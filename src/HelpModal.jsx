@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Icon } from "./SharedComponents.jsx";
 import { DIETS_ENABLED } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
+import { useDialogA11y } from "./useDialogA11y.js";
 
 const HELP_CONTENT = {
   "home": { title:"Scanner", titleIcon:"camera", tips:[
@@ -36,7 +37,7 @@ const HELP_CONTENT = {
     { icon:"shield", title:"4. Hver profil styres af den rette person", desc:"Voksne styrer deres egen profil. Børneprofiler uden egen konto administreres af den person, der har oprettet dem." },
   ]},
   "result": { title:"Scanningsresultat", titleIcon:"package", tips:[
-    { icon:"🚦", title:"Farvet ramme", desc:"Grøn: ingen advarsler fundet. Gul: kan indeholde spor eller passer ikke til dine valg. Rød: allergi-advarsel. Grå: kan ikke vurderes. Vurderet ud fra de personer, du tjekker for." },
+    { icon:"shield", title:"Farvet ramme", desc:"Grøn: ingen advarsler fundet. Gul: kan indeholde spor eller passer ikke til dine valg. Rød: allergi-advarsel. Grå: kan ikke vurderes. Vurderet ud fra de personer, du tjekker for." },
     { icon:"check", title:"Alternativer", desc:"Ved en advarsel foreslår vi varer i samme kategori uden advarsler for din profil. Tryk på en for at se den." },
     { icon:"book", title:"Tryk på en ingrediens", desc:"Åbner leksikonet med forklaring på allergener, E-numre og tilsætningsstoffer." },
     { icon:"heart", title:"Favorit og del", desc:"De to runde knapper øverst på billedet gemmer produktet som favorit eller deler det." },
@@ -44,7 +45,7 @@ const HELP_CONTENT = {
   ]},
   "history": { title:"Scanningshistorik", titleIcon:"list", tips:[
     { icon:"family", title:"Mine / Familien", desc:"Skift mellem kun dine egne scanninger og hele familiens, hvis du har en." },
-    { icon:"👆", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
+    { icon:"eye", title:"Åbn en scanning", desc:"Tryk på en linje for at se det fulde resultat igen." },
   ]},
   "favorites": { title:"Favoritter", titleIcon:"star", tips:[
     { icon:"heart", title:"Gem favoritter", desc:"Tryk på hjertet på et scanningsresultat for at gemme produktet her." },
@@ -70,11 +71,11 @@ const HELP_CONTENT = {
     { icon:"clock", title:"Godkendelse", desc:"Produktet gennemgås, før det er synligt for andre brugere." },
   ]},
   "submitted": { title:"Indsendt", titleIcon:"check", tips:[
-    { icon:"🙏", title:"Tak for hjælpen", desc:"Din indsendelse gennemgås snarest og bliver synlig for andre, når den er godkendt." },
+    { icon:"heart", title:"Tak for hjælpen", desc:"Din indsendelse gennemgås snarest og bliver synlig for andre, når den er godkendt." },
   ]},
   "knowledge": { title:"Leksikon", titleIcon:"book", tips:[
     { icon:"search", title:"Søg eller filtrér", desc:"Søg efter et emne, eller vælg en kategori som allergener og E-numre" + (DIETS_ENABLED ? " eller diæter." : ".") },
-    { icon:"👆", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
+    { icon:"eye", title:"Åbnet fra et produkt", desc:"Tryk på en ingrediens eller et E-nummer i et scanningsresultat for at hoppe direkte hertil." },
   ]},
   "admin": { title:"Admin", titleIcon:"shield", tips:[
     { icon:"check", title:"Godkend indsendelser", desc:"Gennemgå og godkend eller afvis nye produkter og rettelsesforslag fra brugere." },
@@ -88,14 +89,17 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
   const content = HELP_CONTENT[screen] || { title:"Hjælp", titleIcon:"info", tips:[
     { icon:"message", title:"Send feedback", desc:"Brug Feedback-knappen øverst til at rapportere problemer eller forslag." },
   ]};
+  const panelRef = React.useRef(null);
+  useDialogA11y(panelRef, onClose);
   // Portal til body: .screen.fade-in fanger ellers position:fixed (CLAUDE.md §3 regel 4), når modalen åbnes fra en skærm.
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto" }}
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="help-modal-title" tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
-          <div style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
+          <div id="help-modal-title" style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
           <button type="button" onClick={onClose} aria-label="Luk"
             style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
             <Icon name="x" size={16} color="var(--ink)" />
@@ -104,10 +108,8 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
           {content.tips.map((tip, i) => (
             <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
-              <div style={{ ...UI.ufs22_shr0, display:"flex" }}>
-                {typeof tip.icon === "string" && !["👶","🚦","👆","🙏"].includes(tip.icon)
-                  ? <Icon name={tip.icon} size={20} color="var(--ink2)" />
-                  : <span style={UI.ufs22_shr0}>{tip.icon}</span>}
+              <div style={{ flexShrink:0, display:"flex" }}>
+                <Icon name={tip.icon} size={20} color="var(--ink2)" />
               </div>
               <div>
                 <div style={UI.ufs13_fw800_cink_mb3}>{tip.title}</div>

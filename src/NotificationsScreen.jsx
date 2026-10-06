@@ -3,7 +3,7 @@
 // læst/ulæst. Åbnes fra hamburgermenuen ("Beskeder") og når en åbnet besked
 // lukkes (kryds). Selve beskeden vises af NotificationScreen.jsx.
 import React, { useEffect, useState } from "react";
-import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
+import { Icon, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { timeAgo } from "./helpers.js";
 
 export default function NotificationsScreen({ items, loading, listError, loadList, onOpen, onDelete }) {
@@ -26,9 +26,7 @@ export default function NotificationsScreen({ items, loading, listError, loadLis
       </div>
 
       {listError && (
-        <div className="error-box" role="alert" style={{ marginBottom:12 }}>
-          Beskederne kunne ikke hentes. <button className="btn btn-outline" style={{ marginLeft:8, padding:"6px 12px", fontSize:12 }} onClick={loadList}>Prøv igen</button>
-        </div>
+        <LoadErrorBox what="Beskederne" onRetry={loadList} />
       )}
 
       {!listError && !loading && items.length === 0 && (

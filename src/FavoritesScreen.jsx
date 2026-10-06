@@ -2,12 +2,13 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
-import { Icon, ProductImage } from "./SharedComponents.jsx";
+import { Icon, ProductImage, LoadErrorBox, CloseButton } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+import { useDialogA11y } from "./useDialogA11y.js";
 import { STATUS_COLOR, STATUS_ICON } from "./historyStatus.js";
 
 // ── Favoritter: kategoriser-bottom sheet ─────────────────────────────────────
@@ -39,6 +40,8 @@ import { STATUS_COLOR, STATUS_ICON } from "./historyStatus.js";
 // allerede bruger: portal til document.body.
 function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, onClose }) {
   const [newCategoryInput, setNewCategoryInput] = useState("");
+  const sheetRef = React.useRef(null);
+  useDialogA11y(sheetRef, onClose);
   const createCategory = () => {
     const name = newCategoryInput.trim();
     if (!name) return;
@@ -52,16 +55,16 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
           safe-area padding nederst") — samme additive mønster som
           .bottom-nav allerede bruger (calc(24px + env(...))), så "Opret"-
           knappen aldrig ender under enhedens home-indikator/safe-area. */}
-      <div style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px calc(28px + env(safe-area-inset-bottom))", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto" }}
+      <div ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby="favorite-category-title" tabIndex={-1}
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px calc(28px + env(safe-area-inset-bottom))", position:"absolute", left:0, right:0, bottom:0, maxHeight:"75vh", overflowY:"auto", outline:"none" }}
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
           {/* "Kategorisér favorit" → "Kategorier" (26. sept. 2026,
               brugerfeedback: "renere — brugeren kan allerede se produkt-
               navnet nedenunder og forstår handlingen"). Produktnavnet
               herunder er UÆNDRET. */}
-          <div style={UI.ufs18_fw900_cink}>Kategorier</div>
-          <button onClick={onClose} aria-label="Luk"
-            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+          <div id="favorite-category-title" style={UI.ufs18_fw900_cink}>Kategorier</div>
+          <CloseButton onClick={onClose} />
         </div>
         <div style={{ fontSize:12.5, color:"var(--muted)", marginBottom:16 }}>{favorite.name || "Ukendt produkt"}</div>
 
@@ -72,20 +75,20 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
           {existingCategories.map(cat => {
             const selected = favorite.category === cat;
             return (
-              <div key={cat} onClick={() => onSetCategory(selected ? null : cat)}
-                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", borderRadius:10, cursor:"pointer",
+              <button type="button" key={cat} aria-pressed={selected} onClick={() => onSetCategory(selected ? null : cat)}
+                style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", minHeight:44, padding:"12px 14px", borderRadius:10, cursor:"pointer", fontFamily:"var(--f)",
                   background: selected ? "var(--green-selected-bg)" : "var(--surface)", border:`1px solid ${selected ? "var(--green)" : "var(--border)"}` }}>
                 <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, fontWeight:700, color: selected ? "var(--green)" : "var(--ink)" }}>
                   <Icon name="tag" size={13} color={selected ? "var(--green)" : "var(--muted)"} /> {cat}
                 </span>
                 {selected && <Icon name="check" size={14} color="var(--green)" />}
-              </div>
+              </button>
             );
           })}
         </div>
 
         <div className="input-row">
-          <input className="field" placeholder="Ny kategori…" value={newCategoryInput}
+          <input className="field" aria-label="Ny kategori" placeholder="Ny kategori…" value={newCategoryInput}
             onChange={e => setNewCategoryInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") createCategory(); }} />
           {/* Disabled indtil der reelt står noget i feltet (26. sept. 2026,
@@ -105,7 +108,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
   const { user } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
-  const { favorites, favoritesScope, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
+  const { favorites, favoritesScope, favoritesError, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 
   // ── Favoritter: kategori-filter + kategoriser-sheet ─────────────────────────
@@ -164,19 +167,16 @@ export default function FavoritesScreen({ household, lookupProduct }) {
 
       {household.length > 0 && (
         <div style={{ display:"flex", gap:8, marginBottom:14 }}>
-          <div onClick={() => loadFavorites("own")}
-            style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
-              background: favoritesScope==="own" ? "var(--green)" : "var(--surface)", color: favoritesScope==="own" ? "var(--on-green)" : "var(--muted)",
+          <button type="button" className="seg-btn" aria-pressed={favoritesScope==="own"} onClick={() => loadFavorites("own")}
+            style={{ background: favoritesScope==="own" ? "var(--green)" : "var(--surface)", color: favoritesScope==="own" ? "var(--on-green)" : "var(--muted)",
               border:`1px solid ${favoritesScope==="own" ? "var(--green)" : "var(--border)"}` }}>
             Mine
-          </div>
-          <div onClick={() => loadFavorites("family")}
-            style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
-              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
+          </button>
+          <button type="button" className="seg-btn" aria-pressed={favoritesScope==="family"} onClick={() => loadFavorites("family")}
+            style={{ background: favoritesScope==="family" ? "var(--green)" : "var(--surface)", color: favoritesScope==="family" ? "var(--on-green)" : "var(--muted)",
               border:`1px solid ${favoritesScope==="family" ? "var(--green)" : "var(--border)"}` }}>
             <Icon name="family" size={12} color={favoritesScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Familien
-          </div>
+          </button>
         </div>
       )}
 
@@ -184,7 +184,9 @@ export default function FavoritesScreen({ household, lookupProduct }) {
           "seneste scanninger hører kun hjemme under Historik") —
           Favoritter viser nu udelukkende gemte favoritter. */}
 
-      {favorites.length === 0 && (
+      {favoritesError && <LoadErrorBox what="Favoritterne" onRetry={() => loadFavorites(favoritesScope)} />}
+
+      {!favoritesError && favorites.length === 0 && (
         <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="heart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Ingen favoritter endnu</div>
@@ -196,9 +198,9 @@ export default function FavoritesScreen({ household, lookupProduct }) {
       <>
         {existingCategories.length > 0 && (
           <div style={{ ...UI.wrapGap7, marginBottom:12 }}>
-            <div className={`filter-chip${favoriteCategoryFilter==="all"?" active":""}`} onClick={() => setFavoriteCategoryFilter("all")}>Alle</div>
+            <button type="button" className={`filter-chip${favoriteCategoryFilter==="all"?" active":""}`} aria-pressed={favoriteCategoryFilter==="all"} onClick={() => setFavoriteCategoryFilter("all")}>Alle</button>
             {existingCategories.map(cat => (
-              <div key={cat} className={`filter-chip${favoriteCategoryFilter===cat?" active":""}`} onClick={() => setFavoriteCategoryFilter(cat)}>{cat}</div>
+              <button type="button" key={cat} className={`filter-chip${favoriteCategoryFilter===cat?" active":""}`} aria-pressed={favoriteCategoryFilter===cat} onClick={() => setFavoriteCategoryFilter(cat)}>{cat}</button>
             ))}
           </div>
         )}

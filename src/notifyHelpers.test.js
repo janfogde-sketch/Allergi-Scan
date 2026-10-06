@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { formatDanishDeadline, formatDanishDateTime, summarizeItems, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, allergenRiskRank } from "../supabase/functions/_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatDanishDateTime, summarizeItems, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, allergenRiskRank, retryDelayMinutes } from "../supabase/functions/_shared/notifyHelpers.js";
 
 describe("formatDanishDeadline", () => {
   const now = new Date("2026-09-30T12:00:00Z"); // 14:00 dansk sommertid
@@ -87,5 +87,16 @@ describe("delt indkøbsliste: hvem og hvad", () => {
     expect(bulletList(Array.from({ length: 10 }, (_, i) => `v${i + 1}`)).split("\n")).toHaveLength(9);
     expect(bulletList(Array.from({ length: 10 }, (_, i) => `v${i + 1}`)).endsWith("og 2 flere")).toBe(true);
     expect(bulletList([])).toBe("");
+  });
+});
+
+describe("retryDelayMinutes (F1-12)", () => {
+  it("venter stigende 1, 5, 15, 60, 240 minutter", () => {
+    expect([1, 2, 3, 4, 5].map(retryDelayMinutes)).toEqual([1, 5, 15, 60, 240]);
+  });
+  it("holder sig til sidste ventetid og tåler mærkelige input", () => {
+    expect(retryDelayMinutes(9)).toBe(240);
+    expect(retryDelayMinutes(0)).toBe(1);
+    expect(retryDelayMinutes(undefined)).toBe(1);
   });
 });

@@ -18,6 +18,9 @@ export function useHistory({ accessToken, userId }) {
   const [historyScope, setHistoryScope]     = useState("own"); // "own" | "family"
   const [favorites, setFavorites]           = useState([]);
   const [favoritesScope, setFavoritesScope] = useState("own"); // "own" | "family"
+  // F2-4: en fejlet hentning må ikke ligne en tom historik/favoritliste.
+  const [historyError, setHistoryError]     = useState(false);
+  const [favoritesError, setFavoritesError] = useState(false);
 
   const loadHistory = useCallback(async (scope = historyScope) => {
     try {
@@ -27,8 +30,9 @@ export function useHistory({ accessToken, userId }) {
         `${SUPABASE_URL}/functions/v1/history?user_id=${userId}&limit=50&offset=0${scope === "family" ? "&scope=family" : ""}`,
         { headers: makeHeaders(accessToken) }
       );
-      if (data?.success && data.scans) setHistory(data.scans);
-    } catch { /* silent */ }
+      if (data?.success && data.scans) { setHistory(data.scans); setHistoryError(false); }
+      else setHistoryError(true);
+    } catch { setHistoryError(true); }
     finally { setHistoryLoading(false); }
   }, [userId, accessToken, historyScope]);
 
@@ -79,8 +83,9 @@ export function useHistory({ accessToken, userId }) {
           savedBy: f.users?.name || null,
           savedByMe: f.user_id === userId,
         })));
-      }
-    } catch { /* silent */ }
+        setFavoritesError(false);
+      } else setFavoritesError(true);
+    } catch { setFavoritesError(true); }
   }, [userId, accessToken, favoritesScope]);
 
   // ── Flyt en favorit til en (evt. ny) kategori ────────────────────────────
@@ -128,6 +133,7 @@ export function useHistory({ accessToken, userId }) {
     history, setHistory,
     historyLoading,
     historyScope,
+    historyError, favoritesError,
     favorites, setFavorites,
     favoritesScope,
     loadHistory,

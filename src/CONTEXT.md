@@ -189,7 +189,8 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
 - **Afvikling:** pg_cron `notify-dispatch` hvert minut kalder edge-funktionen `notify`
   (kategori 4, kun service-role) for hændelser ældre end 15 sek. `notify` opretter beskeden
   FØR push, sender push kun hvis flaget er tændt og brugeren ikke har slået kategorien fra,
-  og retry'er op til 5 gange. Afvisning uden `review_note` afvises som `failed` og logges.
+  og genforsøger op til 5 gange med stigende ventetid via `available_at` (1, 5, 15, 60, 240 min.; `retryDelayMinutes()` i
+  `notifyHelpers.js`). Opgivne afsendelser logges i `client_errors`. Afvisning uden `review_note` afvises som `failed` og logges.
   Oprydning: beskeder 12 mdr., hændelser 90 dage (`cleanup_notifications`).
 - **Delt kode i `supabase/functions/_shared/`:** `notificationContent.js` (definitioner,
   `renderNotification`, testet i `src/notificationContent.test.js`) og `webpush.ts` (VAPID
@@ -252,13 +253,15 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   Kategori `product_changes` (standard TIL) er nu synlig i Indstillinger. **P5 er droppet** (Jan, 30. sept.).
 
 - **P6 (30. sept. 2026):** tabel `recalls` (kun admin kan læse) + edge-funktionen `recalls-sync` (service-role, cron
-  `notify-recalls-sync` dagligt kl. 17:00 UTC) henter Fødevarestyrelsens RSS-feed
+  `notify-recalls-sync` dagligt kl. 17:00 UTC, Jans beslutning 6. okt. 2026; afløser kvarter-planen samme dag) henter Fødevarestyrelsens RSS-feed
   (`foedevarestyrelsen.dk/handlers/DynamicRss.ashx?id=8c2cdc12-...`), læser hver ny side (`_shared/recallParser.js`) og
   udleder EAN, parti og årsag. Kun EAN'er med gyldigt GTIN-kontrolciffer tæller. Status: `ready` (gyldig EAN, sendes),
   `needs_review` (ingen gyldig EAN; kun admin ser den, `unverified_eans` viser rå tal), `cancelled` (titel starter med
   ANNULLERET), `archived` (første kørsel og alt ældre end 14 dage sendes aldrig). `notify` (`recall_published`) matcher på
   favoritter, scanninger (90 dage) og indkøbslister via EAN, aldrig på navn, og sender P6 til alle matchede uanset
-  allergiprofil. Linket i beskeden (blokken `link`) tillader kun https på foedevarestyrelsen.dk. Cirka 28 af 50 sider i feedet
+  allergiprofil. P6 oprettes altid som besked i appen, også når push og mail er fravalgt (6. okt.). Resultatsiden slår EAN op via
+  RPC `active_recalls_for_ean` (security definer, kun offentlige felter, sidste 60 dage) og viser `RecallNotice` + rød status "Tilbagekaldt".
+  En ny `needs_review` opretter en høj-prioritets to do til admin med link til kilden. Linket i beskeden (blokken `link`) tillader kun https på foedevarestyrelsen.dk. Cirka 28 af 50 sider i feedet
   havde gyldig EAN (juni-sept. 2026). Admin-fanen **Tilbagekald** (1. okt. 2026, `RecallsSection.jsx`, `useAdminRecalls.js`, `recallLogic.js`)
   viser rækkerne med tekst, link og rå tal; admin søger produkter frem og knytter dem. RPC'erne
   `admin_resolve_recall(id, 'link'|'archive'|'cancel', eans)` (kun `needs_review`; EAN'er valideres som GTIN og skal

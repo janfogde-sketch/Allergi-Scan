@@ -127,9 +127,10 @@ function GamificationCard({ history, setScreen, SCREENS }) {
           </div>
         ))}
         {/* Fuld bredde: Se historik */}
-        <div onClick={() => setScreen(SCREENS.HISTORY)}
+        <button type="button" className="row-btn" onClick={() => setScreen(SCREENS.HISTORY)}
           style={{
             gridColumn:"1 / -1",
+            minHeight:44,
             background:"var(--surface2)",
             border:"1px solid var(--border2)",
             borderRadius:10,
@@ -141,7 +142,7 @@ function GamificationCard({ history, setScreen, SCREENS }) {
           }}>
           <div style={UI.boldInk12}>Se fuld scanningshistorik</div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -249,7 +250,7 @@ export default function ProfileScreen({
                 {selectedENumbers && selectedENumbers.length > 0 && (
                   <div style={UI.mb8}>
                     <div style={UI.sectionLbl4Ink}>E-numre</div>
-                    <div className="tags">{selectedENumbers.map((e,i) => <div key={i} className="tag" style={{ background:"rgba(99,102,241,.1)", color:"#818cf8", borderColor:"rgba(99,102,241,.3)" }}>⚗️ {e}</div>)}</div>
+                    <div className="tags">{selectedENumbers.map((e,i) => <div key={i} className="tag" style={{ background:"rgba(99,102,241,.1)", color:"#818cf8", borderColor:"rgba(99,102,241,.3)" }}><Icon name="hash" size={11} color="#818cf8" /> {e}</div>)}</div>
                   </div>
                 )}
               </div>

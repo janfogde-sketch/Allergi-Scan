@@ -203,7 +203,7 @@ export default function NotFoundScreen({
                   style={{ width:52, height:52, objectFit:"contain", borderRadius:8, border:"1px solid var(--border)", flexShrink:0 }} />
                 <div style={S.flex1}>
                   <input value={proposedName} onChange={e => setProposedName(e.target.value)}
-                    placeholder="Produktnavn…"
+                    aria-label="Produktnavn" placeholder="Produktnavn…"
                     style={{ width:"100%", border:"none", outline:"none", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--ink)", background:"transparent", padding:0 }} />
                   <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, color:"var(--green)", marginTop:2 }}><Icon name="check" size={10} color="var(--green)" /> Forside fotograferet</div>
                 </div>
@@ -286,7 +286,7 @@ export default function NotFoundScreen({
                 ].map(({ key, label, placeholder }) => (
                   <div key={key}>
                     <div style={UI.ufs10_cmuted_fw700_mb4}>{label}</div>
-                    <input className="field" placeholder={placeholder}
+                    <input className="field" aria-label={label} placeholder={placeholder}
                       value={proposedNutrition?.[key] || ""}
                       onChange={e => setProposedNutrition(prev => ({ ...prev, [key]: e.target.value }))}
                       style={{ padding:"8px 10px", fontSize:12 }} />
@@ -329,7 +329,7 @@ export default function NotFoundScreen({
                 })}
               </div>
               <div style={{ fontSize:11, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Fri tekst</div>
-              <textarea className="field" rows={3}
+              <textarea className="field" rows={3} aria-label="Mærkninger, fri tekst"
                 placeholder="Fx: 'Opbevares køligt', 'Vegansk certificeret', 'Sæsonvare'…"
                 value={proposedNotes || ""}
                 onChange={e => setProposedNotes(e.target.value)}
@@ -353,7 +353,7 @@ export default function NotFoundScreen({
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
               <div style={S.rowBetweenMb10}>
                 <div style={{ ...UI.ufs12_fw800_cink, display:"flex", alignItems:"center", gap:6 }}><Icon name="camera" size={12} color="var(--ink)" /> Forside og navn</div>
-                <button onClick={() => setNotFoundStep(1)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--muted)", fontFamily:"var(--f)", padding:"2px 8px" }}>← Ret</button>
+                <button className="link-back" onClick={() => setNotFoundStep(1)} style={{ margin:"-12px 0" }}><Icon name="chevronLeft" size={12} color="var(--muted)" /> Ret</button>
               </div>
               <div style={UI.udflex_aicenter_g12_mb12}>
                 {productImagePreview
@@ -363,7 +363,7 @@ export default function NotFoundScreen({
                 <div style={S.flex1}>
                   <div style={UI.ufs11_cmuted_fw600_mb4}>Produktnavn</div>
                   <input value={proposedName} onChange={e => setProposedName(e.target.value)}
-                    placeholder="Skriv produktnavn…" className="field"
+                    aria-label="Produktnavn" placeholder="Skriv produktnavn…" className="field"
                     style={{ padding:"8px 12px", fontSize:14 }} />
                 </div>
               </div>
@@ -399,21 +399,19 @@ export default function NotFoundScreen({
                   {ingItems.map((item, i) => (
                     <div key={i} style={UI.udflex_aicenter_g5_p5px10px_bgpaper2_bd1pxsolid_br20}>
                       <span style={UI.ufs12_cink}>{item}</span>
-                      <div role="button" aria-label={`Fjern "${item}"`} tabIndex={0}
-                        onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
-                        onKeyDown={e => e.key === "Enter" && setIngItems(p => p.filter((_,j)=>j!==i))}
-                        style={UI.ucurpointer_cmuted_fs14_lh1_p6_m6px6px6p}>×</div>
+                      <button type="button" className="tag-x" aria-label={`Fjern "${item}"`}
+                        onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}><Icon name="x" size={12} color="var(--muted)" /></button>
                     </div>
                   ))}
                 </div>
               )}
 
               <div style={S.rowGap8}>
-                <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
+                <input className="field" aria-label="Tilføj ingrediens" placeholder="Tilføj ingrediens…" value={ingInput}
                   onChange={e => setIngInput(e.target.value)}
                   onKeyDown={e => e.key==="Enter" && addIngItem()}
                   style={UI.uflex1_fs12} />
-                <button className="btn btn-outline btn-sm" onClick={addIngItem} style={UI.shrink0}>+</button>
+                <button className="btn btn-outline btn-sm" onClick={addIngItem} style={UI.shrink0} aria-label="Tilføj ingrediens"><Icon name="plus" size={16} /></button>
               </div>
               {ingItems.length > 0 && (
                 <div style={{ fontSize:10, color:"var(--muted)", marginTop:8, lineHeight:1.5 }}>
@@ -479,8 +477,8 @@ export default function NotFoundScreen({
                     </div>
                   ))}
                 </div>
-                <button style={{ marginTop:10, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
-                  onClick={() => setNotFoundStep(3)}>← Ret næringsindhold</button>
+                <button className="link-back" style={{ marginTop:2, paddingLeft:0 }}
+                  onClick={() => setNotFoundStep(3)}><Icon name="chevronLeft" size={12} color="var(--muted)" /> Ret næringsindhold</button>
               </div>
             )}
 
@@ -489,8 +487,8 @@ export default function NotFoundScreen({
               <div style={S.card}>
                 <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>Mærkninger</div>
                 <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.6 }}>{proposedNotes}</div>
-                <button style={{ marginTop:6, fontSize:11, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", padding:0 }}
-                  onClick={() => setNotFoundStep(4)}>← Ret mærkninger</button>
+                <button className="link-back" style={{ paddingLeft:0 }}
+                  onClick={() => setNotFoundStep(4)}><Icon name="chevronLeft" size={12} color="var(--muted)" /> Ret mærkninger</button>
               </div>
             )}
 
@@ -527,7 +525,7 @@ export default function NotFoundScreen({
                 ? <><span style={{ width:16, height:16, border:"2px solid rgba(255,255,255,.4)", borderTopColor:"var(--on-green)", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} /> Sender…</>
                 : <>Send produkt ind <Icon name="check" size={15} color={proposedName.trim() ? "var(--on-green)" : "var(--muted)"} /></>}
             </button>
-            <button className="btn btn-ghost btn-full" onClick={() => setNotFoundStep(2)}>← Tilbage</button>
+            <button className="btn btn-ghost btn-full" onClick={() => setNotFoundStep(2)}><Icon name="chevronLeft" size={14} /> Tilbage</button>
           </div>
         )}
       </div>

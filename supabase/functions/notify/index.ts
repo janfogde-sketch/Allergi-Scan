@@ -17,15 +17,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
-import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges } from "../_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, retryDelayMinutes, RETRY_DELAYS_MIN } from "../_shared/notifyHelpers.js";
 import { eanVariants } from "../_shared/recallParser.js";
 import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail, sendHtmlMail } from "../_shared/mailSend.ts";
 import { LIST_MAIL_KEYS, renderListMail } from "../_shared/listMail.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const APP_URL = "https://www.eatsafe.dk";
-const MAX_ATTEMPTS = 5;
+// Første forsøg + ét genforsøg pr. ventetid (1, 5, 15, 60, 240 min.), i alt ca. 5½ time.
+const MAX_ATTEMPTS = RETRY_DELAYS_MIN.length + 1;
 const BATCH = 20;
+const retryAt = (attempt: number) => new Date(Date.now() + retryDelayMinutes(attempt) * 60_000).toISOString();
 
 type EventRow = { id: string; event_key: string; kind: string; payload: Record<string, unknown>; attempts: number };
 type Flags = { push: boolean; email: boolean; testUsers: Set<string>; overrides: Record<string, { title?: string | null; body?: string | null }> };
@@ -271,14 +273,16 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   const r = renderNotification(plan.templateKey, plan.data, { pushOverride: flags.overrides[plan.templateKey] });
 
   // Brugerens valg pr. kanal (med kategoriens standard, se notification_enabled() i databasen).
-  // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken).
+  // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken). Undtagelse: en
+  // tilbagekaldelse (P6) lander altid som besked i appen, så den aldrig forsvinder helt
+  // (F1-4, Jan 6. okt. 2026); push og mail følger stadig brugerens valg.
   const enabled = async (channel: string): Promise<boolean> => {
     const { data, error } = await db.rpc("notification_enabled", { p_user_id: plan.userId, p_category: r.category, p_channel: channel });
     if (error) throw error;
     return data !== false;
   };
   const [pushOn, emailOn] = [await enabled("push"), await enabled("email")];
-  if (!pushOn && !emailOn) return { retry: false };
+  if (!pushOn && !emailOn && r.category !== "recalls") return { retry: false };
 
   const row = {
     user_id: plan.userId, event_id: ev.id, event_key: ev.event_key,
@@ -410,16 +414,18 @@ async function processEvent(db: Db, ev: EventRow, flags: Flags) {
       return "failed";
     }
     if (retry && ev.attempts + 1 < MAX_ATTEMPTS) {
-      await db.from("notification_events").update({ last_error: "Push midlertidigt fejlet, prøver igen" }).eq("id", ev.id);
+      await db.from("notification_events").update({ last_error: "Afsendelse midlertidigt fejlet, prøver igen", available_at: retryAt(ev.attempts + 1) }).eq("id", ev.id);
       return "retry";
     }
-    const note = missing ? `${skipped} modtager(e) sprunget over: ${missing.message}` : null;
+    // Opgivne afsendelser skal kunne ses i admin (fejlloggen), ikke kun i notification_deliveries.
+    if (retry) await logError(db, "Afsendelse opgivet efter alle forsøg", { event_id: ev.id, kind: ev.kind });
+    const note = missing ? `${skipped} modtager(e) sprunget over: ${missing.message}` : (retry ? "Nogle afsendelser fejlede efter alle forsøg" : null);
     await db.from("notification_events").update({ status: "done", last_error: note, processed_at: new Date().toISOString() }).eq("id", ev.id);
     return "done";
   } catch (e) {
     const msg = String((e as Error)?.message ?? e);
     const giveUp = ev.attempts + 1 >= MAX_ATTEMPTS;
-    await db.from("notification_events").update({ last_error: msg, ...(giveUp ? { status: "failed", processed_at: new Date().toISOString() } : {}) }).eq("id", ev.id);
+    await db.from("notification_events").update({ last_error: msg, ...(giveUp ? { status: "failed", processed_at: new Date().toISOString() } : { available_at: retryAt(ev.attempts + 1) }) }).eq("id", ev.id);
     if (giveUp) await logError(db, msg, { event_id: ev.id, kind: ev.kind });
     return giveUp ? "failed" : "retry";
   }

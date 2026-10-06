@@ -105,9 +105,10 @@ function ToggleRow({ label, sub, note, on, onToggle, disabled, last }) {
 // Kontakt/feedback, Beta-info, Version. Uden `onClick` bliver den en ren
 // info-linje (ingen chevron, ikke klikbar) — bruges til "Version".
 function ChevronRow({ icon, label, sub, value, onClick, last, danger }) {
+  const Tag = onClick ? "button" : "div";
   return (
-    <div onClick={onClick}
-      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 0", borderBottom: last ? "none" : "1px solid var(--border)", cursor: onClick ? "pointer" : "default" }}>
+    <Tag {...(onClick ? { type:"button", className:"row-btn", onClick } : {})}
+      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, width:"100%", minHeight:44, padding:"12px 0", borderBottom: last ? "none" : "1px solid var(--border)", cursor: onClick ? "pointer" : "default" }}>
       <div style={{ display:"flex", alignItems:"center", gap:10, flex:1, minWidth:0 }}>
         {icon && <Icon name={icon} size={15} color={danger ? "var(--red)" : "var(--ink2)"} />}
         <div style={{ minWidth:0 }}>
@@ -119,7 +120,7 @@ function ChevronRow({ icon, label, sub, value, onClick, last, danger }) {
         {value && <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>{value}</span>}
         {onClick && <Icon name="chevronRight" size={14} color="var(--muted)" />}
       </div>
-    </div>
+    </Tag>
   );
 }
 
@@ -215,7 +216,7 @@ export default function SettingsScreen({
           <div className="mp-lang-dropdown" onClick={() => setLangOpen(true)}>
             <span className="mp-lang-flag">{currentLang?.flag || "🌍"}</span>
             <span className="mp-lang-name">{currentLang?.name || "English"}</span>
-            <span className="mp-lang-arrow">▾</span>
+            <span className="mp-lang-arrow"><Icon name="chevronDown" size={14} color="var(--muted)" /></span>
           </div>
         ) : (
           <div className="mp-lang-list">

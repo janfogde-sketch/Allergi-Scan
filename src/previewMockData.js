@@ -6,19 +6,24 @@
 // se CLAUDE.md afsnit 4). Bruges KUN når appen bygges i preview-mode — aldrig
 // i den rigtige produktions-build. Giver Søg, Indkøbsliste og Produkt-view
 // noget at vise uden en rigtig Supabase-session, så design kan gennemgås i
-// preview'en. Ingen image_url — sandboxen kan ikke hente eksterne billeder,
-// og ProductImage falder allerede pænt tilbage til et kategori-ikon uden.
+// preview'en. Billederne er neutrale tegninger i src/assets/preview/ (ingen
+// rigtige mærker, 6. okt. 2026), så preview'et også kan give butiksbilleder (F6-3).
 //
 // Dækker bevidst alle tre sikkerheds-verdikter (rød/gul/grøn), så design på
 // tværs af verdikt-farver kan ses: valgt ud fra preview-brugerens mock-
 // allergener (gluten, nødder — se OnboardingScreen.jsx's preview-knap).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import noeddebarImg from "./assets/preview/noeddebar.jpg";
+import rugbroedImg from "./assets/preview/rugbroed.jpg";
+import letmaelkImg from "./assets/preview/letmaelk.jpg";
+import chokoladeImg from "./assets/preview/chokolade.jpg";
+
 export const PREVIEW_MOCK_PRODUCTS = [
   {
     id: "preview-p1",
-    name: "Nøddebar med chokolade", brand: "Go Ahead!",
-    ean: "5701234500011", category: "Snacks", image_url: null,
+    name: "Nøddebar med chokolade", brand: "",
+    ean: "5701234500011", category: "Snacks", image_url: noeddebarImg,
     ingredients: "Havregryn, sukker, MANDLER 14%, HASSELNØDDER 9%, chokolade (kakaomasse, sukker, kakaosmør), honning, vegetabilsk olie.",
     allergen_flags: {
       gluten:"no", laktose:"no", aeg:"no",
@@ -32,8 +37,8 @@ export const PREVIEW_MOCK_PRODUCTS = [
   },
   {
     id: "preview-p2",
-    name: "Skæret Rugbrød", brand: "Kohberg",
-    ean: "5701234500028", category: "Brød", image_url: null,
+    name: "Skæret Rugbrød", brand: "",
+    ean: "5701234500028", category: "Brød", image_url: rugbroedImg,
     ingredients: "Vand, RUGKERNER, HVEDEMEL, rugmel, solsikkekerner, surdej, salt, gær.",
     allergen_flags: {
       gluten:"traces", laktose:"no", aeg:"no",
@@ -47,8 +52,8 @@ export const PREVIEW_MOCK_PRODUCTS = [
   },
   {
     id: "preview-p3",
-    name: "Letmælk", brand: "Arla",
-    ean: "5701234500035", category: "Mejeri", image_url: null,
+    name: "Letmælk", brand: "",
+    ean: "5701234500035", category: "Mejeri", image_url: letmaelkImg,
     ingredients: "Skummetmælk, fløde.",
     allergen_flags: {
       gluten:"no", laktose:"yes", aeg:"no",
@@ -62,8 +67,8 @@ export const PREVIEW_MOCK_PRODUCTS = [
   },
   {
     id: "preview-p4",
-    name: "Mørk Chokolade 70%", brand: "Anthon Berg",
-    ean: "5701234500042", category: "Chokolade", image_url: null,
+    name: "Mørk Chokolade 70%", brand: "",
+    ean: "5701234500042", category: "Chokolade", image_url: chokoladeImg,
     ingredients: "Kakaomasse, sukker, kakaosmør, emulgator: solsikkelecithin, vaniljearoma.",
     allergen_flags: {
       gluten:"no", laktose:"no", aeg:"no",
@@ -76,3 +81,16 @@ export const PREVIEW_MOCK_PRODUCTS = [
     verified_status:"verified", source:"preview",
   },
 ];
+
+// Opdigtet tilbagekaldelse til preview'et (F6-3), så advarslen kan vises uden en
+// rigtig sag fra Fødevarestyrelsen. Bruges kun i --mode artifact-preview (useRecalls.js).
+export const PREVIEW_MOCK_RECALLS = {
+  "5701234500042": [{
+    title: "Tilbagekaldelse af mørk chokolade",
+    published_at: "2026-10-04T08:00:00Z",
+    affected: "Mørk chokolade 70 %, 100 g, bedst før 12.03.2027",
+    reason: "Varen kan indeholde mælk, som ikke står på etiketten.",
+    action: "Lever varen tilbage til butikken, eller smid den ud.",
+    source_url: null,
+  }],
+};

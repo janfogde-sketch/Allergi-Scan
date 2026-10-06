@@ -37,6 +37,7 @@ export default function DeleteAccountModal({
             Skriv <strong>"slet"</strong> for at bekræfte:
           </div>
           <input
+            aria-label={'Skriv "slet" for at bekræfte'}
             value={deleteConfirmText}
             onChange={e => setDeleteConfirmText(e.target.value)}
             placeholder="slet"

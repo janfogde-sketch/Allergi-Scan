@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS } from "./constants.jsx";
 import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
-import { Icon, ProductImage, ConfirmDialog, showToast } from "./SharedComponents.jsx";
+import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -19,7 +19,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { allergens, customAllerg, scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
-  const { history, historyLoading, historyScope, loadHistory, clearHistory } = useHistoryContext();
+  const { history, historyLoading, historyScope, historyError, loadHistory, clearHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 
   // Historikken opdaterer automatisk ved hvert besøg på Historik (26. sept.
@@ -129,19 +129,16 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       </div>
       {household.length > 0 && (
         <div style={{ display:"flex", gap:8, marginBottom:10 }}>
-          <div onClick={() => loadHistory("own")}
-            style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
-              background: historyScope==="own" ? "var(--green)" : "var(--surface)", color: historyScope==="own" ? "var(--on-green)" : "var(--muted)",
+          <button type="button" className="seg-btn" aria-pressed={historyScope==="own"} onClick={() => loadHistory("own")}
+            style={{ background: historyScope==="own" ? "var(--green)" : "var(--surface)", color: historyScope==="own" ? "var(--on-green)" : "var(--muted)",
               border:`1px solid ${historyScope==="own" ? "var(--green)" : "var(--border)"}` }}>
             Mine
-          </div>
-          <div onClick={() => loadHistory("family")}
-            style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, cursor:"pointer", fontSize:12, fontWeight:700,
-              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
+          </button>
+          <button type="button" className="seg-btn" aria-pressed={historyScope==="family"} onClick={() => loadHistory("family")}
+            style={{ background: historyScope==="family" ? "var(--green)" : "var(--surface)", color: historyScope==="family" ? "var(--on-green)" : "var(--muted)",
               border:`1px solid ${historyScope==="family" ? "var(--green)" : "var(--border)"}` }}>
             <Icon name="family" size={12} color={historyScope==="family" ? "var(--on-green)" : "var(--muted)"} /> Familien
-          </div>
+          </button>
         </div>
       )}
 
@@ -159,7 +156,9 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
         </div>
       )}
 
-      {!historyLoading && history.length===0 && (
+      {!historyLoading && historyError && <LoadErrorBox what="Historikken" onRetry={() => loadHistory(historyScope)} />}
+
+      {!historyLoading && !historyError && history.length===0 && (
         <div className="empty-state">
           {/* 29. sept. 2026, brugerfeedback: lup-ikonet signalerede
               søgning, ikke historik — skiftet til "clock" (samme ikon
@@ -190,9 +189,9 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       {!historyLoading && history.length >= 10 && (
         <div style={{ ...UI.wrapGap7, marginBottom:12 }}>
           {HISTORY_FILTERS.map(f => (
-            <div key={f.id} className={`filter-chip${historyFilter===f.id?" active":""}`} onClick={() => setHistoryFilter(f.id)}>
+            <button type="button" key={f.id} className={`filter-chip${historyFilter===f.id?" active":""}`} aria-pressed={historyFilter===f.id} onClick={() => setHistoryFilter(f.id)}>
               {f.label}
-            </div>
+            </button>
           ))}
         </div>
       )}

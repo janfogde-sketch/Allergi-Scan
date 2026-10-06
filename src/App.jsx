@@ -43,6 +43,7 @@ const FeedbackModal = React.lazy(() => import('./FeedbackModal.jsx'));
 const ProfileMenu = React.lazy(() => import('./ProfileMenu.jsx'));
 import ErrorBoundary from './ErrorBoundary.jsx';
 import { useOffline } from './useOffline.js';
+import { useScreenFocus } from './useScreenFocus.js';
 
 import { appCss } from './theme.jsx';
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './utils.jsx';
@@ -343,7 +344,7 @@ export default function EatSafe() {
     familyMembers, loadFamilyMembers,
     createList, renameList, setListType, deleteList, joinByCode,
     getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
-    loadShoppingList, addToList, toggleItem, removeItem, clearDone,
+    loadShoppingList, listsError, addToList, toggleItem, removeItem, clearDone,
   } = useShoppingList({ accessToken, userId });
 
   const {
@@ -359,8 +360,12 @@ export default function EatSafe() {
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
     editingMemberId,
-    loadFamily, addMember, updateMember, removeMember, startEditMember, cancelEditMember,
+    loadFamily, familyError, addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamily({ accessToken, userId, setActiveProfiles });
+  // F2-4: stabil "Prøv igen" til Familie-siden (loadFamily er en ny funktion ved hver render).
+  const loadFamilyRef = useRef(loadFamily);
+  loadFamilyRef.current = loadFamily;
+  const retryLoadFamily = useCallback(() => loadFamilyRef.current(), []);
 
   // Husstandens rigtige konti (1. okt. 2026): skrivebeskyttede profiler, der kan vælges ved scanning,
   // søgning, lister, historik og Madpas. `family` er stadig kun de profiler, man selv har oprettet
@@ -405,7 +410,7 @@ export default function EatSafe() {
 
   const {
     history, setHistory,
-    historyLoading, historyScope,
+    historyLoading, historyScope, historyError, favoritesError,
     favorites, setFavorites, favoritesScope,
     loadHistory, clearHistory, saveHistoryEntry, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
   } = useHistory({ accessToken, userId });
@@ -495,6 +500,8 @@ export default function EatSafe() {
 
   // ── Beskeder (liste, ulæst-tæller og ?notification=-ruten fra push) ──────
   const notifications = useNotifications({ accessToken, userId, user, screen, setScreen, setAuthTab });
+  // F4-6: fokus til den nye skærms overskrift ved skærmskift (resultatsiden styrer selv sit fokus).
+  useScreenFocus(screen, { skip: [SCREENS.RESULT, SCREENS.BOOT] });
 
   // Push er per enhed, ikke per konto: har enheden allerede givet tilladelse, får den konto, der er logget ind,
   // sit abonnement gemt her (ellers viser appen push som "til", men der kommer intet). Spørger aldrig om tilladelse.
@@ -891,19 +898,19 @@ export default function EatSafe() {
   const navigationContextValue = useMemo(() => ({ screen, setScreen, openLegal, legalReturnScreen }), [screen, openLegal, legalReturnScreen]);
 
   const historyContextValue = useMemo(() => ({
-    history, setHistory, historyLoading, historyScope,
+    history, setHistory, historyLoading, historyScope, historyError, favoritesError,
     favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
-  }), [history, historyLoading, historyScope, favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite]);
+  }), [history, historyLoading, historyScope, historyError, favoritesError, favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite]);
 
   const shoppingContextValue = useMemo(() => ({
     lists, activeList, activeListId, setActiveListId,
     shoppingList, setShoppingList, shoppingListId, setShoppingListId,
-    newItemName, setNewItemName, loadShoppingList,
+    newItemName, setNewItemName, loadShoppingList, listsError,
     familyMembers, loadFamilyMembers,
     createList, renameList, setListType, deleteList, joinByCode,
     getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
     addToList, toggleItem, removeItem, clearDone,
-  }), [lists, activeList, activeListId, setActiveListId, shoppingList, shoppingListId, newItemName, loadShoppingList,
+  }), [lists, activeList, activeListId, setActiveListId, shoppingList, shoppingListId, newItemName, loadShoppingList, listsError,
        familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
        getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList, addToList, toggleItem, removeItem, clearDone]);
 
@@ -918,13 +925,13 @@ export default function EatSafe() {
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
-    editingMemberId,
+    editingMemberId, retryLoadFamily, familyError,
     addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   }), [
     newMemberName, newMemberBirthYear, newMemberGender, newMemberAllerg,
     newMemberCustomAllerg, newMemberDiets, newMemberLevels, newMemberENumbers, newMemberSubtypes,
     newMemberCustomInput, editingMemberId, addMember, updateMember, removeMember,
-    startEditMember, cancelEditMember,
+    startEditMember, cancelEditMember, retryLoadFamily, familyError,
   ]);
 
   const allergenPrefsContextValue = useMemo(() => ({
@@ -1000,14 +1007,18 @@ export default function EatSafe() {
         {/* ══ BEKRÆFT E-MAIL ══ */}
         {screen === SCREENS.VERIFYEMAIL && (
           <Suspense fallback={LazyFallback}>
+            <ErrorBoundary screen="Bekræft e-mail">
             <VerifyEmailScreen />
+            </ErrorBoundary>
           </Suspense>
         )}
 
         {/* ══ VÆLG NY ADGANGSKODE ══ */}
         {screen === SCREENS.RESETPASSWORD && (
           <Suspense fallback={LazyFallback}>
+            <ErrorBoundary screen="Ny adgangskode">
             <ResetPasswordScreen />
+            </ErrorBoundary>
           </Suspense>
         )}
 
@@ -1015,6 +1026,7 @@ export default function EatSafe() {
         {/* ══ ONBOARDING SCREENS ══ */}
         {(screen === SCREENS.WELCOME || screen === SCREENS.LOGIN || screen === SCREENS.ONBOARD || editMode) && (
           <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Opstarten">
           <OnboardingScreen
             onboardStep={onboardStep} setOnboardStep={setOnboardStep}
             tourIdx={tourIdx} setTourIdx={setTourIdx}
@@ -1028,6 +1040,7 @@ export default function EatSafe() {
             hasPendingJoinList={!!pendingJoinList}
             onActivatePreview={activatePreviewMode}
           />
+          </ErrorBoundary>
           </Suspense>
         )}
         {/* TOPBAR — fælles, genbrugelig header (AppHeader.jsx, 27. sept.
@@ -1038,11 +1051,13 @@ export default function EatSafe() {
             2026) — de viser deres egen selvstændige header i stedet, se
             isLegalPage ovenfor. */}
         {!isOnboard && !madpasWaiterView && !isLegalPage && (
+          <ErrorBoundary screen="Topbar" silent>
           <AppHeader
             unread={notifications.unread}
             onFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
             onMenu={() => setShowProfileMenu(true)}
           />
+          </ErrorBoundary>
         )}
 
         {/* Feedback-knap under onboarding — safe-area-korrekt top-afstand.
@@ -1105,6 +1120,7 @@ export default function EatSafe() {
         {/* ══ FEEDBACK MODAL ══ */}
         {feedbackOpen && (
           <Suspense fallback={null}>
+          <ErrorBoundary screen="Feedback-vindue" silent onError={() => { setFeedbackOpen(false); showToast("Feedback kunne ikke åbnes. Prøv igen.", "error"); }}>
           <FeedbackModal
             open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
             authTab={authTab} onboardStep={onboardStep}
@@ -1113,32 +1129,29 @@ export default function EatSafe() {
             editMode={editMode} showManualEan={showManualEan}
             profilePopup={profilePopup}
           />
+          </ErrorBoundary>
           </Suspense>
         )}
 
         {/* ══ MENU (favoritter, familie, historik, opskrifter, viden, profil m.m.) ══ */}
         {showProfileMenu && (
           <Suspense fallback={null}>
+          <ErrorBoundary screen="Menu" silent onError={() => { setShowProfileMenu(false); showToast("Menuen kunne ikke åbnes. Prøv igen.", "error"); }}>
           <ProfileMenu
             open={showProfileMenu} onClose={() => setShowProfileMenu(false)}
             onNavigate={(s) => { setScreen(s); setShowProfileMenu(false); }}
             unreadNotifications={notifications.unread}
             onOpenSafetyInfo={() => { openSafetyInfo(); setShowProfileMenu(false); }}
           />
+          </ErrorBoundary>
           </Suspense>
         )}
 
-        {/* ── OFFLINE BANNER ── */}
+        {/* ── OFFLINE BANNER ── neutral status (Bjørn, 6. okt. 2026): samme ikon og farvestil som
+            offline-boksen på resultatsiden. Bjælken siger status; konsekvensen (dato) står ved indholdet. */}
         {isOffline && (
-          <div style={{
-            position:"sticky", top:0, zIndex:200,
-            background:"var(--amber)", color:"var(--on-green)",
-            fontSize:12, fontWeight:700,
-            padding:"8px 16px",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-            textAlign:"center",
-          }}>
-            <Icon name="block" size={13} color="var(--on-green)" /> Offline — viser lokalt cachede data
+          <div className="offline-bar" role="status">
+            <Icon name="wifiOff" size={16} color="var(--ink2)" /> Du er offline · Viser gemte data
           </div>
         )}
 

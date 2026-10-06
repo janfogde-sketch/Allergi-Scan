@@ -606,7 +606,13 @@ body::-webkit-scrollbar{display:none;}
 .chip-check{margin-left:auto;width:16px;height:16px;background:var(--green-accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ink);flex-shrink:0;}
 .tags{display:flex;flex-wrap:wrap;gap:6px;}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
-.tag-x{cursor:pointer;opacity:.4;font-size:13px;padding:4px 6px;margin:-4px -6px -4px 0;border-radius:50%;}.tag-x:hover{opacity:.8;background:rgba(21,32,26,.06);}
+.tag-x{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:-4px -6px -4px 0;padding:0;border:none;border-radius:50%;background:none;color:inherit;cursor:pointer;opacity:.6;}.tag-x::before{content:"";position:absolute;inset:-10px;}.tag-x:active{background:rgba(21,32,26,.08);}
+/* Klump 6b (6. okt. 2026): runde ikon-knapper (luk, ryd) og tekstlinks tilbage, altid mindst 44 px trykflade. */
+.icon-btn{width:44px;height:44px;min-height:44px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--ink);cursor:pointer;transition:transform .15s;}
+.icon-btn:active{transform:scale(.97);}
+.icon-btn.is-plain{background:none;border:none;}
+.link-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 4px;background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;color:var(--muted);}
+.link-back:active{transform:scale(.97);}
 
 /* ── BADGES ── */
 .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;letter-spacing:.2px;}
@@ -956,7 +962,15 @@ body::-webkit-scrollbar{display:none;}
 .scan-hero-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:400;}
 
 /* ── SEARCH ── */
-.filter-chip{padding:6px 12px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
+/* Klump 6b (6. okt. 2026): rækker og chips er nu <button>; nulstil browserens knap-stil, så de ser ud som før. */
+button.filter-chip,button.hist-row,button.menu-item,button.row-btn{font-family:var(--f);text-align:left;width:100%;appearance:none;-webkit-appearance:none;color:inherit;}
+button.menu-item{background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;margin:0;}
+button.filter-chip{width:auto;}
+.row-btn{background:none;border:none;padding:0;margin:0;font-family:var(--f);color:inherit;cursor:pointer;width:100%;text-align:left;appearance:none;}
+.row-btn:disabled{cursor:default;}
+.seg-btn{flex:1;text-align:center;padding:10px 8px;min-height:44px;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s;}
+.seg-btn:active{transform:scale(.97);}
+.filter-chip{padding:9px 14px;min-height:40px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .filter-chip:hover{border-color:var(--border2);color:var(--ink);}
 .filter-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
 .product-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
@@ -1029,7 +1043,8 @@ body::-webkit-scrollbar{display:none;}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
 .menu-item:hover{opacity:.75;}
 .menu-item:last-child{border-bottom:none;}
-.menu-profile-card{cursor:pointer;transition:opacity .1s;}
+.menu-profile-card{cursor:pointer;transition:transform .15s;font-family:var(--f);text-align:left;width:calc(100% - 20px);appearance:none;}
+.menu-profile-card:active{transform:scale(.99);}
 .menu-profile-card:hover{opacity:.85;}
 .hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .hist-dot.safe{background:var(--green-accent);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
@@ -1044,6 +1059,23 @@ body::-webkit-scrollbar{display:none;}
 .loader-txt{font-size:13.5px;font-weight:700;color:var(--ink);letter-spacing:-.1px;}
 .loader-sub{font-size:11.5px;color:var(--muted);}
 .error-box{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--red);font-weight:600;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
+/* Fejltilstande (Bjørn, 6. okt. 2026): ét fælles system. Rød kun ved egentlig fejl,
+   offline/gemte data er neutral information, og genopretning bruger EatSafe-grøn.
+   Fælles radius (--r), spacing (14/16/12), ikon 20 px og knaphøjde 44 px. */
+.state-box{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);margin-bottom:12px;}
+.state-box.is-error{background:var(--red-lt);border-color:var(--red-md);}
+.state-icon{flex-shrink:0;display:flex;margin-top:1px;}
+.state-body{flex:1;min-width:0;}
+.state-title{font-size:14px;font-weight:700;line-height:1.4;color:var(--ink);}
+.state-text{font-size:13px;line-height:1.5;color:var(--ink2);margin-top:2px;}
+.state-action{margin-top:16px;}
+.btn-recover{background:var(--surface);color:var(--green);border:1.5px solid var(--green);padding:8px 16px;font-size:13px;}
+.offline-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border2);color:var(--ink2);font-size:13px;font-weight:600;text-align:center;}
+.state-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px 24px;text-align:center;}
+.state-page-icon{width:56px;height:56px;border-radius:50%;background:var(--red-lt);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.state-page-title{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.state-page-text{font-size:14px;line-height:1.5;color:var(--ink2);margin-bottom:24px;max-width:300px;}
+.state-page-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;}
 .info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .save-bar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:99;padding:10px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border);box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);animation:saveBarIn .18s ease-out;}
 @keyframes saveBarIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
@@ -1173,7 +1205,7 @@ body::-webkit-scrollbar{display:none;}
 .mp-lang-dropdown:hover{border-color:var(--green);}
 .mp-lang-flag{font-size:20px;flex-shrink:0;}
 .mp-lang-name{flex:1;font-size:14px;font-weight:700;color:var(--ink);}
-.mp-lang-arrow{font-size:14px;color:var(--muted);}
+.mp-lang-arrow{display:inline-flex;color:var(--muted);}
 .mp-lang-list{background:var(--surface);border:1.5px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:14px;max-height:320px;overflow-y:auto;}
 .mp-lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border);}
 .mp-lang-opt:last-child{border-bottom:none;}
@@ -1302,6 +1334,8 @@ body::-webkit-scrollbar{display:none;}
 .btn{min-height:44px;}
 .nav-item{min-height:44px;min-width:44px;}
 *:focus-visible{outline:2.5px solid var(--green);outline-offset:2px;border-radius:4px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+[tabindex="-1"]:focus{outline:none;}
 .skip-link{position:absolute;top:-100px;left:16px;background:var(--green);color:var(--on-green);padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;text-decoration:none;}
 .skip-link:focus{top:8px;}
 @media (prefers-reduced-motion: reduce) {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
-import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
+import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -33,7 +33,7 @@ export default function ListScreen({
     lists, activeList, activeListId, setActiveListId,
     shoppingList, newItemName, setNewItemName, addToList, toggleItem, removeItem, clearDone,
     familyMembers, loadFamilyMembers, createList, renameList, deleteList, joinByCode,
-    getListAccess, grantAccess, revokeAccess, setListType, rotateListCode, leaveList, loadShoppingList,
+    getListAccess, grantAccess, revokeAccess, setListType, rotateListCode, leaveList, loadShoppingList, listsError,
   } = useShoppingContext();
 
   const [showListPicker, setShowListPicker] = useState(false);
@@ -262,7 +262,7 @@ export default function ListScreen({
             — begge 40px høje. Skriftstørrelsen i feltet er bevidst 16px
             (under 16px zoomer iOS Safari ind ved fokus). */}
         <div className="input-row" style={{ marginBottom:0 }}>
-          <input className="field" placeholder="Søg eller skriv en vare…"
+          <input className="field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
             style={{ height:40, padding:"0 12px" }}
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}
@@ -443,7 +443,9 @@ export default function ListScreen({
           inline-overstyringer KUN på denne instans — .empty-icon/-sub er
           delte klasser brugt uændret af MadpasScreen.jsx og tre steder i
           ProfileScreen.jsx, som ikke skal påvirkes. */}
-      {shoppingList.length === 0 && (
+      {listsError && <LoadErrorBox what="Indkøbslisterne" onRetry={() => loadShoppingList()} />}
+
+      {!listsError && shoppingList.length === 0 && (
         <div className="empty-state" style={{ paddingTop:16 }}>
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Listen er tom</div>

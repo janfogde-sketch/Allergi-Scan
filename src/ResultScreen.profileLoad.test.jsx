@@ -12,6 +12,7 @@ vi.mock("./AuthContext.jsx", () => ({ useAuthContext: () => ({ user: { name: "An
 vi.mock("./ProfileContext.jsx", () => ({ useProfileContext: () => profileCtx }));
 vi.mock("./NavigationContext.jsx", () => ({ useNavigationContext: () => ({ setScreen: () => {} }) }));
 vi.mock("./HistoryContext.jsx", () => ({ useHistoryContext: () => ({ isFavorite: () => false, toggleFavorite: () => {} }) }));
+vi.mock("./useRecalls.js", () => ({ useRecalls: () => [] }));
 vi.mock("./ShoppingContext.jsx", () => ({ useShoppingContext: () => ({ lists: [], activeList: null, activeListId: null, addToList: () => {}, shoppingList: [], toggleItem: () => {} }) }));
 
 import ResultScreen from "./ResultScreen.jsx";

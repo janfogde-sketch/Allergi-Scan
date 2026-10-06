@@ -445,7 +445,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
         <svg style={S.searchIcon} width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input style={S.searchInput} placeholder="Søg ingredienser, E-numre, allergener..." value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)} />
-        {searchQuery && <button onClick={() => { setSearchQuery(""); if(!selectedCategory) setEntries([]); }} aria-label="Ryd søgning" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", padding:10, color:"var(--muted)" }}>×</button>}
+        {searchQuery && <button onClick={() => { setSearchQuery(""); if(!selectedCategory) setEntries([]); }} aria-label="Ryd søgning" className="icon-btn is-plain" style={{ position:"absolute", right:2, top:"50%", transform:"translateY(-50%)" }}><Icon name="x" size={16} color="var(--muted)" /></button>}
       </div>
 
       {/* Kategorier — altid synlig når ingen liste vises */}
@@ -486,8 +486,8 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
       {showList && (
         <div style={{ display:"flex", alignItems:"center", gap:10, minHeight:32, marginBottom:12 }}>
           {selectedCategory && (
-            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"inline-flex", alignItems:"center", gap:6, height:32, padding:"0 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.border || "var(--border2)"}`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)", lineHeight:1 }}>
-              <Icon name={selectedCat?.icon} size={12} color={selectedCat?.color} /> {selectedCat?.label} <span aria-hidden="true" style={{ fontSize:14, marginLeft:2 }}>×</span>
+            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"inline-flex", alignItems:"center", gap:6, minHeight:44, padding:"0 14px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.border || "var(--border2)"}`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)", lineHeight:1 }}>
+              <Icon name={selectedCat?.icon} size={12} color={selectedCat?.color} /> {selectedCat?.label} <Icon name="x" size={12} color={selectedCat?.color} />
             </button>
           )}
           {!loading && <div style={UI.ufs12_cmuted}>{entries.length} {entries.length === 1 ? "resultat" : "resultater"}</div>}

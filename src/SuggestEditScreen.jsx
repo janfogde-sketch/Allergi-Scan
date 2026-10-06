@@ -304,21 +304,19 @@ export default function SuggestEditScreen({
                   {ingItems.map((item, i) => (
                     <div key={i} style={UI.udflex_aicenter_g5_p5px10px_bgpaper2_bd1pxsolid_br20}>
                       <span style={UI.ufs12_cink}>{item}</span>
-                      <div role="button" aria-label={`Fjern "${item}"`} tabIndex={0}
-                        onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}
-                        onKeyDown={e => e.key === "Enter" && setIngItems(p => p.filter((_,j)=>j!==i))}
-                        style={UI.ucurpointer_cmuted_fs14_lh1_p6_m6px6px6p}>×</div>
+                      <button type="button" className="tag-x" aria-label={`Fjern "${item}"`}
+                        onClick={() => setIngItems(p => p.filter((_,j)=>j!==i))}><Icon name="x" size={12} color="var(--muted)" /></button>
                     </div>
                   ))}
                 </div>
               )}
 
               <div style={S.rowGap8}>
-                <input className="field" placeholder="Tilføj ingrediens…" value={ingInput}
+                <input className="field" aria-label="Tilføj ingrediens" placeholder="Tilføj ingrediens…" value={ingInput}
                   onChange={e => setIngInput(e.target.value)}
                   onKeyDown={e => e.key==="Enter" && addIngItem()}
                   style={UI.uflex1_fs12} />
-                <button className="btn btn-outline btn-sm" onClick={addIngItem}>+</button>
+                <button className="btn btn-outline btn-sm" onClick={addIngItem} aria-label="Tilføj ingrediens"><Icon name="plus" size={16} /></button>
               </div>
             </div>
           )}
@@ -335,7 +333,7 @@ export default function SuggestEditScreen({
                 </label>
               </div>
               <textarea value={editIngText} onChange={e => setEditIngText(e.target.value)}
-                rows={5} placeholder="Fx Energi: 250 kcal, Fedt: 5g, Kulhydrater: 30g..."
+                aria-label="Ingrediensliste" rows={5} placeholder="Fx Energi: 250 kcal, Fedt: 5g, Kulhydrater: 30g..."
                 className="field" style={{ resize:"vertical", fontFamily:"var(--f)", fontSize:13, lineHeight:1.6 }} />
             </div>
           )}
@@ -361,6 +359,7 @@ export default function SuggestEditScreen({
               {editType === "other" ? "Hvad skal rettes?" : "Bemærkning (valgfrit)"}
             </div>
             <textarea value={editNote} onChange={e => setEditNote(e.target.value)}
+              aria-label={editType === "other" ? "Hvad skal rettes?" : "Bemærkning (valgfrit)"}
               rows={editType === "other" ? 4 : 2}
               placeholder={editType === "other" ? "Fx forkert navn, forkert mærke eller fejl i allergenoplysninger…" : "Fx ny udgave af produktet, fejl i allergen-info..."}
               className="field" style={{ resize:"none", fontFamily:"var(--f)", fontSize:13 }} />
@@ -398,7 +397,7 @@ export default function SuggestEditScreen({
               <path strokeLinecap="round" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for din hjælp! 🙏</div>
+          <div style={{ fontSize:22, fontWeight:900, color:"var(--ink)", marginBottom:8 }}>Tak for din hjælp!</div>
           <div style={{ fontSize:14, color:"var(--muted)", lineHeight:1.7, marginBottom:28 }}>
             Dit forslag er modtaget og vil blive gennemgået af vores team snarest.
             Du hjælper andre med allergi med at spise trygt.
