@@ -23,6 +23,7 @@ export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // e-mailadresser (29. sept. 2026) — afvises her i stedet for at blive sendt
 // til backend. Erstatter/transskriberer IKKE tegnene (fx ø→o, æ→ae), da det
 // kan ændre adressen til en anden, reelt eksisterende adresse.
+// eslint-disable-next-line no-control-regex -- bevidst: alt uden for ASCII afvises
 export const hasUnsupportedEmailChars = (email) => /[^\x00-\x7F]/.test(email);
 
 // Tre adskilte tilstande (30. sept. 2026): konto oprettet → e-mail bekræftet
