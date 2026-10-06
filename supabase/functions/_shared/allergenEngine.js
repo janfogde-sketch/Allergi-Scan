@@ -80,9 +80,10 @@ const SHORT_PATTERNS = {
   "æg": `[${L}]*æg|ægge[${L}]*`,
   "rug": `(?:fuldkorns?|hel)?rug`,
   "byg": `(?:fuldkorns?|hel|vinter|vår)?byg`,
-  "laks": `laks(?:e[${L}]*)?`,
+  "laks": `[${L}]*laks(?:e[${L}]*)?`,
   "sild": `sild(?:e[${L}]*)?`,
   "reje": `reje[${L}]*`,
+  "sej": `[${L}]*sej`,
   // Svensk/norsk hvede som led i sammensætninger ("fullkornsvete", "vetemjöl"), men ikke "bovete"/"vetenskap" (6. okt. 2026, G1)
   "vete": `(?:fullkorns?|hel|durum)?vete(?:mjöl|stärkelse|gluten|kli|fiber|kim|korn|protein|flingor)?`,
 };

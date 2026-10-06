@@ -856,5 +856,75 @@
    "fisk": "no"
   },
   "kilde": "Basillikum er ikke sild (G1)"
+ },
+ {
+  "text": "STENBIDDERROGN (Cyclopterus lumpus) (82%), vand, salt",
+  "expect": {
+   "fisk": "yes"
+  },
+  "kilde": "Stenbidderrogn (nedgangsgennemgang)"
+ },
+ {
+  "text": "Sukker, vand, ægpulver, salt, bonito-fiskekstrakt",
+  "expect": {
+   "aeg": "yes",
+   "fisk": "yes"
+  },
+  "kilde": "Ægpulver og fiskeekstrakt"
+ },
+ {
+  "text": "Surimi 1,4% (fisk, ægghvide, hvede), varmrøget alaskasej, 42 % alaska-vildlaks",
+  "expect": {
+   "fisk": "yes",
+   "aeg": "yes"
+  },
+  "kilde": "Vildlaks og alaskasej"
+ },
+ {
+  "text": "Vand, bygmalt, humle, gær. Perlebyg, salt",
+  "expect": {
+   "gluten": "yes"
+  },
+  "kilde": "Bygmalt og perlebyg er gluten"
+ },
+ {
+  "text": "Vand, sukker. May contain traces of nuts.",
+  "expect": {
+   "noedder": "traces",
+   "jordnoedder": "no"
+  },
+  "kilde": "Engelsk nuts som spor"
+ },
+ {
+  "text": "Vand, linser, peanuts (17%), krydderier",
+  "expect": {
+   "jordnoedder": "yes",
+   "noedder": "no"
+  },
+  "kilde": "Peanuts er ikke trænødder"
+ },
+ {
+  "text": "Kumelkprotein, vann, salt",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "Norsk kumelk"
+ },
+ {
+  "text": "Glutenfri havre, majsmel. Fri for melk/mælk og soya/soja.",
+  "expect": {
+   "gluten": "no",
+   "maelkeallergi": "no",
+   "soja": "no"
+  },
+  "kilde": "Glutenfri og fri for (negation)"
+ },
+ {
+  "text": "Kokosnød (85%), vand, kokosmælk, mælkesyre",
+  "expect": {
+   "noedder": "no",
+   "maelkeallergi": "no"
+  },
+  "kilde": "Kokos og mælkesyre er ikke trænød og mælk"
  }
 ]
