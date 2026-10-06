@@ -56,6 +56,8 @@ export const ALLERGEN_KEYWORDS = {
     "vete", "vetemjöl", "vetestärkelse", "vetegluten", "vetekli", "råg", "rågmjöl", "rågflingor", "rågkross", "rågsurdeg", "bygg", "byggmalt", "byggmjöl", "byggryn", "kornmalt", "kornmjöl", "maltextrakt", "hvete", "hvetemel",
     "vehnä", "vehnäjauho", "vehnätärkkelys", "ohra", "ohramallas", "ruis", "ruisjauho", "kaura", "gluteeni",
     "blé", "froment", "seigle", "orge", "avoine", "épeautre",
+    // Fund fra gennemgang af nedgange (6. okt. 2026, G1): bygmalt/perlebyg manglede, plus spansk
+    "bygmalt", "perlebyg", "bygflager", "trigo", "centeno", "cebada", "avena",
   ],
   // Hvede = specifikt hvedeprotein (separat fra cøliaki/gluten)
   hvede: [
@@ -106,6 +108,8 @@ export const ALLERGEN_KEYWORDS = {
     "mjölk", "mjölkpulver", "mjölkprotein", "vassle", "vasslepulver", "smörfett", "grädde", "ost", "kvarg", "filmjölk", "mjølk", "fløte", "kesella",
     "maito", "maido", "maitojauhe", "maitoproteiini", "heraproteiini", "herajauhe", "kerma", "juusto", "jogurtti", "rahka", "maitorasva", "voita",
     "lait", "lactosérum", "beurre", "yaourt", "caséine", "petit-lait", "crème fraîche",
+    // Norsk (6. okt. 2026, G1)
+    "kumelk", "kumelkprotein", "kumjölk",
   ],
   // Laktose = mælkeSUKKER. Backend behandler laktose bredt (enhver mælke-
   // ingrediens kan indebære laktose) med en global "laktosefri"-override
@@ -129,6 +133,7 @@ export const ALLERGEN_KEYWORDS = {
     "mjölk", "mjölkpulver", "vassle", "vasslepulver", "grädde", "kvarg", "filmjölk", "mjølk", "fløte",
     "maito", "maido", "maitojauhe", "heraproteiini", "herajauhe", "kerma", "juusto", "jogurtti", "rahka", "laktoosi",
     "lait", "lactosérum", "beurre", "yaourt", "petit-lait", "crème fraîche",
+    "kumelk", "kumjölk",
   ],
   aeg: [
     "æg", "egg", "eggs", "ovum", "hønseæg", "æggehvide", "egg white",
@@ -147,6 +152,8 @@ export const ALLERGEN_KEYWORDS = {
     "eieren", "eigeel", "eipoeder", "ägg", "äggvita", "äggula", "äggpulver", "äggprodukter", "helägg",
     "muna", "kananmuna", "munanvalkuainen", "munankeltuainen", "munajauhe", "munia", "munaa", "munan",
     "œuf", "œufs", "oeuf", "oeufs",
+    // Fund fra gennemgang af nedgange (6. okt. 2026, G1): ægpulver, norsk og svensk
+    "ægpulver", "ægghvide", "eggehvite", "eggepulver", "eggeplomme", "eggeblomme", "äggulor", "äggvitor",
   ],
   noedder: [
     "nødder", "mandel", "mandler", "almond", "hasselnød", "hasselnødder",
@@ -169,6 +176,8 @@ export const ALLERGEN_KEYWORDS = {
     "nötter", "hasselnöt", "hasselnötter", "valnöt", "valnötter", "cashewnöt", "cashewnötter", "pistasch", "mandel", "nötpasta",
     "pähkinä", "pähkinää", "hasselpähkinä", "manteli", "mantelia", "saksanpähkinä", "cashewpähkinä", "pistaasi",
     "noisette", "noisettes", "amande", "amandes", "noix", "cajou", "pistache", "pistaches",
+    // Engelsk og norsk "nuts" (6. okt. 2026, G1): "may contain traces of nuts" blev overset. Jordnødder rammes ikke ("peanuts" er et andet ord).
+    "nuts", "tree nuts", "nut mix", "nøtter", "hasselnøtt", "hasselnøtter", "valnøtt", "valnøtter", "cashewnøtter",
   ],
   jordnoedder: [
     "jordnød", "jordnødder", "peanut", "peanuts", "groundnut",
@@ -222,6 +231,8 @@ export const ALLERGEN_KEYWORDS = {
     "lax", "laxfilé", "sill", "makrill", "tonfisk", "fiskprotein", "fiskextrakt", "fiskbuljong", "fiskolja", "torsk",
     "kala", "kalaa", "kalan", "lohi", "kirjolohi", "silli", "tonnikala", "turska", "makrilli", "kalaöljy",
     "poisson", "saumon", "thon", "hareng", "morue", "huile de poisson",
+    // Fund fra gennemgang af nedgange (6. okt. 2026, G1): stavefejl og sammensætninger i butiksdata
+    "stenbidderrogn", "fiskepulver", "fiskegelantine", "fiskekstrakt", "bonito", "vildlaks", "rødlaks", "alaskasej",
   ],
   skaldyr: [
     "skaldyr", "crustacean", "rejer", "reje", "tigerrejer", "shrimp", "prawn",
