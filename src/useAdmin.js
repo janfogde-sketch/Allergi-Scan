@@ -101,7 +101,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
       if (res?.error) throw new Error(res.error);
       clearAuth();
       setShowDeleteAccount(false);
-    } catch (e) { alert("Fejl: " + e.message + "\nKontakt support@eatsafe.dk"); }
+    } catch (e) {
+      console.error("deleteOwnAccount:", e);
+      showToast("Kontoen kunne ikke slettes helt. Prøv igen, eller kontakt support@eatsafe.dk.", "error");
+    }
     setDeletingAccount(false);
   };
 

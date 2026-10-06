@@ -12,6 +12,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const DELETE_FAILED_TEXT = "Kontoen kunne ikke slettes helt. Prøv igen, eller kontakt support@eatsafe.dk.";
+
+// Et sletningstrin fejlede. Beskeden (tabel + databasefejl) logges kun, vises aldrig for brugeren.
+class DeleteStepError extends Error {
+  constructor(step: string, detail: string) {
+    super(`${step}: ${detail}`);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -47,7 +56,15 @@ Deno.serve(async (req) => {
     }
 
     // Hent minimal e-mail/navn FØR sletningen — bruges kun til slettekvitteringen (P4) og gemmes ikke.
-    const { data: target } = await supabase.from("users").select("email, name").eq("id", uid).maybeSingle();
+    const { data: target, error: targetError } = await supabase.from("users").select("email, name").eq("id", uid).maybeSingle();
+    if (targetError) throw new DeleteStepError("users (opslag)", targetError.message);
+
+    // Hvert trin tjekkes. Fejler ét, stopper vi FØR auth.users slettes: så kan brugeren
+    // stadig logge ind og prøve igen, i stedet for at efterlade navn/e-mail/allergier uden ejer.
+    const step = async (label: string, query: PromiseLike<{ error: { message: string } | null }>) => {
+      const { error } = await query;
+      if (error) throw new DeleteStepError(label, error.message);
+    };
 
     // Slet afhængige data i korrekt rækkefølge.
     //
@@ -59,24 +76,25 @@ Deno.serve(async (req) => {
     // users-rækken simpelthen FEJLE (fremmednøgle-brud) for enhver bruger
     // der nogensinde har tilsluttet sig en familie eller fået delt en
     // indkøbsliste, og kontosletning ville se ud til bare ikke at virke.
-    await supabase.from("shopping_list_items").delete().eq("added_by", uid);
-    await supabase.from("shopping_lists").delete().eq("owner_id", uid);
-    await supabase.from("shopping_list_access").delete().eq("user_id", uid);
-    await supabase.from("scan_history").delete().eq("user_id", uid);
-    await supabase.from("user_allergens").delete().eq("user_id", uid);
-    await supabase.from("family_members").delete().eq("user_id", uid);
-    await supabase.from("family_memberships").delete().eq("user_id", uid);
+    await step("shopping_list_items", supabase.from("shopping_list_items").delete().eq("added_by", uid));
+    await step("shopping_lists", supabase.from("shopping_lists").delete().eq("owner_id", uid));
+    await step("shopping_list_access", supabase.from("shopping_list_access").delete().eq("user_id", uid));
+    await step("scan_history", supabase.from("scan_history").delete().eq("user_id", uid));
+    await step("user_allergens", supabase.from("user_allergens").delete().eq("user_id", uid));
+    await step("family_members", supabase.from("family_members").delete().eq("user_id", uid));
+    await step("family_memberships", supabase.from("family_memberships").delete().eq("user_id", uid));
     // families.created_by er nullable og har INGEN cascade — nulstil den i
     // stedet for at slette familien, så resten af familien (og deres delte
     // data) ikke forsvinder bare fordi opretteren sletter sin konto.
-    await supabase.from("families").update({ created_by: null }).eq("created_by", uid);
-    await supabase.from("feedback_tickets").delete().eq("submitted_by", uid);
-    await supabase.from("submissions").delete().eq("submitted_by", uid);
-    await supabase.from("users").delete().eq("id", uid);
+    await step("families", supabase.from("families").update({ created_by: null }).eq("created_by", uid));
+    await step("feedback_tickets", supabase.from("feedback_tickets").delete().eq("submitted_by", uid));
+    await step("submissions", supabase.from("submissions").delete().eq("submitted_by", uid));
+    // users slettes sidst før auth.users.
+    await step("users", supabase.from("users").delete().eq("id", uid));
 
     // Slet fra auth.users (kræver service role)
     const { error: authError } = await supabase.auth.admin.deleteUser(uid);
-    if (authError) throw new Error(`auth sletning fejlede: ${authError.message}`);
+    if (authError) throw new DeleteStepError("auth.users", authError.message);
 
     // P4: slettekvittering — først EFTER en gennemført sletning, og kun når mailkanalen er slået til
     // (notifications_email_enabled, eller brugeren står på testlisten). Fejl her må aldrig få selve sletningen til at se fejlet ud.
@@ -104,6 +122,17 @@ Deno.serve(async (req) => {
     });
 
   } catch (err) {
+    if (err instanceof DeleteStepError) {
+      // Den tekniske årsag logges; brugeren får en kort dansk besked (ingen rå databasefejl).
+      console.error(`delete-user: ${err.message}`);
+      try {
+        const logClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+        await logClient.rpc("log_client_error", { p_message: `Kontosletning stoppet: ${err.message}`, p_source: "edge:delete-user" });
+      } catch { /* logning må ikke skjule selve fejlen */ }
+      return new Response(JSON.stringify({ error: DELETE_FAILED_TEXT }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(JSON.stringify({ error: err.message }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
