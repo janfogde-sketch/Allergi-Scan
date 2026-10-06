@@ -48,7 +48,7 @@ Invitér andre voksne til familien, og del blandt andet indkøbslister på tvær
 
 Hvis Fødevarestyrelsen tilbagekalder en vare, du har scannet, gemt som favorit eller tilføjet til en indkøbsliste, kan EatSafe advare dig.
 
-Så behøver du ikke selv holde øje med alle tilbagekaldelser.
+Advarslen gives, når Fødevarestyrelsen oplyser varens stregkode.
 
 **Madpas på 17 sprog**
 
