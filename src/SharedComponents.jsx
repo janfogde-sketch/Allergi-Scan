@@ -881,6 +881,18 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
 // brug: "Hvad er krydskontaminering?" i Madpas). Samme portal-mønster som
 // ConfirmDialog (position:fixed fanges ellers af .screen.fade-in's transform).
 // Én "Forstået"-knap (44px) og tryk udenfor lukker.
+// ── LoadErrorBox (F2-4, 6. okt. 2026) ─────────────────────────────────────────
+// Vises, når en liste ikke kunne hentes, så en fejl ikke ligner en tom side
+// (brugeren kunne tro, at data var væk). Samme udtryk som Beskeders fejltilstand.
+export function LoadErrorBox({ what, onRetry }) {
+  return (
+    <div className="error-box" role="alert" style={{ marginBottom:12 }}>
+      {what} kunne ikke hentes. Tjek forbindelsen.
+      {onRetry && <button className="btn btn-outline" style={{ marginLeft:"auto", flexShrink:0, whiteSpace:"nowrap", padding:"6px 12px", fontSize:12 }} onClick={onRetry}>Prøv igen</button>}
+    </div>
+  );
+}
+
 export function InfoSheet({ title, children, onClose, closeLabel = "Forstået" }) {
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.7)", display:"flex", alignItems:"flex-end" }}

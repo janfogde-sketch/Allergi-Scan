@@ -71,6 +71,13 @@ export function getFromOfflineCache(ean) {
   }
 }
 
+// ── Ryd hele cachen (F2-6) ────────────────────────────────────────────────────
+// Resultaterne indeholder brugerens fund (fx matchedDanger), så de må ikke blive
+// liggende på telefonen efter log ud eller kontosletning.
+export function clearOfflineCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch { /* privat tilstand */ }
+}
+
 // ── Hent alle cachede produkter ───────────────────────────────────────────────
 export function getAllCachedProducts() {
   try {

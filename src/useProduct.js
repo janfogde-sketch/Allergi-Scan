@@ -226,12 +226,14 @@ export async function runLookupProduct(ean, ctx) {
   // Viser et cache-resultat og henter de tilhørende alternativer — delt af
   // både sessions-cachen (samme app-session) og den vedvarende offline-cache
   // (kun brugt når reelt offline, se nedenfor).
-  const showCachedResult = (cachedProduct) => {
+  const showCachedResult = (cachedProduct, offlineSavedAt = null) => {
     traceLog(tid, "scan:cache-hit");
     // Vurderingen beregnes forfra med de profiler, der er valgt nu (F2-7): ellers styrede den første
     // scannings profiler advarsel, lyd og alternativer, også efter skift af "Tjekker for".
     const rescored = rescoreCachedResult(cachedProduct, { activeIds, activeLevels, activeENumbers, family, activeProfiles });
-    const cachedResult = withCustomAllergenMatch(rescored, activeCustom);
+    const matched = withCustomAllergenMatch(rescored, activeCustom);
+    // F2-6: uden net vises et resultat gemt på telefonen; resultatsiden viser hvornår.
+    const cachedResult = offlineSavedAt ? { ...matched, offlineSavedAt } : matched;
     setScanResult(cachedResult); setScreen(SCREENS.RESULT); setLoading(false);
     // Genscanningen gemmes i historikken som en almindelig scanning, så tilbagekaldelses- og
     // ændringsbeskeder også rammer den (useHistory fanger selv fejl, fx offline).
@@ -266,7 +268,7 @@ export async function runLookupProduct(ean, ctx) {
 
   if (!navigator.onLine) {
     const offlineCached = getFromOfflineCache(ean.trim());
-    if (offlineCached) { showCachedResult(offlineCached); return; }
+    if (offlineCached) { showCachedResult(offlineCached, offlineCached._cached_at || null); return; }
     setScanError("Du er offline, og produktet er ikke gemt på telefonen. Prøv igen, når du har forbindelse.");
     setLoading(false); return;
   }

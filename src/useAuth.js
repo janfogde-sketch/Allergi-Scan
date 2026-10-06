@@ -11,6 +11,7 @@ import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERR
 import { showToast } from "./SharedComponents.jsx";
 import { forgetPushTokenForDevice } from "./usePush.js";
 import { reportError } from "./errorReporter.js";
+import { clearOfflineCache } from "./useOffline.js";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
 // PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
@@ -188,6 +189,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     localStorage.removeItem("as_user_id"); sessionStorage.removeItem("as_user_id");
     setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
     try { localStorage.removeItem(ONBOARDED_KEY); } catch { /* privat tilstand */ }
+    clearOfflineCache();
     writePendingVerify(""); setVerifyEmail(""); setVerifyStatus("pending");
     setAllergens([]); setCustomAllerg([]);
     // App.jsx rydder family/history/shopping via useEffect på accessToken

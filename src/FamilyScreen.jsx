@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { DIETS, SUPABASE_URL, SCREENS } from "./constants.jsx";
 import { initials, getAllergenLabels, makeHeaders, apiCall, visibleDiets } from "./helpers.js";
-import { Icon, showToast, ConfirmDialog, AllergenGlyph } from "./SharedComponents.jsx";
+import { Icon, showToast, ConfirmDialog, AllergenGlyph, LoadErrorBox } from "./SharedComponents.jsx";
 import HelpModal from "./HelpModal.jsx";
 import { MemberForm } from "./MemberForm.jsx";
 import { TextLink } from "./DesignSystem.jsx";
@@ -47,7 +47,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
-    editingMemberId,
+    editingMemberId, retryLoadFamily, familyError,
     addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   } = useFamilyFormContext();
 
@@ -240,7 +240,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
 
       <div style={SECTION}>Profiler du administrerer</div>
       <div style={SECTION_SUB}>Børn under 18 år uden egen konto. Du administrerer deres profil.</div>
-      {family.length === 0 && <EmptyRow title="Ingen endnu" text="Opret en profil til et barn." />}
+      {familyError && <LoadErrorBox what="Profilerne" onRetry={retryLoadFamily} />}
+      {!familyError && family.length === 0 && <EmptyRow title="Ingen endnu" text="Opret en profil til et barn." />}
       {family.map(m => (
         <div key={`p-${m.id}`} className="family-member" style={editingMemberId === m.id ? { border:"1.5px solid var(--green)", background:"var(--green-selected-bg)" } : undefined}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>

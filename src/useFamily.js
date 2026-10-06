@@ -12,6 +12,7 @@ import { showToast } from "./SharedComponents.jsx";
 
 export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const [family, setFamily]                         = useState([]);
+  const [familyError, setFamilyError]               = useState(false); // F2-4: hentefejl ≠ ingen profiler
 
   // Nyt-medlem form-state
   const [newMemberName, setNewMemberName]           = useState("");
@@ -94,10 +95,13 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           levels: m.allergen_levels || {},
           eNumbers: m.e_numbers || [],
         })));
+        setFamilyError(false);
         return true;
       }
+      setFamilyError(true);
       return false;
     } catch {
+      setFamilyError(true);
       // Returnerer false, så useLoadUserData kan spærre for en vurdering (hotfix F2-1).
       return false;
     }
@@ -240,7 +244,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     newMemberSubtypes, setNewMemberSubtypes,
     newMemberCustomInput, setNewMemberCustomInput,
     editingMemberId,
-    loadFamily,
+    loadFamily, familyError,
     addMember,
     updateMember,
     removeMember,

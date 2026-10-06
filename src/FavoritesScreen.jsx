@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
-import { Icon, ProductImage } from "./SharedComponents.jsx";
+import { Icon, ProductImage, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
@@ -105,7 +105,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
   const { user } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
-  const { favorites, favoritesScope, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
+  const { favorites, favoritesScope, favoritesError, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 
   // ── Favoritter: kategori-filter + kategoriser-sheet ─────────────────────────
@@ -184,7 +184,9 @@ export default function FavoritesScreen({ household, lookupProduct }) {
           "seneste scanninger hører kun hjemme under Historik") —
           Favoritter viser nu udelukkende gemte favoritter. */}
 
-      {favorites.length === 0 && (
+      {favoritesError && <LoadErrorBox what="Favoritterne" onRetry={() => loadFavorites(favoritesScope)} />}
+
+      {!favoritesError && favorites.length === 0 && (
         <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="heart" size={23} color="var(--muted)" /></span>
           <div className="empty-txt">Ingen favoritter endnu</div>

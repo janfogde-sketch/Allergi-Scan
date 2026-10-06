@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { SCREENS } from "./constants.jsx";
 import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
-import { Icon, ProductImage, ConfirmDialog, showToast } from "./SharedComponents.jsx";
+import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -19,7 +19,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
   const { allergens, customAllerg, scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
-  const { history, historyLoading, historyScope, loadHistory, clearHistory } = useHistoryContext();
+  const { history, historyLoading, historyScope, historyError, loadHistory, clearHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 
   // Historikken opdaterer automatisk ved hvert besøg på Historik (26. sept.
@@ -159,7 +159,9 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
         </div>
       )}
 
-      {!historyLoading && history.length===0 && (
+      {!historyLoading && historyError && <LoadErrorBox what="Historikken" onRetry={() => loadHistory(historyScope)} />}
+
+      {!historyLoading && !historyError && history.length===0 && (
         <div className="empty-state">
           {/* 29. sept. 2026, brugerfeedback: lup-ikonet signalerede
               søgning, ikke historik — skiftet til "clock" (samme ikon

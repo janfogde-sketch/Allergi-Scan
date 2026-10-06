@@ -26,6 +26,7 @@ export function useShoppingList({ accessToken, userId }) {
   });
   const [newItemName, setNewItemName]       = useState("");
   const [familyMembers, setFamilyMembers]   = useState([]);
+  const [listsError, setListsError]         = useState(false); // F2-4: hentefejl ≠ ingen lister
 
   const channelRef = useRef(null);
 
@@ -116,7 +117,10 @@ export function useShoppingList({ accessToken, userId }) {
     }
     try {
       const data = await apiCall(`${SHOPPING_FN}?user_id=${userId}`, { headers: makeHeaders(accessToken) });
-      const fetched = Array.isArray(data?.lists) ? data.lists : [];
+      // Et svar uden lister er en fejl, ikke "ingen lister": ellers oprettedes en ekstra standardliste.
+      if (!Array.isArray(data?.lists)) { setListsError(true); return; }
+      const fetched = data.lists;
+      setListsError(false);
       updateLists(fetched);
 
       if (fetched.length === 0) {
@@ -133,7 +137,7 @@ export function useShoppingList({ accessToken, userId }) {
       } else if (!fetched.some(l => l.id === activeListId)) {
         setActiveListId(fetched[0].id);
       }
-    } catch { /* silent */ }
+    } catch { setListsError(true); }
   }, [userId, accessToken, activeListId, setActiveListId]);
 
   const loadFamilyMembers = useCallback(async () => {
@@ -483,7 +487,7 @@ export function useShoppingList({ accessToken, userId }) {
     shoppingListId: activeListId, setShoppingListId: setActiveListId,
     newItemName, setNewItemName,
     familyMembers, loadFamilyMembers,
-    loadShoppingList,
+    loadShoppingList, listsError,
     createList, renameList, setListType, deleteList, joinByCode,
     getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
     addToList,
