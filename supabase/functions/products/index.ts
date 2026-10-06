@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -253,6 +254,25 @@ Deno.serve(async (req) => {
 
       // Trin 2: Prøv Open Food Facts (kun rene EAN-koder)
       if (isEan && /^\d+$/.test(identifier)) {
+        // Opslag hos Open Food Facts gemmer varen og kan koste et AI-kald, så det kræver login og har et dagligt loft pr. konto.
+        // Produkter, vi allerede har, kan stadig slås op uden login (trin 1).
+        if (!/^\d{6,14}$/.test(identifier)) return new Response(JSON.stringify({ found: false, product: null }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        const lookupAuth = req.headers.get("Authorization");
+        let lookupUser: { id: string } | null = null;
+        if (lookupAuth) {
+          const lookupClient = createClient(
+            Deno.env.get("SUPABASE_URL") ?? "",
+            Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+            { global: { headers: { Authorization: lookupAuth } } }
+          );
+          lookupUser = (await lookupClient.auth.getUser()).data.user;
+        }
+        if (!lookupUser) return new Response(JSON.stringify({ error: "Log ind for at slå nye produkter op" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (!(await withinUserLimit(supabase, lookupUser.id, "off_lookup"))) return new Response(
+          JSON.stringify({ error: "Du har brugt dagens grænse for opslag af nye produkter. Prøv igen i morgen.", code: "daily_limit" }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         const offProduct = await fetchFromOFF(identifier);
         if (offProduct) {
           let allergenFlags = mapAllergenTags(offProduct.allergens_tags, offProduct.traces_tags);

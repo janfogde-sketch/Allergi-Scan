@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,10 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
 };
 
-const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // uden forvekslelige tegn (0/O, 1/I/L)
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // uden forvekslelige tegn (0/O, 1/I/L); 32 tegn deler 256 op uden skævhed
+const CODE_LENGTH = 10; // ca. 1,1 billiard koder (ældre lister har stadig 6 tegn, indtil ejeren laver nyt link)
 function generateCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(CODE_LENGTH));
   let code = "";
-  for (let i = 0; i < 6; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  for (const b of bytes) code += CODE_CHARS[b % CODE_CHARS.length];
   return code;
 }
 
@@ -42,6 +45,12 @@ Deno.serve(async (req) => {
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
+
+  // Forsøg på at slå en listekode op tælles pr. konto (mod gætning); normal brug er 1-2 forsøg om dagen.
+  function codeLimitResponse() {
+    return new Response(JSON.stringify({ error: "For mange forsøg i dag. Prøv igen i morgen.", code: "daily_limit" }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   // Alle brugere caller deler en "familiegruppe" med (sig selv + alle der
   // har accepteret/sendt en family_invite til/fra caller) — samme gruppe
@@ -118,6 +127,7 @@ Deno.serve(async (req) => {
     if (method === "GET" && isPreview) {
       const code = (url.searchParams.get("code") ?? "").trim().toUpperCase();
       if (!code) return new Response(JSON.stringify({ error: "code er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!(await withinUserLimit(supabase, caller.id, "list_code"))) return codeLimitResponse();
       const { data: list } = await supabase
         .from("shopping_lists").select("id, owner_id, name, type").eq("share_link", code).maybeSingle();
       if (!list) return new Response(JSON.stringify({ error: "Ugyldig kode" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -145,6 +155,7 @@ Deno.serve(async (req) => {
     if (method === "POST" && isJoin) {
       const { code } = await req.json();
       if (!code) return new Response(JSON.stringify({ error: "code er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!(await withinUserLimit(supabase, caller.id, "list_code"))) return codeLimitResponse();
 
       const { data: list } = await supabase
         .from("shopping_lists").select("id, owner_id, name").eq("share_link", code.trim().toUpperCase()).maybeSingle();
