@@ -93,7 +93,7 @@ Afventer endelig afklaring (Jan, F6-4).
 3. **Tjek for hele familien på én gang**
 4. **Få besked om tilbagekaldte varer**
 5. **Dit madpas på 17 sprog**
-6. **Over 700 opslag om allergener og E-numre**
+6. **700+ opslag om allergener og E-numre**
 
 ---
 
