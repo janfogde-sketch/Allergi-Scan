@@ -63,7 +63,7 @@ export class ErrorBoundary extends React.Component {
           </button>
         </div>
 
-        {process.env.NODE_ENV === "development" && this.state.error && (
+        {import.meta.env.DEV && this.state.error && (
           <div style={{ marginTop:24, padding:"12px 14px", background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:10, fontSize:11, color:"var(--red)", textAlign:"left", wordBreak:"break-all", maxWidth:340 }}>
             <div style={{ fontWeight:700, marginBottom:4 }}>Dev-fejl:</div>
             {this.state.error.toString()}

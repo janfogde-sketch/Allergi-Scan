@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +29,16 @@ Deno.serve(async (req) => {
   if (!caller) return new Response(
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+
+  // Dagligt loft mod misbrug af det betalte Vision-kald (normal brug ligger langt under).
+  const serviceClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+  if (!(await withinUserLimit(serviceClient, caller.id, "ocr"))) return new Response(
+    JSON.stringify({ error: "Du har brugt dagens grænse for billedlæsning. Prøv igen i morgen.", code: "daily_limit", success: false }),
+    { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 
   try {

@@ -525,6 +525,7 @@ export default function EatSafe() {
     ocrText, setOcrText,
     ocrLoading, setOcrLoading,
     ocrImageBase64, setOcrImageBase64,
+    setNutritionImageBase64,
     productImagePreview, setProductImagePreview,
     productImageBase64, setProductImageBase64,
     proposedName, setProposedName,
@@ -714,13 +715,13 @@ export default function EatSafe() {
     productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
-    setProductImagePreview, setProductImageBase64,
+    setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
     vibrateOnWarning, soundOnWarning,
   }), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles,
        productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
-       setProductImagePreview, setProductImageBase64,
+       setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
        vibrateOnWarning, soundOnWarning]);
   lookupProductRef.current = lookupProduct;
 

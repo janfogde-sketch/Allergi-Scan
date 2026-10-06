@@ -197,7 +197,7 @@ export async function runLookupProduct(ean, ctx) {
     productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
-    setProductImagePreview, setProductImageBase64,
+    setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
     vibrateOnWarning, soundOnWarning,
   } = ctx;
 
@@ -386,7 +386,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     if (!text) return "";
     const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 2 && l.length < 50);
     return lines.filter(l =>
-      !/^[0-9\s\.,gkJ%]+$/.test(l) &&
+      !/^[0-9\s.,gkJ%]+$/.test(l) &&
       !/^(ingredienser|næringsindhold|opbevaring|bedst|energi|fedt|protein|salt|kulhydrat)/i.test(l) &&
       l.length > 3
     )[0] || "";
@@ -459,7 +459,9 @@ export function useProduct({ accessToken, userId, activeProfiles,
       }
     } catch (e) {
       traceLog(tid, "ocr:error", { error: e?.message || String(e) });
-      setScanError_("Billedet kunne ikke analyseres. Prøv igen.");
+      setScanError_(e?.status === 429
+        ? "Du har brugt dagens grænse for billedlæsning. Prøv igen i morgen, eller indtast ingredienserne selv."
+        : "Billedet kunne ikke analyseres. Prøv igen.");
     }
     setOcrLoading(false);
   };
@@ -474,7 +476,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
       return "";
     };
     return {
-      energy:    find([/energi[^0-9]*([0-9][0-9,.\/ kJ]+)/i, /energy[^0-9]*([0-9][0-9,.\/ kJ]+)/i]),
+      energy:    find([/energi[^0-9]*([0-9][0-9,./ kJ]+)/i, /energy[^0-9]*([0-9][0-9,./ kJ]+)/i]),
       fat:       find([/fedt[^0-9]*([0-9][0-9,.]*)\s*g/i, /fat[^0-9]*([0-9][0-9,.]*)\s*g/i]),
       saturated: find([/mættet[^0-9]*([0-9][0-9,.]*)\s*g/i, /saturated[^0-9]*([0-9][0-9,.]*)\s*g/i]),
       carbs:     find([/kulhydrat[^0-9]*([0-9][0-9,.]*)\s*g/i, /carbohydrate[^0-9]*([0-9][0-9,.]*)\s*g/i]),
@@ -575,6 +577,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     ocrText, setOcrText,
     ocrLoading, setOcrLoading,
     ocrImageBase64, setOcrImageBase64,
+    setNutritionImageBase64,
     productImagePreview, setProductImagePreview,
     productImageBase64, setProductImageBase64,
     proposedName, setProposedName,

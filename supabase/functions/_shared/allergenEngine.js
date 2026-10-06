@@ -66,7 +66,7 @@ const L = "a-zæøåäöüß";
 // "Mandelflager", "Torskefilet"). Undtagelser er ord, der er egne ord og ikke
 // skal matche inde i andre. Korte nøgleord (4 tegn eller færre) matcher som hele ord,
 // med de eksplicitte sammensætningsregler i SHORT_PATTERNS nedenfor.
-const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke"]);
+const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke", "ising", "ørred", "silli", "kerma", "kalaa", "kalan"]);
 
 export function isSubstringKeyword(kw) {
   return SUBSTRING_KEYWORDS.has(kw) || (kw.length >= 5 && !NO_SUBSTRING.has(kw));
@@ -80,9 +80,12 @@ const SHORT_PATTERNS = {
   "æg": `[${L}]*æg|ægge[${L}]*`,
   "rug": `(?:fuldkorns?|hel)?rug`,
   "byg": `(?:fuldkorns?|hel|vinter|vår)?byg`,
-  "laks": `laks(?:e[${L}]*)?`,
+  "laks": `[${L}]*laks(?:e[${L}]*)?`,
   "sild": `sild(?:e[${L}]*)?`,
   "reje": `reje[${L}]*`,
+  "sej": `[${L}]*sej`,
+  // Svensk/norsk hvede som led i sammensætninger ("fullkornsvete", "vetemjöl"), men ikke "bovete"/"vetenskap" (6. okt. 2026, G1)
+  "vete": `(?:fullkorns?|hel|durum)?vete(?:mjöl|stärkelse|gluten|kli|fiber|kim|korn|protein|flingor)?`,
 };
 
 function escapeRe(s) {
@@ -120,10 +123,11 @@ export function matchIndex(lower, kw) {
 // så "Chokolade uden sukker, hvedemel" ikke fjerner hvede. "Free from"-klausulen
 // slutter også ved komma. Efter nøgleordet tæller "-fri"/"free" kun som del af
 // samme ord eller som næste ord ("mælkefri", "lactose free"), aldrig "freeze".
-const SEGMENT_BREAKS = ",;.!?\n";
-const NEGATION_WORDS = new RegExp(`(^|[^${L}])(uden|ingen|ohne|sans|without|fri for|free from|free of|frei von)(?=[^${L}]|$)`);
+// Kolon afslutter også et led: "Uden mørkt skind og ben Panering (33%): HVEDEMEL" er ikke "uden hvede" (6. okt. 2026, G1).
+const SEGMENT_BREAKS = ",;.!?:\n";
+const NEGATION_WORDS = new RegExp(`(^|[^${L}])(uden|ingen|ohne|sans|without|fri for|free from|free of|frei von|utan|uten|zonder|ilman)(?=[^${L}]|$)`);
 const NEGATION_CUT = new RegExp(`(^|[^${L}])(med|men|but|with)(?=[^${L}]|$)`, "g");
-const NEGATION_AFTER = new RegExp(`^(?:e|s)?[\\s-]?(?:fri|frei|free)(?![${L}])`);
+const NEGATION_AFTER = new RegExp(`^(?:e|s)?[\\s-]?(?:fri|frei|free|ton|tonta|vrij)(?![${L}])`);
 const UNDER_ZERO_AFTER = /^[\s(]*(?:under|<|mindre end|less than)\s*0/;
 
 function segmentStart(lower, idx) {
@@ -168,7 +172,7 @@ export function keywordMatch(haystack, keyword) {
 // advarselsfrase om fælles anlæg ("fremstillet på et anlæg, der også ...").
 const SENTENCE_BREAKS = ".!?\n";
 const TRACE_WORDS = new RegExp(
-  `(^|[^${L}])(spor|spuren|traces?(?!\\s+(?:elements?|minerals?|metals?))|may contain|can contain|kan indeholde|kann|samme fabrik|same facility|samme produktionsudstyr|samme anlæg|same equipment|samme linje|same line)(?=[^${L}]|$)`
+  `(^|[^${L}])(spor|spår|sporen|spuren|traces?(?!\\s+(?:elements?|minerals?|metals?))|may contain|can contain|kan indeholde|kann|samme fabrik|same facility|samme produktionsudstyr|samme anlæg|same equipment|samme linje|same line|kan innehålla|kan inneholde|kan bevatten|kan sisältää|saattaa sisältää|pieniä määriä|peut contenir|peuvent contenir)(?=[^${L}]|$)`
 );
 const TRACE_PRODUCED = new RegExp(`(fremstillet|produceret|produced|manufactured)[^.!?\\n]*(også|also|samme|same|shared|delt)`);
 
@@ -223,22 +227,29 @@ export function normalizeIngredientText(text) {
     .replace(/kanel[\s-]?snegl\w*/gi, " ")
     .replace(/cream of tartar/gi, " ")
     .replace(/(cocoa|cacao|shea|kakao)[\s-]+butter/gi, " ")
-    .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik|fløde|yoghurt)/gi, "$1")
+    .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik|fløde|yoghurt|grädde|fløte)/gi, "$1")
     .replace(/\b(coconut|almond|oat|soy|rice|cashew|hazelnut|pea) milk\b/gi, "$1")
     .replace(/(vegansk\s+)?mælkesyre\w*/gi, " ")
+    // Fremmedsprog (6. okt. 2026, G1): mælkesyre og plantedrikke på svensk/norsk, hollandsk, finsk og fransk, kakaosmør, sort/boghvede
+    .replace(/mjölk-?syra\w*|mjølk-?syre\w*|melke-?syre\w*|melkzuur\w*|maitohappo\w*|(acides?|ferments?)\s+lactiques?/gi, " ")
+    .replace(/(kokos|mandel|havre|haver|soja|ris|rijst|cashew|ärt|hamp|hassel|kookos|kaura|riisi)[\s-]*(mjölk|mjølk|melk|maito|drink|dryck|drank)/gi, "$1")
+    .replace(/\blait\s+(?:de|d['’])\s*(coco|soja|riz|amande|avoine|noisette|cajou)/gi, "$1")
+    .replace(/(kakao|cacao|kaakao)[\s-]*(smör|smør|boter|voi|beurre)|beurre\s+de\s+(cacao|karité)/gi, " ")
+    .replace(/(?:bo|bok)-?h?vete\w*|boekweit\w*|blé\s+noir|sarrasin|tattari\w*/gi, " ")
+    .replace(/(tournesol|colza|zonnebloem|solros|auringonkukka)[\s-]*(le[ck]ithin|lecitin|lesitiini)\w*|l[ée]cithines?\s+de\s+(tournesol|colza)/gi, "$1")
     .replace(/\b(solsikke|raps|sunflower|rapeseed)[\s-]*(le[ck]ithin|le[ck]itin)\w*/gi, "$1")
     .replace(CARAMEL_SULFITE, " ")
     .replace(/\b(ris|majs|kokos|mandel|kikærte|tapioka|boghvede|kartoffel|havre|linse|ærte|quinoa|hirse)\s+mel\b/gi, "$1mel");
 }
 
-// Ord der aldrig må tælle med i ét bestemt allergen: jordnødder og muskatnød er ikke "nødder" (træ-nødder),
-// og de ender på "nødder" (6. okt. 2026, understrengs-matchning).
+// Ord der aldrig må tælle med i ét bestemt allergen: jordnødder, muskatnød og kokosnød er ikke "nødder" (træ-nødder),
+// og de ender på "nødder" (6. okt. 2026, understrengs-matchning; kokosnød er ikke et EU-allergen).
 const ALLERGEN_MASKS = {
-  noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*/g,
+  noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*|kokos-?nød\w*|jord-?nöt\w*|muskot-?nöt\w*|kokos-?nöt\w*|maa-?pähkin\w*|kookos-?pähkin\w*|arachide\w*|cacahu[eè]te\w*|pinda\w*|kokosnoot\w*|noix de (?:coco|muscade)/g,
 };
 
 // Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
-const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin"]);
+const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin", "lécithine", "lécithines", "lesitiini"]);
 
 export function analyzeIngredients(rawText) {
   const text = normalizeIngredientText(rawText);

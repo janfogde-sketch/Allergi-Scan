@@ -41,7 +41,7 @@ function safeAppUrl(raw) {
 const FALLBACK_PUSH = { title: "EatSafe", body: "Du har en ny besked i EatSafe." };
 
 self.addEventListener("push", (event) => {
-  let data = null;
+  let data;
   try { data = event.data ? event.data.json() : null; } catch { data = null; }
   if (!data || typeof data !== "object") {
     event.waitUntil(self.registration.showNotification(FALLBACK_PUSH.title, {

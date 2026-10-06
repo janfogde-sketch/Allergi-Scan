@@ -67,7 +67,7 @@ function HighlightText({ text }) {
       parts.push(<span key={key++} style={{ color, background:bg, fontWeight:700, borderRadius:3, padding:"0 3px" }}>{matched}</span>);
       remaining = remaining.slice(earliestIdx + matchLen);
     } else {
-      parts.push(<span key={key++}>{remaining}</span>);
+      parts.push(<span key={key}>{remaining}</span>);
       break;
     }
   }

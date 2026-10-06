@@ -52,7 +52,7 @@ const RecipeCard = React.memo(function RecipeCard({ recipe: r, profiles, isFav, 
       </button>
       <div style={{ position:"relative" }}>
         {r.image_url
-          ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display="flex"); }} />
+          ? <img src={r.image_url} alt={r.title} className="recipe-card-img" loading="lazy" onError={e => { e.currentTarget.style.display="none"; if (e.currentTarget.nextSibling?.style) e.currentTarget.nextSibling.style.display="flex"; }} />
           : <div className="recipe-card-img-placeholder">{getCatEmoji(r.category)}</div>
         }
         <div style={{ position:"absolute", left:0, right:0, bottom:0, display:"flex", alignItems:"center", gap:8,
@@ -263,7 +263,7 @@ export default function RecipesScreen({
               const scaled = Math.round(ing.amount * scale * 10) / 10;
               amtDisplay = String(scaled);
             }
-            const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,\/\s]+/, "").trim() : "");
+            const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,/\s]+/, "").trim() : "");
 
             return (
               <div key={i} className="ingredient-row" style={{ padding:"10px 14px", opacity: added ? 0.5 : 1, transition:"opacity .2s" }}>
@@ -402,7 +402,7 @@ export default function RecipesScreen({
                       const results = await Promise.all(ingItems.map(async (ing, i) => {
                         if (listAdded[i]) return true;
                         const amt = ing.amount ? Math.round(ing.amount * scale * 10) / 10 : null;
-                        const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,\/\s]+/, "").trim() : "");
+                        const unit = ing.unit || (ing.measure ? ing.measure.replace(/^[\d.,/\s]+/, "").trim() : "");
                         const label = [amt, unit, ing.name].filter(Boolean).join(" ");
                         return addToList(label);
                       }));
