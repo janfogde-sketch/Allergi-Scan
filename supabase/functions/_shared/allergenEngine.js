@@ -28,6 +28,10 @@ export const ENUMBER_ALLERGENS = {
   "e226": { allergen: "svovl", certainty: "yes" },
   "e227": { allergen: "svovl", certainty: "yes" },
   "e228": { allergen: "svovl", certainty: "yes" },
+  // Sulfit-karamel (E150b, E150d) er en farve med sulfitrester: svovl-spor, ikke direkte svovl (F2, 6. okt. 2026).
+  "e150b": { allergen: "svovl", certainty: "traces" },
+  "e150d": { allergen: "svovl", certainty: "traces" },
+  "e1105": { allergen: "aeg", certainty: "yes" },      // Lysozym — udvundet af æggehvide
 };
 
 export const ALL_ALLERGENS = [
@@ -54,109 +58,132 @@ export const SUBSTRING_KEYWORDS = new Set([
   "fisch", "garnelen", "sellerie", "senf",
 ]);
 
-// Position for det match, keywordMatch() faktisk fandt — ikke bare første
-// forekomst som understreng. Ellers blev fx "ei" (æg) i "Kann ... Ei
-// enthalten" vurderet ud fra "ei" inde i "Weizenmehl" længere fremme, så
-// spor-/negations-tjekket kiggede det forkerte sted (30. sept. 2026).
-export function matchIndex(lower, kw) {
-  if (SUBSTRING_KEYWORDS.has(kw)) return lower.indexOf(kw);
-  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const m = new RegExp(`(^|[^a-zæøåA-ZÆØÅ0-9])${escaped}([^a-zæøåA-ZÆØÅ0-9]|$)`, "i").exec(lower);
-  return m ? m.index + m[1].length : -1;
+// Bogstavklasse til ordgrænser (æøå og tyske tegn; teksten er altid små bogstaver her).
+const L = "a-zæøåäöüß";
+
+// Nøgleord på 5 tegn eller mere matches som understreng (6. okt. 2026, K1):
+// danske sammensætninger har allergenet både først og sidst ("FuldkornsHVEDE",
+// "Mandelflager", "Torskefilet"). Undtagelser er ord, der er egne ord og ikke
+// skal matche inde i andre. Korte nøgleord (4 tegn eller færre) matcher som hele ord,
+// med de eksplicitte sammensætningsregler i SHORT_PATTERNS nedenfor.
+const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke"]);
+
+export function isSubstringKeyword(kw) {
+  return SUBSTRING_KEYWORDS.has(kw) || (kw.length >= 5 && !NO_SUBSTRING.has(kw));
 }
 
-// Negation-detektion: "laktosefri", "uden mælk", "mælkefri", "under 0,01%"
+// Korte nøgleord, der også må stå som led i sammensatte ord (regex-udtryk for
+// selve ordet, uden ordgrænser). "æg" som slutled ("SkalÆG", "TØRÆG", "Frilandsæg")
+// og som start ("æggepulver"); korn med kendte forled ("Fuldkornsbyg"); fisk/skaldyr
+// som første led ("Laksefilet", "Rejesalat").
+const SHORT_PATTERNS = {
+  "æg": `[${L}]*æg|ægge[${L}]*`,
+  "rug": `(?:fuldkorns?|hel)?rug`,
+  "byg": `(?:fuldkorns?|hel|vinter|vår)?byg`,
+  "laks": `laks(?:e[${L}]*)?`,
+  "sild": `sild(?:e[${L}]*)?`,
+  "reje": `reje[${L}]*`,
+};
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Alle forekomster af et nøgleord som [start, slut]-par. Erstatter "første
+// forekomst": en negeret/spor-forekomst må ikke skjule en direkte forekomst længere henne.
+export function findOccurrences(lower, keyword) {
+  const kw = keyword.toLowerCase();
+  const out = [];
+  if (isSubstringKeyword(kw)) {
+    let i = lower.indexOf(kw);
+    while (i !== -1) { out.push([i, i + kw.length]); i = lower.indexOf(kw, i + kw.length); }
+    return out;
+  }
+  const pat = SHORT_PATTERNS[kw] || escapeRe(kw);
+  const re = new RegExp(`(^|[^${L}0-9])(${pat})(?=[^${L}0-9]|$)`, "g");
+  let m;
+  while ((m = re.exec(lower))) {
+    const start = m.index + m[1].length;
+    out.push([start, start + m[2].length]);
+    re.lastIndex = Math.max(start + m[2].length, re.lastIndex);
+  }
+  return out;
+}
+
+// Position for første match (bevaret for tests og eksterne kaldere).
+export function matchIndex(lower, kw) {
+  const occ = findOccurrences(lower, kw);
+  return occ.length ? occ[0][0] : -1;
+}
+
+// Negation (6. okt. 2026, K2): kun inden for ét kommasegment. Intet fast tegnvindue,
+// så "Chokolade uden sukker, hvedemel" ikke fjerner hvede. "Free from"-klausulen
+// slutter også ved komma. Efter nøgleordet tæller "-fri"/"free" kun som del af
+// samme ord eller som næste ord ("mælkefri", "lactose free"), aldrig "freeze".
+const SEGMENT_BREAKS = ",;.!?\n";
+const NEGATION_WORDS = new RegExp(`(^|[^${L}])(uden|ingen|ohne|sans|without|fri for|free from|free of|frei von)(?=[^${L}]|$)`);
+const NEGATION_CUT = new RegExp(`(^|[^${L}])(med|men|but|with)(?=[^${L}]|$)`, "g");
+const NEGATION_AFTER = new RegExp(`^(?:e|s)?[\\s-]?(?:fri|frei|free)(?![${L}])`);
+const UNDER_ZERO_AFTER = /^[\s(]*(?:under|<|mindre end|less than)\s*0/;
+
+function segmentStart(lower, idx) {
+  for (let i = idx - 1; i >= 0; i--) if (SEGMENT_BREAKS.includes(lower[i])) return i + 1;
+  return 0;
+}
+
+export function isNegatedAt(lower, start, end) {
+  let before = lower.slice(segmentStart(lower, start), start);
+  let m, cutAt = 0;
+  NEGATION_CUT.lastIndex = 0;
+  while ((m = NEGATION_CUT.exec(before))) cutAt = m.index + m[0].length;
+  before = before.slice(cutAt);
+  if (NEGATION_WORDS.test(before)) return true;
+  const rest = lower.slice(end, end + 24);
+  return NEGATION_AFTER.test(rest) || UNDER_ZERO_AFTER.test(rest);
+}
+
+// Negation-detektion for første forekomst: "laktosefri", "uden mælk", "mælkefri", "under 0,01%"
 export function isNegated(text, keyword) {
   const lower = text.toLowerCase();
-  const kw = keyword.toLowerCase();
-  const idx = matchIndex(lower, kw);
-  if (idx === -1) return false;
-  const before = lower.substring(Math.max(0, idx - 18), idx);
-  // "Free from dairy and gluten." — opremsningen kan være længere end 18 tegn,
-  // så "free from"/"frei von"/"sans" tjekkes tilbage til sætningens start (2. okt. 2026).
-  const clauseStart = Math.max(lower.lastIndexOf(".", idx), lower.lastIndexOf(";", idx)) + 1;
-  const clauseBefore = lower.substring(clauseStart, idx);
-  if (/(free from|free of|frei von|sans|without)\s[^.;]*$/.test(clauseBefore)) return true;
-  const after = lower.substring(idx + kw.length, idx + kw.length + 18);
-  return (
-    before.includes("uden") ||
-    before.includes("fri for") ||
-    before.includes("ingen") ||
-    before.includes("ohne") ||        // tysk: "ohne Milch"
-    after.startsWith("fri") ||        // laktosefri, mælkefri
-    after.startsWith("frei") ||       // tysk: laktosefrei, glutenfrei
-    after.startsWith("-frei") ||
-    after.startsWith("-fri") ||
-    after.includes("under 0") ||      // laktose under 0,01%
-    after.includes("free")            // lactose free
- );
+  const occ = findOccurrences(lower, keyword);
+  if (!occ.length) return false;
+  return isNegatedAt(lower, occ[0][0], occ[0][1]);
 }
 
 // Ordgrænse-match: undgår at "æg" matcher inde i "lægemiddel"
 export function wordBoundaryMatch(haystack, needle) {
-  // Escape regex-special-tegn i søgeordet
-  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  // \b virker ikke pålideligt med æøå, så vi bruger custom grænse:
-  // Match hvis omgivet af ikke-bogstav eller streng-start/slut
-  const pattern = new RegExp(
-    `(^|[^a-zæøåA-ZÆØÅ0-9])${escaped}([^a-zæøåA-ZÆØÅ0-9]|$)`,
-    "i"
- );
+  const pattern = new RegExp(`(^|[^a-zæøåA-ZÆØÅ0-9])${escapeRe(needle)}([^a-zæøåA-ZÆØÅ0-9]|$)`, "i");
   return pattern.test(haystack);
 }
 
-// Samlet match: ordgrænse for de fleste, substring for kerne-ord
+// Samlet match: understreng for lange nøgleord, ordgrænse (med sammensætningsregler) for korte
 export function keywordMatch(haystack, keyword) {
-  if (SUBSTRING_KEYWORDS.has(keyword.toLowerCase())) {
-    return haystack.toLowerCase().includes(keyword.toLowerCase());
-  }
-  return wordBoundaryMatch(haystack, keyword);
+  return findOccurrences(haystack.toLowerCase(), keyword).length > 0;
 }
 
-// Tjek om et match er i "spor"-kontekst. Sætnings-scoped (finder tilbage til
-// forrige punktum/udråbstegn/spørgsmålstegn, IKKE bare et fast antal tegn) —
-// en "kan indeholde spor af A, B, C, D, E"-opremsning kan sagtens være
-// længere end 60 tegn, og et fast tegn-vindue overser da de sidste allergener
-// i opremsningen (fundet ved en gennemgang af rigtige produkter i databasen,
-// 25. sept. 2026: "Kan indeholde spor af SESAMFRØ, SENNEP, HASSELNØDDER,
-// SELLERI, SULFITTER, SOJA og JORDNØDDER" — JORDNØDDER lå uden for det
-// gamle 60-tegns vindue).
+// Spor-kontekst (6. okt. 2026, K3): signalet skal stå i SAMME sætning FØR nøgleordet
+// ("Kan indeholde spor af A, B, C" dækker hele opremsningen). Sætningsgrænser er
+// punktum, udråbs-/spørgsmålstegn og linjeskift. "spor" gælder kun som helt ord
+// ("sporstoffer" er ikke spor), og "fremstillet/produceret" kun i en egentlig
+// advarselsfrase om fælles anlæg ("fremstillet på et anlæg, der også ...").
+const SENTENCE_BREAKS = ".!?\n";
+const TRACE_WORDS = new RegExp(
+  `(^|[^${L}])(spor|spuren|traces?(?!\\s+(?:elements?|minerals?|metals?))|may contain|can contain|kan indeholde|kann|samme fabrik|same facility|samme produktionsudstyr|samme anlæg|same equipment|samme linje|same line)(?=[^${L}]|$)`
+);
+const TRACE_PRODUCED = new RegExp(`(fremstillet|produceret|produced|manufactured)[^.!?\\n]*(også|also|samme|same|shared|delt)`);
+
+export function isTracesAt(lower, start) {
+  let from = 0;
+  for (let i = start - 1; i >= 0; i--) if (SENTENCE_BREAKS.includes(lower[i])) { from = i + 1; break; }
+  const before = lower.slice(from, start);
+  return TRACE_WORDS.test(before) || TRACE_PRODUCED.test(before);
+}
+
 export function isTracesContext(text, keyword) {
   const lower = text.toLowerCase();
-  const idx = matchIndex(lower, keyword.toLowerCase());
-  if (idx === -1) return false;
-  let sentenceStart = 0;
-  for (const p of [".", "!", "?"]) {
-    const pos = lower.lastIndexOf(p, idx);
-    if (pos > sentenceStart) sentenceStart = pos + 1;
-  }
-  // Lookahead-vinduet (+20 tegn) må IKKE bløde ind i NÆSTE sætning — ellers
-  // kan et direkte, fremhævet ingrediens-match (fx "CASHEWNØDDER.") fejlagtigt
-  // blive slået sammen med en efterfølgende "Kan indeholde spor af..."-sætning
-  // og selv blive markeret som spor. Afgrænset af det først følgende
-  // punktum/udråbstegn/spørgsmålstegn efter selve nøgleordet (eller
-  // tekstens slutning, hvis der ikke er ét).
-  let sentenceEnd = lower.length;
-  for (const p of [".", "!", "?"]) {
-    const pos = lower.indexOf(p, idx);
-    if (pos !== -1 && pos < sentenceEnd) sentenceEnd = pos;
-  }
-  const windowEnd = Math.min(idx + keyword.length + 20, sentenceEnd);
-  const sentence = lower.substring(sentenceStart, windowEnd);
-  return (
-    sentence.includes("spor") ||
-    sentence.includes("trace") ||
-    sentence.includes("kan indeholde") ||
-    sentence.includes("may contain") ||
-    sentence.includes("spuren") ||           // tysk: "Kann Spuren von ... enthalten"
-    sentence.includes("kann ") ||            // tysk: "Kann Mandeln ... enthalten"
-    sentence.includes("enthalten") ||
-    sentence.includes("fremstillet") ||
-    sentence.includes("produced in") ||
-    sentence.includes("samme fabrik") ||
-    sentence.includes("same facility") ||
-    sentence.includes("samme produktionsudstyr")
- );
+  const occ = findOccurrences(lower, keyword);
+  if (!occ.length) return false;
+  return isTracesAt(lower, occ[0][0]);
 }
 
 // Ord der indeholder et allergenord uden at være det allergen (2. okt. 2026):
@@ -167,19 +194,48 @@ export function isTracesContext(text, keyword) {
 // den giver svovl-SPOR, ikke direkte svovl (se analyzeIngredients).
 const CARAMEL_SULFITE = /(ammonieret\s+)?sulfiteret(\s+(caramel|karamel)\w*)?|sulfit-?ammoniak-?(caramel|karamel)\w*|ammonium-?sulfit-?(caramel|karamel)\w*|sulphite ammonia caramel/gi;
 
-export function normalizeIngredientText(text) {
+// HTML-rester fra importerede lister ("salt,<BR>kartoffelstivelse", "&nbsp;"): tags bliver
+// skilletegn, entiteter bliver almindelig tekst, så de ikke ændrer ordgrænser (6. okt. 2026, D2).
+export function stripHtml(text) {
   return text
+    .replace(/<\s*br\s*\/?\s*>/gi, ", ")
+    .replace(/<\/?[a-z][^>]*>/gi, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&[a-z]+;|&#\d+;/gi, " ");
+}
+
+export function normalizeIngredientText(text) {
+  return stripHtml(text)
     // "Kan indeholde spor afæg" (manglende mellemrum, set i butiksdata): ellers matcher "æg" aldrig som eget ord
     .replace(/\bspor\s+af(?=[a-zæøå])/gi, "spor af ")
     // "glutenfri havregryn" er certificeret glutenfri havre: ingen glutenmatch (kun havre; hvede/spelt røres ikke, de er hvedeallergi)
     .replace(/gluten[\s-]?fri\w*\s+havre\w*/gi, " ")
-    .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik)\b/gi, "$1")
+    // Ord der indeholder et allergenord som understreng uden at være det (understrengs-matchning, 6. okt. 2026):
+    // boghvede/buckwheat er ikke hvede, kanelsnegl er ikke et bløddyr, fløde/yoghurt af kokos er ikke mælk,
+    // "cream of tartar" og kakao-/sheasmør er ikke mejeri.
+    .replace(/bog[\s-]?hvede\w*/gi, " ")
+    .replace(/buck[\s-]?wheat\w*/gi, " ")
+    .replace(/kanel[\s-]?snegl\w*/gi, " ")
+    .replace(/cream of tartar/gi, " ")
+    .replace(/(cocoa|cacao|shea|kakao)[\s-]+butter/gi, " ")
+    .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik|fløde|yoghurt)/gi, "$1")
     .replace(/\b(coconut|almond|oat|soy|rice|cashew|hazelnut|pea) milk\b/gi, "$1")
     .replace(/(vegansk\s+)?mælkesyre\w*/gi, " ")
     .replace(/\b(solsikke|raps|sunflower|rapeseed)[\s-]*(le[ck]ithin|le[ck]itin)\w*/gi, "$1")
     .replace(CARAMEL_SULFITE, " ")
     .replace(/\b(ris|majs|kokos|mandel|kikærte|tapioka|boghvede|kartoffel|havre|linse|ærte|quinoa|hirse)\s+mel\b/gi, "$1mel");
 }
+
+// Ord der aldrig må tælle med i ét bestemt allergen: jordnødder og muskatnød er ikke "nødder" (træ-nødder),
+// og de ender på "nødder" (6. okt. 2026, understrengs-matchning).
+const ALLERGEN_MASKS = {
+  noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*/g,
+};
 
 // Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
 const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin"]);
@@ -193,37 +249,36 @@ export function analyzeIngredients(rawText) {
 
   for (const allergen of ALL_ALLERGENS) {
     const keywords = ALLERGEN_KEYWORDS[allergen] || [];
+    const mask = ALLERGEN_MASKS[allergen];
+    const hay = mask ? lower.replace(mask, (m) => " ".repeat(m.length)) : lower;
     let status = "no";
 
+    outer:
     for (const keyword of keywords) {
-      if (!keywordMatch(lower, keyword.toLowerCase())) continue;
+      const kw = keyword.toLowerCase();
+      for (const [start, end] of findOccurrences(hay, kw)) {
+        // Spring over hvis allergenet er negeret (laktosefri, uden mælk)
+        if (isNegatedAt(hay, start, end)) continue;
 
-      // Spring over hvis allergenet er negeret (laktosefri, uden mælk)
-      if (isNegated(text, keyword)) continue;
+        // Spor-kontekst tjekkes FØRST og er afgørende — versaler/fed alene
+        // (EU-krav 1169/2011 om fremhævning) er IKKE et pålideligt signal for
+        // "direkte ingrediens": producenter fremhæver allergen-navnet på
+        // PRÆCIS samme måde inde i en "kan indeholde spor af"-advarsel
+        // (set i rigtige produkter, 25. sept. 2026). Match fundet uden for en
+        // spor-sætning behandles som direkte ingrediens.
+        if (isTracesAt(hay, start)) {
+          if (status !== "yes") status = "traces";
+          continue; // en senere, direkte forekomst skal stadig kunne opgradere til "yes"
+        }
 
-      // Spor-kontekst tjekkes FØRST og er afgørende — versaler/fed alene
-      // (EU-krav 1169/2011 om fremhævning) er IKKE et pålideligt signal for
-      // "direkte ingrediens", fordi danske producenter/forhandlere ofte
-      // fremhæver allergen-navnet på PRÆCIS samme måde inde i en "kan
-      // indeholde spor af"-advarsel som i selve ingredienslisten (bekræftet
-      // ved en gennemgang af rigtige produkter i databasen, 25. sept. 2026 —
-      // den tidligere kode brugte fremhævning til at overtrumfe spor-tjekket
-      // og markerede fx "Kan indeholde spor af FISK, SOJA, ... BLØDDYR" som
-      // "yes" i stedet for "traces" for alle nævnte allergener). Match fundet
-      // uden for en spor-sætning behandles som direkte ingrediens.
-      if (isTracesContext(text, keyword)) {
-        if (status !== "yes") status = "traces";
-        continue; // stop IKKE — en senere, direkte forekomst af samme
-                   // allergen andetsteds i teksten skal stadig kunne opgradere til "yes"
+        if (allergen === "soja" && WEAK_SOY_WORDS.has(kw)) {
+          if (status === "no") status = "traces";
+          continue;
+        }
+
+        status = "yes";
+        break outer; // yes er højeste sikkerhed, stop
       }
-
-      if (allergen === "soja" && WEAK_SOY_WORDS.has(keyword.toLowerCase())) {
-        if (status === "no") status = "traces";
-        continue;
-      }
-
-      status = "yes";
-      break; // yes er højeste sikkerhed, stop
     }
 
     flags[allergen] = status;
@@ -232,15 +287,19 @@ export function analyzeIngredients(rawText) {
   if (hasSulfiteCaramel && flags.svovl === "no") flags.svovl = "traces";
 
   // ── E-nummer detektion ──────────────────────────────────────────────────
-  for (const [enumber, mapping] of Object.entries(ENUMBER_ALLERGENS)) {
-    if (wordBoundaryMatch(lower, enumber)) {
-      const current = flags[mapping.allergen];
-      // Opgrader kun hvis det forbedrer sikkerheden (no → traces → yes)
-      if (mapping.certainty === "yes" && current !== "yes") {
-        flags[mapping.allergen] = "yes";
-      } else if (mapping.certainty === "traces" && current === "no") {
-        flags[mapping.allergen] = "traces";
-      }
+  // "E220", "E 220", "E-471", "E472e", "E322(i)": mellemrum, bindestreg og suffiks tillades (6. okt. 2026, F2).
+  const eRe = new RegExp(`(?<![${L}0-9])e[\\s-]?(\\d{3,4})([a-z]|\\([ivx]+\\))?(?![0-9])`, "g");
+  for (const m of lower.matchAll(eRe)) {
+    const base = "e" + m[1];
+    const suffixed = m[2] && /^[a-z]$/.test(m[2]) ? base + m[2] : null;
+    const mapping = (suffixed && ENUMBER_ALLERGENS[suffixed]) || ENUMBER_ALLERGENS[base];
+    if (!mapping) continue;
+    const current = flags[mapping.allergen];
+    // Opgrader kun hvis det forbedrer sikkerheden (no → traces → yes)
+    if (mapping.certainty === "yes" && current !== "yes") {
+      flags[mapping.allergen] = "yes";
+    } else if (mapping.certainty === "traces" && current === "no") {
+      flags[mapping.allergen] = "traces";
     }
   }
 
@@ -299,7 +358,7 @@ export function liftGlutenFromWheat(flags) {
 export function shouldUseClaudeFallback(text) {
   const lower = text.toLowerCase();
   if (looksNonDanish(text)) return true;
-  if (/uden|fri for|free|laktosefri|under 0/.test(lower)) return true;
+  if (/uden|ingen|ohne|fri for|free|laktosefri|under 0/.test(lower)) return true;
   const commaCount = (text.match(/,/g) || []).length;
   if (commaCount > 15) return true;
   const eNumbers = lower.match(/e\d{3}/g) || [];

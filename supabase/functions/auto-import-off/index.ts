@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { analyzeIngredients, liftGlutenFromWheat, stripHtml } from "../_shared/allergenEngine.js";
 
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -75,6 +76,19 @@ function buildAllergenFlags(product: any): Record<string, string> {
   // ikke mellem dem, så vi sætter konservativt begge ved mælk-indhold
   // (samme model som allergens-funktionens keyword-engine bruger)
   if (flags["maelkeallergi"] === "yes") flags["laktose"] = "yes";
+
+  // OFF's tags alene er ikke nok: de mangler spor og sammensatte ord, og "no" som standard
+  // gav falske "ingen advarsler" (kodegennemgang fase 2, F3, 6. okt. 2026). Kør derfor også
+  // nøgleordsmotoren på ingredienslisten, og lad den mest forsigtige værdi vinde pr. allergen.
+  const text = product.ingredients_text?.trim();
+  if (text) {
+    const rank: Record<string, number> = { no: 0, traces: 1, yes: 2 };
+    const fromText = analyzeIngredients(text);
+    for (const [k, v] of Object.entries(fromText)) {
+      if ((rank[v as string] ?? 0) > (rank[flags[k]] ?? 0)) flags[k] = v as string;
+    }
+    liftGlutenFromWheat(flags);
+  }
   return flags;
 }
 
@@ -207,8 +221,9 @@ Deno.serve(async (req) => {
         brand:            brand || null,
         category:         buildCategory(product.categories_tags),
         image_url:        product.image_url || null,
-        ingredients_text: product.ingredients_text?.trim() || null,
+        ingredients_text: product.ingredients_text ? stripHtml(product.ingredients_text).trim() || null : null,
         allergen_flags:   buildAllergenFlags(product),
+        allergen_quality: "pending", // natlig auto-reparse kvalitetssikrer flagene
         nutrition:        buildNutrition(product.nutriments),
         verified_status:  "auto_verified",
         verified:         false,
