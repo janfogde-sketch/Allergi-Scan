@@ -172,6 +172,7 @@ export default function PrivacyScreen({ onBack }) {
           <li style={S.li}>beskeder i appen: slettes automatisk efter 12 måneder</li>
           <li style={S.li}>tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage</li>
           <li style={S.li}>tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning</li>
+          <li style={S.li}>tællere for dagligt forbrug af tekniske funktioner (beskyttelse mod misbrug): slettes automatisk efter 30 dage og slettes med din konto</li>
           <li style={S.li}>e-mailadressen på en person, du har inviteret til din familie: slettes, så snart invitationen er besvaret eller udløbet (invitationen virker højst 24 timer, og oprydningen sker dagligt), og senest når du sletter din konto</li>
           <li style={S.li}>sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder</li>
           <li style={S.li}>logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister</li>
