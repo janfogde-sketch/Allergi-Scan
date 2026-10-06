@@ -118,7 +118,7 @@ hvert tælleligt dansk substantiv skal have både ental og flertal ("hasselnød"
 understreng (fanger "FuldkornsHVEDE", "Mandelflager"); undtagelser står i `NO_SUBSTRING`, og ord der ikke må matche (boghvede, kanelsnegl, kokosfløde) fjernes i
 `normalizeIngredientText`. Ord på højst 4 tegn matcher som hele ord, med eksplicitte sammensætningsregler i `SHORT_PATTERNS`. Negation gælder kun inden for samme kommasegment,
 spor-signalet ("kan indeholde spor af") skal stå i samme sætning FØR ordet. Ændringer i motoren skal have en liste i `src/fixtures/allergenRegression.json` (test `src/allergenRegression.test.js`).
-Genanalyse af alle produkter efter en motorrettelse: `allergen-reanalyze` (først `dry_run` til diff-tabellen, så `apply`), backup i `products_allergen_backup_20261006`.
+Genanalyse af alle produkter efter en motorrettelse: `allergen-reanalyze` (først `dry_run` til diff-tabellen, så `apply`; kun opadgående: nej→spor→ja, aldrig nedgange, fordi motoren ikke kender fremmedsprog og fiskenavne), backup i `products_allergen_backup_20261006`.
 
 ---
 
@@ -133,7 +133,7 @@ attributions-trailerne fra system-instruktionen. Commits batches lokalt, indtil 
 **Hver session starter blank**, så intet må kun leve i samtalen. Ved afslutning af en opgave: (1) opdatér `CLAUDE.md`/`src/CONTEXT.md`, hvis noget stående er ændret; (2) skriv en kort statuskommentar på to do-opgaven (hvad er gjort, hvad mangler, hvad der afventer et svar); (3) luk opgaven, eller lad den stå med en tydelig status. Beslutninger fra Jan eller Bjørn, som gælder fremover, skrives i `CLAUDE.md`, ikke kun i svaret.
 
 **Push er den ENESTE ting, der kræver eksplicit godkendelse.** Når opgaven er færdig: opsummér kort, og vent på Jans
-"push og merge"/lignende. Spørg ikke i hvert svar; nævn blot at der ligger lokale commits. Stop-hookens "Please push"-beskeder er
+"push" (Jan, 6. okt. 2026: "push" alene betyder push OG squash-merge)/"push og merge"/lignende. Spørg ikke i hvert svar; nævn blot at der ligger lokale commits. Stop-hookens "Please push"-beskeder er
 ikke en godkendelse. Når godkendt: push → ÉN PR (dansk body, tjek PR-template, slut med footer + session-link) → squash-merge →
 resync branch (`git fetch origin main`, reset, `--force-with-lease`; se `.claude/commands/resync-branch.md`).
 Kritiske produktionsfejl (fx crashende skærm) shippes straks som isoleret hotfix uden at vente på godkendelse.

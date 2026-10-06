@@ -11,9 +11,10 @@
 //   2. { "mode": "apply", "after": "<product_id>", "limit": 500 }
 //      Skriver de godkendte ændringer fra diff-tabellen til products (kun rækker
 //      med changed=true og applied_at is null) og markerer dem som anvendt.
-// Produkter, hvor Claude har verificeret listen (kilde med "claude"), får pr. allergen
-// den mest forsigtige værdi af gammel og ny, så en genkørsel aldrig sænker en
-// Claude-verificeret "ja". Rollback: products_allergen_backup_20261006.
+// Genanalysen er kun opadgående (Jan, 6. okt. 2026): pr. allergen vinder den mest forsigtige
+// værdi af gammel og ny for ALLE produkter, så en genkørsel aldrig sænker et ja/spor. Motoren
+// kender ikke fremmedsprog (tarwebloem, mjölk) eller fiskenavne (skrubbe), så nedgange
+// (ja→nej, spor→nej, ukendt→nej) afventer en egen gennemgang. Rollback: products_allergen_backup_20261006.
 //
 // Auth (kategori 2 og 4 i .claude/rules/edge-function-auth.md): kun admin-JWT eller service-role.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,7 +29,8 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-const RANK: Record<string, number> = { no: 0, traces: 1, yes: 2 };
+// "unknown" rangerer som "no": et nyt "no" sænker aldrig et gammelt "unknown".
+const RANK: Record<string, number> = { unknown: 0, no: 0, traces: 1, yes: 2 };
 const DIFF_TABLE = "allergen_reanalysis_diff_20261006";
 
 serve(async (req) => {
@@ -72,13 +74,12 @@ serve(async (req) => {
       const rows = (products ?? []).map((p) => {
         const old = p.allergen_flags ?? {};
         const fresh = liftGlutenFromWheat(analyzeIngredients(p.ingredients_text));
-        const verifiedByClaude = String(p.allergen_source_method ?? "").includes("claude");
         const next: Record<string, string> = { ...old };
         for (const a of ALL_ALLERGENS) {
           const o = old[a] ?? "no";
           const n = fresh[a] ?? "no";
-          // Claude-verificerede produkter: mest forsigtige værdi vinder.
-          next[a] = verifiedByClaude && (RANK[o] ?? 0) > (RANK[n] ?? 0) ? o : n;
+          // Kun opadgående: den nye værdi bruges kun, hvis den er mere forsigtig end den gamle.
+          next[a] = (RANK[n] ?? 0) > (RANK[o] ?? 0) ? n : o;
         }
         const changed = ALL_ALLERGENS.some((a) => (old[a] ?? "no") !== next[a]);
         return {
