@@ -259,7 +259,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   `needs_review` (ingen gyldig EAN; kun admin ser den, `unverified_eans` viser rå tal), `cancelled` (titel starter med
   ANNULLERET), `archived` (første kørsel og alt ældre end 14 dage sendes aldrig). `notify` (`recall_published`) matcher på
   favoritter, scanninger (90 dage) og indkøbslister via EAN, aldrig på navn, og sender P6 til alle matchede uanset
-  allergiprofil. P6 oprettes altid som besked i appen, også når push og mail er fravalgt (6. okt.). Resultatsiden slår EAN op via
+  allergiprofil. P6 og P1 oprettes altid som besked i appen, også når push og mail er fravalgt (6. okt.). Resultatsiden slår EAN op via
   RPC `active_recalls_for_ean` (security definer, kun offentlige felter, sidste 60 dage) og viser `RecallNotice` + rød status "Tilbagekaldt".
   En ny `needs_review` opretter en høj-prioritets to do til admin med link til kilden. Linket i beskeden (blokken `link`) tillader kun https på foedevarestyrelsen.dk. Cirka 28 af 50 sider i feedet
   havde gyldig EAN (juni-sept. 2026). Admin-fanen **Tilbagekald** (1. okt. 2026, `RecallsSection.jsx`, `useAdminRecalls.js`, `recallLogic.js`)
