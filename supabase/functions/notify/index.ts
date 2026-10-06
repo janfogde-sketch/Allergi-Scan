@@ -386,6 +386,10 @@ async function processEvent(db: Db, ev: EventRow, flags: Flags) {
   try {
     const plans = await planEvent(db, ev);
     let retry = false;
+    // Mangler en obligatorisk værdi for én modtager, springes kun den modtager over (F1-13, 6. okt. 2026):
+    // før stoppede det hele hændelsen, så resten af modtagerne (fx af en tilbagekaldelse) intet fik.
+    let missing: MissingRequiredError | null = null;
+    let skipped = 0;
     for (const plan of plans) {
       try {
         const out = await deliver(db, ev, plan, flags);
@@ -393,18 +397,24 @@ async function processEvent(db: Db, ev: EventRow, flags: Flags) {
       } catch (e) {
         if (e instanceof MissingRequiredError) {
           // Fx en afvisning uden begrundelse: må ikke sendes, og kan ikke løses ved at prøve igen.
-          await logError(db, String((e as Error).message), { event_id: ev.id, kind: ev.kind, field: (e as MissingRequiredError).field });
-          await db.from("notification_events").update({ status: "failed", last_error: String((e as Error).message), processed_at: new Date().toISOString() }).eq("id", ev.id);
-          return "failed";
+          missing = e as MissingRequiredError;
+          skipped++;
+          await logError(db, String((e as Error).message), { event_id: ev.id, kind: ev.kind, field: (e as MissingRequiredError).field, user_id: plan.userId });
+          continue;
         }
         throw e;
       }
+    }
+    if (missing && skipped === plans.length) {
+      await db.from("notification_events").update({ status: "failed", last_error: String(missing.message), processed_at: new Date().toISOString() }).eq("id", ev.id);
+      return "failed";
     }
     if (retry && ev.attempts + 1 < MAX_ATTEMPTS) {
       await db.from("notification_events").update({ last_error: "Push midlertidigt fejlet, prøver igen" }).eq("id", ev.id);
       return "retry";
     }
-    await db.from("notification_events").update({ status: "done", last_error: null, processed_at: new Date().toISOString() }).eq("id", ev.id);
+    const note = missing ? `${skipped} modtager(e) sprunget over: ${missing.message}` : null;
+    await db.from("notification_events").update({ status: "done", last_error: note, processed_at: new Date().toISOString() }).eq("id", ev.id);
     return "done";
   } catch (e) {
     const msg = String((e as Error)?.message ?? e);

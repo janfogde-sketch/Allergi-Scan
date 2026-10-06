@@ -26,12 +26,40 @@ import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 // samme sikkerhedsrelevante beregning har allerede givet mindst én bug før
 // (se aktiveIds-kommentaren i App.jsx).
 export function buildScanResultFromProductData({ product, data, ean, activeIds, activeLevels, activeENumbers, family, activeProfiles }) {
-  const variantLabel = product.variant_label || null;
   const ingredientsText = product.ingredients || data?.ingredients?.raw_text || product.ingredients_text || "";
   const flags = normalizeProductFlags(product.allergen_flags || data?.allergen_flags || {}, {
     ingredientsText, productName: product.name || "", verifiedStatus: product.verified_status, source: product.source,
     sourceMethod: product.allergen_source_method, quality: product.allergen_quality,
   });
+  const base = {
+    id: product.id || null,
+    code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
+    variant_label: product.variant_label || null,
+    image_url: product.image_url || null, category: product.category || null,
+    subcategory: product.subcategory || null, category_original: product.category_original || null,
+    ingredients: ingredientsText,
+    nutrition: product.nutrition || data?.nutrition || null,
+    verified_status: product.verified_status || "unverified", source: product.source || data?.source,
+  };
+  return scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers, family, activeProfiles });
+}
+
+// Genberegner vurderingen af et cachet resultat ud fra de profiler, der er valgt NU (F2-7, 6. okt. 2026).
+// Cachen gemmer de allerede normaliserede flag, så de bruges direkte; kun status, fund, advarsel og
+// alternativer følger de aktuelle profiler, ikke dem, der var valgt ved første scanning.
+export function rescoreCachedResult(cached, { activeIds, activeLevels, activeENumbers, family, activeProfiles }) {
+  const base = {
+    id: cached.id || null, code: cached.code, name: cached.name, brand: cached.brand || "",
+    variant_label: cached.variant_label || null, image_url: cached.image_url || null,
+    category: cached.category || null, subcategory: cached.subcategory || null, category_original: cached.category_original || null,
+    ingredients: cached.ingredients || "", nutrition: cached.nutrition || null,
+    verified_status: cached.verified_status || "unverified", source: cached.source,
+  };
+  return scoreScanResult({ base, flags: cached.allergen_flags || {}, activeIds, activeLevels, activeENumbers, family: family || [], activeProfiles: activeProfiles || [] });
+}
+
+function scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers, family, activeProfiles }) {
+  const ingredientsText = base.ingredients;
   const { status: rawStatus, matchedDanger, matchedWarning, ignoredTraces, hasUnknown } = compareAllergens(flags, activeIds, activeLevels);
   // Data mangler for ét eller flere af dine allergener ("unknown"-felter) — vis
   // det IKKE som et trygt grønt "sikkert produkt". Uden dette nedgraderes en
@@ -71,15 +99,8 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     }
   }
   return {
-    id: product.id || null,
-    code: ean.trim(), name: product.name || "Ukendt produkt", brand: product.brand || "",
-    variant_label: variantLabel,
-    image_url: product.image_url || null, category: product.category || null,
-    subcategory: product.subcategory || null, category_original: product.category_original || null,
-    ingredients: ingredientsText,
+    ...base,
     productENumbers,
-    nutrition: product.nutrition || data?.nutrition || null,
-    verified_status: product.verified_status || "unverified", source: product.source || data?.source,
     status, headline: headlines[status], summary: summaries[status],
     flags: flagList, allergen_flags: flags, matchedDanger, matchedWarning, ignoredTraces: ignoredTraces || [], matchedENumbers, familyImpact, hasUnknown,
     timestamp: Date.now(),
@@ -207,8 +228,15 @@ export async function runLookupProduct(ean, ctx) {
   // (kun brugt når reelt offline, se nedenfor).
   const showCachedResult = (cachedProduct) => {
     traceLog(tid, "scan:cache-hit");
-    const cachedResult = withCustomAllergenMatch(cachedProduct, activeCustom);
+    // Vurderingen beregnes forfra med de profiler, der er valgt nu (F2-7): ellers styrede den første
+    // scannings profiler advarsel, lyd og alternativer, også efter skift af "Tjekker for".
+    const rescored = rescoreCachedResult(cachedProduct, { activeIds, activeLevels, activeENumbers, family, activeProfiles });
+    const cachedResult = withCustomAllergenMatch(rescored, activeCustom);
     setScanResult(cachedResult); setScreen(SCREENS.RESULT); setLoading(false);
+    // Genscanningen gemmes i historikken som en almindelig scanning, så tilbagekaldelses- og
+    // ændringsbeskeder også rammer den (useHistory fanger selv fejl, fx offline).
+    setHistory(h => [cachedResult, ...h].slice(0, 50));
+    saveHistoryEntry(ean.trim(), cachedResult.id, cachedResult.status, cachedResult.allergen_flags, activeProfiles);
     if (navigator.vibrate) navigator.vibrate(25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
     // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis

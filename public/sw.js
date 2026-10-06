@@ -35,12 +35,27 @@ function safeAppUrl(raw) {
   }
 }
 
+// En push skal ALTID vise en notifikation (F1-8, 6. okt. 2026). En stille push giver i Chrome
+// "Webstedet er opdateret i baggrunden", og Safari kan trække abonnementet tilbage efter
+// gentagne stille push. Tom/ulæselig eller udløbet push viser derfor en neutral besked.
+const FALLBACK_PUSH = { title: "EatSafe", body: "Du har en ny besked i EatSafe." };
+
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
-  let data;
-  try { data = event.data.json(); } catch { return; }
-  // Udløbet besked (fx enheden var offline): vis den ikke.
-  if (data.expiresAt && Date.parse(data.expiresAt) < Date.now()) return;
+  let data = null;
+  try { data = event.data ? event.data.json() : null; } catch { data = null; }
+  if (!data || typeof data !== "object") {
+    event.waitUntil(self.registration.showNotification(FALLBACK_PUSH.title, {
+      body: FALLBACK_PUSH.body, icon: "/icon-192.png", lang: "da", data: { url: APP_HOME, notificationId: null },
+    }));
+    return;
+  }
+  // Udløbet besked (fx enheden var offline længe): vis ikke det forældede indhold, kun en neutral linje.
+  if (data.expiresAt && Date.parse(data.expiresAt) < Date.now()) {
+    const expired = { body: "En besked er ikke længere aktuel. Åbn EatSafe for at se dine beskeder.", icon: "/icon-192.png", lang: "da", data: { url: APP_HOME, notificationId: null } };
+    if (data.tag) expired.tag = data.tag;
+    event.waitUntil(self.registration.showNotification("EatSafe", expired));
+    return;
+  }
   const options = {
     body: data.body ?? "",
     icon: data.icon ?? "/icon-192.png",
