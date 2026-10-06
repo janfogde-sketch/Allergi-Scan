@@ -30,7 +30,7 @@ export const NOTIFICATION_CATEGORIES = [
   // databasen. `live:false` = kategorien findes i databasen, men der sendes endnu ikke noget i den, så den
   // vises ikke i Indstillinger (ingen kontakter, der ikke gør noget). Sæt live:true, når afsendelsen er bygget.
   { id: "shared_lists", label: "Delte indkøbslister", description: "Når andre tilføjer varer til en indkøbsliste, du deler", defaultOn: false },
-  { id: "product_changes", label: "Ændringer i dine produkter", description: "Når allergenoplysninger ændres for et produkt, du har gemt eller scannet" },
+  { id: "product_changes", label: "Ændringer i dine produkter", description: "Når allergenoplysninger ændres for et produkt, du har gemt eller scannet. Du får altid en besked i appen; her vælger du push og mail." },
   { id: "recalls", label: "Tilbagekaldelser", description: "Når et produkt, du har brugt, bliver tilbagekaldt. Du får altid en besked i appen; her vælger du push og mail." },
   { id: "onboarding_reminder", label: "Påmindelse om oprettelse", description: "En engangspåmindelse, hvis du ikke er færdig med at oprette din profil", defaultOn: false, live: false },
 ];
