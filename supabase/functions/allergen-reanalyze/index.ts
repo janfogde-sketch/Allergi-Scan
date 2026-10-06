@@ -14,6 +14,10 @@
 //   3. { "mode": "dry_run_down", "after": "<product_id>", "limit": 500 } (G1, 6. okt. 2026)
 //      Kun læsning: finder produkter hvor den nuværende motor giver et LAVERE svar end det gemte (ja/spor -> nej)
 //      og skriver dem med ingrediensliste i allergen_reanalysis_down_20261006 til gennemgang. Skriver aldrig til products.
+//   4. { "mode": "apply_down", "after": "<product_id>", "limit": 200 } (G1, 6. okt. 2026, Jans ja)
+//      Skriver KUN de nedgange, der er godkendt i allergen_reanalysis_down_20261006 (decision='approved', felterne i
+//      approved_allergens, dvs. allergenet nævnes slet ikke i ingredienslisten). Gemmer først det gamle svar i
+//      products_allergen_down_backup_20261006 og sænker kun et felt, hvis produktet stadig har den gamle, højere værdi.
 // Genanalysen er kun opadgående (Jan, 6. okt. 2026): pr. allergen vinder den mest forsigtige
 // værdi af gammel og ny for ALLE produkter, så en genkørsel aldrig sænker et ja/spor. Motoren
 // kender ikke fremmedsprog (tarwebloem, mjölk) eller fiskenavne (skrubbe), så nedgange
@@ -38,6 +42,7 @@ const DIFF_TABLE = "allergen_reanalysis_diff_20261006";
 // Nedgang: "unknown" (ukendt) → "no" tæller også, fordi motoren så svarer "ingen allergen" i stedet for "ukendt".
 const DOWN_RANK: Record<string, number> = { no: 0, unknown: 1, traces: 2, yes: 3 };
 const DOWN_TABLE = "allergen_reanalysis_down_20261006";
+const DOWN_BACKUP_TABLE = "products_allergen_down_backup_20261006";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -63,7 +68,60 @@ serve(async (req) => {
   try {
     const { mode, after = null, limit = 500 } = await req.json().catch(() => ({}));
     const batch = Math.min(Number(limit) || 500, 1000);
-    if (mode !== "dry_run" && mode !== "dry_run_down" && mode !== "apply") return json({ error: "mode skal være dry_run, dry_run_down eller apply" }, 400);
+    if (mode !== "dry_run" && mode !== "dry_run_down" && mode !== "apply" && mode !== "apply_down") return json({ error: "mode skal være dry_run, dry_run_down, apply eller apply_down" }, 400);
+
+    if (mode === "apply_down") {
+      const size = Math.min(Number(limit) || 200, 200);
+      let dq = supabase
+        .from(DOWN_TABLE)
+        .select("product_id, new_flags, approved_allergens")
+        .eq("decision", "approved")
+        .is("applied_at", null)
+        .order("product_id", { ascending: true })
+        .limit(size);
+      if (after) dq = dq.gt("product_id", after);
+      const { data: dRows, error: dErr } = await dq;
+      if (dErr) throw dErr;
+
+      let applied = 0, skipped = 0, errors = 0;
+      for (const r of dRows ?? []) {
+        const { data: prod, error: pErr } = await supabase
+          .from("products")
+          .select("allergen_flags, allergen_quality, allergen_source_method")
+          .eq("id", r.product_id)
+          .single();
+        if (pErr || !prod) { errors++; continue; }
+        const cur = prod.allergen_flags ?? {};
+        const next = { ...cur };
+        let changed = false;
+        for (const a of r.approved_allergens ?? []) {
+          const fresh = r.new_flags?.[a] ?? "no";
+          // Kun ned, og kun hvis værdien stadig er den gamle, højere værdi (ingen overskrivning af nyere rettelser).
+          if ((DOWN_RANK[fresh] ?? 0) < (DOWN_RANK[cur[a] ?? "no"] ?? 0)) { next[a] = fresh; changed = true; }
+        }
+        if (!changed) {
+          skipped++;
+          await supabase.from(DOWN_TABLE).update({ applied_at: new Date().toISOString() }).eq("product_id", r.product_id);
+          continue;
+        }
+        const { error: bErr } = await supabase.from(DOWN_BACKUP_TABLE).upsert({
+          product_id: r.product_id, old_flags: cur,
+          old_quality: prod.allergen_quality, old_method: prod.allergen_source_method,
+        }, { onConflict: "product_id", ignoreDuplicates: true });
+        if (bErr) { errors++; continue; }
+        const { error: uErr } = await supabase
+          .from("products")
+          .update({ allergen_flags: next, reparsed_at: new Date().toISOString() })
+          .eq("id", r.product_id);
+        if (uErr) { errors++; continue; }
+        await supabase.from(DOWN_TABLE).update({ applied_at: new Date().toISOString() }).eq("product_id", r.product_id);
+        applied++;
+      }
+      return json({
+        mode, applied, skipped, errors,
+        next: (dRows ?? []).length === size ? dRows[dRows.length - 1].product_id : null,
+      });
+    }
 
     if (mode === "dry_run" || mode === "dry_run_down") {
       let q = supabase
