@@ -928,7 +928,7 @@ export default function ResultScreen({
 
       {/* F2-6: uden net vises et resultat gemt på telefonen; neutral information, ikke en fejl */}
       {scanResult.offlineSavedAt && (
-        <StateBox icon="wifiOff" title="Du er offline"
+        <StateBox icon="wifiOff" title="Gemte produktdata"
           text={`Dette resultat er gemt på din telefon fra ${new Date(scanResult.offlineSavedAt).toLocaleDateString("da-DK", { day:"numeric", month:"long" })} og kan være ændret siden.`} />
       )}
 
