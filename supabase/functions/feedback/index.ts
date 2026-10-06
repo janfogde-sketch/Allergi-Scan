@@ -88,8 +88,29 @@ Deno.serve(async (req) => {
     return json(429, { error: "Du har sendt meget feedback på kort tid. Prøv igen om en time." });
   }
 
+  // Skærmbilledet gemmes som fil i den lukkede bucket feedback-screenshots
+  // og kun stien i tabellen, så billeder ikke fylder databasen op og ikke
+  // hentes med, hver gang admin åbner tickets. Fejler upload, gemmes
+  // feedbacken uden billede.
+  const { image_base64: imageBase64, ...ticketFields } = checked.ticket;
+  let imagePath: string | null = null;
+  if (imageBase64) {
+    const ext = imageBase64.startsWith("iVBOR") ? "png" : imageBase64.startsWith("UklG") ? "webp" : "jpg";
+    const contentType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+    try {
+      const bytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await admin.storage.from("feedback-screenshots").upload(path, bytes, { contentType });
+      if (upErr) console.error("feedback billede-upload fejlede:", upErr.message);
+      else imagePath = path;
+    } catch (e) {
+      console.error("feedback billede kunne ikke gemmes:", e);
+    }
+  }
+
   const { error } = await admin.from("feedback_tickets").insert({
-    ...checked.ticket,
+    ...ticketFields,
+    image_path: imagePath,
     status: "open",
     submitted_by: userId,
     client_hash: clientHash,

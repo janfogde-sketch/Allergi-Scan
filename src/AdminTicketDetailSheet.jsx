@@ -1,11 +1,28 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 
-export default function AdminTicketDetailSheet({ openTicket, setOpenTicket, updateTicketStatus }) {
+export default function AdminTicketDetailSheet({ openTicket, setOpenTicket, updateTicketStatus, accessToken }) {
   const [closing, setClosing] = useState(false);
   const [note, setNote] = useState("");
+  const [imageUrl, setImageUrl] = useState(null);
+  // Nye skærmbilleder ligger som filer i den lukkede bucket; admin får et kortvarigt link.
+  const imagePath = openTicket?.image_path;
+  useEffect(() => {
+    setImageUrl(null);
+    if (!imagePath || !accessToken) return undefined;
+    let cancelled = false;
+    fetch(`${SUPABASE_URL}/storage/v1/object/sign/feedback-screenshots/${imagePath}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: 300 }),
+    }).then(r => r.json()).then(d => {
+      if (!cancelled && d?.signedURL) setImageUrl(`${SUPABASE_URL}/storage/v1${d.signedURL}`);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [imagePath, accessToken]);
   if (!openTicket) return null;
   const close = () => { setClosing(false); setNote(""); setOpenTicket(null); };
   const pickStatus = (val) => {
@@ -65,10 +82,10 @@ export default function AdminTicketDetailSheet({ openTicket, setOpenTicket, upda
         </div>
 
         {/* Skærmbillede */}
-        {openTicket.image_base64 && (
+        {(imageUrl || openTicket.image_base64) && (
           <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb10}>
             <div style={UI.ufs11_cmuted_fw700_mb8}>SKÆRMBILLEDE</div>
-            <img src={`data:image/jpeg;base64,${openTicket.image_base64}`} alt="Screenshot"
+            <img src={imageUrl || `data:image/jpeg;base64,${openTicket.image_base64}`} alt="Screenshot"
               style={{ width:"100%", borderRadius:8, objectFit:"contain" }} />
           </div>
         )}
