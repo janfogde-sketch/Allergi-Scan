@@ -50,7 +50,6 @@ Deno.serve(async (req) => {
   const groupUserId = isGroup && parts[parts.length - 1] !== "group" ? parts[parts.length - 1] : null;
   const isMembers = parts.includes("members");
   const isInvite = parts.includes("invite");
-  const isLinkProfile = parts.includes("link-profile");
   const memberId = isMembers ? parts[parts.length - 1] === "members" ? null : parts[parts.length - 1] : null;
   const inviteId = isInvite ? parts[parts.length - 1] === "invite" ? null : parts[parts.length - 1] : null;
   const familyId = !isMembers && !isInvite && !isGroup ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
@@ -129,60 +128,6 @@ Deno.serve(async (req) => {
         const ids = (ownerLists ?? []).map((l) => l.id);
         if (ids.length > 0) await supabase.from("shopping_list_access").delete().in("list_id", ids).eq("user_id", other);
       }
-      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // POST — kobl en administreret profil (family_members, uden eget login)
-    // til en rigtig EatSafe-konto der lige er blevet en del af husstanden
-    // (26. sept. 2026, Familie-redesign: undgå dubletter når en person, man
-    // tidligere har administreret en profil for, senere accepterer en
-    // invitation med sit eget login). Overfører profilens allergener/
-    // kostpræferencer/E-numre til kontoen og sletter den nu overflødige
-    // administrerede profil — en bevidst, eksplicit handling fra husstandens
-    // administrator, ikke en automatisk sammenlægning ud fra fx navne-match.
-    if (method === "POST" && isLinkProfile) {
-      const { managed_member_id, target_user_id } = await req.json();
-      if (!managed_member_id || !target_user_id) return new Response(
-        JSON.stringify({ error: "managed_member_id og target_user_id er påkrævet" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-      const { data: managedMember } = await supabase
-        .from("family_members").select("*").eq("id", managed_member_id).eq("user_id", caller.id).maybeSingle();
-      if (!managedMember) return new Response(
-        JSON.stringify({ error: "Ikke autoriseret til denne profil" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-      // target_user_id skal være en del af caller's egen husstand — samme
-      // "admin af forbindelsen"-tjek som DELETE /group ovenfor, blot i begge
-      // retninger (caller kan have inviteret target, eller omvendt).
-      const { data: link } = await supabase
-        .from("family_invites").select("id")
-        .eq("status", "accepted")
-        .or(`and(invited_by.eq.${caller.id},accepted_by.eq.${target_user_id}),and(invited_by.eq.${target_user_id},accepted_by.eq.${caller.id})`)
-        .maybeSingle();
-      if (!link) return new Response(
-        JSON.stringify({ error: "Denne konto er ikke en del af din familie" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-      await supabase.from("user_allergens").delete().eq("user_id", target_user_id).is("family_member_id", null);
-      const allergenRows = [
-        ...(managedMember.allergens ?? []).map((a) => ({ user_id: target_user_id, allergen: a, type: "allergen" })),
-        ...(managedMember.custom_allergens ?? []).map((c) => ({ user_id: target_user_id, allergen: c, type: "custom" })),
-      ];
-      if (allergenRows.length > 0) await supabase.from("user_allergens").insert(allergenRows);
-
-      await supabase.from("users").update({
-        diets: managedMember.diets ?? [],
-        e_numbers: managedMember.e_numbers ?? [],
-        allergen_levels: managedMember.allergen_levels ?? {},
-      }).eq("id", target_user_id);
-
-      const { error } = await supabase.from("family_members").delete().eq("id", managed_member_id);
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
