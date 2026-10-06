@@ -93,6 +93,39 @@ describe("runLookupProduct — cache-hit path", () => {
   });
 });
 
+describe("runLookupProduct — cache-hit følger de profiler, der er valgt nu (F2-7)", () => {
+  // Cachet ved første scanning, hvor kun en profil uden æg-allergi var valgt.
+  const cached = {
+    id: "p1", code: "123", name: "Pandekager", ingredients: "hvedemel, mælk, æg", status: "safe",
+    flags: [], allergen_flags: { aeg: "yes", gluten: "yes", maelkeallergi: "yes", sesam: "no" }, matchedDanger: [], matchedWarning: [],
+  };
+
+  it("giver danger, advarsel og alternativer, når den nu valgte profil har allergenet", async () => {
+    const ctx = makeCtx({ productCacheRef: { current: { "123": cached } }, activeIds: ["aeg"] });
+    await runLookupProduct("123", ctx);
+    const result = ctx.setScanResult.mock.calls[0][0];
+    expect(result.status).toBe("danger");
+    expect(result.matchedDanger).toEqual(["aeg"]);
+    expect(ctx.loadAlternatives).toHaveBeenCalled();
+  });
+
+  it("gemmer genscanningen i historikken med den nye status", async () => {
+    const ctx = makeCtx({ productCacheRef: { current: { "123": cached } }, activeIds: ["aeg"] });
+    await runLookupProduct("123", ctx);
+    expect(ctx.saveHistoryEntry).toHaveBeenCalledWith("123", "p1", "danger", cached.allergen_flags, ["me"]);
+    expect(ctx.setHistory).toHaveBeenCalled();
+  });
+
+  it("giver safe uden fund, når ingen valgt profil har allergenerne", async () => {
+    const ctx = makeCtx({ productCacheRef: { current: { "123": { ...cached, status: "danger", matchedDanger: ["aeg"] } } }, activeIds: ["sesam"] });
+    await runLookupProduct("123", ctx);
+    const result = ctx.setScanResult.mock.calls[0][0];
+    expect(result.status).toBe("safe");
+    expect(result.matchedDanger).toEqual([]);
+    expect(ctx.clearAlternatives).toHaveBeenCalled();
+  });
+});
+
 describe("runLookupProduct — network not-found path", () => {
   it("routes to the NOTFOUND screen and resets the submission form", async () => {
     global.fetch.mockResolvedValue(jsonResponse({ found: false }));
