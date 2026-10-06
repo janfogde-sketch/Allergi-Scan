@@ -11,11 +11,11 @@
   </defs>
   <g clip-path="url(#squircle)">
     <rect width="100" height="100" fill="#FBFAF7"></rect>
-    <g transform="translate(6.0547,6.0547) scale(0.087891)" fill="#232528">
+    <g transform="translate(7.5177,6.0547) scale(0.087891)" fill="#232528">
       <rect x="100.000" y="158.000" width="102.991" height="684.525" rx="12.484"></rect>
       <rect x="225.878" y="219.378" width="48.895" height="560.728" rx="12.484"></rect>
       <rect x="300.780" y="158.000" width="66.580" height="684.525" rx="12.484"></rect>
-      <rect x="390.247" y="212.096" width="36.411" height="568.010" rx="12.484"></rect>
+      <rect x="390.247" y="219.378" width="36.411" height="560.728" rx="12.484"></rect>
       <rect x="452.666" y="158.000" width="44.733" height="684.525" rx="12.484"></rect>
       <rect x="520.286" y="219.378" width="78.023" height="560.728" rx="12.484"></rect>
       <rect x="621.196" y="158.000" width="64.499" height="684.525" rx="12.484"></rect>
