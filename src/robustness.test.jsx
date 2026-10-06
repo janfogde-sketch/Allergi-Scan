@@ -20,7 +20,9 @@ describe("ErrorBoundary (F2-5)", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     render(<ErrorBoundary screen="Appen" withStyles><Boom /></ErrorBoundary>);
     expect(screen.getByText("Noget gik galt")).toBeTruthy();
-    expect(screen.getByText(/Appen stødte på en uventet fejl/)).toBeTruthy();
+    expect(screen.getByText("Der opstod en uventet fejl. Dine gemte data er ikke påvirket.")).toBeTruthy();
+    expect(screen.getByText("Prøv igen").className).toContain("btn-primary");
+    expect(screen.getByText("Genstart appen")).toBeTruthy();
   });
 
   it("silent skjuler kun den fejlende del og kalder onError", () => {
@@ -36,7 +38,7 @@ describe("LoadErrorBox (F2-4)", () => {
   it("siger hvad der ikke kunne hentes og giver Prøv igen", () => {
     const onRetry = vi.fn();
     render(<LoadErrorBox what="Historikken" onRetry={onRetry} />);
-    expect(screen.getByRole("alert").textContent).toContain("Historikken kunne ikke hentes");
+    expect(screen.getByRole("alert").textContent).toContain("Historikken kunne ikke hentes.Tjek din forbindelse, og prøv igen.");
     fireEvent.click(screen.getByText("Prøv igen"));
     expect(onRetry).toHaveBeenCalled();
   });

@@ -41,33 +41,25 @@ export class ErrorBoundary extends React.Component {
     if (!this.state.hasError) return this.props.children;
     if (this.props.silent) return null;
 
-    const screen = this.props.screen || "denne skærm";
     const onRetry = this.props.onRetry;
 
+    // En fejl i visningen ændrer ikke data, der allerede er gemt på serveren, så sætningen om gemte data holder.
     const page = (
-      <div className="screen" role="alert" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"60vh", padding:"40px 24px", textAlign:"center" }}>
-        <div style={{ marginBottom:16, display:"flex", justifyContent:"center" }}><Icon name="warning" size={48} color="var(--red)" /></div>
-        <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
-          Noget gik galt
-        </div>
-        <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:24, maxWidth:300 }}>
-          {screen} stødte på en uventet fejl. Dine data er ikke påvirket.
-        </div>
-
-        <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:280 }}>
-          <button
-            className="btn btn-outline"
+      <div className="screen state-page" role="alert">
+        <div className="state-page-icon"><Icon name="warning" size={24} color="var(--red)" /></div>
+        <div className="state-page-title">Noget gik galt</div>
+        <div className="state-page-text">Der opstod en uventet fejl. Dine gemte data er ikke påvirket.</div>
+        <div className="state-page-actions">
+          <button className="btn btn-primary btn-full"
             onClick={() => {
               this.setState({ hasError: false, error: null });
               onRetry?.();
-            }}
-            style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-            <Icon name="refresh" size={14} color="var(--ink)" /> Prøv igen
+            }}>
+            Prøv igen
           </button>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => window.location.reload()}>
-            Genindlæs app
+          {/* Genindlæser hele appen fra serveren, dvs. en reel genstart. */}
+          <button className="btn btn-ghost btn-full" onClick={() => window.location.reload()}>
+            Genstart appen
           </button>
         </div>
 

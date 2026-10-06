@@ -1044,6 +1044,22 @@ body::-webkit-scrollbar{display:none;}
 .loader-txt{font-size:13.5px;font-weight:700;color:var(--ink);letter-spacing:-.1px;}
 .loader-sub{font-size:11.5px;color:var(--muted);}
 .error-box{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--red);font-weight:600;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
+/* Fejltilstande (Bjørn, 6. okt. 2026): ét fælles system. Rød kun ved egentlig fejl,
+   offline/gemte data er neutral information, og genopretning bruger EatSafe-grøn.
+   Fælles radius (--r), spacing (14/16/12), ikon 20 px og knaphøjde 44 px. */
+.state-box{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface2);margin-bottom:12px;}
+.state-box.is-error{background:var(--red-lt);border-color:var(--red-md);}
+.state-icon{flex-shrink:0;display:flex;margin-top:1px;}
+.state-body{flex:1;min-width:0;}
+.state-title{font-size:14px;font-weight:700;line-height:1.4;color:var(--ink);}
+.state-text{font-size:13px;line-height:1.5;color:var(--ink2);margin-top:2px;}
+.state-action{margin-top:12px;}
+.btn-recover{background:var(--surface);color:var(--green);border:1.5px solid var(--green);padding:8px 16px;font-size:13px;}
+.state-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px 24px;text-align:center;}
+.state-page-icon{width:56px;height:56px;border-radius:50%;background:var(--red-lt);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.state-page-title{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.state-page-text{font-size:14px;line-height:1.5;color:var(--ink2);margin-bottom:24px;max-width:300px;}
+.state-page-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;}
 .info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
 .save-bar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:99;padding:10px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border);box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);animation:saveBarIn .18s ease-out;}
 @keyframes saveBarIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}

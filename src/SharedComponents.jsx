@@ -152,6 +152,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     x: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>,
     warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>,
     info: <><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/></>,
+    wifiOff: <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M8.5 16.4a5 5 0 017 0M5 12.9a10 10 0 015.2-2.8M19 12.9a10 10 0 00-2.4-1.7M1.6 9.3a15 15 0 014.2-2.7M22.4 9.3A15 15 0 0010.7 5M12 20h.01"/>,
     chevronLeft: <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>,
     chevronRight: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>,
     chevronDown: <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>,
@@ -881,16 +882,26 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
 // brug: "Hvad er krydskontaminering?" i Madpas). Samme portal-mønster som
 // ConfirmDialog (position:fixed fanges ellers af .screen.fade-in's transform).
 // Én "Forstået"-knap (44px) og tryk udenfor lukker.
-// ── LoadErrorBox (F2-4, 6. okt. 2026) ─────────────────────────────────────────
-// Vises, når en liste ikke kunne hentes, så en fejl ikke ligner en tom side
-// (brugeren kunne tro, at data var væk). Samme udtryk som Beskeders fejltilstand.
-export function LoadErrorBox({ what, onRetry }) {
+// ── Fejl- og informationstilstande (F2-4, finpudset af Bjørn 6. okt. 2026) ────
+// StateBox er den fælles inline-boks: tone "error" (rød, egentlig fejl) eller "info"
+// (neutral, fx offline med gemt resultat). Genopretning er en grøn, sekundær knap.
+export function StateBox({ tone = "info", icon, title, text, actionLabel, onAction }) {
+  const isError = tone === "error";
   return (
-    <div className="error-box" role="alert" style={{ marginBottom:12 }}>
-      {what} kunne ikke hentes. Tjek forbindelsen.
-      {onRetry && <button className="btn btn-outline" style={{ marginLeft:"auto", flexShrink:0, whiteSpace:"nowrap", padding:"6px 12px", fontSize:12 }} onClick={onRetry}>Prøv igen</button>}
+    <div className={`state-box${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>
+      <span className="state-icon"><Icon name={icon || (isError ? "warning" : "info")} size={20} color={isError ? "var(--red)" : "var(--ink2)"} /></span>
+      <div className="state-body">
+        <div className="state-title">{title}</div>
+        {text && <div className="state-text">{text}</div>}
+        {onAction && <div className="state-action"><button className="btn btn-recover" onClick={onAction}>{actionLabel || "Prøv igen"}</button></div>}
+      </div>
     </div>
   );
+}
+
+// Vises, når en liste ikke kunne hentes, så en fejl ikke ligner en tom side.
+export function LoadErrorBox({ what, onRetry }) {
+  return <StateBox tone="error" title={`${what} kunne ikke hentes.`} text="Tjek din forbindelse, og prøv igen." onAction={onRetry} />;
 }
 
 export function InfoSheet({ title, children, onClose, closeLabel = "Forstået" }) {

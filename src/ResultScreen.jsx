@@ -3,7 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, findProductOnList, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, imageAttribution } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
-import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -926,14 +926,10 @@ export default function ResultScreen({
         </div>
       )}
 
-      {/* F2-6: uden net vises et resultat gemt på telefonen; sig hvornår, så ingen tror det er helt nyt */}
+      {/* F2-6: uden net vises et resultat gemt på telefonen; neutral information, ikke en fejl */}
       {scanResult.offlineSavedAt && (
-        <div role="status" style={{ display:"flex", alignItems:"center", gap:8, background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 12px", marginBottom:10 }}>
-          <Icon name="info" size={13} color="var(--neutral)" />
-          <span style={{ fontSize:12, color:"var(--ink2)" }}>
-            Du er offline. Resultatet blev gemt på telefonen {new Date(scanResult.offlineSavedAt).toLocaleDateString("da-DK", { day:"numeric", month:"long" })} og kan være ændret siden.
-          </span>
-        </div>
+        <StateBox icon="wifiOff" title="Du er offline"
+          text={`Dette resultat er gemt på din telefon fra ${new Date(scanResult.offlineSavedAt).toLocaleDateString("da-DK", { day:"numeric", month:"long" })} og kan være ændret siden.`} />
       )}
 
       {/* ── 1. PRODUKT — verdikten sidder nu som en ramme + strimmel på selve kortet ── */}
