@@ -66,7 +66,6 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   const [familyAddMode, setFamilyAddMode] = useState(null);
   const [confirmDeleteProfile, setConfirmDeleteProfile] = useState(null); // administreret profil, der afventer "Slet profil"-bekræftelse
   const [confirmRemoveHousehold, setConfirmRemoveHousehold] = useState(null); // rigtig konto, der afventer "Fjern fra familien"-bekræftelse
-  const [linkPickerFor, setLinkPickerFor] = useState(null); // husstandsmedlems id — åbner "Kobl til en administreret profil"-vælgeren for netop den række
   const [expandedChipsFor, setExpandedChipsFor] = useState([]); // række-nøgler hvor "+N" er trykket, så alle chips vises i stedet for kun de første
 
   // ── Ventende invitationer (26. sept. 2026, Familie-redesign) ────────────────
@@ -141,32 +140,6 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     );
   };
 
-  // ── Undgå dubletter: kobl en administreret profil til en rigtig konto ──────
-  // (26. sept. 2026, Familie-redesign). Bevidst en eksplicit handling
-  // husstandens administrator selv vælger — ikke et automatisk navne-match,
-  // som let kunne koble den forkerte profil sammen. Overfører data server-
-  // side (se supabase/functions/family/index.ts's link-profile-endpoint) og
-  // fjerner derefter den nu overflødige administrerede profil lokalt.
-  const linkManagedProfile = async (managedMemberId, targetUserId) => {
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/family/link-profile`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-        body: JSON.stringify({ managed_member_id: managedMemberId, target_user_id: targetUserId }),
-      });
-      if (data?.success) {
-        setFamily(f => f.filter(x => x.id !== managedMemberId));
-        setLinkPickerFor(null);
-        showToast("Profilerne er koblet sammen");
-        loadHousehold();
-      } else {
-        showToast("Kunne ikke koble profilerne sammen. Prøv igen.", "error");
-      }
-    } catch {
-      showToast("Noget gik galt. Tjek din forbindelse.", "error");
-    }
-  };
-
   // Bundpadding: den målte navigationshøjde plus luft (6. okt. 2026). Den faste "110px + safe area" var for lidt på iPhones med
   // hjemmeindikator, så invitationskortets sidste knap kunne ende bag navigationen. Uden måling (fx i test) bruges den gamle værdi.
   const bottomPad = navH ? `${navH + 40}px` : "calc(110px + env(safe-area-inset-bottom))";
@@ -203,28 +176,6 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             )}
           </div>
           {renderMemberChips(m, `h-${m.id}`)}
-          {/* Undgå dubletter: hvis personen tidligere var en administreret profil, man selv oprettede, kan de to slås sammen.
-              Kun for den, der inviterede (canRemove), og kun når der er en administreret profil at vælge imellem. */}
-          {m.canRemove && family.length > 0 && linkPickerFor !== m.id && (
-            <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
-              <TextLink onClick={() => setLinkPickerFor(m.id)}>Har du allerede en profil til {m.name || m.email}? Slå dem sammen</TextLink>
-            </div>
-          )}
-          {linkPickerFor === m.id && (
-            <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)" }}>
-              <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:8, lineHeight:1.5 }}>
-                Vælg den profil, du selv har oprettet til {m.name || m.email}. Allergier, kostvalg og E-numre flyttes over på kontoen, og din egen profil slettes.
-              </div>
-              {family.map(p => (
-                <button key={p.id} type="button" onClick={() => linkManagedProfile(p.id, m.id)}
-                  style={{ display:"flex", alignItems:"center", gap:8, width:"100%", textAlign:"left", cursor:"pointer", fontFamily:"var(--f)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", marginBottom:6 }}>
-                  <div className="fm-avatar" style={{ width:26, height:26, fontSize:11, background:p.color, color:"var(--ink)" }}>{initials(p.name)}</div>
-                  <span style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{p.name}</span>
-                </button>
-              ))}
-              <TextLink onClick={() => setLinkPickerFor(null)}>Fortryd</TextLink>
-            </div>
-          )}
         </div>
       ))}
       {pendingInvites.filter(inv => inv.id !== inviteId).map(inv => (
