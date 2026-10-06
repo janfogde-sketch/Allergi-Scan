@@ -1143,17 +1143,11 @@ export default function EatSafe() {
           </Suspense>
         )}
 
-        {/* ── OFFLINE BANNER ── */}
+        {/* ── OFFLINE BANNER ── neutral status (Bjørn, 6. okt. 2026): samme ikon og farvestil som
+            offline-boksen på resultatsiden. Bjælken siger status; konsekvensen (dato) står ved indholdet. */}
         {isOffline && (
-          <div style={{
-            position:"sticky", top:0, zIndex:200,
-            background:"var(--amber)", color:"var(--on-green)",
-            fontSize:12, fontWeight:700,
-            padding:"8px 16px",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-            textAlign:"center",
-          }}>
-            <Icon name="block" size={13} color="var(--on-green)" /> Offline — viser lokalt cachede data
+          <div className="offline-bar" role="status">
+            <Icon name="wifiOff" size={16} color="var(--ink2)" /> Du er offline · Viser gemte data
           </div>
         )}
 

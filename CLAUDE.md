@@ -213,6 +213,8 @@ link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selv
 
 **Historik (Bjørn, 5. okt.):** gentagne scanninger vises som én post med "Scannet N gange, senest …" (`groupHistoryDuplicates()` i `helpers.js`, kun visning; databasen beholder hver række). Fundne produkter samles kun ved samme EAN/produkt-ID (aldrig kun navn), bruger, valgte personer, resultat og allergen-flag, lige efter hinanden med højst 30 min. mellem; "ikke fundet" pr. stregkode. "Ryd" er neutral og skjult uden egen historik; kun bekræftelsen er rød. Ingen søgning/filtre ud over det eksisterende filter ved 10+ poster.
 
+**Fejltilstande (Bjørn, 6. okt.):** ét system i `theme.jsx` (`.state-box`, `.state-page`, `.offline-bar`) og `StateBox`/`LoadErrorBox` i `SharedComponents.jsx`. Rød kun ved egentlig fejl; offline/gemte data er neutral grå med `wifiOff`-ikonet og altid ordene "Du er offline" (global bjælke: "Du er offline · Viser gemte data"; datoen står ved det konkrete indhold); genopretning er EatSafe-grøn. Ingen tekniske ord som "cachede data".
+
 **Scanner:** `stopCamera()` nulstiller al scanner-state (også det manuelle EAN-panel via `closeCameraFully()` i `App.jsx`) ved
 ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsvibration/-lyd via `fireWarningAlert()`.
 

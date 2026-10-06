@@ -1055,6 +1055,7 @@ body::-webkit-scrollbar{display:none;}
 .state-text{font-size:13px;line-height:1.5;color:var(--ink2);margin-top:2px;}
 .state-action{margin-top:12px;}
 .btn-recover{background:var(--surface);color:var(--green);border:1.5px solid var(--green);padding:8px 16px;font-size:13px;}
+.offline-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border2);color:var(--ink2);font-size:13px;font-weight:600;text-align:center;}
 .state-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px 24px;text-align:center;}
 .state-page-icon{width:56px;height:56px;border-radius:50%;background:var(--red-lt);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
 .state-page-title{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;}
