@@ -57,6 +57,9 @@ verify_jwt = false
 [functions.submissions]
 verify_jwt = false
 
+[functions.cleanup-orphan-images]
+verify_jwt = false
+
 [functions.weekly-digest]
 verify_jwt = false
 
