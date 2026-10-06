@@ -39,9 +39,9 @@ export default function InstallPrompt() {
       onClick={() => setDismissed(true)}>
       <div onClick={e => e.stopPropagation()}
         style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:340, width:"100%", textAlign:"center", position:"relative" }}>
-        <button onClick={() => setDismissed(true)} aria-label="Luk"
-          style={{ position:"absolute", top:14, right:14, background:"var(--surface2)", border:"none", borderRadius:"50%", width:28, height:28, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
-          <Icon name="x" size={14} color="var(--muted)" />
+        <button onClick={() => setDismissed(true)} aria-label="Luk" className="icon-btn"
+          style={{ position:"absolute", top:8, right:8, background:"var(--surface2)", border:"none" }}>
+          <Icon name="x" size={16} color="var(--muted)" />
         </button>
 
         <div style={{ width:56, height:56, margin:"0 auto 14px", borderRadius:16, background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>

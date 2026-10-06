@@ -17,7 +17,7 @@ import { createPortal } from "react-dom";
 import { SCREENS } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
-import { Icon } from "./SharedComponents.jsx";
+import { Icon, CloseButton } from "./SharedComponents.jsx";
 import { useDialogA11y } from "./useDialogA11y.js";
 
 // Delt række-komponent, så ethvert menupunkt (uanset gruppe) ser og opfører
@@ -32,7 +32,7 @@ import { useDialogA11y } from "./useDialogA11y.js";
 // afstand adskiller den, ikke farve.
 function MenuRow({ icon, label, sub, chevron = true, onClick, secondary = false }) {
   return (
-    <div className="menu-item" onClick={onClick} style={secondary ? { marginTop:10 } : undefined}>
+    <button type="button" className="menu-item" onClick={onClick} style={secondary ? { marginTop:10 } : undefined}>
       <div style={{ width:36, height:36, borderRadius:9, background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
         <Icon name={icon} size={17} color="var(--ink2)" />
       </div>
@@ -45,7 +45,7 @@ function MenuRow({ icon, label, sub, chevron = true, onClick, secondary = false 
           <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
         </svg>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -155,8 +155,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 14px 14px" }}>
           <div id="profile-menu-title" style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Menu</div>
-          <button onClick={onClose} aria-label="Luk menu"
-            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+          <CloseButton onClick={onClose} label="Luk menu" />
         </div>
 
         {/* Profilkort — menuens primære element, uændret placering. Meget
@@ -164,7 +163,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
             grøn-token designsystemet allerede bruger til lette accent-/
             valgt-tilstande andre steder) i stedet for en neutral grå
             baggrund — ikke en ny farve, kun en anden eksisterende token. */}
-        <div className="menu-profile-card" onClick={() => onNavigate(SCREENS.PROFILE)}
+        <button type="button" className="menu-profile-card" onClick={() => onNavigate(SCREENS.PROFILE)}
           style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", margin:"0 10px 10px", background:"var(--green-selected-bg)", border:"1px solid var(--border)", borderRadius:12 }}>
           <div style={{ width:42, height:42, borderRadius:"50%", background:"var(--green-lt)", border:"1.5px solid var(--green-mid)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800, color:"var(--green)", flexShrink:0 }}>
             {initials(user?.name || "?")}
@@ -174,7 +173,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
             <div style={{ fontSize:11, color:"var(--muted)" }}>Se og redigér din profil</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-        </div>
+        </button>
 
         {/* Grupperet liste — diskrete sektionsoverskrifter (.card-lbl,
             samme uppercase/muted-mønster som fx ShareSheets "ELLER VÆLG

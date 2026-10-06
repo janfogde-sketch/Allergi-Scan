@@ -107,8 +107,8 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
       {customAllerg.length > 0 && (
         <div className="tags">
           {customAllerg.map((a, i) => (
-            <div key={i} className="tag">{a}<span className="tag-x" role="button" aria-label={`Fjern "${a}"`} tabIndex={0}
-              onClick={() => remove(a)} onKeyDown={e => e.key === "Enter" && remove(a)}>×</span></div>
+            <div key={i} className="tag">{a}<button type="button" className="tag-x" aria-label={`Fjern "${a}"`}
+              onClick={() => remove(a)}><Icon name="x" size={12} /></button></div>
           ))}
         </div>
       )}
@@ -271,11 +271,11 @@ export const ENumberPicker = ({ selected, onChange }) => {
 
       {/* Søg */}
       <input style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, boxSizing:"border-box", background:"var(--surface)", color:"var(--ink)" }}
-        placeholder="Søg E-nummer eller navn..." value={search} onChange={e => setSearch(e.target.value)} />
+        aria-label="Søg E-nummer eller navn" placeholder="Søg E-nummer eller navn..." value={search} onChange={e => setSearch(e.target.value)} />
 
       {/* Kategori */}
       <select style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border2)", borderRadius:8, fontSize:13, fontFamily:"var(--f)", marginBottom:8, background:"var(--surface)", color:"var(--ink)", boxSizing:"border-box" }}
-        value={cat} onChange={e => setCat(e.target.value)}>
+        aria-label="Kategori" value={cat} onChange={e => setCat(e.target.value)}>
         <option value="alle">Alle kategorier</option>
         <option value="farve">Farvestoffer (E100–E199)</option>
         <option value="konserv">Konserveringsmidler (E200–E299)</option>

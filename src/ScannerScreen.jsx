@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum, initials, scanTargetCopy } from "./helpers.js";
-import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback, CloseButton } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -187,8 +187,7 @@ function ScanProfilePickerSheet({ activeProfiles, setActiveProfiles, family, use
         onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
           <div id="scan-profile-title" style={{ fontSize:16, fontWeight:900, color:"var(--ink)" }}>Tjekker for</div>
-          <button onClick={onClose} aria-label="Luk"
-            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+          <CloseButton onClick={onClose} />
         </div>
         <div style={{ fontSize:12, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
           Vælg, hvem dine scanninger skal tjekkes for. Du kan vælge én eller flere.
@@ -855,8 +854,7 @@ export default function ScannerScreen({
               <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
                 <div style={S.rowBetweenMb10}>
                   <div style={S.h13}>Indtast EAN-nummer</div>
-                  <button onClick={() => setShowManualEan(false)} aria-label="Luk"
-                    style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--muted)", lineHeight:1, padding:8, margin:-8 }}>×</button>
+                  <span style={{ margin:-10 }}><CloseButton onClick={() => setShowManualEan(false)} plain /></span>
                 </div>
                 <div style={S.rowGap8}>
                   <input

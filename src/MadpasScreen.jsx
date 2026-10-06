@@ -387,7 +387,7 @@ export default function MadpasScreen({
                   <div className="mp-lang-dropdown" onClick={() => setLangOpen(true)}>
                     <span className="mp-lang-flag">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.flag||"🌍"}</span>
                     <span className="mp-lang-name">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.name||"English"}</span>
-                    <span className="mp-lang-arrow">▾</span>
+                    <span className="mp-lang-arrow"><Icon name="chevronDown" size={14} color="var(--muted)" /></span>
                   </div>
                 ) : (
                   <div className="mp-lang-list">

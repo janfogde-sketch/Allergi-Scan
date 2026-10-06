@@ -548,6 +548,7 @@ export default function ResultScreen({
   const renderProductHero = () => {
     const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
     const fav = isFavorite(scanResult.code);
+    const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
     // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
     // en strimmel øverst med ikon + status, i stedet for en selvstændig boks under
     // kortet der bare gentog det samme. Se SECURITY/DESIGN-diskussion i PR'en for baggrund.
@@ -616,14 +617,17 @@ export default function ResultScreen({
               </h1></>}
             </div>
             <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-              <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} onClick={() => toggleFavorite(scanResult)}
-                style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
-                <Icon name="heart" size={16} color={fav ? "var(--red)" : "var(--ink2)"} />
+              <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} aria-pressed={fav} onClick={() => toggleFavorite(scanResult)}
+                style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:44, height:44 }}>
+                <Icon name="heart" size={18} color={fav ? "var(--red)" : "var(--ink2)"} />
               </button>
-              <button aria-label="Del produkt" onClick={() => { if(navigator.share) navigator.share({ title:scanResult.name, text:headlineText }); }}
-                style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:36, height:36 }}>
-                <Icon name="share" size={16} color="var(--ink2)" />
-              </button>
+              {/* F4-9: Del vises kun, når telefonen faktisk kan dele — ellers gjorde knappen intet. */}
+              {canShare && (
+                <button aria-label="Del produkt" onClick={() => navigator.share({ title:scanResult.name, text:headlineText })}
+                  style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:44, height:44 }}>
+                  <Icon name="share" size={18} color="var(--ink2)" />
+                </button>
+              )}
             </div>
           </div>
           {topNames && (
@@ -807,7 +811,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <span style={UI.ufs9_op06}>›</span>
+                  <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <Icon name="chevronRight" size={11} color="var(--muted)" />
                 </div>
               ) : null;
             })}
@@ -821,7 +825,7 @@ export default function ResultScreen({
                 <div key={k} className="tag"
                   onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
                   style={{ background:"var(--surface)", color:"var(--muted)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  spor: <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <span style={UI.ufs9_op06}>›</span>
+                  spor: <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <Icon name="chevronRight" size={11} color="var(--muted)" />
                 </div>
               ) : null;
             })}
@@ -862,7 +866,7 @@ export default function ResultScreen({
                 <span style={UI.uffmonospac}>{e}</span>
                 {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name.slice(0,20)}{name.length>20?"…":""}</span>}
                 {isWatched && <Icon name="warning" size={10} color="var(--amber)" />}
-                <span style={{ fontSize:9, opacity:.5 }}>›</span>
+                <Icon name="chevronRight" size={10} color="var(--muted)" />
               </span>
             );
           })}

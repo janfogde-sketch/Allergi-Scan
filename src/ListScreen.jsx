@@ -262,7 +262,7 @@ export default function ListScreen({
             — begge 40px høje. Skriftstørrelsen i feltet er bevidst 16px
             (under 16px zoomer iOS Safari ind ved fokus). */}
         <div className="input-row" style={{ marginBottom:0 }}>
-          <input className="field" placeholder="Søg eller skriv en vare…"
+          <input className="field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
             style={{ height:40, padding:"0 12px" }}
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}

@@ -800,11 +800,20 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
           style={{ width:44, height:44, minHeight:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, lineHeight:1,
             background: added ? "var(--green)" : "var(--surface2)", color: added ? "var(--on-green)" : "var(--ink2)",
             border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s" }}
-          onClick={handleAddToList}>+</button>
+          onClick={handleAddToList}><Icon name="plus" size={18} color={added ? "var(--on-green)" : "var(--ink2)"} /></button>
       </div>
     </div>
   );
 });
+
+// ── Luk-knap (klump 6b, F3-6/F4-9): ikon i stedet for "×", 44 px trykflade ─────
+export function CloseButton({ onClick, label = "Luk", plain = false }) {
+  return (
+    <button type="button" className={`icon-btn${plain ? " is-plain" : ""}`} aria-label={label} onClick={onClick}>
+      <Icon name="x" size={18} color={plain ? "var(--muted)" : "var(--ink)"} />
+    </button>
+  );
+}
 
 // ── Fælles "vælg liste"-ark ──────────────────────────────────────────────────
 // Vises når en bruger med mere end én indkøbsliste tilføjer et produkt, så de
@@ -825,8 +834,7 @@ export function ListPickerSheet({ lists, onChoose, onCancel }) {
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
           <div id={titleId} style={UI.ufs18_fw900_cink}>Tilføj til hvilken liste?</div>
-          <button onClick={onCancel} aria-label="Luk"
-            style={{ background:"var(--surface)", border:"none", borderRadius:"50%", width:32, height:32, cursor:"pointer", fontSize:18, color:"var(--ink)" }}>×</button>
+          <CloseButton onClick={onCancel} />
         </div>
         {lists.map(l => (
           <button type="button" key={l.id} onClick={() => onChoose(l.id)}

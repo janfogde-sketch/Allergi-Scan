@@ -606,7 +606,13 @@ body::-webkit-scrollbar{display:none;}
 .chip-check{margin-left:auto;width:16px;height:16px;background:var(--green-accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ink);flex-shrink:0;}
 .tags{display:flex;flex-wrap:wrap;gap:6px;}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
-.tag-x{cursor:pointer;opacity:.4;font-size:13px;padding:4px 6px;margin:-4px -6px -4px 0;border-radius:50%;}.tag-x:hover{opacity:.8;background:rgba(21,32,26,.06);}
+.tag-x{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:-4px -6px -4px 0;padding:0;border:none;border-radius:50%;background:none;color:inherit;cursor:pointer;opacity:.6;}.tag-x::before{content:"";position:absolute;inset:-10px;}.tag-x:active{background:rgba(21,32,26,.08);}
+/* Klump 6b (6. okt. 2026): runde ikon-knapper (luk, ryd) og tekstlinks tilbage, altid mindst 44 px trykflade. */
+.icon-btn{width:44px;height:44px;min-height:44px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--ink);cursor:pointer;transition:transform .15s;}
+.icon-btn:active{transform:scale(.97);}
+.icon-btn.is-plain{background:none;border:none;}
+.link-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 4px;background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;color:var(--muted);}
+.link-back:active{transform:scale(.97);}
 
 /* ── BADGES ── */
 .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;letter-spacing:.2px;}
@@ -956,7 +962,14 @@ body::-webkit-scrollbar{display:none;}
 .scan-hero-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:400;}
 
 /* ── SEARCH ── */
-.filter-chip{padding:6px 12px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
+/* Klump 6b (6. okt. 2026): rækker og chips er nu <button>; nulstil browserens knap-stil, så de ser ud som før. */
+button.filter-chip,button.hist-row,button.menu-item,button.row-btn{font-family:var(--f);text-align:left;width:100%;appearance:none;}
+button.filter-chip{width:auto;}
+.row-btn{background:none;border:none;padding:0;margin:0;font-family:var(--f);color:inherit;cursor:pointer;width:100%;text-align:left;appearance:none;}
+.row-btn:disabled{cursor:default;}
+.seg-btn{flex:1;text-align:center;padding:10px 8px;min-height:44px;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s;}
+.seg-btn:active{transform:scale(.97);}
+.filter-chip{padding:9px 14px;min-height:40px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .filter-chip:hover{border-color:var(--border2);color:var(--ink);}
 .filter-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
 .product-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
@@ -1029,7 +1042,8 @@ body::-webkit-scrollbar{display:none;}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
 .menu-item:hover{opacity:.75;}
 .menu-item:last-child{border-bottom:none;}
-.menu-profile-card{cursor:pointer;transition:opacity .1s;}
+.menu-profile-card{cursor:pointer;transition:transform .15s;font-family:var(--f);text-align:left;width:calc(100% - 20px);appearance:none;}
+.menu-profile-card:active{transform:scale(.99);}
 .menu-profile-card:hover{opacity:.85;}
 .hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .hist-dot.safe{background:var(--green-accent);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
@@ -1190,7 +1204,7 @@ body::-webkit-scrollbar{display:none;}
 .mp-lang-dropdown:hover{border-color:var(--green);}
 .mp-lang-flag{font-size:20px;flex-shrink:0;}
 .mp-lang-name{flex:1;font-size:14px;font-weight:700;color:var(--ink);}
-.mp-lang-arrow{font-size:14px;color:var(--muted);}
+.mp-lang-arrow{display:inline-flex;color:var(--muted);}
 .mp-lang-list{background:var(--surface);border:1.5px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:14px;max-height:320px;overflow-y:auto;}
 .mp-lang-opt{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border);}
 .mp-lang-opt:last-child{border-bottom:none;}
