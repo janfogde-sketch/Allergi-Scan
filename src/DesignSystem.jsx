@@ -94,7 +94,7 @@ export function TextLink({ children, onClick, disabled = false, variant = "green
       style={{
         ...(isMuted ? {
           background: "none", border: "none", cursor: "pointer",
-          fontFamily: "var(--f)", fontSize: 13, fontWeight: 600, color: "var(--muted2)",
+          fontFamily: "var(--f)", fontSize: 13, fontWeight: 600, color:"var(--muted)",
           textDecoration: "underline", textUnderlineOffset: 2, padding: "6px",
         } : {}),
         ...(block ? { display: "block", width: "100%", textAlign: "center", marginTop: 12 } : {}),

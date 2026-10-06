@@ -275,7 +275,7 @@ export default function RecipesScreen({
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
                   {(amtDisplay || unit) && (
-                    <div style={{ fontSize:12, fontWeight:700, color:"var(--muted2)", textAlign:"right" }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"var(--muted)", textAlign:"right" }}>
                       {amtDisplay}{amtDisplay && unit ? " " : ""}{unit}
                     </div>
                   )}
@@ -355,7 +355,7 @@ export default function RecipesScreen({
           )}
           {customAllerg?.length > 0 && (
             <div style={{ fontSize:10, color:"var(--muted)", marginBottom:12, lineHeight:1.4 }}>
-              Dine egne tilføjede allergier tjekkes via fritekst-søgning i opskriftens ingrediensliste — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+              Dine egne tilføjede allergier tjekkes via fritekstsøgning i opskriftens ingrediensliste — det kan være sværere for os at fange end vores faste allergener. Dobbelttjek altid selv, og sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
             </div>
           )}
 
@@ -376,7 +376,7 @@ export default function RecipesScreen({
 
           {/* Beskrivelse */}
           {r.description && (
-            <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:16, padding:"12px 14px", background:"var(--paper2)", borderRadius:10 }}>
+            <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:16, padding:"12px 14px", background:"var(--paper2)", borderRadius:10 }}>
               {r.description}
             </div>
           )}
@@ -444,7 +444,7 @@ export default function RecipesScreen({
                       <div className="step-circle" style={{ background: done ? "var(--green)" : "var(--surface2)", border: done ? "none" : "1.5px solid var(--border2)" }}>
                         {done
                           ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3"><path strokeLinecap="round" d="M5 13l4 4L19 7"/></svg>
-                          : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted2)" }}>{i+1}</span>
+                          : <span style={{ fontSize:12, fontWeight:800, color:"var(--muted)" }}>{i+1}</span>
                         }
                       </div>
                       <div style={{ flex:1, fontSize:13, color:"var(--ink)", lineHeight:1.6, paddingRight:8, textDecoration: done ? "line-through" : "none" }}>
@@ -790,7 +790,7 @@ export default function RecipesScreen({
                 : <div style={UI.utacenter}>
                     <div style={{ display:"flex", justifyContent:"center", marginBottom:6 }}><Icon name="camera" size={28} color="var(--muted2)" /></div>
                     <div style={UI.muted13}>Tryk for at vælge billede</div>
-                    <div style={{ fontSize:11, color:"var(--muted2)" }}>Valgfrit</div>
+                    <div style={{ fontSize:11, color:"var(--muted)" }}>Valgfrit</div>
                   </div>
               }
             </div>
@@ -917,7 +917,7 @@ export default function RecipesScreen({
                         onClick={() => setSubmitIngredients(submitIngredients.map((x,i) =>
                           i===idx ? {...x, allergens:[...(x.allergens||[]),a.id], showPicker:false} : x
                         ))}
-                        style={{ padding:"3px 10px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--muted2)", fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                        style={{ padding:"3px 10px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--muted)", fontSize:10, fontWeight:700, cursor:"pointer" }}>
                         <AllergenGlyph a={a} size={10} /> {a.label}
                       </div>
                     ))}

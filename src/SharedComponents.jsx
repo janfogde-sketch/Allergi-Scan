@@ -2,7 +2,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileMatchLabel, imageAttribution } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileWarnLabel, profileMatchLabel, imageAttribution } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
@@ -438,7 +438,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   // Mindre "washed out" grundtekst (krav 8) — kun i den nye tilstand, så
   // RecipesScreen.jsx's eksisterende brug (ingen highlightRules) er
   // pixel-identisk uændret.
-  const baseColor = useRules ? "var(--ink2)" : "var(--muted2)";
+  const baseColor = useRules ? "var(--ink2)" : "var(--muted)";
 
   return (
     <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 2px", lineHeight:1.6 }}>
@@ -723,12 +723,12 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
     });
     const conflict = profileConflictLabel(results);
     status = conflict ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
-    statusLabel = conflict || (status === "warn" ? "Kan ikke afgøres sikkert" : profileMatchLabel(profiles));
+    statusLabel = conflict || (status === "warn" ? profileWarnLabel(results) : profileMatchLabel(profiles));
     reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
   } else {
     const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds, effectiveLevels);
     status = cmp.status;
-    statusLabel = status==="safe" ? profileMatchLabel([]) : status==="danger" ? "Konflikt" : "Kan ikke afgøres sikkert";
+    statusLabel = status==="safe" ? profileMatchLabel([]) : status==="danger" ? "Allergi-advarsel" : cmp.matchedWarning.length ? "Kan indeholde spor" : "Kan ikke vurderes";
     reasonChips = [
       ...cmp.matchedDanger.map(id => `Indeholder ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
       ...cmp.matchedWarning.map(id => `Spor af ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
@@ -856,7 +856,7 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
           {danger && <Icon name="warning" size={20} color="var(--red)" />}
           <div>
             <div style={{ fontSize:15.5, fontWeight:800, color:"var(--ink)", marginBottom: message ? 4 : 0 }}>{title}</div>
-            {message && <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5 }}>{message}</div>}
+            {message && <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>{message}</div>}
           </div>
         </div>
         <div style={{ display:"flex", gap:8 }}>

@@ -10,6 +10,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { forgetPushTokenForDevice } from "./usePush.js";
+import { reportError } from "./errorReporter.js";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
 // PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
@@ -414,7 +415,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
-        setAuthError("Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
+        setAuthError("Login virker ikke på denne adresse. Brug eatsafe.dk."); setAuthLoading(false); return;
       }
       const data = JSON.parse(text);
       if (!res.ok) {
@@ -502,7 +503,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       const text = await res.text();
       if (text === "Host not in allowlist") {
-        setAuthError("Supabase er ikke konfigureret til dette domæne."); setAuthLoading(false); return;
+        setAuthError("Login virker ikke på denne adresse. Brug eatsafe.dk."); setAuthLoading(false); return;
       }
       const data = JSON.parse(text);
       if (!res.ok) {
@@ -699,7 +700,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
     } catch (e) {
-      setAuthError(`${provider} login fejlede: ${e.message}`);
+      reportError(e, { source: "oauth-start" });
+      setAuthError(`Login med ${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : provider} mislykkedes. Prøv igen.`);
       setAuthLoading(false);
     }
   }, []);

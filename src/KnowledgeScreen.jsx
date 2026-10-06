@@ -5,6 +5,7 @@ import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { UI } from "./styleUtils.js";
+import { reportError } from "./errorReporter.js";
 
 // Redesignet 26. sept. 2026 (brugerfeedback: "match resten af appens rene
 // funktionelle design") — emoji-glyffer erstattet med Icon-bibliotekets
@@ -19,24 +20,24 @@ import { UI } from "./styleUtils.js";
 // selv). "Vidste du at" beholder sin peach — den kategori viser aldrig
 // risikoniveauer, så der er intet reelt kollisionsscenarie der.
 const CATEGORIES = [
-  { id:"allergen",       icon:"shield",   label:"Allergener",      color:"var(--red)",   bg:"rgba(255,82,82,.10)" },
-  { id:"ingredient",     icon:"package",  label:"Ingredienser",    color:"var(--blue)",  bg:"rgba(96,165,250,.10)" },
-  { id:"e_number",       icon:"hash",     label:"E-numre",         color:"var(--amber)", bg:"rgba(255,186,59,.10)" },
-  { id:"diet",           icon:"utensils", label:"Diæter",          color:"var(--green)", bg:"rgba(14,143,90,.10)" },
-  { id:"cross_reaction", icon:"refresh",  label:"Krydsreaktioner", color:"var(--blue)",  bg:"var(--blue-lt)" },
-  { id:"fun_fact",       icon:"bulb",     label:"Vidste du at",    color:"#E8A87C",      bg:"rgba(232,168,124,.10)" },
+  { id:"allergen",       icon:"shield",   label:"Allergener",      color:"var(--red)",   bg:"rgba(255,82,82,.10)", border:"var(--red-md)" },
+  { id:"ingredient",     icon:"package",  label:"Ingredienser",    color:"var(--blue)",  bg:"rgba(96,165,250,.10)", border:"var(--blue-md)" },
+  { id:"e_number",       icon:"hash",     label:"E-numre",         color:"var(--amber)", bg:"rgba(255,186,59,.10)", border:"var(--amber-md)" },
+  { id:"diet",           icon:"utensils", label:"Diæter",          color:"var(--green)", bg:"rgba(14,143,90,.10)", border:"var(--green-mid)" },
+  { id:"cross_reaction", icon:"refresh",  label:"Krydsreaktioner", color:"var(--blue)",  bg:"var(--blue-lt)", border:"var(--blue-md)" },
+  { id:"fun_fact",       icon:"bulb",     label:"Vidste du at",    color:"#E8A87C",      bg:"rgba(232,168,124,.10)", border:"rgba(232,168,124,.20)" },
 ];
 // "FAQ" → "Ofte stillede spørgsmål" (26. sept. 2026, brugerfeedback) — egen
 // hjælpesektion i stedet for en kategori-flise, men stadig en del af
 // CAT_MAP så kategori-labelen på en FAQ-detaljeside ("OFTE STILLEDE
 // SPØRGSMÅL") kan slås op ét sted, ikke en selvstændig kopi af opslaget.
-const FAQ_CATEGORY = { id:"faq", icon:"message", label:"Ofte stillede spørgsmål", color:"var(--neutral)", bg:"rgba(148,163,184,.10)" };
+const FAQ_CATEGORY = { id:"faq", icon:"message", label:"Ofte stillede spørgsmål", color:"var(--neutral)", bg:"rgba(148,163,184,.10)", border:"var(--border2)" };
 // Faglig struktur (30. sept. 2026): "Ingredienser" indeholder kun det, der kan
 // stå i en ingrediensliste (råvarer, forarbejdede ingredienser, krydderier,
 // saucer brugt som ingrediens). Færdige retter, bagværk, slik, drikkevarer og
 // færdigprodukter ligger i "dish" — ikke en flise i griddet, men de kan stadig
 // findes via søgning og relaterede opslag.
-const DISH_CATEGORY = { id:"dish", icon:"tag", label:"Retter og produkter", color:"var(--neutral)", bg:"rgba(148,163,184,.10)" };
+const DISH_CATEGORY = { id:"dish", icon:"tag", label:"Retter og produkter", color:"var(--neutral)", bg:"rgba(148,163,184,.10)", border:"var(--border2)" };
 const CAT_MAP = Object.fromEntries([...CATEGORIES, FAQ_CATEGORY, DISH_CATEGORY].map(c => [c.id, c]));
 
 // Risikoniveauer ("Høj risiko"/"Moderat"/"Lav risiko") er fjernet 30. sept.
@@ -68,7 +69,8 @@ const S = {
   // mellem alle sektioner (søg → kategorier → hjælp → udvalgte fakta).
   grid: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 },
   catBtn: { display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" },
-  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:c.bg, border:`1px solid ${c.color}33`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
+  catBtnActive: (c) => ({ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:c.bg, // Egen kant-token pr. kategori: "${c.color}33" gav "var(--red)33", som browseren afviser (F3-1).
+    border:`1px solid ${c.border || "var(--border2)"}`, borderRadius:12, cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }),
   catIconBox: (c) => ({ width:32, height:32, borderRadius:10, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
   catLabel: { fontSize:12, fontWeight:700, color:"var(--ink)" },
   catLabelActive: (c) => ({ fontSize:12, fontWeight:700, color:c.color }),
@@ -86,7 +88,7 @@ const S = {
   card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px", marginBottom:8, display:"flex", alignItems:"flex-start", gap:10, cursor:"pointer" },
   cardIconBox: (c) => ({ width:32, height:32, borderRadius:10, background:c.bg||"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }),
   cardTitle: { fontSize:14, fontWeight:700, color:"var(--ink)", lineHeight:1.3, marginBottom:2 },
-  cardSummary: { fontSize:12, color:"var(--muted2)", lineHeight:1.45, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
+  cardSummary: { fontSize:12, color:"var(--muted)", lineHeight:1.45, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
   cardStatus: { display:"inline-block", marginTop:6, fontSize:11, fontWeight:600, color:"var(--ink2)", background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:100, padding:"2px 8px" },
   cardChevron: { alignSelf:"center", flexShrink:0, display:"flex" },
   // "Udvalgte fakta" på forsiden: lavere kort, lettere orange tone og
@@ -187,7 +189,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
           data.forEach(r => { if(r.category) c[r.category] = (c[r.category]||0)+1; });
           setCounts(c);
         }
-      } catch (e) { setError(`Counts: ${e.message}`); }
+      } catch (e) { reportError(e, { source: "knowledge-counts" }); setError("Leksikonet kunne ikke hentes. Tjek din forbindelse, og prøv igen."); }
       try {
         const facts = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.fun_fact&limit=3`);
         if (Array.isArray(facts)) setFunFacts(facts);
@@ -243,7 +245,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
     try {
       const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?category=eq.${cat}&order=sort_order.asc,title.asc&limit=200`);
       setEntries(Array.isArray(data) ? data : []);
-    } catch (e) { setError(`Load: ${e.message}`); setEntries([]); }
+    } catch (e) { reportError(e, { source: "knowledge-category" }); setError("Emnerne kunne ikke hentes. Tjek din forbindelse, og prøv igen."); setEntries([]); }
     setLoading(false);
   }, [accessToken, doFetch]);
 
@@ -257,7 +259,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
       const catFilter = selectedCategory ? `&category=eq.${selectedCategory}` : (DIETS_ENABLED ? "" : "&category=neq.diet");
       const data = await doFetch(`${SUPABASE_URL}/rest/v1/knowledge_base?or=(title.ilike.${enc},summary.ilike.${enc})${catFilter}&order=category.asc,sort_order.asc&limit=50`);
       setEntries(Array.isArray(data) ? data : []);
-    } catch (e) { setError(`Søg: ${e.message}`); setEntries([]); }
+    } catch (e) { reportError(e, { source: "knowledge-search" }); setError("Søgningen mislykkedes. Tjek din forbindelse, og prøv igen."); setEntries([]); }
     setLoading(false);
   }, [accessToken, selectedCategory, doFetch]);
 
@@ -484,7 +486,7 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
       {showList && (
         <div style={{ display:"flex", alignItems:"center", gap:10, minHeight:32, marginBottom:12 }}>
           {selectedCategory && (
-            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"inline-flex", alignItems:"center", gap:6, height:32, padding:"0 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.color}33`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)", lineHeight:1 }}>
+            <button onClick={() => handleCatSelect(null)} aria-label={`Ryd kategori-filter: ${selectedCat?.label}`} style={{ display:"inline-flex", alignItems:"center", gap:6, height:32, padding:"0 12px", background:selectedCat?.bg, border:`1px solid ${selectedCat?.border || "var(--border2)"}`, borderRadius:100, cursor:"pointer", fontSize:12, fontWeight:700, color:selectedCat?.color, fontFamily:"var(--f)", lineHeight:1 }}>
               <Icon name={selectedCat?.icon} size={12} color={selectedCat?.color} /> {selectedCat?.label} <span aria-hidden="true" style={{ fontSize:14, marginLeft:2 }}>×</span>
             </button>
           )}

@@ -190,7 +190,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
       {household.map(m => (
         <div key={`h-${m.id}`} className="family-member">
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-            <div className="fm-avatar" style={{ background:"var(--green)", color:"var(--ink)" }}>{initials(m.name || m.email)}</div>
+            <div className="fm-avatar" style={{ background:"var(--green)", color:"var(--on-green)" }}>{initials(m.name || m.email)}</div>
             <div style={UI.flex1}>
               <div style={{ fontWeight:800, fontSize:15 }}>{m.name || m.email}</div>
               <div style={UI.muted11mt2}>{m.invitedByMe ? "Har egen konto · Du inviterede" : "Har egen konto · Inviterede dig"}</div>
@@ -338,7 +338,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               addMember();
               if (valid) setFamilyAddMode(null);
             }}
-            addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj familiemedlem"}
+            addLabel={editingMemberId ? "Gem ændringer" : "+ Tilføj børneprofil"}
           />
           {editingMemberId && (
             <div style={{ marginTop:16, paddingTop:12, borderTop:"1px solid var(--border)", display:"flex", justifyContent:"center" }}>

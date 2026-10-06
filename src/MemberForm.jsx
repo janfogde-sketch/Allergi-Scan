@@ -80,7 +80,7 @@ export const MemberForm = ({
 
       {/* Navn * */}
       <InputField label="Navn" required style={{ marginBottom:17 }}
-        placeholder="Fx. Mia" value={name} onChange={e => setName(e.target.value)} />
+        placeholder="Fx Mia" value={name} onChange={e => setName(e.target.value)} />
 
       {/* Alder * — vælger med 0-17 år (6. okt. 2026, Bjørn: "– | Vælg alder | +" uden startværdi var ikke intuitiv). Gemmes internt som
           fødselsår (birthYear-prop uændret). */}
@@ -196,7 +196,7 @@ export const MemberForm = ({
           onAdd();
           setAttempted(false);
         }}>
-        {addLabel || "+ Tilføj familiemedlem"}
+        {addLabel || "+ Tilføj børneprofil"}
       </PrimaryButton>
       </>
     </div>
@@ -229,7 +229,7 @@ export const CategorySelect = ({ value, onChange, options, placeholder="Alle kat
         ))}
       </select>
       {/* Pile-ikon */}
-      <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted2)", fontSize:11 }}>▾</div>
+      <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", color:"var(--muted)", fontSize:11 }}>▾</div>
     </div>
   );
 };

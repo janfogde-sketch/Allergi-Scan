@@ -48,11 +48,17 @@ paths:
                          ikke accent
 --on-green:#FFFFFF
 --red:#C8402E (+lt/md)   fare
---amber:#B5791A (+lt/md) advarsel
+--amber:#9A6514 (+lt/md) advarsel (mørkere 6. okt. 2026: 4,9:1 med hvid tekst;
+                         tekst på amber-flade bruger --on-amber)
 --blue:#3A6EA5 (+lt/md)  reel, distinkt slate-blå sekundærfarve (IKKE aliaset
                          til grøn) — brugt semantisk til "sekundær info/accent"
                          (.greeting-eyebrow, .home-tip, .info-box, .share-bar)
---muted / --muted2
+--muted (.66)            hjælpetekst, 5,4:1 på hvid
+--muted2 (.40)           KUN kanter, ikoner og deaktiveret tekst (2,5:1 er for
+                         svagt til tekst; brug --muted)
+--field-border           inputfelters kant, mindst 3:1 (WCAG 1.4.11)
+--sh-green               skygge under primærknapper
+--neutral:#5C6A61        "Kan ikke vurderes" og labels; --unknown er et alias
 --surface / -2 / -3
 --border / -2
 --r:12px (default radius), --sh / --sh2 (skygge-tokens)

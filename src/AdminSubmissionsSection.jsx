@@ -106,7 +106,7 @@ export default function AdminSubmissionsSection({
                   <div style={{ fontSize:13.5, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{normalizeProductName(s.ai_parsed_data?.name || s.product_name) || "Ukendt produkt"}</div>
                   {isEdit && <StatusChip tone="amber">Rettelse</StatusChip>}
                 </div>
-                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   EAN {s.ean} · {new Date(s.created_at).toLocaleString("da-DK", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}
                 </div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:5 }}>

@@ -173,7 +173,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
   const emailOk = isValidInviteEmail(email);
   // Metodevalg: den valgte har lys grøn baggrund og grøn kant, den anden er neutral.
   const TAB = on => ({ ...BTN, flex:1, minHeight:44, background: on ? "var(--green-selected-bg)" : "var(--surface)", color:"var(--ink)", border: on ? "1.5px solid var(--green)" : "1px solid var(--border2)" });
-  const HINT = { fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginBottom:12 };
+  const HINT = { fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginBottom:12 };
 
   return (
     <div className="card" style={UI.mb12}>

@@ -23,7 +23,7 @@ export const DEMO_SLIDES = [
           <div style={{ width:40, height:40, background:"var(--surface2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20 }}>🥛</div>
           <div style={UI.flex1}>
             <div style={UI.boldInk13}>Arla Letmælk 1L</div>
-            <div style={{ fontSize:10, color:"var(--muted2)" }}>EAN 5710085008001 · Arla Foods</div>
+            <div style={{ fontSize:10, color:"var(--muted)" }}>EAN 5710085008001 · Arla Foods</div>
           </div>
           <div style={{ padding:"6px 12px", borderRadius:20, background:"var(--red-md)", border:"1px solid var(--red-md)", fontSize:11, fontWeight:800, color:"var(--red)" }}>⚠ FARE</div>
         </div>
@@ -48,7 +48,7 @@ export const DEMO_SLIDES = [
             <div key={n} style={{ background:"var(--surface)", borderRadius:10, padding:"10px 10px", textAlign:"center", border:"1px solid var(--border)", flex:1 }}>
               <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 6px" }}>{n[0]}</div>
               <div style={{ fontSize:9, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{n}</div>
-              <div style={{ fontSize:8, color:"var(--muted2)", lineHeight:1.3 }}>{a}</div>
+              <div style={{ fontSize:8, color:"var(--muted)", lineHeight:1.3 }}>{a}</div>
             </div>
           ))}
         </div>
@@ -71,7 +71,7 @@ export const DEMO_SLIDES = [
             <div style={UI.muted10}>Indeholder laktose</div>
           </div>
         </div>
-        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>✓ Sikre alternativer</div>
+        <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"1px", marginBottom:6 }}>✓ Sikre alternativer</div>
         {[["Oatly Havregrød","Havredrik · Laktosefri"],["Alpro Soya","Soyadrik · Laktosefri"]].map(([name,tag]) => (
           <div key={name} style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:8, padding:"8px 10px", marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
             <span style={UI.fs16}>✅</span>
@@ -169,10 +169,10 @@ export const DEMO_SLIDES = [
         </div>
         <div style={UI.ufs13_fw800_cink_mb3}>Sono allergico al latte e al glutine.</div>
         <div style={{ fontSize:11, color:"var(--muted)", fontStyle:"italic", marginBottom:10 }}>"so-no al-ler-JI-ko al LAT-te e al glu-TI-ne"</div>
-        <div style={{ fontSize:10, color:"var(--muted2)", marginBottom:6 }}>Tilgængeligt på:</div>
+        <div style={{ fontSize:10, color:"var(--muted)", marginBottom:6 }}>Tilgængeligt på:</div>
         <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
           {["🇩🇰","🇬🇧","🇩🇪","🇫🇷","🇪🇸","🇵🇹","🇳🇱","🇸🇪"].map(f => <span key={f} style={UI.fs18}>{f}</span>)}
-          <span style={{ fontSize:11, color:"var(--muted2)", alignSelf:"center" }}>+9 mere</span>
+          <span style={{ fontSize:11, color:"var(--muted)", alignSelf:"center" }}>+9 mere</span>
         </div>
       </div>
     ),

@@ -597,7 +597,7 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
     const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
       : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0 || unknown.length > 0) ? "warn"
       : "safe";
-    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, customMatches };
+    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, customMatches, dietFails, eNumberMatches };
   });
 }
 
@@ -611,8 +611,19 @@ export function profileConflictLabel(results, { maxNames = Infinity, manyText = 
   const danger = results.filter(r => r.status === "danger").map(first);
   if (danger.length === 0) return null;
   const warn = results.filter(r => r.status === "warn").map(first);
-  const main = danger.length <= maxNames ? `Konflikt for ${danger.join(", ")}` : manyText;
+  const main = danger.length <= maxNames ? `Allergi-advarsel for ${danger.join(", ")}` : manyText;
   return warn.length ? `${main} · advarsel for ${warn.join(", ")}` : main;
+}
+
+// Statuslinje-tekst, når ingen har en allergi-advarsel, men mindst én profil har en
+// advarsel (F5-7, 6. okt. 2026): samme ord som resultatsidens computeTopStatus, så et
+// produkt med spor også hedder "Kan indeholde spor" i listerne og aldrig "sikkert".
+export function profileWarnLabel(results) {
+  const warn = (results || []).filter(r => r.status === "warn");
+  if (warn.length === 0) return null;
+  if (warn.some(r => (r.warning || []).length > 0)) return "Kan indeholde spor";
+  if (warn.some(r => (r.dietFails || []).length > 0 || (r.eNumberMatches || []).length > 0)) return "Passer ikke til dine valg";
+  return "Kan ikke vurderes";
 }
 
 // Statuslinje-tekst når INGEN profil har konflikt eller advarsel (indkøbsliste,

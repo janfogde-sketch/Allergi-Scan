@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileMatchLabel } from "./helpers.js";
+import { normalizeProductFlagsFor, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -150,8 +150,8 @@ export default function ListScreen({
   // ── EatSafe-status pr. vare på listen (25. sept. 2026, brugerfeedback) ──────
   // Henter produktdata for varer med et EAN (dvs. tilføjet fra søgning/scan,
   // ikke en fritekst-vare) én gang pr. unikt EAN, så en diskret statuslinje
-  // under varenavnet kan vise "Passer til …"/"Konflikt for X"/"Kan
-  // ikke afgøres sikkert" — samme sikkerhedsberegning som ResultScreen bruger
+  // under varenavnet kan vise "Passer til …"/"Allergi-advarsel for X"/"Kan
+  // indeholde spor" — samme sikkerhedsberegning som ResultScreen bruger
   // efter et scan (buildActiveProfileList/computeProfileResults, se
   // helpers.js), IKKE en selvstændig kopi af logikken.
   const [productDetails, setProductDetails] = useState({});
@@ -187,7 +187,7 @@ export default function ListScreen({
     });
     const conflict = profileConflictLabel(results);
     if (conflict) return { status:"danger", text: conflict };
-    if (results.some(r => r.status === "warn")) return { status:"warn", text: "Kan ikke afgøres sikkert" };
+    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results) };
     // Ordlyden følger antallet af valgte profiler (1. okt. 2026, brugerrapport:
     // "Matcher alle profiler" gav ikke mening for én person uden familie).
     return { status:"safe", text: profileMatchLabel(activeProfileList) };
@@ -205,7 +205,7 @@ export default function ListScreen({
   // kan vælge at se dem. Bruger samme per-profil-beregning som resten af
   // appen (buildActiveProfileList/computeProfileResults, helpers.js) i
   // stedet for den tidligere flade compareAllergens(activeIds), så "farlig"
-  // her betyder præcis det samme som "Konflikt for X" nedenfor.
+  // her betyder præcis det samme som "Allergi-advarsel for X" nedenfor.
   const itemResultsWithSafety = itemResults.map(p => {
     const ingredientsText = p.ingredients || p.ingredients_text || "";
     const results = computeProfileResults(activeProfileList, {

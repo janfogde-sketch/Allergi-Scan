@@ -185,7 +185,7 @@ export default function FeedbackModal({
                   <div style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.45, marginTop:8 }}>
                     {hasCrashData
                       ? "Vi vedhæfter automatisk den seneste tekniske fejl, så du ikke selv behøver beskrive de tekniske detaljer."
-                      : "Vi fandt ingen nylig crash-log på enheden. Beskriv gerne, hvad du gjorde lige før appen lukkede."}
+                      : "Vi fandt ingen nylig fejl på enheden. Beskriv gerne, hvad du gjorde lige før appen lukkede."}
                   </div>
                 )}
               </div>
@@ -268,7 +268,7 @@ export default function FeedbackModal({
                             <div key={i}>
                               <span style={{ color:"var(--green-text)" }}>[{t.id}]</span>{" "}
                               <span style={UI.ucink}>{t.step}</span>{" "}
-                              <span style={{ color:"var(--muted2)" }}>{t.ts?.slice(11,19)}</span>
+                              <span style={{ color:"var(--muted)" }}>{t.ts?.slice(11,19)}</span>
                             </div>
                           ))}
                         </div>

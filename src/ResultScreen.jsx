@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, findProductOnList, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, imageAttribution } from "./helpers.js";
+import { glutenCerealsIn, allergenChoiceLabel, compareENumbers, checkDietCompatibility, verifiedBadge, STORE_SOURCES, makeHeaders, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, findProductOnList, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, imageAttribution } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, SafetyRow, ListPickerSheet, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -106,7 +106,7 @@ export default function ResultScreen({
   const overallHeadline = !isMultiProfile ? scanResult.headline
     : overallStatus === "safe" ? "Passer til alle"
     : overallStatus === "danger" ? "Passer ikke til alle"
-    : "Kan ikke bekræftes for alle";
+    : profileWarnLabel(profileResults);
 
   // ── FINAL PRODUCT RESULT PAGE — dynamisk, kategoriseret statuslogik (28.
   // sept. 2026) ──────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ export default function ResultScreen({
     ...findings.allergyMatches.map(m => ({
       keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
       category: "allergy", label: m.label,
-      reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label} — du er allergisk.` : `Matcher din valgte ${m.label}-allergi.`,
+      reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label} — du er allergisk.` : `Matcher dit valg: ${m.label}.`,
     })),
     ...findings.intoleranceMatches.map(m => ({
       keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
@@ -198,7 +198,7 @@ export default function ResultScreen({
       // FORBEDR PRODUKTSIDEN (28. sept. 2026) samler allergi+intolerance i
       // én rød sundhedsadvarsel-behandling overalt på siden, se topStatus.
       category: "allergy", label: m.label,
-      reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label}.` : `Matcher din valgte ${m.label}.`,
+      reason: m.severity === "traces" ? `Kan indeholde spor af ${m.label}.` : `Matcher dit valg: ${m.label}.`,
     })),
     // Spor er gule (ikke røde): kun direkte indhold er en allergi-advarsel
     ...findings.traceMatches.map(m => ({
@@ -307,7 +307,7 @@ export default function ResultScreen({
         <Icon name={icon} size={13} color={color} />
         <div style={{ fontSize:12.5, lineHeight:1.4 }}>
           <span style={{ fontWeight:700, color:"var(--ink)" }}>{label}</span>
-          {reason && <div style={{ color:"var(--muted2)", fontSize:11.5, marginTop:1 }}>{reason}</div>}
+          {reason && <div style={{ color:"var(--muted)", fontSize:11.5, marginTop:1 }}>{reason}</div>}
         </div>
       </div>
     );
@@ -422,7 +422,7 @@ export default function ResultScreen({
         <Icon name={hasIngredientsText ? "info" : "list"} size={20} color="var(--ink2)" />
         <div style={S.flex1}>
           <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>{hasIngredientsText ? "Oplysninger mangler" : "Ingrediensliste mangler"}</div>
-          <div style={{ fontSize:12.5, color:"var(--muted2)", lineHeight:1.5, marginTop:3 }}>
+          <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginTop:3 }}>
             {hasIngredientsText
               ? "Vi mangler allergenoplysninger og kan ikke kontrollere alle dine valg."
               : "Vi kan ikke kontrollere dine allergier og intolerancer uden ingredienslisten."}
@@ -475,7 +475,7 @@ export default function ResultScreen({
       id: "salt",
       label: "Højt saltindhold",
       check: (n) => n?.salt != null && parseFloat(n.salt) > 1.5,
-      reason: "Produktet indeholder over 1,5g salt per 100g. Høj saltindhold er ikke anbefalet til småbørn.",
+      reason: "Produktet indeholder over 1,5 g salt pr. 100 g. Højt saltindhold frarådes til småbørn.",
     },
     {
       id: "additives",
@@ -552,7 +552,7 @@ export default function ResultScreen({
     // profiler bruges fortsat den eksisterende, samlede tre-tilstands-status
     // (overallStatus/overallHeadline) — per-profil-detaljer vises separat
     // nedenfor (renderPersonOverview).
-    const verdictColor = cannotAssess ? "var(--unknown)" : isMultiProfile
+    const verdictColor = cannotAssess ? "var(--neutral)" : isMultiProfile
       ? ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)" }[overallStatus] || "var(--green)")
       : ({ danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)" }[topStatus.level] || "var(--green)");
     const verdictIcon = cannotAssess ? "info" : isMultiProfile ? (overallStatus === "safe" ? "check" : "warning") : topStatus.icon;
@@ -875,17 +875,19 @@ export default function ResultScreen({
   const renderNutrition = () => {
     const n = scanResult.nutrition;
     if (!n) return null;
+    // Danske tal med komma ("3,5 g"), ikke punktum (F5-10); værdierne er tal eller tekst fra Open Food Facts.
+    const num = (v) => { const x = Number(v); return Number.isFinite(x) ? x.toLocaleString("da-DK", { maximumFractionDigits: 2 }) : String(v); };
     const rows = [
-      ["Energi",          n.energy_kcal    ? `${n.energy_kcal} kcal`    : null],
-      ["Fedt",            n.fat     != null ? `${n.fat} g`               : null],
+      ["Energi",          n.energy_kcal    ? `${num(n.energy_kcal)} kcal`    : null],
+      ["Fedt",            n.fat     != null ? `${num(n.fat)} g`               : null],
       // "heraf" kun under en overrække der faktisk vises — ellers læses fx
       // "Fedt 32 g / — heraf sukker 58 g" som at fedtet er sukker.
-      [n.fat != null ? "— heraf mættet" : "Mættet fedt", n.saturated_fat != null ? `${n.saturated_fat} g` : null],
-      ["Kulhydrat",       n.carbohydrates != null ? `${n.carbohydrates} g` : null],
-      [n.carbohydrates != null ? "— heraf sukker" : "Sukkerarter", n.sugars != null ? `${n.sugars} g` : null],
-      ["Kostfibre",       n.fiber   != null ? `${n.fiber} g`             : null],
-      ["Protein",         n.protein != null ? `${n.protein} g`           : null],
-      ["Salt",            n.salt    != null ? `${n.salt} g`              : null],
+      [n.fat != null ? "— heraf mættet" : "Mættet fedt", n.saturated_fat != null ? `${num(n.saturated_fat)} g` : null],
+      ["Kulhydrat",       n.carbohydrates != null ? `${num(n.carbohydrates)} g` : null],
+      [n.carbohydrates != null ? "— heraf sukker" : "Sukkerarter", n.sugars != null ? `${num(n.sugars)} g` : null],
+      ["Kostfibre",       n.fiber   != null ? `${num(n.fiber)} g`             : null],
+      ["Protein",         n.protein != null ? `${num(n.protein)} g`           : null],
+      ["Salt",            n.salt    != null ? `${num(n.salt)} g`              : null],
     ].filter(([,v]) => v !== null);
     // Ingen brugbare næringsdata — skjul HELE sektionen (krav 10/13),
     // ikke en "hjælp os"-prompt som ved manglende ingredienser. Den
@@ -935,7 +937,7 @@ export default function ResultScreen({
           {altLoading && (
             <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
               <div style={UI.uw16_h16_bd2pxsolid_borgreen_br50_anspin7sli_shr0} />
-              <div style={UI.muted13}>Finder sikre alternativer…</div>
+              <div style={UI.muted13}>Finder alternativer…</div>
             </div>
           )}
           {!altLoading && alternatives.length > 0 && (
@@ -944,7 +946,7 @@ export default function ResultScreen({
                 <Icon name="check" size={18} color="var(--green)" />
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
-                  <div style={UI.muted11mt1}>Sikre for din profil · samme kategori</div>
+                  <div style={UI.muted11mt1}>Ingen advarsler for din profil · samme kategori</div>
                 </div>
               </div>
               <div style={UI.colGap8}>
@@ -1007,7 +1009,7 @@ export default function ResultScreen({
             )}
             {customAllerg?.length > 0 && (
               <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", marginTop:6, background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-                Dine egne tilføjede allergier tjekkes via fritekst-søgning her i ingredienslisten — det kan være sværere for os at fange end vores faste allergener. Sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
+                Dine egne tilføjede allergier tjekkes via fritekstsøgning her i ingredienslisten — det kan være sværere for os at fange end vores faste allergener. Sig endelig til hvis vi overser noget — vi udvider løbende vores allergen-liste.
               </div>
             )}
           </div>

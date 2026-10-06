@@ -46,7 +46,7 @@ export const UI = {
   muted11mt2:   { fontSize:11, color:"var(--muted)", marginTop:2 },
   muted12mt2:   { fontSize:12, color:"var(--muted)", marginTop:2 },
   muted13:      { fontSize:13, color:"var(--muted)" },
-  muted2_12lh:  { fontSize:12, color:"var(--muted2)", lineHeight:1.5 },
+  muted2_12lh:  { fontSize:12, color:"var(--muted)", lineHeight:1.5 },
 
   boldInk12:    { fontSize:12, fontWeight:700, color:"var(--ink)" },
   boldInk13:    { fontSize:13, fontWeight:800, color:"var(--ink)" },
@@ -89,7 +89,7 @@ export const UI = {
   ufs12_cmuted: { fontSize:12, color:"var(--muted)" },
   ufs48_mb10: { fontSize:48, marginBottom:10 },
   uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin: { width:20,height:20,borderRadius:"50%",background:"var(--green)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)" },
-  ufs12_cmuted2_lh16: { fontSize:12, color:"var(--muted2)", lineHeight:1.6 },
+  ufs12_cmuted2_lh16: { fontSize:12, color:"var(--muted)", lineHeight:1.6 },
   ufs12_fw700_cink_dblock_mb6: { fontSize:12, fontWeight:700, color:"var(--ink)", display:"block", marginBottom:6 },
   udflex_aicenter_g8: { display:"flex", alignItems:"center", gap:8 },
   ufw700: { fontWeight:700 },
@@ -102,14 +102,14 @@ export const UI = {
   ufs13_fw700_cink: { fontSize:13, fontWeight:700, color:"var(--ink)" },
   udflex_flewrap_g6: { display:"flex", flexWrap:"wrap", gap:6 },
   utacenter: { textAlign:"center" },
-  ufs12_cmuted2: { fontSize:12, color:"var(--muted2)" },
+  ufs12_cmuted2: { fontSize:12, color:"var(--muted)" },
   ubggreenlt_cgreen_bdcgreenmid: { background:"var(--green-lt)", color:"var(--green)", borderColor:"var(--green-mid)" },
   // 18px→16px (27. sept. 2026, MASTER PROMPT-audit) — matcher nu samme
   // titel-størrelse som .screen-title (theme.jsx), som var det eneste
   // reelle udsving fra appens titel-skala for denne "tilbageknap +
   // titel/undertekst"-header-mønster (RecipesScreen).
   ufs18_fw800_cink: { fontSize:16, fontWeight:800, color:"var(--ink)" },
-  ubgpaper2_cmuted2_bdcborder: { background:"var(--paper2)", color:"var(--muted2)", borderColor:"var(--border)" },
+  ubgpaper2_cmuted2_bdcborder: { background:"var(--paper2)", color:"var(--muted)", borderColor:"var(--border)" },
   udflex_aicenter_g6_p8px12px_bgsurface_bd1pxsolid_br10: { display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10 },
   ufs12_cmuted_shr0: { fontSize:12, color:"var(--muted)", flexShrink:0 },
   uw100_bgnone_bdnone_cink_fff_fs13_outnone: { width:"100%", background:"none", border:"none", color:"var(--ink)", fontFamily:"var(--f)", fontSize:13, outline:"none" },
@@ -157,7 +157,7 @@ export const UI = {
   ufs11_p3px8px: { fontSize:11, padding:"3px 8px" },
   uwsnowrap: { whiteSpace:"nowrap" },
   udflex_fdcolumn: { display:"flex", flexDirection:"column" },
-  ufs13_cmuted2_lh15: { fontSize:13, color:"var(--muted2)", lineHeight:1.5 },
+  ufs13_cmuted2_lh15: { fontSize:13, color:"var(--muted)", lineHeight:1.5 },
   ufs12_c555: { fontSize:12, color:"#555" },
   umb24: { marginBottom:24 },
   ufs13_fw700_ttuppercas_ls1px_c555_mb12: { fontSize:13, fontWeight:700, textTransform:"uppercase", letterSpacing:"1px", color:"#555", marginBottom:12 },
@@ -193,7 +193,7 @@ export const UI = {
   utacenter_p20px20px: { textAlign:"center", padding:"20px 20px 14px" },
   ufs17_fw900_cink_mb6: { fontSize:17, fontWeight:900, color:"var(--ink)", marginBottom:6 },
   udflex_aicenter_jcspacebet_mb12: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 },
-  ufs13_cmuted2_mb8: { fontSize:13, color:"var(--muted2)", marginBottom:8 },
+  ufs13_cmuted2_mb8: { fontSize:13, color:"var(--muted)", marginBottom:8 },
   ufs28_shr0: { fontSize:28, flexShrink:0 },
   ubgsurface_bd1pxsolid_br14_p14px16px_mb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:14, padding:"14px 16px", marginBottom:10, boxShadow:"var(--sh)" },
   ufs11_cmuted_mb8: { fontSize:11, color:"var(--muted)", marginBottom:8 },
@@ -218,8 +218,8 @@ export const UI = {
               fontFamily:"var(--f)", fontSize:13, fontWeight:800, color:"var(--on-green)", cursor:"pointer" },
   uw34_h34_bgsurface2_br9_dflex_aicenter_jccenter_shr0: { width:34, height:34, background:"var(--surface2)", borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 },
   ufs13_fw700: { fontSize:13, fontWeight:700 },
-  ufs16_cmuted2: { fontSize:16, color:"var(--muted2)" },
+  ufs16_cmuted2: { fontSize:16, color:"var(--muted)" },
   ubgsurface_br14_p12px14px_mt12_bd1pxsolid: { background:"var(--surface)", borderRadius:14, padding:"12px 14px", marginTop:12, border:"1px solid var(--border)" },
   up3px9px_br20_bggreenlt_bd1pxsolid_fs10_cgreen_fw700: { padding:"3px 10px", borderRadius:20, background:"var(--green-lt)", border:"1px solid var(--green-mid)", fontSize:10, color:"var(--green)", fontWeight:700 },
-  ufs9_cmuted2: { fontSize:9, color:"var(--muted2)" },
+  ufs9_cmuted2: { fontSize:9, color:"var(--muted)" },
 };

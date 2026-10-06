@@ -43,7 +43,7 @@ export class ErrorBoundary extends React.Component {
         <div style={{ fontSize:18, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
           Noget gik galt
         </div>
-        <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.6, marginBottom:24, maxWidth:300 }}>
+        <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:24, maxWidth:300 }}>
           {screen} stødte på en uventet fejl. Dine data er ikke påvirket.
         </div>
 

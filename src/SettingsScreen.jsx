@@ -40,7 +40,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
-import { Icon, showToast } from "./SharedComponents.jsx";
+import { Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { usePush, SAVE_FAILED_REASON } from "./usePush.js";
 import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -127,7 +127,7 @@ function ChevronRow({ icon, label, sub, value, onClick, last, danger }) {
 // bevidst dupliceret her (begge er små, statiske arrays, samme mønster som
 // andre små inline-lister i appen) i stedet for en fælles fil for to
 // brugssteder.
-const ACCOUNT_DATA_CATEGORIES = ["Din profil og login", "Allergier og præferencer", "Familiemedlemmer", "Scanningshistorik", "Indkøbslister", "Feedback og tickets"];
+const ACCOUNT_DATA_CATEGORIES = ["Din profil og login", "Allergier og præferencer", "Familie og børneprofiler", "Scanningshistorik", "Indkøbslister", "Feedback og henvendelser"];
 
 export default function SettingsScreen({
   setShowDeleteAccount, setDeleteConfirmText,
@@ -153,6 +153,7 @@ export default function SettingsScreen({
   const consent = useHealthConsent();
   const [showConsent, setShowConsent] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [showBuildDetail, setShowBuildDetail] = useState(false);
 
   const handlePushToggle = async () => {
@@ -206,7 +207,7 @@ export default function SettingsScreen({
         <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
           <Icon name="globe" size={14} color="var(--ink)" /> Madpas-sprog
         </div>
-        <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Standard-sprog til Madpas</div>
+        <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Standardsprog til Madpas</div>
         <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginBottom:10 }}>
           Sproget dit madpas åbner i, medmindre du vælger et andet direkte på Madpas-siden.
         </div>
@@ -276,7 +277,7 @@ export default function SettingsScreen({
           <div style={{ flex:1 }} />
           <div style={{ display:"flex", gap:12, flexShrink:0 }}>
             {["Push", "E-mail"].map(label => (
-              <div key={label} style={{ width:36, textAlign:"center", fontSize:9, fontWeight:700, color:"var(--muted2)", textTransform:"uppercase", letterSpacing:.3 }}>{label}</div>
+              <div key={label} style={{ width:36, textAlign:"center", fontSize:9, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:.3 }}>{label}</div>
             ))}
           </div>
         </div>
@@ -332,8 +333,15 @@ export default function SettingsScreen({
                   Du kan give samtykke igen senere.
                 </div>
                 <button className="btn btn-outline btn-sm" disabled={withdrawing}
-                  onClick={async () => {
-                    if (!window.confirm("Vil du trække dit samtykke tilbage? Dine allergi- og helbredsoplysninger og din scanningshistorik slettes permanent.")) return;
+                  onClick={() => setConfirmWithdraw(true)}>{withdrawing ? "Sletter…" : "Træk samtykke tilbage"}</button>
+                {/* Appens egen bekræftelse i stedet for window.confirm (F2-8): handlingen sletter helbredsdata permanent. */}
+                {confirmWithdraw && (
+                  <ConfirmDialog title="Træk samtykket tilbage?"
+                    message="Dine allergi- og helbredsoplysninger og din scanningshistorik slettes permanent."
+                    confirmLabel="Træk tilbage og slet"
+                    onCancel={() => setConfirmWithdraw(false)}
+                    onConfirm={async () => {
+                    setConfirmWithdraw(false);
                     setWithdrawing(true);
                     try {
                       await consent.withdraw();
@@ -343,7 +351,8 @@ export default function SettingsScreen({
                       showToast("Samtykket kunne ikke trækkes tilbage. Prøv igen.", "error");
                       setWithdrawing(false);
                     }
-                  }}>{withdrawing ? "Sletter…" : "Træk samtykke tilbage"}</button>
+                  }} />
+                )}
               </>
             ) : (
               <div>Du har ikke givet samtykke. Du bliver bedt om det, første gang du gemmer allergier eller andre helbredsoplysninger.</div>

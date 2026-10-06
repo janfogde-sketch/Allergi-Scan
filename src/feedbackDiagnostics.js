@@ -101,7 +101,7 @@ export function buildFeedbackContext({ type, env, app, state, traces = [], recen
   return ctx;
 }
 
-export const NO_CRASH_TEXT = "Ingen nylig crash-log fundet";
+export const NO_CRASH_TEXT = "Ingen nylig fejl fundet";
 
 // Rækker til oversigten. Alt det, der sendes, står her (undtagen de rå trace-linjer, som vises for sig).
 export function diagnosticGroups(ctx, { type, formatBuild } = {}) {

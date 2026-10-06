@@ -52,7 +52,7 @@ function SheetHeader({ title, sub, note, onClose, right }) {
           <Icon name="x" size={16} color="var(--ink)" />
         </button>
       </div>
-      {note && <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.5, marginTop:8 }}>{note}</div>}
+      {note && <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, marginTop:8 }}>{note}</div>}
     </div>
   );
 }
@@ -197,7 +197,7 @@ export function ListSwitcherSheet({ lists, activeListId, userId, onSelect, onClo
         <div>
           <div style={{ ...LBL, marginBottom:8 }}>Ny liste</div>
           <div style={{ display:"flex", gap:8 }}>
-            <input className="field" placeholder="Fx. Weekend, Fest…" autoFocus maxLength={60} enterKeyHint="done" aria-label="Navn på ny liste" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
+            <input className="field" placeholder="Fx Weekend, Fest…" autoFocus maxLength={60} enterKeyHint="done" aria-label="Navn på ny liste" style={{ flex:1, minWidth:0, marginBottom:0, height:44, padding:"0 12px" }}
               value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && submitNew()} />
             <button type="button" className="btn btn-primary" style={{ minHeight:44, padding:"0 16px" }} disabled={!newName.trim() || creating} onClick={submitNew}>{creating ? "…" : "Opret"}</button>
           </div>
@@ -396,7 +396,7 @@ export function ShareListSheet({ list, userId, familyMembers, loadFamilyMembers,
             </button>
           )}
         </div>
-        <button type="button" disabled={!list.share_link} onClick={() => setConfirm("newlink")} style={{ ...BTN_TEXT, marginTop:4, color:"var(--muted2)", opacity: list.share_link ? 1 : .45, cursor: list.share_link ? "pointer" : "not-allowed" }}>Lav nyt link</button>
+        <button type="button" disabled={!list.share_link} onClick={() => setConfirm("newlink")} style={{ ...BTN_TEXT, marginTop:4, color:"var(--muted)", opacity: list.share_link ? 1 : .45, cursor: list.share_link ? "pointer" : "not-allowed" }}>Lav nyt link</button>
       </div>
 
       {confirm === "private" && (

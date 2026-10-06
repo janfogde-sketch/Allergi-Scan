@@ -16,7 +16,7 @@ export default function DeleteAccountModal({
         <div style={UI.utacenter_mb20}>
           <div style={{ ...UI.ufs48_mb10, display:"flex", justifyContent:"center" }}><Icon name="warning" size={40} color="var(--red)" /></div>
           <div style={{ fontSize:19, fontWeight:900, color:"var(--red)", marginBottom:8 }}>Slet din konto</div>
-          <div style={{ fontSize:13, color:"var(--muted2)", lineHeight:1.7 }}>
+          <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.7 }}>
             Dette sletter permanent alle dine data — allergier, familie, historik og præferencer. Handlingen kan ikke fortrydes.
           </div>
         </div>
@@ -24,7 +24,7 @@ export default function DeleteAccountModal({
         {/* Hvad slettes */}
         <div style={{ background:"var(--red-lt)", border:"1px solid var(--red-md)", borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"var(--red)", marginBottom:8 }}>FØLGENDE DATA SLETTES:</div>
-          {["Din profil og login","Allergier og præferencer","Familiemedlemmer","Scanningshistorik","Indkøbslister","Feedback og tickets"].map(item => (
+          {["Din profil og login","Allergier og præferencer","Familie og børneprofiler","Scanningshistorik","Indkøbslister","Feedback og henvendelser"].map(item => (
             <div key={item} style={{ fontSize:12, color:"var(--red)", padding:"3px 0", display:"flex", alignItems:"center", gap:8 }}>
               <Icon name="x" size={11} color="var(--red)" /><span>{item}</span>
             </div>

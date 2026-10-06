@@ -29,7 +29,7 @@ export default function EditProfileScreen() {
         <div className="card-lbl">Personlige oplysninger</div>
         <div style={UI.mb10}>
           <label className="field-lbl" htmlFor="edit-name">Dit navn <span style={UI.red}>*</span></label>
-          <input id="edit-name" className="field" type="text" autoComplete="name" placeholder="Fx. Anna Hansen" value={user.name||""}
+          <input id="edit-name" className="field" type="text" autoComplete="name" placeholder="Fx Anna Hansen" value={user.name||""}
             onChange={e => setUser(u => ({ ...u, name: e.target.value }))} />
         </div>
         {!nameOk && (

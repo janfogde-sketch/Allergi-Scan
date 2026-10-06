@@ -66,7 +66,7 @@ export default function AdminTicketsSection({
       {!ticketsLoading && openTickets.length > 0 && (
         <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:6 }}>
           <button type="button" onClick={downloadOpen}
-            style={{ minHeight:36, padding:"0 4px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--muted2)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+            style={{ minHeight:36, padding:"0 4px", background:"none", border:"none", fontFamily:"var(--f)", fontSize:12, fontWeight:700, color:"var(--muted)", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
             <Icon name="download" size={13} color="var(--muted2)" /> Download åbne tickets ({openTickets.length})
           </button>
         </div>
@@ -86,7 +86,7 @@ export default function AdminTicketsSection({
                   <StatusChip tone={type.tone}>{type.label}</StatusChip>
                 </div>
                 <div style={{ fontSize:13, color:"var(--ink)", lineHeight:1.4, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{t.description || "(ingen beskrivelse)"}</div>
-                <div style={{ fontSize:11, color:"var(--muted2)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                <div style={{ fontSize:11, color:"var(--muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {ticketReporter(t)} · {t.context?.screen_label || t.context?.screen || "—"} · {new Date(t.created_at).toLocaleDateString("da-DK", { day:"numeric", month:"short" })}
                 </div>
               </div>

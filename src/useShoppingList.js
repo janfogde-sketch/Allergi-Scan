@@ -12,6 +12,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
 import { makeHeaders, apiCall, findProductOnList } from "./helpers.js";
 import { PREVIEW_MOCK_PRODUCTS } from "./previewMockData.js";
 import { showToast } from "./SharedComponents.jsx";
+import { reportError } from "./errorReporter.js";
 
 const SAVE_FAILED = "kunne ikke gemmes. Tjek din forbindelse og prøv igen.";
 
@@ -201,7 +202,10 @@ export function useShoppingList({ accessToken, userId }) {
       await loadShoppingList();
       return { success: true };
     } catch (e) {
-      return { success: false, error: e.message || "Ugyldig kode" };
+      // Kun serverens kendte, danske tekster vises; alt andet er en fast tekst (F2-3).
+      const known = ["Ugyldig kode", "Du er allerede ejer af denne liste"];
+      if (!known.includes(e?.message)) reportError(e, { source: "shopping-join" });
+      return { success: false, error: known.includes(e?.message) ? e.message : "Listen kunne ikke åbnes. Prøv igen." };
     }
   }, [accessToken, loadShoppingList]);
 

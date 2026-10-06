@@ -81,7 +81,7 @@ function scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers,
     ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
     ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
   ];
-  const headlines = { safe:"Sikkert produkt", danger:"Indeholder allergen", warn: isUnsafeUnknown ? "Kan ikke bekræftes sikkert" : "Mulige spor" };
+  const headlines = { safe:"Ingen advarsler fundet", danger:"Allergi-advarsel", warn: isUnsafeUnknown ? "Kan ikke vurderes" : "Kan indeholde spor" };
   const summaries = {
     safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
     danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
@@ -121,7 +121,7 @@ export function withCustomAllergenMatch(result, customTerms) {
     ...result,
     status: "danger",
     headline: alreadyDanger ? result.headline : "Mulig egen allergi fundet",
-    summary: alreadyDanger ? result.summary : `Ingredienslisten nævner muligvis ${quotedTerms} — en allergi du selv har tilføjet. Vores fritekst-søgning for selv-tilføjede allergier er ikke lige så grundig som for vores faste allergener, så dobbelttjek altid selv emballagen. Vi arbejder løbende på at udvide vores faste allergen-liste.`,
+    summary: alreadyDanger ? result.summary : `Ingredienslisten nævner muligvis ${quotedTerms} — en allergi du selv har tilføjet. Vores fritekstsøgning for selvtilføjede allergier er ikke lige så grundig som for vores faste allergener, så dobbelttjek altid selv emballagen. Vi arbejder løbende på at udvide vores faste allergen-liste.`,
     flags: [...customFlags, ...result.flags],
     customAllergenMatches: customMatches,
   };
@@ -267,7 +267,7 @@ export async function runLookupProduct(ean, ctx) {
   if (!navigator.onLine) {
     const offlineCached = getFromOfflineCache(ean.trim());
     if (offlineCached) { showCachedResult(offlineCached); return; }
-    setScanError("Du er offline og dette produkt er ikke i den lokale cache.");
+    setScanError("Du er offline, og produktet er ikke gemt på telefonen. Prøv igen, når du har forbindelse.");
     setLoading(false); return;
   }
   setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
