@@ -1,84 +1,101 @@
 # EatSafe — App Store Metadata
 
-## App navn
-**EatSafe** (dansk: "Spis trygt")
+Godkendt af Bjørn 6. okt. 2026 (F6-2). Tal tjekket i databasen samme dag: 20.182 varer og 768 opslag i leksikonet.
+Undgå "sikkert", "præcis" og funktioner på pause (opskrifter, diæter), når teksten ændres.
 
-## Undertitel / tagline
-**Allergi-scanning af madvarer**
+## App-navn
+**EatSafe**
+
+## Undertitel (App Store, højst 30 tegn)
+**Scan mad for allergener**
+
+## Kort beskrivelse (Google Play, højst 80 tegn)
+Scan madvarer og tjek allergener og intolerancer for dig og din familie.
+
+## Lang beskrivelse (højst 4000 tegn)
+
+Gør det lettere at tjekke madvarer, når du handler.
+
+Med EatSafe kan du scanne en stregkode og hurtigt se, hvordan varens registrerede ingrediens- og allergenoplysninger matcher dine valgte allergier og intolerancer.
+
+**Scan og få et klart overblik**
+
+Scan varens stregkode, eller søg efter varen.
+
+EatSafe har oplysninger om over 20.000 varer fra danske butikker og hjælper dig med at se relevante allergener, ingredienser og eventuelle oplysninger om spor.
+
+Mangler der ingrediensoplysninger om en vare, fortæller EatSafe det i stedet for at gætte. Du kan også hjælpe ved at indsende oplysninger om varen.
+
+**Din profil, dine valg**
+
+Vælg dine allergier og intolerancer én gang, og få resultater tilpasset din profil.
+
+For hvert allergen kan du selv vælge, om EatSafe også skal advare dig om produkter mærket med eksempelvis “kan indeholde spor af”.
+
+Du kan desuden vælge bestemte E-numre, du ønsker at holde øje med.
+
+**Tjek for hele familien**
+
+Opret profiler til børn og andre familiemedlemmer, og tjek den samme vare for flere personer på én gang.
+
+Invitér andre voksne til familien, og del blandt andet indkøbslister på tværs af familien.
+
+**Få besked om tilbagekaldte varer**
+
+Hvis Fødevarestyrelsen tilbagekalder en vare, du har scannet, gemt som favorit eller tilføjet til en indkøbsliste, kan EatSafe advare dig.
+
+Så behøver du ikke selv holde øje med alle tilbagekaldelser.
+
+**Madpas på 17 sprog**
+
+Tag dine allergioplysninger med på rejsen eller restauranten.
+
+Vis dit madpas på 17 sprog, eller få teksten læst højt, når du skal forklare dine allergier til eksempelvis en tjener.
+
+**Allergileksikon**
+
+Bliv klogere på allergener, ingredienser og E-numre med mere end 700 opslag i EatSafes leksikon.
+
+Vigtigt: EatSafe er vejledende. Kontrollér altid produktets aktuelle ingrediens- og allergenoplysninger på emballagen.
 
 ---
 
-## Kort beskrivelse (80 tegn — Google Play)
-Skan madvarer og find skjulte allergener — hurtig og præcis.
+## Søgeord (App Store, højst 100 tegn)
+allergi,allergener,madallergi,gluten,cøliaki,laktose,nødder,ingredienser,e-numre,stregkode
 
-## Lang beskrivelse (4000 tegn — begge stores)
-
-**Er du træt af at stå i supermarkedet og læse mikroskopisk ingredienstekst?**
-
-EatSafe scanner stregkoden på madvarer og fortæller dig øjeblikkeligt, om produktet er sikkert for dig og din familie.
-
-### 🔍 Skan på sekunder
-Peg kameraet mod stregkoden — EatSafe finder produktet i vores database med over 20.000 danske produkter og analyserer ingredienserne for allergener.
-
-### 🛡️ Personlig allergi-profil
-Registrér dine allergier og intolerancer én gang. EatSafe husker dem og viser et klart sikkert/advarsel/farligt-signal for hvert produkt.
-
-### 👨‍👩‍👧 Hele familien
-Tilføj familiemedlemmer med egne allergier. Se på én gang, om et produkt er sikkert for alle.
-
-### 📚 Leksikon
-Over 400 artikler om E-numre, ingredienser, allergener og diæter — forstå hvad der rent faktisk er i din mad.
-
-### 🍳 Opskrifter
-Mere end 600 opskrifter filtreret til dine allergier. Sæt aldrig "indeholder spor af" på menuen igen.
-
-### 🔢 E-numre og diæter
-Overvåg specifikke E-numre. Filtrer til glutenfri, vegansk, vegetarisk, laktosefri og mere.
-
----
-
-**Vigtigt:** EatSafe er et vejledende værktøj og erstatter ikke medicinsk rådgivning. Tjek altid produktets emballage ved alvorlige allergier.
-
-EatSafe er i beta og udvikles løbende med hjælp fra vores brugere.
-
----
-
-## Søgeord (App Store — 100 tegn max)
-allergi,scanning,stregkode,gluten,laktose,madvarer,ingredienser,e-numre,vegansk,familievenlig
-
-## Søgeord (Google Play — ubegrænset)
-allergi app, allergi scanning, stregkode scanner, gluten intolerans, laktose intolerans, madallergier, e-numre, vegansk, glutenfri, dansk madvarer, ingredienser, familievenlig
+## Søgeord (Google Play)
+allergi app, allergen scanner, madallergi, stregkode scanner, glutenfri, cøliaki, laktoseintolerans, nøddeallergi, fødevareallergi, ingredienser, e-numre, madpas, tilbagekaldte varer
 
 ---
 
 ## Kategori
-- App Store: **Food & Drink**
-- Google Play: **Food & Drink**
+App Store og Google Play: **Mad og drikke (Food & Drink)**
 
-## Aldersgrænse
-**4+** / **Everyone**
+## Aldersgrænse og målgruppe
+Afventer endelig afklaring (Jan, F6-4).
 
-## Privatliv
-- Kræver kamera (til scanning)
-- Gemmer allergi-profil lokalt + Supabase
-- Ingen sporingsdata sælges
-
----
-
-## Screenshots tekster (til store-billeder)
-
-1. **"Skan — få svar på 2 sekunder"**
-2. **"Din personlige allergi-profil"**
-3. **"Sikkert for hele familien"**
-4. **"Over 20.000 danske produkter"**
-5. **"600+ opskrifter uden dine allergener"**
-6. **"Forstå dine ingredienser — Leksikon"**
+## Privatliv (kort)
+- Kamera bruges til at scanne stregkoder og fotografere ingrediensoplysninger.
+- Profiloplysninger og valgte allergier gemmes på din EatSafe-konto.
+- Oplysninger om allergier og intolerancer behandles kun med det nødvendige samtykke.
+- EatSafe sælger ikke dine personoplysninger.
 
 ---
 
-## What's New (Release notes — beta)
-- Leksikon med 400+ artikler om E-numre og ingredienser
-- Redesignet scan-resultat med klarere hierarki
-- Familieprofiler med fælles allergen-visning
-- Forbedret onboarding
-- Opskrifter filtreret til dine allergier
+## Billedtekster til skærmbilleder
+
+1. **Scan en vare på få sekunder**
+2. **Se resultatet ud fra din allergiprofil**
+3. **Tjek for hele familien på én gang**
+4. **Få besked om tilbagekaldte varer**
+5. **Dit madpas på 17 sprog**
+6. **Over 700 opslag om allergener og E-numre**
+
+---
+
+## Nyt i denne version
+- Advarsler om tilbagekaldte varer
+- Madpas på 17 sprog med oplæsning
+- Familieprofiler og invitationer
+- Individuelt spor-valg for hvert allergen
+- Forbedret offlineoplevelse
