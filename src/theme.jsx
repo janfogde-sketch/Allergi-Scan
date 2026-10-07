@@ -1142,8 +1142,6 @@ button.filter-chip{width:auto;}
 }
 @media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}}
 @keyframes laserMove{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
-.scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
-.scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
 .scroll-top-btn{
   position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9990;
   width:44px;height:44px;border-radius:50%;

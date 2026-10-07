@@ -81,12 +81,12 @@ export const EatSafeWordmark = () => (
 // den statiske grønne tjek-streg (som ville signalere "godkendt" for tidligt).
 // Portal-baseret (samme mønster som ToastHost/ListPickerSheet), monteret i
 // App.jsx, styret af et rent boolean show-flag.
-export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "Tjekker dine allergener" }) {
+export function ScanLoadingOverlay({ show, label = "Scanner produkt og tjekker dine allergener" }) {
   if (!show) return null;
   return createPortal(
-    <div className="scan-loading-overlay" role="status" aria-live="polite">
+    <div className="scan-loading-overlay" role="status" aria-live="polite" aria-label={label}>
       <svg className="scan-loading-mark" width="92" height="92" viewBox="0 0 1000 1000" aria-hidden="true">
-        {/* Logoet (7 streger) med fluebenet, der tegnes ind igen og igen; stregen har runde ender og ingen cirkel (Bjørn, 7. okt. 2026). */}
+        {/* Logoet (7 streger) med fluebenet, der tegnes ind igen og igen; stregen har runde ender og ingen cirkel. Ingen synlig tekst, kun animationen; skærmlæsere får label (Bjørn, 7. okt. 2026). */}
         <g transform="translate(16.8,0)">
           <g fill="var(--ink)">
             <rect x="104.8" y="158" width="102.396" height="684.495" rx="15.582" />
@@ -101,10 +101,6 @@ export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "T
           <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" strokeLinecap="round" />
         </g>
       </svg>
-      <div>
-        <div className="scan-loading-txt">{text}</div>
-        {sub && <div className="scan-loading-sub">{sub}</div>}
-      </div>
     </div>,
     document.body
   );
