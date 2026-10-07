@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiCost.ts";
 import { withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import {
   ALL_ALLERGENS,
@@ -54,6 +55,7 @@ Returner KUN JSON, ingen forklaring, ingen markdown.`;
 
     if (!res.ok) return null;
     const data = await res.json();
+    await logAiUsage("allergens", "claude-haiku-4-5", data.usage);
     let raw = data.content?.[0]?.text || "";
     raw = raw.replace(/```json\s*|\s*```/g, "").trim();
     const parsed = JSON.parse(raw);

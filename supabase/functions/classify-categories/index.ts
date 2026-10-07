@@ -14,6 +14,7 @@
 // vedligeholdelsesværktøj, ikke noget klientappen kalder direkte.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiCost.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,6 +100,7 @@ async function classifyBatch(products: { id: string; name: string; brand: string
 
   if (!res.ok) throw new Error(`Claude API fejl: ${res.status}`);
   const data = await res.json();
+  await logAiUsage("classify-categories", "claude-haiku-4-5", data.usage);
   let raw = data.content?.[0]?.text || "[]";
   raw = raw.replace(/```json\s*|\s*```/g, "").trim();
   const parsed = JSON.parse(raw);

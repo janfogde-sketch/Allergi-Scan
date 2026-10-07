@@ -18,6 +18,8 @@ import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
+import AiUsageSection from "./sections/AiUsageSection.jsx";
+import { useAiUsage } from "./useAiUsage.js";
 import RecallsSection from "./sections/RecallsSection.jsx";
 import { useAdminRecalls } from "./useAdminRecalls.js";
 import NotificationsSection from "./sections/NotificationsSection.jsx";
@@ -38,6 +40,7 @@ export default function AdminApp() {
   const admin = useAdmin(accessToken, userId, logout);
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
+  const aiUsage = useAiUsage(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
@@ -151,6 +154,7 @@ export default function AdminApp() {
     if (section === "history") admin.loadRevisionLog();
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
+    if (section === "ai-usage") aiUsage.load();
     if (section === "todo") todos.load();
     if (section === "recalls") recalls.load();
     if (section === "notifications") notifications.load();
@@ -315,6 +319,7 @@ export default function AdminApp() {
         />
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
+      {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
       {section === "recalls" && <RecallsSection {...recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && (
