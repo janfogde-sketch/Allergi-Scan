@@ -11,6 +11,7 @@
   "rewrites": [
     { "source": "/invite/:token", "destination": "/invite.html" },
     { "source": "/list/:code", "destination": "/list.html" },
+    { "source": "/slet-konto", "destination": "/slet-konto.html" },
     { "source": "/assets/:path*", "destination": "/assets-missing" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
