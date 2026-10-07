@@ -22,6 +22,15 @@ export const SAVE_FAILED_REASON = "Kunne ikke gemme abonnementet";
 // token er også ok); tidligere blev svaret aldrig tjekket, så en fejl var usynlig.
 async function saveTokenToSupabase(token, accessToken) {
   try {
+    // Foretrukket: databasen flytter enhedens abonnement til denne konto og fjerner det fra andre konti
+    // (delt telefon). Findes funktionen ikke endnu, falder vi tilbage til den gamle indsættelse.
+    const claim = await fetch(`${SUPABASE_URL}/rest/v1/rpc/claim_push_token`, {
+      method: "POST",
+      headers: makeHeaders(accessToken),
+      body: JSON.stringify({ p_token: JSON.stringify(token) }),
+    });
+    if (claim.ok) return true;
+    if (claim.status !== 404) console.warn("[usePush] claim afvist:", claim.status);
     const res = await fetch(`${SUPABASE_URL}/rest/v1/push_tokens`, {
       method: "POST",
       headers: {

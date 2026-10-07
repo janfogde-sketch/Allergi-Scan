@@ -280,6 +280,7 @@ eksisterende tilladelse (fx jafo efter janfogde), fik aldrig sin række og så p
 `syncPushToken` (`usePush.js`, kaldt i `App.jsx` når en konto er logget ind) enhedens abonnement for den indloggede konto
 uden at spørge om tilladelse, og `forgetPushTokenForDevice` (kaldt i `clearAuth`) sletter kun den udloggede kontos række, så
 den forrige kontos beskeder ikke vises på enheden. Serverens svar tjekkes nu (`SAVE_FAILED_REASON`; Indstillinger viser en fejl).
+**Delt telefon (7. okt. 2026):** `saveTokenToSupabase` kalder RPC `claim_push_token(p_token)` (security definer, kun `authenticated`), som sletter samme abonnement fra alle andre konti og gemmer det for den indloggede; falder tilbage til almindelig indsættelse ved 404. Dækker, når ryd-op ved logout fejler (udløbet nøgle, offline). DB-test: `supabase/tests/claim_push_token.sql`.
 
 **Admin → Notifikationer (1. okt. 2026):** fanen vælger en notifikation, viser pushens titel/tekst med
 eksempeldata (`_shared/notificationMock.js`) og sender en testversion ("[TEST]") til en valgt admin via edge-funktionen

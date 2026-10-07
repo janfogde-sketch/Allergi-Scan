@@ -31,9 +31,17 @@ describe("syncPushToken", () => {
     const res = await syncPushToken("tok-jafo");
     expect(res.ok).toBe(true);
     const [url, init] = global.fetch.mock.calls[0];
-    expect(url).toMatch(/\/rest\/v1\/push_tokens$/);
+    expect(url).toMatch(/\/rest\/v1\/rpc\/claim_push_token$/);
     expect(init.headers.Authorization).toBe("Bearer tok-jafo");
-    expect(JSON.parse(init.body)).toEqual({ token: JSON.stringify(SUB) });
+    expect(JSON.parse(init.body)).toEqual({ p_token: JSON.stringify(SUB) });
+  });
+
+  it("falder tilbage til almindelig indsættelse, hvis databasefunktionen ikke findes endnu", async () => {
+    setupBrowser();
+    global.fetch.mockResolvedValueOnce({ ok: false, status: 404 }).mockResolvedValueOnce({ ok: true, status: 201 });
+    const res = await syncPushToken("tok-jafo");
+    expect(res.ok).toBe(true);
+    expect(global.fetch.mock.calls[1][0]).toMatch(/\/rest\/v1\/push_tokens$/);
   });
 
   it("opretter et nyt abonnement, hvis tilladelsen findes, men abonnementet mangler", async () => {
