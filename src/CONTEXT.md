@@ -48,6 +48,8 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 
 **Test af sletning/opbevaring:** `supabase/tests/account_deletion.sql` kører i CI (`.github/workflows/db-tests.yml`, lokal database bygget af migrationerne): liste-vagt over kolonner med brugerdata, sletning med nul rester, oprydningsfrister. `src/accountDeletionGuard.test.js` holder trinene ens med `delete-user`.
 
+**Tjek efter merge (7. okt. 2026):** `.github/workflows/post-merge-checks.yml` kører efter hvert push til main og holder intet tilbage (`ci.yml` er uændret og hurtig). Fire spor: `npm audit` (fejler på alvorlige huller i produktionspakker; byggeværktøj kun advarsel), kyrillisk mojibake-scan, `deno check` af edge-funktioner (fejler kun på manglende import/syntaks; ca. 79 kendte typeadvarsler er et efterslæb, ikke rød) og dækningsrapport (ca. 69 % linjer, kun information). Påkrævede checks/branch protection venter på dev-grenen.
+
 **Opbevaringsfrister (privatlivspolitik afsnit 11):** kontosletning (`delete-user`) fjerner straks profil, allergener, familieprofiler, lister, scanninger,
 favoritter, beskeder, push-tilmeldinger, tickets, indsendelser og login (cascade/eksplicit); `client_errors` mister bruger-id. Automatisk oprydning i `cleanup_notifications()`
 (cron `notify-cleanup`, 03:30 UTC): beskeder 12 mdr., hændelser 90 dage, `client_errors` 90 dage (på `last_seen`), `security_reports` 12 mdr. (migration `20261001132038`), `family_invites.invitee_email` nulstilles ved svar/udløb af `cleanup_family_invite_emails()` (cron `family-invite-email-cleanup` 03:40 UTC, migration `20261003180000`). Ingen automatiske backups (Free).
