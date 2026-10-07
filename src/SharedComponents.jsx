@@ -86,7 +86,7 @@ export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "T
   return createPortal(
     <div className="scan-loading-overlay" role="status" aria-live="polite">
       <svg className="scan-loading-mark" width="92" height="92" viewBox="0 0 1000 1000" aria-hidden="true">
-        {/* Logoet (7 streger) med fluebenet, der tegnes ind igen og igen; den runde ende kommer først, når fluebenet er tegnet færdigt (Bjørn, 7. okt. 2026). */}
+        {/* Logoet (7 streger) med fluebenet, der tegnes ind igen og igen; stregen har runde ender og ingen cirkel (Bjørn, 7. okt. 2026). */}
         <g transform="translate(16.8,0)">
           <g fill="var(--ink)">
             <rect x="104.8" y="158" width="102.396" height="684.495" rx="15.582" />
@@ -97,10 +97,8 @@ export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "T
             <rect x="670.204" y="221.441" width="80.136" height="557.613" rx="15.582" />
             <rect x="790.408" y="158" width="71.232" height="684.495" rx="15.582" />
           </g>
-          <polyline className="scan-loading-check" points="131.512,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--paper)" strokeWidth="146.916" strokeLinejoin="round" />
-          <polyline className="scan-loading-check" points="131.512,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" />
-          <circle className="scan-loading-dot" cx="790.408" cy="466.301" r="73.458" fill="var(--paper)" />
-          <circle className="scan-loading-dot" cx="790.408" cy="466.301" r="44.52" fill="var(--green)" />
+          <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--paper)" strokeWidth="146.916" strokeLinejoin="round" strokeLinecap="round" />
+          <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" strokeLinecap="round" />
         </g>
       </svg>
       <div>
