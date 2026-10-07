@@ -433,11 +433,12 @@ body::-webkit-scrollbar{display:none;}
    forside" — .7/.5 skaleret til .53/.38), samme skala/timing i øvrigt. */
 /* Afløst 7. okt. 2026 (Bjørn): bølgeringe i stedet for halo-glød. Tre tynde
    ringe i --green starter ved knappens kant (samme inset som knappen) og glider
-   roligt ud, mens de forsvinder; 6 s pr. ring, forskudt 2 s, så der altid er
+   roligt ud, mens de forsvinder (højst 1.16, så de stopper før "Tjekker for"-
+   chippen 11 px under knappen); 6 s pr. ring, forskudt 2 s, så der altid er
    en ring på vej ud. Knappen selv beholder sin gradient (Bjørn, 7. okt.). */
 @keyframes scan-wave{
   0%{transform:scale(1);opacity:.5;}
-  100%{transform:scale(1.3);opacity:0;}
+  100%{transform:scale(1.16);opacity:0;}
 }
 .scan-cta-wave{position:absolute;inset:clamp(5px, 1.1cqh, 7px);border-radius:50%;border:2px solid var(--green);opacity:0;pointer-events:none;animation:scan-wave 6s cubic-bezier(.2,.6,.3,1) infinite;}
 .scan-cta-wave.w2{animation-delay:2s;}
