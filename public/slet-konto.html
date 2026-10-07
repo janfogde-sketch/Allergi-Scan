@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sådan sletter du din EatSafe-konto og dine data, også hvis du har afinstalleret appen." />
+  <title>Slet din EatSafe-konto</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    @import url('/fonts/fonts.css');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
+      --paper:#FFFFFF; --green:#0F7D4F; --green-lt:rgba(15,125,79,.10);
+      --red:#C8402E; --red-lt:rgba(200,64,46,.08);
+      --surface:#FFFFFF; --border:rgba(21,32,26,.10);
+      --f:'DM Sans',system-ui,-apple-system,sans-serif;
+    }
+    body {
+      font-family: var(--f);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.7;
+      padding: 0 0 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo img { height: 26px; width: auto; display: block; }
+    .container { max-width: 520px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 24px; font-weight: 900; letter-spacing: -.4px; margin-bottom: 12px; line-height: 1.25; }
+    p { font-size: 15px; color: var(--ink2); margin-bottom: 14px; }
+    a { color: var(--green); font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .btn {
+      display: block; width: 100%; min-height: 52px; margin-top: 24px; padding: 14px 20px;
+      border: 0; border-radius: 12px; background: var(--green); color: #FFFFFF;
+      font-family: var(--f); font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .note { margin-top: 16px; font-size: 13px; color: var(--muted); }
+    .box { border-radius: 12px; padding: 16px 18px; margin-top: 20px; font-size: 14px; font-weight: 600; line-height: 1.6; }
+    .box.ok { background: var(--green-lt); color: var(--green); }
+    ol, ul { margin: 0 0 14px 22px; font-size: 15px; color: var(--ink2); }
+    li { margin-bottom: 6px; }
+    h2 { font-size: 18px; font-weight: 800; margin: 28px 0 8px; }
+    .box.err { background: var(--red-lt); color: var(--red); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo"><img src="/brand/EatSafe_Master_Logo_Horizontal.svg" alt="EatSafe" /></div>
+  </div>
+
+  <div class="container">
+    <h1>Slet din EatSafe-konto</h1>
+    <p>Du kan altid få slettet din konto og dine oplysninger. Vælg den vej, der passer dig.</p>
+
+    <h2>Har du stadig appen?</h2>
+    <ol>
+      <li>Åbn EatSafe og log ind.</li>
+      <li>Tryk på menuen øverst til højre og vælg Indstillinger.</li>
+      <li>Rul ned i bunden og tryk på Slet konto.</li>
+      <li>Følg trinnene på skærmen for at bekræfte.</li>
+    </ol>
+    <p>Kontoen slettes med det samme.</p>
+
+    <h2>Kan du ikke komme ind i appen?</h2>
+    <p>Har du afinstalleret appen eller glemt din adgangskode, kan du bede os om at slette kontoen.</p>
+    <p>Skriv til <a href="mailto:hej@eatsafe.dk?subject=Slet%20min%20konto">hej@eatsafe.dk</a> med emnet "Slet min konto", og send mailen fra den e-mailadresse, du har oprettet kontoen med. Så kan vi se, at det er din konto. Vi sletter den hurtigst muligt og senest inden for 30 dage, og du får en besked, når det er gjort.</p>
+
+    <h2>Hvad bliver slettet?</h2>
+    <p>Din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen.</p>
+
+    <h2>Hvad bliver ikke slettet med det samme?</h2>
+    <ul>
+      <li>Et produkt, du har indsendt, og som er godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger.</li>
+      <li>Sikkerhedskopier og logs hos vores leverandører udløber efter deres egne frister.</li>
+    </ul>
+    <p class="note">Læs mere i <a href="/privacy.html">privatlivspolitikken</a>, afsnit 11.</p>
+  </div>
+</body>
+</html>
