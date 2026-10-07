@@ -210,7 +210,8 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
               Rediger
             </button>
           </div>
-          {m.birth_year && new Date().getFullYear() - m.birth_year >= 18 && (
+          {/* F3-7: under redigering viser formularen (MemberForm) selv overgangsnoten, så kortet viser den ikke også. */}
+          {m.birth_year && new Date().getFullYear() - m.birth_year >= 18 && editingMemberId !== m.id && (
             <div role="note" style={{ margin:"0 0 10px", padding:"10px 12px", borderRadius:12, background:"var(--surface2)", border:"1px solid var(--border)" }}>
               <div style={{ fontSize:12.5, color:"var(--ink)", lineHeight:1.5 }}>Denne profil skal nu overgå til en personlig EatSafe-konto.</div>
               <button type="button" className="btn btn-outline btn-sm" style={{ marginTop:8, minHeight:44 }} onClick={() => { cancelEditMember(); openInvite(); }}>Invitér til egen konto</button>
