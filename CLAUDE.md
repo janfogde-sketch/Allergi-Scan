@@ -137,6 +137,8 @@ ikke en godkendelse. Når godkendt: push → ÉN PR (dansk body, tjek PR-templat
 resync branch (`git fetch origin main`, reset, `--force-with-lease`; se `.claude/commands/resync-branch.md`).
 Kritiske produktionsfejl (fx crashende skærm) shippes straks som isoleret hotfix uden at vente på godkendelse.
 
+**Dev-gren (Jan, 7. okt. 2026; AKTIV FØRST når grenen `dev` findes, til da gælder reglerne ovenfor):** tråde lægger arbejde på `dev` (PR mod `dev`, squash-merge). Jans "push" betyder da: PR mod `dev` og squash-merge dér. Det rører hverken produktion, "Apply migrations", "Deploy edge functions" eller Vercel (de kører kun ved push til `main`). Jans "udgiv" = én PR `dev` → `main`, squash-merge; først da går ændringerne live (app, database, edge-funktioner). Tjekkene (CI, DB-tests, "Tjek efter merge") kører på PR'er mod `dev`/`main` og push til `dev`/`main`; Jan gør dem påkrævede på `main` i GitHub (Settings → Branches). Ingen separat Supabase/Vercel-preview til dev (kræver Pro). Migrationer: ny version skal være unik og verificeres i databasen efter "udgiv".
+
 **Vercel (Free, 100 deploys/dag): push/merge KUN ved funktions- og dataændringer.** Rene design-ændringer og rene dokument-
 ændringer (`CLAUDE.md`, `src/CONTEXT.md`, `.claude/HISTORY.md`, kommentarer, workflow-filer uden app-effekt) afsluttes med commit,
 men pushes ikke alene: de følger med næste funktionsændring eller shippes, når brugeren beder om det. Kun et push til `main`

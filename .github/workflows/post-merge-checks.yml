@@ -6,6 +6,9 @@ name: Tjek efter merge
 
 on:
   push:
+    branches: [main, dev]
+  # Når dev-grenen findes: tjekkene kører også på "udgiv"-PR'en (dev til main), så de kan gøres påkrævede.
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
