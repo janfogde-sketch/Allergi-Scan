@@ -659,7 +659,7 @@ export default function ScannerScreen({
                     selv står nu STILLE (scanCtaBreathe-åndedrættet er fjernet
                     herfra 25. sept. 2026 — brugeren bad specifikt om puls "kun i"
                     halo-gløden, ikke selve knappen); al levende bevægelse ligger
-                    nu udelukkende i .scan-cta-halo (langsom, subtil skala+
+                    nu udelukkende i .scan-cta-wave (bølgeringe, 7. okt. 2026; før halo, skala+
                     opacity-puls, se theme.jsx). Størrelsen er reduceret ~10%
                     denne runde (29. sept. 2026, "en mere balanceret og rolig
                     forside" — knappen må stadig være hovedfokus, men ikke
@@ -686,7 +686,7 @@ export default function ScannerScreen({
                     forsøgte samme dag et hvidt ghost/outline-design med en
                     roterende ring-lys (mockup "C") — bevidst ikke genindført
                     ved sammenlægningen med main, se theme.jsx's kommentar
-                    ved .scan-cta-halo for begrundelsen. */}
+                    ved .scan-cta-wave for begrundelsen. */}
                 {showScanProfilePicker && scanProfilePickerAvailable && (
                   <ScanProfilePickerSheet
                     activeProfiles={activeProfiles} setActiveProfiles={setActiveProfiles}
@@ -743,19 +743,19 @@ export default function ScannerScreen({
                     </div>
                   ) : (
                     <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                      {/* Glow dæmpet ~25% (29. sept. 2026, "en mere balanceret
-                          og rolig forside") — se .scan-halo-pulse-keyframes i
-                          theme.jsx, hvor selve puls-opaciteten er skaleret
-                          ned, så knappen stadig har dybde, men mere
-                          diskret/premium. */}
-                      <div className="scan-cta-halo" style={{ position:"absolute", inset:"clamp(-20px, -3.3cqh, -9px)", borderRadius:"50%",
-                        background:"radial-gradient(circle, var(--green-halo) 0%, rgba(221,244,232,0) 70%)" }} aria-hidden="true" />
+                      {/* Bølgeringe (Bjørn, 7. okt. 2026, forslag A i roligt tempo): tre tynde grønne ringe glider
+                          ud fra knappen og forsvinder, forskudt i tid. Erstatter den tidligere halo-glød. Slås fra ved "Reducer bevægelse" (theme.jsx). */}
+                      <div className="scan-cta-wave" aria-hidden="true" />
+                      <div className="scan-cta-wave w2" aria-hidden="true" />
+                      <div className="scan-cta-wave w3" aria-hidden="true" />
                       <button
                         className="scan-cta-btn"
                         onClick={handleScanButtonClick}
                         aria-label="Start kamera for at scanne stregkode"
                         style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
                           border:"none", fontFamily:"var(--f)",
+                          // Gradient og lyst skær bevidst bevaret (Bjørn, 7. okt. 2026): knappen skal ligne den gamle;
+                          // en bevidst undtagelse fra "ingen gradienter" i BRAND.md. Kun bølgeringene er nye.
                           background:"linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%)",
                           boxShadow:"0 14px 28px -12px rgba(8,115,74,.4), inset 0 2px 3px rgba(255,255,255,.3)",
                           display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.4cqh, 9px)" }}>
