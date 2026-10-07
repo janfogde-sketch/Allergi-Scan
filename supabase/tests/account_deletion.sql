@@ -136,5 +136,25 @@ begin
   select count(*) into n from api_usage where user_id=uid; if n<>1 then raise exception 'OPBEVARING: api_usage forventet 1, fik %', n; end if;
 end $$;
 
+do $$
+declare uid uuid := gen_random_uuid(); uid2 uuid := gen_random_uuid(); fid uuid; lid uuid; n int;
+begin
+  -- Direkte sletning af loginkontoen (uden delete-user) skal selv fjerne profilen og alt, der hænger på den.
+  insert into auth.users(id,email,aud,role) values (uid,'cas-'||substr(uid::text,1,8)||'@example.invalid','authenticated','authenticated');
+  insert into auth.users(id,email,aud,role) values (uid2,'cas2-'||substr(uid2::text,1,8)||'@example.invalid','authenticated','authenticated');
+  insert into families(name,created_by) values ('F',uid) returning id into fid;
+  insert into family_memberships(family_id,user_id) values (fid,uid),(fid,uid2);
+  insert into shopping_lists(name,owner_id) values ('L',uid2) returning id into lid;
+  insert into shopping_list_access(list_id,user_id) values (lid,uid);
+  insert into user_allergens(user_id,allergen) values (uid,'gluten');
+  delete from auth.users where id=uid;
+  select count(*) into n from public.users where id=uid; if n<>0 then raise exception 'CASCADE: profil blev ikke slettet med loginkontoen'; end if;
+  select count(*) into n from user_allergens where user_id=uid; if n<>0 then raise exception 'CASCADE: allergier blev ikke slettet'; end if;
+  select count(*) into n from family_memberships where user_id=uid; if n<>0 then raise exception 'CASCADE: familiemedlemskab blev ikke slettet'; end if;
+  select count(*) into n from shopping_list_access where user_id=uid; if n<>0 then raise exception 'CASCADE: listeadgang blev ikke slettet'; end if;
+  select count(*) into n from families where id=fid and created_by is null; if n<>1 then raise exception 'CASCADE: familien skulle bestå uden opretter'; end if;
+  select count(*) into n from family_memberships where user_id=uid2; if n<>1 then raise exception 'CASCADE: andre medlemmer skulle blive'; end if;
+end $$;
+
 rollback;
 select 'KONTOSLETNING OG OPBEVARING: ALLE TESTS BESTAAET' as resultat;
