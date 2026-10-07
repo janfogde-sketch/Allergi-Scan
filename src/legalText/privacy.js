@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "6. oktober 2026",
+  "updated": "7. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -340,7 +340,7 @@ export default {
     ],
     [
       "p",
-      "Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv."
+      "Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv. Bruger du ikke din konto i 36 måneder, sender vi dig en mail og sletter kontoen og alle oplysninger på den efter 30 dage, medmindre du logger ind igen inden da."
     ],
     [
       "p",
@@ -357,6 +357,7 @@ export default {
     [
       "ul",
       [
+        "scanningshistorik: slettes automatisk 24 måneder efter scanningen",
         "beskeder i appen: slettes automatisk efter 12 måneder",
         "tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage",
         "tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning",

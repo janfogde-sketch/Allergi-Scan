@@ -156,5 +156,36 @@ begin
   select count(*) into n from family_memberships where user_id=uid2; if n<>1 then raise exception 'CASCADE: andre medlemmer skulle blive'; end if;
 end $$;
 
+do $$
+declare a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); c uuid := gen_random_uuid(); d uuid := gen_random_uuid(); n int; act text;
+begin
+  -- Scanninger: 24 måneder.
+  insert into auth.users(id,email,aud,role) values (a,'scan-'||substr(a::text,1,8)||'@example.invalid','authenticated','authenticated');
+  insert into scan_history(user_id,ean_scanned,result,scanned_at) values (a,'1','ok',now()-interval '25 months'),(a,'2','ok',now()-interval '23 months');
+  perform public.cleanup_notifications();
+  select count(*) into n from scan_history where user_id=a; if n<>1 then raise exception 'OPBEVARING: scan_history forventet 1 efter oprydning, fik %', n; end if;
+  delete from auth.users where id=a;
+
+  -- Inaktive konti: a = 36 mdr. uden aktivitet, b = aktiv, c = gammel men scannet for nylig, d = admin.
+  insert into auth.users(id,email,aud,role,created_at,last_sign_in_at) values
+    (a,'ina-'||substr(a::text,1,8)||'@example.invalid','authenticated','authenticated',now()-interval '40 months',now()-interval '37 months'),
+    (b,'inb-'||substr(b::text,1,8)||'@example.invalid','authenticated','authenticated',now()-interval '40 months',now()-interval '1 month'),
+    (c,'inc-'||substr(c::text,1,8)||'@example.invalid','authenticated','authenticated',now()-interval '40 months',now()-interval '37 months'),
+    (d,'ind-'||substr(d::text,1,8)||'@example.invalid','authenticated','authenticated',now()-interval '40 months',now()-interval '37 months');
+  insert into scan_history(user_id,ean_scanned,result,scanned_at) values (c,'1','ok',now()-interval '2 months');
+  update public.users set role='admin' where id=d;
+  select action into act from public.inactive_accounts() where user_id=a; if act is distinct from 'warn' then raise exception 'INAKTIV: a skulle advares, fik %', act; end if;
+  select count(*) into n from public.inactive_accounts() where user_id in (b,c,d); if n<>0 then raise exception 'INAKTIV: aktive konti og admin må ikke med, fik %', n; end if;
+  -- Advaret for 10 dage siden: endnu ikke sletning.
+  update public.users set inactivity_warned_at=now()-interval '10 days' where id=a;
+  select count(*) into n from public.inactive_accounts() where user_id=a; if n<>0 then raise exception 'INAKTIV: a skal vente på de 30 dage, fik %', n; end if;
+  -- Advaret for 31 dage siden: slet.
+  update public.users set inactivity_warned_at=now()-interval '31 days' where id=a;
+  select action into act from public.inactive_accounts() where user_id=a; if act is distinct from 'delete' then raise exception 'INAKTIV: a skulle slettes, fik %', act; end if;
+  -- Bruger er aktiv igen efter advarslen: hverken advar eller slet.
+  update auth.users set last_sign_in_at=now() where id=a;
+  select count(*) into n from public.inactive_accounts() where user_id=a; if n<>0 then raise exception 'INAKTIV: a er aktiv igen, fik %', n; end if;
+end $$;
+
 rollback;
 select 'KONTOSLETNING OG OPBEVARING: ALLE TESTS BESTAAET' as resultat;
