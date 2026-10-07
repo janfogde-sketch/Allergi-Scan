@@ -173,7 +173,9 @@ begin
     (c,'inc-'||substr(c::text,1,8)||'@example.invalid','authenticated','authenticated',now()-interval '40 months',now()-interval '37 months'),
     (d,'ind-'||substr(d::text,1,8)||'@example.invalid','authenticated','authenticated',now()-interval '40 months',now()-interval '37 months');
   insert into scan_history(user_id,ean_scanned,result,scanned_at) values (c,'1','ok',now()-interval '2 months');
+  set local session_replication_role = replica; -- hopper over rolle-vagten, kun i testen
   update public.users set role='admin' where id=d;
+  set local session_replication_role = origin;
   select action into act from public.inactive_accounts() where user_id=a; if act is distinct from 'warn' then raise exception 'INAKTIV: a skulle advares, fik %', act; end if;
   select count(*) into n from public.inactive_accounts() where user_id in (b,c,d); if n<>0 then raise exception 'INAKTIV: aktive konti og admin må ikke med, fik %', n; end if;
   -- Advaret for 10 dage siden: endnu ikke sletning.
