@@ -1,4 +1,5 @@
--- Oprydning af api_usage efter 30 dage (se api_usage_limits_tables).
+-- Oprydning af api_usage efter 30 dage. Erstatter den oprindelige fil 20261006114500, som aldrig blev kørt
+-- (versionen lå før allerede anvendte migrationer og blev sprunget over). Bygget på den nuværende funktion.
 create or replace function public.cleanup_notifications()
 returns void
 language sql

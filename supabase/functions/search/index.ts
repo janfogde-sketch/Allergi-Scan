@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +51,16 @@ Deno.serve(async (req) => {
     const ean = (body.ean || "").toString().trim();
     const productId = body.product_id || null;
     const queryNorm = normalize(query);
+
+    if (query.length > 100 || ean.length > 20 || (productId && String(productId).length > 64)) return new Response(
+      JSON.stringify({ error: "For lange værdier" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+    // Loggen er kun et baggrundskald: over loftet svarer vi pænt, men gemmer ikke mere.
+    if (!(await withinUserLimit(supabase, caller.id, "search_selection"))) return new Response(
+      JSON.stringify({ success: true, skipped: true }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
     if (!queryNorm || !ean) return new Response(
       JSON.stringify({ error: "query og ean er påkrævet" }),
