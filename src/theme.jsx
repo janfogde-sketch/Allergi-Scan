@@ -130,8 +130,9 @@ export const appCss = `
      fundet ved at gen-optælle fill-værdier i selve SVG-kildefilen
      (fill="url(#greenGrad)" optræder præcis dér hvor "Safe"-bogstaverne
      tegnes) i stedet for at antage den ene grønne hex-værdi i filen var
-     "facit". Brugt via background-clip:text på selve wordmark-spannet
-     (se .topbar-wordmark-safe nedenfor), IKKE som en simpel text-color. */
+     "facit". 7. okt. 2026 (Bjørn): "Safe" i headeren er nu ensfarvet
+     var(--green) uden gradient (se .topbar-wordmark-safe nedenfor);
+     --brand-green-gradient bruges ikke længere af wordmark'et. */
   --brand-ink:#232528;
   --brand-green-gradient:linear-gradient(90deg, #70DC59 0%, #17BF55 52%, #039A55 100%);
   /* Accent-grønt — kun små highlights (checkmarks, safe-badges/dots,
@@ -318,7 +319,7 @@ body::-webkit-scrollbar{display:none;}
    ikke en flad farve — background-clip:text erstatter den tidligere,
    forkerte flade color:var(--brand-green). */
 .topbar-wordmark{font-size:26px;font-weight:800;color:var(--brand-ink);letter-spacing:-.4px;line-height:1;white-space:nowrap;}
-.topbar-wordmark-safe{background:var(--brand-green-gradient);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
+.topbar-wordmark-safe{color:var(--green);}
 /* BETA-badge — samme varme/guldbrune farve som før, nu i en delt klasse i
    stedet for inline styles, med line-height:1 + inline-flex-centrering så
    den altid centrerer sig lodret mod tekstlogoet uanset dets nøjagtige
