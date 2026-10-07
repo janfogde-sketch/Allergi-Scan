@@ -86,7 +86,7 @@ export function ScanLoadingOverlay({ show, label = "Scanner produkt og tjekker d
   return createPortal(
     <div className="scan-loading-overlay" role="status" aria-live="polite" aria-label={label}>
       <svg className="scan-loading-mark" width="92" height="92" viewBox="0 0 1000 1000" aria-hidden="true">
-        {/* Logoet (7 streger) med fluebenet, der tegnes ind igen og igen; stregen har runde ender og ingen cirkel. Ingen synlig tekst, kun animationen; skærmlæsere får label (Bjørn, 7. okt. 2026). */}
+        {/* Logoet (7 streger) med fluebenet, der tegnes ind og glider ud igen og igen (forslag D); stregen har runde ender og ingen cirkel. Ingen synlig tekst, kun animationen; skærmlæsere får label (Bjørn, 7. okt. 2026). */}
         <g transform="translate(16.8,0)">
           <g fill="var(--ink)">
             <rect x="104.8" y="158" width="102.396" height="684.495" rx="15.582" />

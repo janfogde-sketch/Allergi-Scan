@@ -1134,11 +1134,11 @@ button.filter-chip{width:auto;}
   background:var(--paper);opacity:.97;
   animation:fadeUp .18s ease both;
 }
-.scan-loading-check{stroke-dasharray:800 1200;stroke-dashoffset:801;animation:scan-check-draw 1.8s ease-out infinite;}
+.scan-loading-check{stroke-dasharray:800 1200;stroke-dashoffset:801;animation:scan-check-draw 2.2s cubic-bezier(.65,0,.35,1) infinite;}
 @keyframes scan-check-draw{
-  0%,8%{stroke-dashoffset:801;opacity:1;}
-  45%,85%{stroke-dashoffset:0;opacity:1;}
-  100%{stroke-dashoffset:0;opacity:0;}
+  0%{stroke-dashoffset:801;}
+  40%,55%{stroke-dashoffset:0;}
+  95%,100%{stroke-dashoffset:-801;}
 }
 @media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}}
 @keyframes laserMove{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
