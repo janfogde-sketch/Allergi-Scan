@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { normalizeNutrition } from "../_shared/nutrition.js";
+import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,6 +124,13 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "Kan ikke indsende på vegne af en anden bruger" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!(await withinUserLimit(supabase, caller.id, "submission"))) {
+        await reportLimitHit(supabase, caller.id, "submission", "indsendelser");
+        return new Response(
+          JSON.stringify({ error: "Du har indsendt mange i dag. Prøv igen i morgen.", code: "daily_limit" }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       // Klienten sender scanResult.id som product_id — men den er null for et

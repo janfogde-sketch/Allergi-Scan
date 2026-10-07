@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
+import { logAiUsage } from "../_shared/aiCost.ts";
+import { reportLimitHit, withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import {
   ALL_ALLERGENS,
   analyzeIngredients,
@@ -54,6 +55,7 @@ Returner KUN JSON, ingen forklaring, ingen markdown.`;
 
     if (!res.ok) return null;
     const data = await res.json();
+    await logAiUsage("allergens", "claude-haiku-4-5", data.usage);
     let raw = data.content?.[0]?.text || "";
     raw = raw.replace(/```json\s*|\s*```/g, "").trim();
     const parsed = JSON.parse(raw);
@@ -144,6 +146,7 @@ Deno.serve(async (req) => {
       claudeAllowed = isInternalCall
         ? await withinGlobalLimit(usageClient, "claude_internal")
         : await withinUserLimit(usageClient, caller!.id, "claude_analysis");
+      if (!claudeAllowed && !isInternalCall) await reportLimitHit(usageClient, caller!.id, "claude_analysis", "Claude-analyse");
     }
     if (claudeAllowed) {
       const claudeFlags = await analyzeWithClaude(text);

@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { withinUserLimit } from "../_shared/apiUsage.ts";
+import { logAiUsage } from "../_shared/aiCost.ts";
+import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,10 +37,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
-  if (!(await withinUserLimit(serviceClient, caller.id, "ocr"))) return new Response(
-    JSON.stringify({ error: "Du har brugt dagens grænse for billedlæsning. Prøv igen i morgen.", code: "daily_limit", success: false }),
-    { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  if (!(await withinUserLimit(serviceClient, caller.id, "ocr"))) {
+    await reportLimitHit(serviceClient, caller.id, "ocr", "billedlæsning (OCR)");
+    return new Response(
+      JSON.stringify({ error: "Du har brugt dagens grænse for billedlæsning. Prøv igen i morgen.", code: "daily_limit", success: false }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     const body = await req.json();
@@ -134,6 +138,7 @@ Deno.serve(async (req) => {
 
     const data = await res.json();
     const text = data.content?.[0]?.text?.trim() || "";
+    await logAiUsage("ocr", "claude-haiku-4-5", data.usage);
 
     return new Response(
       JSON.stringify({ success: true, text, mode: mode || "ingredients" }),
