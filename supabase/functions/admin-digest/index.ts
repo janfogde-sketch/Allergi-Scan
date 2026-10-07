@@ -55,10 +55,16 @@ serve(async (req) => {
       .select("id", { count: "exact", head: true })
       .eq("status", "open");
 
+    const { count: pendingRecalls } = await supabase
+      .from("recalls")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "needs_review");
+
     const submissionsN = pendingSubmissions ?? 0;
     const ticketsN = openTickets ?? 0;
+    const recallsN = pendingRecalls ?? 0;
 
-    if (submissionsN === 0 && ticketsN === 0) {
+    if (submissionsN === 0 && ticketsN === 0 && recallsN === 0) {
       return new Response(JSON.stringify({ sent: 0, reason: "Intet afventer" }), {
         headers: { ...CORS, "Content-Type": "application/json" },
       });
@@ -78,6 +84,7 @@ serve(async (req) => {
     const rows = [
       submissionsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#B5791A;">${submissionsN}</td><td style="padding:8px 12px;color:#333;">indsendelse${submissionsN !== 1 ? "r" : ""} afventer godkendelse</td></tr>` : "",
       ticketsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#C8402E;">${ticketsN}</td><td style="padding:8px 12px;color:#333;">åben${ticketsN !== 1 ? "e" : ""} ticket${ticketsN !== 1 ? "s" : ""}</td></tr>` : "",
+          recallsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#C8402E;">${recallsN}</td><td style="padding:8px 12px;color:#333;">tilbagekaldelse${recallsN !== 1 ? "r" : ""} uden stregkode afventer gennemgang</td></tr>` : "",
     ].filter(Boolean).join("");
 
     const html = `
@@ -88,7 +95,11 @@ serve(async (req) => {
         <a href="https://eatsafe.dk" style="display:inline-block;background:#178A50;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">Åbn admin-panelet →</a>
       </div>
     `;
-    const subject = `EatSafe: ${submissionsN > 0 ? `${submissionsN} indsendelse${submissionsN !== 1 ? "r" : ""}` : ""}${submissionsN > 0 && ticketsN > 0 ? " · " : ""}${ticketsN > 0 ? `${ticketsN} åben${ticketsN !== 1 ? "e" : ""} ticket${ticketsN !== 1 ? "s" : ""}` : ""} venter`;
+    const subject = `EatSafe: ${[
+      submissionsN > 0 ? `${submissionsN} indsendelse${submissionsN !== 1 ? "r" : ""}` : "",
+      ticketsN > 0 ? `${ticketsN} åben${ticketsN !== 1 ? "e" : ""} ticket${ticketsN !== 1 ? "s" : ""}` : "",
+      recallsN > 0 ? `${recallsN} tilbagekaldelse${recallsN !== 1 ? "r" : ""}` : "",
+    ].filter(Boolean).join(" · ")} venter`;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     let sent = 0;
@@ -110,7 +121,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ sent, pending_submissions: submissionsN, open_tickets: ticketsN }), {
+    return new Response(JSON.stringify({ sent, pending_submissions: submissionsN, open_tickets: ticketsN, recalls_needing_review: recallsN }), {
       headers: { ...CORS, "Content-Type": "application/json" },
     });
 
