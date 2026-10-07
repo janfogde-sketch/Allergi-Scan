@@ -177,17 +177,12 @@ begin
       when others then res := res || 'UVENTET-FEJL(' || sqlstate || '): ' || left(q, 60) || ' | ';
     end;
   end loop;
-  -- Kendte fund (egen to do, ikke rettet i denne test): giver kun en NOTICE. Når hullet er lukket, flyt linjen op i sqls.
-  sqls := array[
-    format('insert into family_members(name,user_id,family_owner_id) values (''injiceret'',%L,%L)', b, a)
-  ];
-  foreach q in array sqls loop
-    begin
-      execute q;
-      raise notice 'KENDT FUND (åbent hul): fremmed kan oprette familieprofil hos en anden: %', left(q, 60);
-    exception when others then null;
-    end;
-  end loop;
+  -- Fremmed må ikke lægge en familieprofil ind i en andens liste (rettet 7. okt. 2026)
+  begin
+    execute format('insert into family_members(name,user_id,family_owner_id) values (''injiceret'',%L,%L)', b, a);
+    res := res || 'FREMMED-PROFIL-I-ANDENS-LISTE | ';
+  exception when others then null;
+  end;
   execute 'reset role';
 
   -- 4b) Selvophøjelse: B må ikke kunne give sig selv admin, abonnement eller ændre e-mail
