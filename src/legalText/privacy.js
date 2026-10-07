@@ -348,7 +348,7 @@ export default {
     ],
     [
       "p",
-      "Når du sletter din konto (Indstillinger → Slet konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger."
+      "Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger."
     ],
     [
       "p",
