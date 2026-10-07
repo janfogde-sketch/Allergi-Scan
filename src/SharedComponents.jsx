@@ -85,31 +85,22 @@ export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "T
   if (!show) return null;
   return createPortal(
     <div className="scan-loading-overlay" role="status" aria-live="polite">
-      <svg className="scan-loading-mark" width="88" height="88" viewBox="0 0 100 100" aria-hidden="true">
-        <defs>
-          <clipPath id="scan-loading-sq">
-            <path d="M 50 0 C 85 0, 100 15, 100 50 C 100 85, 85 100, 50 100 C 15 100, 0 85, 0 50 C 0 15, 15 0, 50 0 Z" />
-          </clipPath>
-          <linearGradient id="scan-loading-beam" x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="var(--green)" stopOpacity="0" />
-            <stop offset="50%" stopColor="var(--green)" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="var(--green)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <g clipPath="url(#scan-loading-sq)">
-          <rect width="100" height="100" fill="var(--surface)" />
+      <svg className="scan-loading-mark" width="92" height="92" viewBox="0 0 1000 1000" aria-hidden="true">
+        {/* Logoet (7 streger) med fluebenet, der tegnes ind igen og igen (Bjørn, 7. okt. 2026). */}
+        <g transform="translate(16.8,0)">
           <g fill="var(--ink)">
-            <rect x="16.64" y="16" width="9.03" height="68" rx="1.37" />
-            <rect x="29.20" y="22" width="4.71" height="56" rx="1.37" />
-            <rect x="37.44" y="16" width="7.06" height="68" rx="1.37" />
-            <rect x="48.04" y="22" width="5.89" height="56" rx="1.37" />
-            <rect x="57.46" y="16" width="5.49" height="68" rx="1.37" />
-            <rect x="66.48" y="22" width="7.06" height="56" rx="1.37" />
-            <rect x="77.08" y="16" width="6.28" height="68" rx="1.37" />
+            <rect x="104.8" y="158" width="102.396" height="684.495" rx="15.582" />
+            <rect x="247.264" y="221.441" width="53.424" height="557.613" rx="15.582" />
+            <rect x="340.756" y="158" width="80.136" height="684.495" rx="15.582" />
+            <rect x="460.96" y="221.441" width="66.78" height="557.613" rx="15.582" />
+            <rect x="567.808" y="158" width="62.328" height="684.495" rx="15.582" />
+            <rect x="670.204" y="221.441" width="80.136" height="557.613" rx="15.582" />
+            <rect x="790.408" y="158" width="71.232" height="684.495" rx="15.582" />
           </g>
-          <g className="scan-loading-beam">
-            <rect x="14" y="16" width="72" height="3" fill="url(#scan-loading-beam)" />
-          </g>
+          <polyline className="scan-loading-check" points="131.512,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--paper)" strokeWidth="146.916" strokeLinejoin="round" />
+          <polyline className="scan-loading-check" points="131.512,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" />
+          <circle className="scan-loading-dot" cx="790.408" cy="466.301" r="73.458" fill="var(--paper)" />
+          <circle className="scan-loading-dot" cx="790.408" cy="466.301" r="44.52" fill="var(--green)" />
         </g>
       </svg>
       <div>

@@ -1134,16 +1134,20 @@ button.filter-chip{width:auto;}
   background:var(--paper);opacity:.97;
   animation:fadeUp .18s ease both;
 }
-.scan-loading-mark{animation:scan-mark-pulse 1.8s ease-in-out infinite;}
-@keyframes scan-mark-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.035);}}
-.scan-loading-beam{animation:scan-beam-sweep 1.6s cubic-bezier(.45,0,.55,1) infinite;}
-@keyframes scan-beam-sweep{
-  0%{transform:translateY(0);opacity:0;}
-  10%{opacity:1;}
-  50%{transform:translateY(68px);opacity:1;}
-  90%{opacity:1;}
-  100%{transform:translateY(0);opacity:0;}
+.scan-loading-check{stroke-dasharray:900;stroke-dashoffset:900;animation:scan-check-draw 1.8s ease-out infinite;}
+@keyframes scan-check-draw{
+  0%,8%{stroke-dashoffset:900;opacity:1;}
+  45%,85%{stroke-dashoffset:0;opacity:1;}
+  100%{stroke-dashoffset:0;opacity:0;}
 }
+.scan-loading-dot{transform-box:fill-box;transform-origin:center;animation:scan-check-dot 1.8s ease-out infinite;}
+@keyframes scan-check-dot{
+  0%,40%{transform:scale(0);opacity:1;}
+  50%{transform:scale(1.15);}
+  57%,85%{transform:scale(1);opacity:1;}
+  100%{opacity:0;}
+}
+@media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}.scan-loading-dot{animation:none;}}
 @keyframes laserMove{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
 .scan-loading-txt{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.1px;text-align:center;}
 .scan-loading-sub{font-size:12.5px;color:var(--muted);text-align:center;margin-top:2px;}
