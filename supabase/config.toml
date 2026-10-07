@@ -60,6 +60,9 @@ verify_jwt = false
 [functions.cleanup-orphan-images]
 verify_jwt = false
 
+[functions.inactive-accounts]
+verify_jwt = false
+
 [functions.weekly-digest]
 verify_jwt = false
 

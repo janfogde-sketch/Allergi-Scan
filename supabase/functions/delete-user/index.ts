@@ -31,29 +31,34 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Verificer at den kaldende bruger faktisk er logget ind
+    // Verificer at den kaldende bruger faktisk er logget ind. Undtagelse: vores egen oprydning af inaktive konti (inactive-accounts)
+    // kalder med service-role-nøglen og må slette en konto, den selv har fundet (36 måneder uden aktivitet, advaret 30 dage før).
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Ikke autoriseret");
-
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user: caller } } = await userClient.auth.getUser();
-    if (!caller) throw new Error("Ikke autoriseret");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const isSystemCall = serviceKey !== "" && authHeader === `Bearer ${serviceKey}`;
 
     const { uid } = await req.json();
     if (!uid) throw new Error("uid er påkrævet");
 
-    // En bruger må altid slette sin egen konto. Sletning af ANDRE brugere
-    // kræver admin-rolle.
-    const isSelfDelete = uid === caller.id;
-    if (!isSelfDelete) {
-      const { data: callerProfile } = await supabase
-        .from("users").select("role").eq("id", caller.id).single();
-      if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
+    if (!isSystemCall) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user: caller } } = await userClient.auth.getUser();
+      if (!caller) throw new Error("Ikke autoriseret");
+
+      // En bruger må altid slette sin egen konto. Sletning af ANDRE brugere
+      // kræver admin-rolle.
+      const isSelfDelete = uid === caller.id;
+      if (!isSelfDelete) {
+        const { data: callerProfile } = await supabase
+          .from("users").select("role").eq("id", caller.id).single();
+        if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
+      }
     }
 
     // Hent minimal e-mail/navn FØR sletningen — bruges kun til slettekvitteringen (P4) og gemmes ikke.
