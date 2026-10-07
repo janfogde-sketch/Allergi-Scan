@@ -10,7 +10,7 @@
 -- 3) Ændring/sletning: B rammer 0 af A's rækker.
 -- 4) Oprettelse på andres vegne og selvophøjelse (rolle/abonnement/e-mail) afvises.
 -- 5) Anon: ser intet i brugertabeller.
--- Bemærk: backup-tabeller (…_backup_…, …_diff_…) er undtaget fra TRUNCATE-vagten, indtil to do'en om deres rettigheder er løst.
+-- Backup-tabeller (…_backup_…, …_diff_…, …_ÅÅÅÅMMDD) er IKKE undtaget: appens roller må hverken tømme, skrive eller læse dem.
 begin;
 
 -- 1) Strukturvagter ---------------------------------------------------------------------------------------------
@@ -28,11 +28,9 @@ begin
     where n.nspname='public' and c.relkind in ('r','p')
   loop
     if not r.relrowsecurity then res := res || 'RLS-FRA:' || r.relname || ' '; end if;
-    if r.relname !~ '_(backup|fix|diff|down|match|ids)(_|$)' and r.relname !~ '_[0-9]{8}[a-z]?$' then
-      if has_table_privilege('anon', r.oid, 'insert,update,delete') then res := res || 'ANON-SKRIVER:' || r.relname || ' '; end if;
-      if has_table_privilege('anon', r.oid, 'truncate') or has_table_privilege('authenticated', r.oid, 'truncate') then
-        res := res || 'TRUNCATE:' || r.relname || ' ';
-      end if;
+    if has_table_privilege('anon', r.oid, 'insert,update,delete') then res := res || 'ANON-SKRIVER:' || r.relname || ' '; end if;
+    if has_table_privilege('anon', r.oid, 'truncate') or has_table_privilege('authenticated', r.oid, 'truncate') then
+      res := res || 'TRUNCATE:' || r.relname || ' ';
     end if;
   end loop;
 
@@ -205,7 +203,6 @@ begin
   for r in
     select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='public' and c.relkind='r' and c.relname <> all(public_read)
-      and c.relname !~ '_(backup|fix|diff|down|match|ids)(_|$)' and c.relname !~ '_[0-9]{8}[a-z]?$'
   loop
     begin
       execute format('select count(*) from public.%I', r.relname) into n;
