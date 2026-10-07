@@ -109,32 +109,11 @@ export const appCss = `
   --green-selected-bg:#EFF9F4;
   --green-halo:#DDF4E8;
   --on-green:#FFFFFF;
-  /* Låste logo-/brandfarver (29. sept. 2026, "Opdater EatSafe-brandingen i
-     headers", rettet 29. sept. 2026 efter et reelt farve-fund — se nedenfor)
-     — hentet direkte fra de FASTE SVG-master-filerne (src/assets/logo/
-     eatsafe-logo-horizontal.svg), IKKE de samme som appens almindelige
-     --ink/--green-UI-tokens ovenfor. Bruges KUN til at gengive selve
-     EatSafe-ordmærket som tekst (headerens/onboardingens wordmark) — ikke
-     til almindelig UI (knapper, ikoner osv.), som fortsat bruger --ink/
-     --green. Navngivet forskelligt fra den eksisterende --green-logo (som
-     reelt er aliaset til --green-accent og driver kamera-reticle/laser-
-     linjen — et andet, ikke-relateret formål) for at undgå forveksling.
-     --brand-ink:#232528 er "Eat"-teksten i SVG'en, fill="#232528" (flad
-     farve, ingen gradient) — korrekt uændret.
-     --brand-green-gradient: "Safe"-teksten i SVG'en er IKKE en flad farve
-     — dens <path> har fill="url(#greenGrad)", en venstre-til-højre-gradient
-     (stops #70DC59→#17BF55→#039A55, samme gradient som logoets lille
-     tjekmærke-cirkel). Et tidligere forsøg (samme dag) brugte fejlagtigt
-     #039A55 alene som en FLAD farve for hele "Safe" — det er reelt kun
-     farven på tjekmærke-CIRKLEN i symbolet, ikke selve wordmark-teksten;
-     fundet ved at gen-optælle fill-værdier i selve SVG-kildefilen
-     (fill="url(#greenGrad)" optræder præcis dér hvor "Safe"-bogstaverne
-     tegnes) i stedet for at antage den ene grønne hex-værdi i filen var
-     "facit". 7. okt. 2026 (Bjørn): "Safe" i headeren er nu ensfarvet
-     var(--green) uden gradient (se .topbar-wordmark-safe nedenfor);
-     --brand-green-gradient bruges ikke længere af wordmark'et. */
+  /* Logo-/brandfarver (7. okt. 2026, Bjørn: nyt logo uden gradient).
+     --brand-ink:#232528 er "Eat" og stregerne i logoet; "Safe" og fluebenet
+     er ensfarvet --green (#0F7D4F), samme grønne som Scan-knappen.
+     Master-filerne ligger i src/assets/logo/ og public/brand/. */
   --brand-ink:#232528;
-  --brand-green-gradient:linear-gradient(90deg, #70DC59 0%, #17BF55 52%, #039A55 100%);
   /* Accent-grønt — kun små highlights (checkmarks, safe-badges/dots,
      reticle), se kommentaren ovenfor. */
   --green-accent:#34D06A;
@@ -304,7 +283,7 @@ body::-webkit-scrollbar{display:none;}
    ikke bruges som del af brandingen her.
    29. sept. 2026, "Opdater EatSafe-brandingen i headers": farverne skiftet
    fra appens almindelige --ink/--green-UI-tokens til de FASTE, låste logo-
-   brandfarver --brand-ink/--brand-green-gradient (samme farver som selve
+   brandfarver --brand-ink/--green (samme farver som selve
    master-SVG'en på velkomstsiden bruger, se :root-kommentaren ovenfor) —
    headeren skal nu farvemæssigt matche velkomstsidens rigtige logo, ikke
    blot appens generelle UI-palet. Størrelse øget yderligere ~10%
@@ -315,9 +294,7 @@ body::-webkit-scrollbar{display:none;}
    så en pixel-identisk skrifttype-gengivelse via CSS er ikke muligt; dette
    er den tætteste praktisk opnåelige match inden for appens ene faste
    skrifttype (DM Sans).
-   Rettet SAMME dag: "Safe" er en gradient i SVG'en (fill="url(#greenGrad)"),
-   ikke en flad farve — background-clip:text erstatter den tidligere,
-   forkerte flade color:var(--brand-green). */
+   7. okt. 2026 (Bjørn): "Safe" er ensfarvet --green, ligesom i det nye logo. */
 .topbar-wordmark{font-size:26px;font-weight:800;color:var(--brand-ink);letter-spacing:-.4px;line-height:1;white-space:nowrap;}
 .topbar-wordmark-safe{color:var(--green);}
 /* BETA-badge — samme varme/guldbrune farve som før, nu i en delt klasse i
