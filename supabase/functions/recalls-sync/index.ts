@@ -70,11 +70,14 @@ Deno.serve(async (req) => {
         } else if (status === "needs_review") {
           // F1-3 (6. okt. 2026): en tilbagekaldelse uden gyldig EAN når ingen brugere, før admin har
           // afgjort den, så den lander som høj prioritet på admins to do-liste med link til kilden.
-          await db.from("admin_todos").insert({
+          const { error: todoErr } = await db.from("admin_todos").insert({
             title: `Tilbagekaldelse uden EAN: ${item.title}`.slice(0, 200),
             description: `Fødevarestyrelsens side har ingen gyldig stregkode, så ingen brugere har fået besked. Afgør den under Admin → Tilbagekald (tilføj EAN eller arkivér).${page.unverifiedEans?.length ? ` Ubekræftede tal på siden: ${page.unverifiedEans.join(", ")}.` : ""}`,
             priority: "high", track: "drift", link: item.url,
           });
+          if (todoErr) {
+            try { await db.rpc("log_client_error", { p_message: `Kunne ikke oprette to do for tilbagekaldelse uden EAN: ${todoErr.message}`, p_source: "edge:recalls-sync", p_context: { url: item.url } }); } catch { /* aldrig blokere */ }
+          }
           results.review++;
         }
         else results.archived++;
