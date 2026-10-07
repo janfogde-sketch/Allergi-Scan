@@ -926,5 +926,76 @@
    "maelkeallergi": "no"
   },
   "kilde": "Kokos og mælkesyre er ikke trænød og mælk"
+ },
+ {
+  "text": "Sukker, glukosesirup, modificeret stivelse, tablethjælpestof (E570), pebermynteolie.",
+  "expect": {
+   "noedder": "no"
+  },
+  "kilde": "Polo (hjælpestof er ikke pesto)"
+ },
+ {
+  "text": "Basilikum, tomatpesto, olivenolie",
+  "expect": {
+   "noedder": "yes"
+  },
+  "kilde": "Pesto er stadig nødder"
+ },
+ {
+  "text": "Gulerødder, vandkastanjer, løg",
+  "expect": {
+   "noedder": "no"
+  },
+  "kilde": "Vandkastanjer er ikke nødder"
+ },
+ {
+  "text": "Kastanjer, sukker",
+  "expect": {
+   "noedder": "no"
+  },
+  "kilde": "Kastanjer er ikke på EU's nødde-liste"
+ },
+ {
+  "text": "Vand, vegetabilske olier, kokosolie, salt, mælkesyre. Mælkefri. Laktosefri.",
+  "expect": {
+   "maelkeallergi": "no",
+   "laktose": "no"
+  },
+  "kilde": "Smørbart fedtstof (mælkefri)"
+ },
+ {
+  "text": "Margarine 80%. Palmeolie (68%), vand, rapsolie (12%), salt, emulgator (lecithin)",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "Plantebaseret fedtstof"
+ },
+ {
+  "text": "HVEDEMEL, margarine (vegetabilsk olie (palme, raps), vand, emulgatorer (E475), salt), sukker",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "Småkager med margarine og egen liste"
+ },
+ {
+  "text": "HVEDEMEL, margarine (palmeolie, vand, valleprotein), sukker",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "Margarine med mælk i egen liste"
+ },
+ {
+  "text": "Sardiner, vand, margarine, salt",
+  "expect": {
+   "maelkeallergi": "yes"
+  },
+  "kilde": "Margarine uden liste forbliver mælk"
+ },
+ {
+  "text": "Mælkefri margarine (vand, rapsolie)",
+  "expect": {
+   "maelkeallergi": "no"
+  },
+  "kilde": "Mælkefri margarine"
  }
 ]

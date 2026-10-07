@@ -66,7 +66,7 @@ const L = "a-zæøåäöüß";
 // "Mandelflager", "Torskefilet"). Undtagelser er ord, der er egne ord og ikke
 // skal matche inde i andre. Korte nøgleord (4 tegn eller færre) matcher som hele ord,
 // med de eksplicitte sammensætningsregler i SHORT_PATTERNS nedenfor.
-const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke", "ising", "ørred", "silli", "kerma", "kalaa", "kalan"]);
+const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke", "ising", "ørred", "silli", "kerma", "kalaa", "kalan", "pesto"]);
 
 export function isSubstringKeyword(kw) {
   return SUBSTRING_KEYWORDS.has(kw) || (kw.length >= 5 && !NO_SUBSTRING.has(kw));
@@ -83,6 +83,8 @@ const SHORT_PATTERNS = {
   "laks": `[${L}]*laks(?:e[${L}]*)?`,
   "sild": `sild(?:e[${L}]*)?`,
   "reje": `reje[${L}]*`,
+  // "tomatpesto", "basilikumpesto", men ikke "tablethjælpestof" (7. okt. 2026, E2)
+  "pesto": `[${L}]*pesto(?:er)?`,
   "sej": `[${L}]*sej`,
   // Svensk/norsk hvede som led i sammensætninger ("fullkornsvete", "vetemjöl"), men ikke "bovete"/"vetenskap" (6. okt. 2026, G1)
   "vete": `(?:fullkorns?|hel|durum)?vete(?:mjöl|stärkelse|gluten|kli|fiber|kim|korn|protein|flingor)?`,
@@ -251,6 +253,27 @@ const ALLERGEN_MASKS = {
 // Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
 const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin", "lécithine", "lécithines", "lesitiini"]);
 
+// Margarine/minarine er ikke i sig selv mælk (7. okt. 2026, E2): plantemargarine er veganske, og
+// indeholder en margarine mælk, står mælkeproteinet i dens egen ingrediensliste. Står der
+// ingen liste efter ordet ("margarine, salt"), og teksten ikke selv siger plantebaseret/vegansk,
+// kan vi ikke vide det og beholder det forsigtige svar (mælk).
+const MARGARINE_RE = /(?:margarine|minarine)[a-zæøå]*/g;
+const PLANT_BASED_RE = /plantebaseret|vegansk|vegan\b|plantemargarine|vegetabilsk margarine/;
+function applyMargarineRule(lower, flags) {
+  if (flags.maelkeallergi === "yes") return;
+  if (PLANT_BASED_RE.test(lower)) return;
+  MARGARINE_RE.lastIndex = 0;
+  let m;
+  while ((m = MARGARINE_RE.exec(lower))) {
+    const start = m.index, end = start + m[0].length;
+    if (isNegatedAt(lower, start, end)) continue;
+    if (/^\s*(?:\d+[.,]?\d*\s*%\s*[.:(*\[]|[(*\[:])/.test(lower.slice(end, end + 14))) continue; // har egen liste
+    if (isTracesAt(lower, start)) { if (flags.maelkeallergi === "no") flags.maelkeallergi = "traces"; continue; }
+    flags.maelkeallergi = "yes";
+    return;
+  }
+}
+
 export function analyzeIngredients(rawText) {
   const text = normalizeIngredientText(rawText);
   CARAMEL_SULFITE.lastIndex = 0;
@@ -294,6 +317,8 @@ export function analyzeIngredients(rawText) {
 
     flags[allergen] = status;
   }
+
+  applyMargarineRule(lower, flags);
 
   if (hasSulfiteCaramel && flags.svovl === "no") flags.svovl = "traces";
 

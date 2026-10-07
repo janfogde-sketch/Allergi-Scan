@@ -92,7 +92,7 @@ export const ALLERGEN_KEYWORDS = {
     "sødmælkspulver", "kærnemælk", "buttermilk",
     "flødepulver", "mælketørstof", "milk solids", "laktoprotein",
     "inddampet mælk", "condensed milk", "evaporated milk",
-    "animalsk fedtstof", "animalsk olie", "margarine", "minarine",
+    "animalsk fedtstof", "animalsk olie",
     // Sammensatte ord med de korte kerneord "smør"/"ost", som ellers kun
     // matcher som hele ord (30. sept. 2026 — "SMØRFEDT" og "Hytteost" blev
     // overset). Ental og flertal, jf. den stående regel i CLAUDE.md.
@@ -164,7 +164,7 @@ export const ALLERGEN_KEYWORDS = {
     "macadamia", "macadamianød", "macadamianødder",
     "paranød", "paranødder", "brazil nut",
     "pinjekerne", "pinjekerner", "pinjenød", "pinjenødder", "pine nut",
-    "kokosnød", "kokosnødder", "chestnuts", "kastanje", "kastanjer",
+    "kokosnød", "kokosnødder",
     "nødde", "nøddepasta", "nut paste", "marcipan", "marzipan", "nougat",
     "pesto", "praline", "gianduja",
     "mandelmel", "nøddemel", "mandelsmør", "nøddeolie",
