@@ -82,17 +82,17 @@ serve(async (req) => {
     }
 
     const rows = [
-      submissionsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#B5791A;">${submissionsN}</td><td style="padding:8px 12px;color:#333;">indsendelse${submissionsN !== 1 ? "r" : ""} afventer godkendelse</td></tr>` : "",
+      submissionsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#9A6514;">${submissionsN}</td><td style="padding:8px 12px;color:#333;">indsendelse${submissionsN !== 1 ? "r" : ""} afventer godkendelse</td></tr>` : "",
       ticketsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#C8402E;">${ticketsN}</td><td style="padding:8px 12px;color:#333;">åben${ticketsN !== 1 ? "e" : ""} ticket${ticketsN !== 1 ? "s" : ""}</td></tr>` : "",
           recallsN > 0 ? `<tr><td style="padding:8px 12px;font-size:28px;font-weight:800;color:#C8402E;">${recallsN}</td><td style="padding:8px 12px;color:#333;">tilbagekaldelse${recallsN !== 1 ? "r" : ""} uden stregkode afventer gennemgang</td></tr>` : "",
     ].filter(Boolean).join("");
 
     const html = `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-        <h2 style="color:#178A50;">EatSafe — ugentligt overblik</h2>
+        <h2 style="color:#0F7D4F;">EatSafe — ugentligt overblik</h2>
         <p style="color:#555;">Her er hvad der venter på jer i admin-panelet lige nu:</p>
         <table style="border-collapse:collapse;margin:16px 0;">${rows}</table>
-        <a href="https://eatsafe.dk" style="display:inline-block;background:#178A50;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">Åbn admin-panelet →</a>
+        <a href="https://eatsafe.dk" style="display:inline-block;background:#0F7D4F;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">Åbn admin-panelet →</a>
       </div>
     `;
     const subject = `EatSafe: ${[
