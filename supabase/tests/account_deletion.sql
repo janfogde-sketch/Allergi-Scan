@@ -23,7 +23,7 @@ declare
     'scan_history.user_id','search_selections.user_id','security_reports.user_id',
     'shopping_list_access.user_id','shopping_list_hidden.user_id','shopping_list_items.added_by',
     'shopping_lists.owner_id','submissions.reviewed_by','submissions.submitted_by','user_allergens.user_id',
-    'users.email'
+    'users.email','users.id'
   ];
   found text[]; missing text[]; stale text[];
 begin
