@@ -27,14 +27,14 @@ export function base64urlEncode(bytes: Uint8Array): string {
   return btoa(s).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-export function base64urlDecode(str: string): Uint8Array {
+export function base64urlDecode(str: string): Uint8Array<ArrayBuffer> {
   const b64 = str.replace(/-/g, "+").replace(/_/g, "/").padEnd(str.length + ((4 - (str.length % 4)) % 4), "=");
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 
 const utf8 = (s: string) => new TextEncoder().encode(s);
 
-function concat(...arrays: Uint8Array[]): Uint8Array {
+function concat(...arrays: Uint8Array[]): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(arrays.reduce((n, a) => n + a.length, 0));
   let offset = 0;
   for (const a of arrays) { out.set(a, offset); offset += a.length; }
@@ -80,13 +80,13 @@ export async function buildVapidJwt(audience: string, privKey: string, subject: 
   return `${sigInput}.${base64urlEncode(sig)}`;
 }
 
-async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
+async function hkdf(salt: Uint8Array<ArrayBuffer>, ikm: Uint8Array<ArrayBuffer>, info: Uint8Array<ArrayBuffer>, length: number): Promise<Uint8Array<ArrayBuffer>> {
   const key = await crypto.subtle.importKey("raw", ikm, { name: "HKDF" }, false, ["deriveBits"]);
   return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, key, length * 8));
 }
 
 /** aes128gcm-kryptering (RFC 8291) af én besked til én subscription. */
-export async function encryptPayload(payload: string, sub: PushSubscriptionJson): Promise<Uint8Array> {
+export async function encryptPayload(payload: string, sub: PushSubscriptionJson): Promise<Uint8Array<ArrayBuffer>> {
   const clientPublicKey = base64urlDecode(sub.keys.p256dh);
   const clientAuth = base64urlDecode(sub.keys.auth);
 

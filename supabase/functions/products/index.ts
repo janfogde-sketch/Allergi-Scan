@@ -1,6 +1,9 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
 
+// Findes kun i Supabase's kørselsmiljø (ikke i Deno-typerne).
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -138,7 +141,8 @@ async function fetchFromOFF(ean: string) {
 // ── Gem OFF-produkt permanent i databasen ─────────────────────────────────────
 // Køres i baggrunden (ikke-blokerende) efter vi har svaret brugeren
 async function saveOffProductToDB(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   offProduct: Awaited<ReturnType<typeof fetchFromOFF>>,
   allergenFlags: Record<string, string>,
   usedKeywordEngine: boolean
@@ -189,7 +193,8 @@ async function saveOffProductToDB(
 }
 
 // ── Log manglende EAN (til prioritering) ──────────────────────────────────────
-async function logMissingEan(supabase: ReturnType<typeof createClient>, ean: string) {
+async function logMissingEan(// deno-lint-ignore no-explicit-any
+  supabase: any, ean: string) {
   try {
     // Upsert: opret eller inkrementer tæller
     await supabase.rpc("log_missing_ean", { p_ean: ean });
@@ -287,7 +292,7 @@ Deno.serve(async (req) => {
           // EdgeRuntime.waitUntil sikrer at gem-operationen fuldføres selv efter response er sendt
           const savePromise = saveOffProductToDB(supabase, offProduct, allergenFlags, usedKeywordEngine);
           if (typeof EdgeRuntime !== "undefined") {
-            EdgeRuntime.waitUntil(savePromise);
+            EdgeRuntime!.waitUntil(savePromise);
           } else {
             savePromise.catch(console.error);
           }
@@ -310,7 +315,7 @@ Deno.serve(async (req) => {
         // Produkt ikke fundet nogen steder — log manglende EAN
         const logPromise = logMissingEan(supabase, identifier);
         if (typeof EdgeRuntime !== "undefined") {
-          EdgeRuntime.waitUntil(logPromise);
+          EdgeRuntime!.waitUntil(logPromise);
         } else {
           logPromise.catch(console.error);
         }
@@ -386,7 +391,7 @@ Deno.serve(async (req) => {
       { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }),
+    return new Response(JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

@@ -108,8 +108,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (err) {
-    console.error("send-email fejl:", err.message);
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("send-email fejl:", (err as Error).message);
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

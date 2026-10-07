@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     // konto ligger hos personen selv (se CLAUDE.md's rettigheds-afsnit).
     if (method === "GET" && isGroup && !groupUserId) {
       const { data: groupRows } = await supabase.rpc("family_group", { p_uid: caller.id });
-      const group = (groupRows ?? []).map((r) => (typeof r === "string" ? r : r.family_group)).filter((id) => id !== caller.id);
+      const group = (groupRows ?? []).map((r: string | { family_group: string }) => (typeof r === "string" ? r : r.family_group)).filter((id: string) => id !== caller.id);
 
       if (group.length === 0) {
         return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

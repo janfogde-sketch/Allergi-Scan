@@ -13,7 +13,8 @@ const MAX_IMAGE_BASE64_LENGTH = 8_000_000; // samme loft som ocr-funktionen
 
 // ── Upload base64 billede til Supabase Storage ─────────────────────────────
 async function uploadImageToStorage(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   base64: string,
   folder: string,
   filename: string
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
   async function callerIsAdmin() {
-    const { data } = await supabase.from("users").select("role").eq("id", caller.id).single();
+    const { data } = await supabase.from("users").select("role").eq("id", caller!.id).single();
     return data?.role === "admin";
   }
 
@@ -412,6 +413,6 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "Ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

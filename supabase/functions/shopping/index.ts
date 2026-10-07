@@ -56,25 +56,25 @@ Deno.serve(async (req) => {
   // har accepteret/sendt en family_invite til/fra caller) — samme gruppe
   // RLS-politikkerne for type='family'-lister bruger.
   async function callerFamilyGroup() {
-    const { data } = await supabase.rpc("family_group", { p_uid: caller.id });
-    return (data ?? []).map((r) => (typeof r === "string" ? r : r.family_group));
+    const { data } = await supabase.rpc("family_group", { p_uid: caller!.id });
+    return (data ?? []).map((r: string | { family_group: string }) => (typeof r === "string" ? r : r.family_group));
   }
 
   // En liste kan tilgås af sin ejer, af hele ejerens familiegruppe (hvis
   // listen er type='family'), eller af en bruger med en
   // shopping_list_access-række (permission "edit" kræves for skrivning).
-  async function canAccessList(listId, requireEdit) {
+  async function canAccessList(listId: string | null, requireEdit?: boolean) {
     const { data: list } = await supabase
       .from("shopping_lists").select("owner_id, type").eq("id", listId).single();
     if (!list) return false;
-    if (list.owner_id === caller.id) return true;
+    if (list.owner_id === caller!.id) return true;
     if (list.type === "family") {
       const group = await callerFamilyGroup();
       if (group.includes(list.owner_id)) return true;
     }
     const { data: access } = await supabase
       .from("shopping_list_access").select("permission")
-      .eq("list_id", listId).eq("user_id", caller.id).maybeSingle();
+      .eq("list_id", listId).eq("user_id", caller!.id).maybeSingle();
     if (!access) return false;
     return requireEdit ? access.permission === "edit" : true;
   }
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     // ─────────────────────────────────────
 
     if (method === "GET" && isFamilyMembers) {
-      const group = (await callerFamilyGroup()).filter((id) => id !== caller.id);
+      const group = (await callerFamilyGroup()).filter((id: string) => id !== caller.id);
       if (group.length === 0) {
         return new Response(JSON.stringify({ success: true, members: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -233,7 +233,7 @@ Deno.serve(async (req) => {
         if (!error) break;
       }
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      return new Response(JSON.stringify({ success: true, share_link: updated.share_link }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, share_link: updated?.share_link }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ─────────────────────────────────────
@@ -266,7 +266,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false });
 
       const orParts = [`owner_id.eq.${userId}`];
-      if (group.length > 1) orParts.push(`and(type.eq.family,owner_id.in.(${group.filter((id) => id !== userId).join(",")}))`);
+      if (group.length > 1) orParts.push(`and(type.eq.family,owner_id.in.(${group.filter((id: string) => id !== userId).join(",")}))`);
       if (sharedListIds.length > 0) orParts.push(`id.in.(${sharedListIds.join(",")})`);
       query = query.or(orParts.join(","));
 
@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
 
       // Berig med det, appen skal bruge til en klar delt-status: ejerens fornavn, hvem egne lister er delt med
       // (fornavne), og om jeg har adgang via en udvalgt/link-række. Listekoden er kun til ejeren.
-      const firstName = (n) => (n ?? "").trim().split(/\s+/)[0] || null;
+      const firstName = (n?: string | null) => (n ?? "").trim().split(/\s+/)[0] || null;
       // Skjulte lister (forladt familiedeling) udelades, medmindre jeg er ejer eller siden har fået en egen adgangsrække.
       const rows = (lists ?? []).filter((l) => l.owner_id === userId || sharedListIds.includes(l.id) || !hiddenIds.has(l.id));
       const foreignOwnerIds = [...new Set(rows.filter((l) => l.owner_id !== userId).map((l) => l.owner_id))];
@@ -529,7 +529,7 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
