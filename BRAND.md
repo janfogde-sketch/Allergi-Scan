@@ -14,7 +14,7 @@
 
 **Opbygning (logo A, Bjørn 7. okt. 2026):** et stregkodemærke med 7 lodrette streger, hvor et flueben går gennem stregerne
 med lige meget luft på begge sider af den grønne streg, og hele mærket er centreret. Ordmærket "EatSafe" står til højre.
-Ingen gradient nogen steder.
+Ingen gradient i logoet.
 
 | Del | Farve |
 |---|---|
@@ -154,6 +154,10 @@ Brug de delte klasser og komponenter, ikke inline-styles der genopfinder dem.
 | Beskeder | `showToast(msg, "success"\|"error")`, aldrig `alert()` |
 | Info-ark og vælgere | `InfoSheet`, `ListPickerSheet` |
 | Ikoner | `<Icon name=… />` fra `SharedComponents.jsx` (selvtegnede streg-ikoner). Nye ikoner tilføjes dér |
+
+**Scan-knappen på forsiden er en bevidst undtagelse (Bjørn, 7. okt. 2026):** den beholder sin gradient fra `--green` til
+`--green-dark`, det hvide lysskær foroven og haloen i `--green-halo`, nu med langsomme bølgeringe. Gør den ikke flad, og brug ikke
+gradienten andre steder end på Scan-knappen og den store velkomstknap (`ScannerScreen.jsx`, `.welcome-btn`).
 
 **Emoji:** kun som indhold (allergen-glyffer, sprogflag, kategorier), aldrig i knapper, overskrifter eller anden UI-ramme.
 
