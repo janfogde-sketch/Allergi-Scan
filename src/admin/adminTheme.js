@@ -15,10 +15,10 @@ export const adminCss = `
   --green:#0F7D4F;--green-dark:#0C643F;--green-lt:rgba(15,125,79,.10);--green-mid:rgba(15,125,79,.18);--green-selected-bg:#EFF9F4;--on-green:#FFFFFF;
   --green-accent:#34D06A;--green-accent-lt:rgba(52,208,106,.14);--green-accent-mid:rgba(52,208,106,.26);
   --red:#C8402E;--red-lt:rgba(200,64,46,.08);--red-md:rgba(200,64,46,.18);
-  --amber:#B5791A;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
+  --amber:#9A6514;--amber-lt:rgba(181,121,26,.08);--amber-md:rgba(181,121,26,.18);
   --blue:#3A6EA5;--blue-lt:rgba(58,110,165,.10);--blue-md:rgba(58,110,165,.20);
   --border:rgba(21,32,26,.10);--border2:rgba(21,32,26,.16);
-  --muted:rgba(21,32,26,.58);--muted2:rgba(21,32,26,.40);
+  --muted:rgba(21,32,26,.66);--muted2:rgba(21,32,26,.40);
   --r:10px;--f:'DM Sans',system-ui,-apple-system,sans-serif;--mono:'DM Mono','SF Mono',monospace;
   --sidebar-w:232px;
 }

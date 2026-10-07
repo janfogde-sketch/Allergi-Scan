@@ -7,9 +7,12 @@ paths:
 
 # Designsystem-tokens (`src/theme.jsx`, `:root` CSS-variabler)
 
+> Samlet brandguide (logo, farver, skrift, komponenter, tone, hvor kopierne ligger): `BRAND.md` i roden.
+> Denne fil er den tekniske detalje bag; ved uenighed er `:root` i `src/theme.jsx` facit.
+
 ```
 --ink:#15201A            tekst
---paper:#F6F8F3          baggrund (hvid/lys — IKKE grøn baggrund)
+--paper:#FFFFFF          baggrund (ren hvid; admin bruger #F6F8F3)
 --green:#0F7D4F          EatSafe-designsystemets PRIMÆRE grønne handlings-
                          farve — låst 27. sept. 2026 (MASTER PROMPT-brief,
                          se CLAUDE.md afsnit 5/7), superseding den tidligere
@@ -59,6 +62,7 @@ paths:
 --field-border           inputfelters kant, mindst 3:1 (WCAG 1.4.11)
 --sh-green               skygge under primærknapper
 --neutral:#5C6A61        "Kan ikke vurderes" og labels; --unknown er et alias
+--brand-ink:#232528      "Eat" og stregerne i logoet (.topbar-wordmark)
 --surface / -2 / -3
 --border / -2
 --r:12px (default radius), --sh / --sh2 (skygge-tokens)

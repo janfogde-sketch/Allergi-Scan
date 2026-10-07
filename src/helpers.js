@@ -100,15 +100,15 @@ export const STORE_SOURCES = ["bilka", "nemlig"];
 export const verifiedBadge = (verified_status, source) => {
   // Producent-data — højeste troværdighed
   if (verified_status === "verified" || source === "producer")
-    return { label:"Fra producent", bg:"rgba(34,197,94,.1)", color:"#16a34a", dot:"#16a34a" };
+    return { label:"Fra producent", bg:"rgba(15,125,79,.10)", color:"#0F7D4F", dot:"#0F7D4F" };
   // Open Food Facts — crowd-sourced
   if (source === "off" || source === "open_food_facts")
-    return { label:"Open Food Facts", bg:"rgba(37,99,235,.06)", color:"#2563eb", dot:"#2563eb" };
+    return { label:"Open Food Facts", bg:"rgba(58,110,165,.10)", color:"#3A6EA5", dot:"#3A6EA5" };
   // Importeret fra butikkernes varekataloger — ikke indsendt af en bruger
   if (STORE_SOURCES.includes(source))
-    return { label:"Butiksdata", bg:"rgba(138,144,153,.08)", color:"#6B7280", dot:"#6B7280" };
+    return { label:"Butiksdata", bg:"rgba(107,122,112,.12)", color:"#5C6A61", dot:"#5C6A61" };
   // Bruger-indsendt
-  return { label:"Bruger-indsendt", bg:"rgba(138,144,153,.08)", color:"#6B7280", dot:"#6B7280" };
+  return { label:"Bruger-indsendt", bg:"rgba(107,122,112,.12)", color:"#5C6A61", dot:"#5C6A61" };
 };
 
 // ─── SUPABASE API-HJÆLPER ────────────────────────────────────────────────────

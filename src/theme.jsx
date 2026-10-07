@@ -1,9 +1,9 @@
 // @ts-nocheck
 // ─────────────────────────────────────────────────────────────────────────────
-// theme.jsx — EatSafe designsystem (Mørkt tema)
+// theme.jsx — EatSafe designsystem (lyst tema). Brandguiden er BRAND.md i roden.
 //
 // Ét sted til at styre hele appens visuelle udtryk.
-// Skift tema ved at ændre THEME-objektet herunder — resten følger automatisk.
+// Kilden er :root i appCss nedenfor. THEME er en JS-kopi af de samme værdier; ret begge.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
@@ -15,8 +15,8 @@ export const THEME = {
 
   // Primær tekst — mørk grøn-sort (ikke ren sort)
   ink:     "#15201A",
-  ink2:    "rgba(21,32,26,.72)",
-  ink3:    "rgba(21,32,26,.52)",
+  ink2:    "rgba(21,32,26,.78)",
+  ink3:    "rgba(21,32,26,.62)",
 
   // Grønt to-farve-system (låst 27. sept. 2026, se :root i denne fil for
   // fuld begrundelse) — green er primær handlingsfarve, greenAccent er en
@@ -37,7 +37,7 @@ export const THEME = {
   redMd:  "rgba(200,64,46,.18)",
 
   // Advarsel — amber (bruges kun til reelle advarsler, ikke dekoration)
-  amber:   "#B5791A",
+  amber:   "#9A6514",
   amberLt: "rgba(181,121,26,.08)",
   amberMd: "rgba(181,121,26,.18)",
 
@@ -48,11 +48,11 @@ export const THEME = {
   blueMd: "rgba(58,110,165,.20)",
 
   // Neutral — grå til labels og metadata
-  neutral:   "#6B7A70",
+  neutral:   "#5C6A61",
   neutralLt: "rgba(107,122,112,.12)",
 
   // Tekst-muted — neutral grå (ikke grønstemt)
-  muted:  "rgba(21,32,26,.58)",
+  muted:  "rgba(21,32,26,.66)",
   muted2: "rgba(21,32,26,.40)",
 
   // Borders — bløde, lyse
@@ -409,10 +409,9 @@ body::-webkit-scrollbar{display:none;}
      13 — faste px-størrelser skalerede slet ikke med boksens egen højde. */
   container-type:size;
 }
-/* Hjem-forsidens store scan-CTA: egen farvepalet (primær #0E8F5A, mørk
-   #08734A, halo #DDF4E8) adskilt fra appens generelle --green-token,
-   bevidst — kun selve CTA'en skal bruge denne specifikke nuance, resten af
-   appens grønne elementer (bundnav, andre knapper) rører vi ikke her.
+/* Hjem-forsidens store scan-CTA: bruger nu appens --green/--green-dark og
+   --green-halo (den tidligere egne, lysere palet er udfaset; se
+   BRAND.md).
    Puls-adfærden er justeret to gange: 24. sept. 2026 startede med en
    tydelig, hurtig puls PÅ BÅDE halo og knap (efter ønsket "må gerne
    pulsere så man får lyst til at trykke"); 25. sept. 2026 præciseret til
@@ -746,7 +745,7 @@ body::-webkit-scrollbar{display:none;}
 .welcome-benefit-label{font-size:12px;font-weight:700;color:var(--ink);line-height:1.35;white-space:nowrap;}
 /* Primær CTA — EatSafes låste --green/--green-dark-token (25. sept.
    2026-designsystem, se CLAUDE.md afsnit 5/7). Var tidligere hardkodet til
-   den daværende Scan-CTA-only-palet (#0E8F5A→#08734A) adskilt fra
+   den daværende Scan-CTA-only-palet adskilt fra
    --green — nu samme farve, så ingen adskillelse længere nødvendig.
    (Ryddet op i en duplikeret, tavst-vindende .welcome-btn-regel
    længere nede i filen, som pga. CSS-cascade reelt overskrev denne.)
@@ -823,7 +822,7 @@ body::-webkit-scrollbar{display:none;}
    næsten usynlig markering (samme --surface2-farve som rækkens egen
    baggrund, kun adskilt af en skygge) til en tydelig, men rolig markering
    (25. sept. 2026-brief) — hvid pille i EatSafes scan-CTA-grøn tekstfarve
-   (#0E8F5A) på en meget lys grøn baggrund (#EFF9F4), samme palet som resten
+   (--green) på en meget lys grøn baggrund (#EFF9F4), samme palet som resten
    af onboarding-flowet. */
 .tab-row{display:flex;gap:3px;background:var(--green-selected-bg);border-radius:10px;padding:3px;margin-bottom:14px;border:1px solid var(--green-mid);}
 .tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink2);transition:all .15s;}

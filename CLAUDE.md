@@ -165,12 +165,12 @@ Preview kalder den LIVE database og kan ikke teste service worker/PWA-installati
 
 ## 5. Produkt- og designbeslutninger (nutid)
 
-**Designsystem:** lyst tema (dark mode er droppet, tag det ikke op igen). Primær `--green:#0F7D4F`; `--green-accent:#34D06A` kun
+**Designsystem:** `BRAND.md` er den samlede brandguide (logo, farver, skrift, komponenter, tone, hvor kopierne ligger) og gælder app, admin, `public/*.html`, mails og butiksbilleder (Bjørn, 7. okt. 2026: "altid ens alle steder"); `src/brandConsistency.test.js` fanger udfasede farver. Lyst tema (dark mode er droppet, tag det ikke op igen). Primær `--green:#0F7D4F`; `--green-accent:#34D06A` kun
 til små positive mikro-elementer; `--blue:#3A6EA5`; spacing-skala og tokens i `.claude/rules/design-tokens.md`. **Logo (Bjørn, 7. okt. 2026):** logo A
 (7 streger, flueben med lige meget luft i begge sider, centreret) uden gradient: `#232528` ("Eat"/streger), `--green` `#0F7D4F` ("Safe"/flueben), `#FBFAF7`.
 Mail i mørk tilstand bruger hvid + `#79D5A7`. Master-SVG'er i `src/assets/logo/` og `public/brand/`; PNG'er gengives fra dem (se `public/brand/README.txt`). Brand-slogan "Mere tryghed i hverdagen" kun
 under logoet på velkomstsiden og i "Om EatSafe". Fast disclaimer i `ResultScreen.jsx` ("EatSafe er vejledende...", ikke "ved
-alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knappen har egen palette (`#0E8F5A`/`#08734A`/`#DDF4E8`).
+alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knappen bruger `--green`→`--green-dark` med `--green-halo`.
 
 **Fladhed-bug:** delte kort-/knap-klasser uden `box-shadow` ser flade ud; brug `--sh2`/`--sh`/flad+kant-hierarki bevidst.
 
@@ -257,6 +257,7 @@ ved `controllerchange` (nødvendigt for at opdateringen overtager åbne faner).
 
 ## 6. Hvor finder du mere?
 
+- `BRAND.md`: brandguide (logo, farver, skrift, komponenter, tone). Læs ved alt UI-, mail- og grafikarbejde.
 - `src/CONTEXT.md`: database-tabeller, edge functions, notifikationer, to do, auth-mails, Madpas-struktur.
 - `.claude/HISTORY.md`: fuld historik og begrundelser (designrunder, hændelser, audits, gamle åbne punkter). Ikke auto-loadet.
 - `.claude/rules/design-tokens.md` (tokens + antimønstre, kun ved UI-arbejde), `.claude/rules/edge-function-auth.md`.
