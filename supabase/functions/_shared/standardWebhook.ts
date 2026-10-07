@@ -6,7 +6,7 @@
 // Headers: webhook-id, webhook-timestamp (sekunder) og webhook-signature ("v1,<base64>", flere adskilt af mellemrum).
 // Signeret indhold: `${id}.${timestamp}.${body}`, HMAC-SHA256 med nøglen fra hemmeligheden ("v1,whsec_<base64>").
 
-const b64decode = (s: string): Uint8Array => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+const b64decode = (s: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
@@ -32,7 +32,7 @@ export async function verifyStandardWebhook(
   const now = (opts.now ?? Date.now()) / 1000;
   if (!Number.isFinite(ts) || Math.abs(now - ts) > (opts.toleranceSeconds ?? 300)) return false;
 
-  let keyBytes: Uint8Array;
+  let keyBytes: Uint8Array<ArrayBuffer>;
   try { keyBytes = b64decode(secret.trim().replace(/^v1,/, "").replace(/^whsec_/, "")); } catch { return false; }
   if (keyBytes.length === 0) return false;
 

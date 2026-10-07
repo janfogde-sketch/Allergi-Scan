@@ -59,21 +59,14 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: Findes alt, og kan det læses? (fejler)
+      - name: Findes alt, og passer typerne? (fejler)
         run: |
           set -u
-          fail=0; typewarn=0
+          fail=0
           for f in supabase/functions/*/index.ts; do
             out=$(NO_COLOR=1 deno check --node-modules-dir=none "$f" 2>&1) && continue
-            if echo "$out" | grep -qE "TS(2307|1[0-9]{3}) \[ERROR\]|Module not found|Could not resolve|Unexpected token"; then
-              echo "::error file=$f::Manglende fil eller syntaksfejl"; echo "$out" | tail -15; fail=1
-            else
-              n=$(echo "$out" | grep -c "TS[0-9]* \[ERROR\]" || true)
-              typewarn=$((typewarn + n))
-              echo "::warning file=$f::$n typeadvarsler (påvirker ikke driften)"
-            fi
+            echo "::error file=$f::Typefejl eller manglende fil"; echo "$out" | tail -25; fail=1
           done
-          echo "Typeadvarsler i alt: $typewarn (kendt efterslæb, rettes senere)"
           exit $fail
 
   daekning:

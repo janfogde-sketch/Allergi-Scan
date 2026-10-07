@@ -369,10 +369,10 @@ async function sendMail(db: Db, plan: Planned, r: ReturnType<typeof renderNotifi
   const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
   if (!apiKey) { await record("failed", "RESEND_API_KEY mangler"); return false; }
 
-  const variables = buildMailVariables(r.mailVars, user.name);
+  const variables = buildMailVariables(r.mailVars as Record<string, string>, user.name);
   const res = direct
-    ? await sendHtmlMail({ apiKey, to: user.email, subject: r.mail.subject, html: renderListMail(variables), idempotencyKey: `notification-${notificationId}` })
-    : await sendTemplateMail({ apiKey, to: user.email, templateId, subject: r.mail.subject, variables, idempotencyKey: `notification-${notificationId}` });
+    ? await sendHtmlMail({ apiKey, to: user.email, subject: r.mail!.subject, html: renderListMail(variables), idempotencyKey: `notification-${notificationId}` })
+    : await sendTemplateMail({ apiKey, to: user.email, templateId, subject: r.mail!.subject, variables, idempotencyKey: `notification-${notificationId}` });
   await record(res.ok ? "sent" : "failed", res.ok ? null : res.error ?? null);
   return !res.ok && res.retryable;
 }

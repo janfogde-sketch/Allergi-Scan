@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
   }
 
   const checked = validateFeedback(body);
-  if (!checked.ok) return json(checked.status, { error: checked.error });
+  if (!checked.ok) return json(checked.status!, { error: checked.error });
 
   // Login er valgfrit. Et token, der ikke kan verificeres, behandles som
   // anonymt (fx udløbet session) i stedet for at afvise feedbacken.
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
   // og kun stien i tabellen, så billeder ikke fylder databasen op og ikke
   // hentes med, hver gang admin åbner tickets. Fejler upload, gemmes
   // feedbacken uden billede.
-  const { image_base64: imageBase64, ...ticketFields } = checked.ticket;
+  const { image_base64: imageBase64, ...ticketFields } = checked.ticket!;
   let imagePath: string | null = null;
   if (imageBase64) {
     const ext = imageBase64.startsWith("iVBOR") ? "png" : imageBase64.startsWith("UklG") ? "webp" : "jpg";

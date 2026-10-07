@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     // 1. Keyword-engine kører altid (gratis, hurtig)
-    let allergenFlags = analyzeIngredients(text);
+    let allergenFlags = analyzeIngredients(text) as unknown as Record<string, string>;
     let method = "keyword";
 
     // 2. Claude-fallback hvis usikker ELLER eksplicit anmodet (force_ai)
@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

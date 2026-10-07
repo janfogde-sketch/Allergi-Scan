@@ -53,9 +53,9 @@ Deno.serve(async (req) => {
     if (!res.ok || !tpl?.html) return json({ error: `Kunne ikke hente skabelonen fra Resend (HTTP ${res.status})` }, 502);
     const { data: who } = userId ? await db.from("users").select("name").eq("id", userId).maybeSingle() : { data: null };
     const r = renderNotification(key, mockDataFor(key));
-    const vars = buildMailVariables(r.mailVars, who?.name || "Maria");
+    const vars = buildMailVariables(r.mailVars as Record<string, string>, who?.name || "Maria");
     const html = String(tpl.html).replace(/\{\{\{\s*([a-zA-Z_]+)\s*\}\}\}/g, (_m, name) => vars[name] ?? "");
-    return json({ html, subject: r.mail.subject, templateId, status: tpl.status ?? null });
+    return json({ html, subject: r.mail!.subject, templateId, status: tpl.status ?? null });
   }
 
   const channels: string[] = Array.isArray(body?.channels) ? body.channels : [];
@@ -103,8 +103,8 @@ Deno.serve(async (req) => {
     else if (!target.email) result.mail = { sent: false, error: "Modtageren har ingen e-mailadresse" };
     else {
       const m = await sendTemplateMail({
-        apiKey, to: target.email, templateId, subject: `[TEST] ${r.mail.subject}`,
-        variables: buildMailVariables(r.mailVars, target.name), idempotencyKey: `notify-test-${crypto.randomUUID()}`,
+        apiKey, to: target.email, templateId, subject: `[TEST] ${r.mail!.subject}`,
+        variables: buildMailVariables(r.mailVars as Record<string, string>, target.name), idempotencyKey: `notify-test-${crypto.randomUUID()}`,
       });
       result.mail = { sent: m.ok, error: m.ok ? null : m.error };
     }
