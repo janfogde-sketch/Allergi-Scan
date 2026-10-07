@@ -1140,11 +1140,10 @@ button.filter-chip{width:auto;}
   45%,85%{stroke-dashoffset:0;opacity:1;}
   100%{stroke-dashoffset:0;opacity:0;}
 }
-.scan-loading-dot{transform-box:fill-box;transform-origin:center;animation:scan-check-dot 1.8s ease-out infinite;}
+.scan-loading-dot{animation:scan-check-dot 1.8s ease-out infinite;}
 @keyframes scan-check-dot{
-  0%,40%{transform:scale(0);opacity:1;}
-  50%{transform:scale(1.15);}
-  57%,85%{transform:scale(1);opacity:1;}
+  0%,44%{opacity:0;}
+  45%,85%{opacity:1;}
   100%{opacity:0;}
 }
 @media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}.scan-loading-dot{animation:none;}}
