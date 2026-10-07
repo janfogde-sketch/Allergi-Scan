@@ -18,16 +18,15 @@ TRANSPARENT EXPORTS
 - EatSafe_BrandMark_Transparent_2048.png
 - EatSafe_Monochrome_Transparent_2048.png
 - EatSafe_Logo_Horizontal_2400.png
-- EatSafe_Logo_Email_Dark.png: logo til mails i mørk tilstand (hvid 'Eat'/stregkode, grøn 'Safe', gennemsigtig; 1200x360).
+- EatSafe_Logo_Email_Dark.png: logo til mails i mørk tilstand (hvid 'Eat'/stregkode, lysegrøn #79D5A7 'Safe'/flueben, gennemsigtig; 1200x360).
 
-COLORS
-- Near-black: #232528
-- Primary green: #039A55
-- Gradient start: #70DC59
-- Gradient mid: #17BF55
+COLORS (7. okt. 2026: ingen gradient længere)
+- Near-black: #232528 ("Eat" og stregkode)
+- EatSafe-grøn: #0F7D4F ("Safe" og flueben; samme som appens --green og Scan-knappen)
+- Lysegrøn til mørk baggrund: #79D5A7 (kun mail i mørk tilstand)
 - Off-white: #FBFAF7
 
 NOTES
-- The vector geometry was reconstructed cleanly from the approved final EatSafe raster direction rather than auto-traced.
-- The white separation around the green line/check is deliberately thin to preserve the premium/minimal look while maintaining contrast over the barcode.
+- Logo A (7. okt. 2026, Bjørn): 7 streger, flueben med samme luft i begge sider af den grønne streg, hele mærket centreret.
+- PNG-filerne er gengivet fra SVG-masterfilerne. I de gennemsigtige PNG'er er kanten om fluebenet skåret ud af stregerne.
 - SVG files import directly into Figma and Adobe Illustrator as editable vectors.

@@ -1,27 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<defs>
-    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#70DC59"/>
-      <stop offset="52%" stop-color="#17BF55"/>
-      <stop offset="100%" stop-color="#039A55"/>
-    </linearGradient>
-  </defs>
 <rect width="1024" height="1024" fill="#FBFAF7"/>
-<g transform="translate(62,62) scale(0.9)">
+<g transform="translate(77,62) scale(0.9)">
 <g id="eatsafe-mark">
-<rect x="100.000" y="158.000" width="102.991" height="684.525" rx="12.484" fill="#232528"/>
-<rect x="225.878" y="219.378" width="48.895" height="560.728" rx="12.484" fill="#232528"/>
-<rect x="300.780" y="158.000" width="66.580" height="684.525" rx="12.484" fill="#232528"/>
-<rect x="390.247" y="212.096" width="36.411" height="568.010" rx="12.484" fill="#232528"/>
-<rect x="452.666" y="158.000" width="44.733" height="684.525" rx="12.484" fill="#232528"/>
-<rect x="520.286" y="219.378" width="78.023" height="560.728" rx="12.484" fill="#232528"/>
-<rect x="621.196" y="158.000" width="64.499" height="684.525" rx="12.484" fill="#232528"/>
-<rect x="708.583" y="219.378" width="67.620" height="560.728" rx="12.484" fill="#232528"/>
-<rect x="802.211" y="158.000" width="64.499" height="684.525" rx="12.484" fill="#232528"/>
-<polyline points="124.967,532.512 654.486,532.512 731.469,599.092 877.113,442.005" fill="none" stroke="#FFFFFF" stroke-width="83.225" stroke-linecap="butt" stroke-linejoin="round"/>
-<circle cx="877.113" cy="442.005" r="41.612" fill="#FFFFFF"/>
-<polyline points="124.967,532.512 654.486,532.512 731.469,599.092 877.113,442.005" fill="none" stroke="url(#greenGrad)" stroke-width="62.419" stroke-linecap="butt" stroke-linejoin="round"/>
-<circle cx="877.113" cy="442.005" r="31.209" fill="#039A55"/>
+<rect x="104.8" y="158.0" width="102.396" height="684.495" rx="15.582" fill="#232528"/>
+<rect x="247.264" y="221.441" width="53.424" height="557.613" rx="15.582" fill="#232528"/>
+<rect x="340.756" y="158.0" width="80.136" height="684.495" rx="15.582" fill="#232528"/>
+<rect x="460.96" y="221.441" width="66.78" height="557.613" rx="15.582" fill="#232528"/>
+<rect x="567.808" y="158.0" width="62.328" height="684.495" rx="15.582" fill="#232528"/>
+<rect x="670.204" y="221.441" width="80.136" height="557.613" rx="15.582" fill="#232528"/>
+<rect x="790.408" y="158.0" width="71.232" height="684.495" rx="15.582" fill="#232528"/>
+<polyline points="131.512,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="#FFFFFF" stroke-width="146.916" stroke-linecap="butt" stroke-linejoin="round"/>
+<circle cx="790.408" cy="466.301" r="73.458" fill="#FFFFFF"/>
+<polyline points="131.512,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="#0F7D4F" stroke-width="89.04" stroke-linecap="butt" stroke-linejoin="round"/>
+<circle cx="790.408" cy="466.301" r="44.52" fill="#0F7D4F"/>
 </g>
 </g>
 </svg>

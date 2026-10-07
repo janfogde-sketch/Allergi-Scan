@@ -60,11 +60,11 @@ export const EatSafeLogo = ({ variant = "horizontal", size = 28, style, classNam
 // — badge'n er bevidst IKKE en del af denne komponent, da den kun skal vises
 // visse steder (appens headers), ikke andre (onboarding), se AppHeader.jsx/
 // OnboardingScreen.jsx for hvordan de hver især komponerer den. Farver/
-// vægt/kerning styres af --brand-ink/--brand-green-gradient +
+// vægt/kerning styres af --brand-ink/--green +
 // .topbar-wordmark(-safe) i theme.jsx — PRÆCIS samme værdier som selve
 // billedlogoets (EatSafeLogo ovenfor) indlejrede SVG-farver, hentet direkte
-// fra master-vektorfilerne (src/assets/logo/*.svg — "Safe" er en gradient i
-// selve SVG'en, ikke en flad farve), ikke gættet ud fra et screenshot og ikke appens
+// fra master-vektorfilerne (src/assets/logo/*.svg — "Safe" er ensfarvet
+// #0F7D4F siden 7. okt. 2026), ikke gættet ud fra et screenshot og ikke appens
 // almindelige --ink/--green-UI-tokens. Dette er den ENE wordmark-komponent
 // for hele appen — brug den overalt tekst-logoet skal vises (aldrig en ny,
 // lignende variant), så "Eat"/"Safe"-farve, font, vægt, kerning og
@@ -99,15 +99,13 @@ export function ScanLoadingOverlay({ show, text = "Scanner produkt…", sub = "T
         <g clipPath="url(#scan-loading-sq)">
           <rect width="100" height="100" fill="var(--surface)" />
           <g fill="var(--ink)">
-            <rect x="18.00" y="16" width="8.31" height="68" rx="1.49" />
-            <rect x="29.05" y="22" width="4.15" height="56" rx="0.75" />
-            <rect x="35.94" y="16" width="5.54" height="68" rx="1.00" />
-            <rect x="44.21" y="22" width="2.77" height="56" rx="0.50" />
-            <rect x="49.71" y="16" width="3.32" height="68" rx="0.60" />
-            <rect x="55.76" y="22" width="6.92" height="56" rx="1.25" />
-            <rect x="65.41" y="16" width="4.43" height="68" rx="0.80" />
-            <rect x="72.57" y="22" width="5.54" height="56" rx="1.00" />
-            <rect x="80.84" y="16" width="3.88" height="68" rx="0.70" />
+            <rect x="16.64" y="16" width="9.03" height="68" rx="1.37" />
+            <rect x="29.20" y="22" width="4.71" height="56" rx="1.37" />
+            <rect x="37.44" y="16" width="7.06" height="68" rx="1.37" />
+            <rect x="48.04" y="22" width="5.89" height="56" rx="1.37" />
+            <rect x="57.46" y="16" width="5.49" height="68" rx="1.37" />
+            <rect x="66.48" y="22" width="7.06" height="56" rx="1.37" />
+            <rect x="77.08" y="16" width="6.28" height="68" rx="1.37" />
           </g>
           <g className="scan-loading-beam">
             <rect x="14" y="16" width="72" height="3" fill="url(#scan-loading-beam)" />
