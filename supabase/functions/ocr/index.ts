@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiCost.ts";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {
@@ -134,6 +135,7 @@ Deno.serve(async (req) => {
 
     const data = await res.json();
     const text = data.content?.[0]?.text?.trim() || "";
+    await logAiUsage("ocr", "claude-haiku-4-5", data.usage);
 
     return new Response(
       JSON.stringify({ success: true, text, mode: mode || "ingredients" }),
