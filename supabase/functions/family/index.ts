@@ -35,13 +35,6 @@ Deno.serve(async (req) => {
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
-  async function callerMembership(famId) {
-    const { data } = await supabase
-      .from("family_memberships").select("role")
-      .eq("family_id", famId).eq("user_id", caller.id).eq("status", "active").maybeSingle();
-    return data;
-  }
-
   const url = new URL(req.url);
   const parts = url.pathname.split("/").filter(Boolean);
   const method = req.method;
@@ -49,10 +42,7 @@ Deno.serve(async (req) => {
   const isGroup = parts.includes("group");
   const groupUserId = isGroup && parts[parts.length - 1] !== "group" ? parts[parts.length - 1] : null;
   const isMembers = parts.includes("members");
-  const isInvite = parts.includes("invite");
   const memberId = isMembers ? parts[parts.length - 1] === "members" ? null : parts[parts.length - 1] : null;
-  const inviteId = isInvite ? parts[parts.length - 1] === "invite" ? null : parts[parts.length - 1] : null;
-  const familyId = !isMembers && !isInvite && !isGroup ? parts[parts.length - 1] === "family" ? null : parts[parts.length - 1] : null;
 
   try {
     // ─────────────────────────────────────
@@ -132,86 +122,6 @@ Deno.serve(async (req) => {
     }
 
     // ─────────────────────────────────────
-    // FAMILIE
-    // ─────────────────────────────────────
-
-    // GET — hent brugerens familie
-    if (method === "GET" && !isMembers && !isInvite) {
-      const userId = url.searchParams.get("user_id");
-      if (!userId) return new Response(JSON.stringify({ error: "user_id er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (userId !== caller.id) return new Response(JSON.stringify({ error: "Ikke autoriseret til denne brugers familie" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      const { data: memberships } = await supabase
-        .from("family_memberships")
-        .select("family_id")
-        .eq("user_id", userId)
-        .eq("status", "active");
-
-      const familyIds = memberships?.map(m => m.family_id) ?? [];
-
-      const { data: families, error } = await supabase
-        .from("families")
-        .select("*, family_memberships(*), family_members(*)")
-        .in("id", familyIds.length > 0 ? familyIds : ["00000000-0000-0000-0000-000000000000"]);
-
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      return new Response(
-        JSON.stringify({ success: true, families }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // POST — opret familie
-    if (method === "POST" && !isMembers && !isInvite && !familyId) {
-      const { name, created_by } = await req.json();
-      if (!name || !created_by) return new Response(JSON.stringify({ error: "name og created_by er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (created_by !== caller.id) return new Response(JSON.stringify({ error: "Ikke autoriseret til denne bruger" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      const { data: family, error: familyError } = await supabase
-        .from("families")
-        .insert({ name, created_by })
-        .select()
-        .single();
-
-      if (familyError) return new Response(JSON.stringify({ error: familyError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      // Opret ejeren som aktivt medlem
-      await supabase
-        .from("family_memberships")
-        .insert({
-          family_id: family.id,
-          user_id: created_by,
-          role: "owner",
-          status: "active",
-          joined_at: new Date(),
-        });
-
-      return new Response(
-        JSON.stringify({ success: true, family }),
-        { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // DELETE — slet familie (kun ejeren)
-    if (method === "DELETE" && familyId && !isMembers && !isInvite) {
-      const membership = await callerMembership(familyId);
-      if (!membership || membership.role !== "owner") return new Response(
-        JSON.stringify({ error: "Kun familiens ejer kan slette familien" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-      await supabase.from("family_memberships").delete().eq("family_id", familyId);
-      await supabase.from("family_members").delete().eq("user_id", familyId);
-      const { error } = await supabase.from("families").delete().eq("id", familyId);
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ─────────────────────────────────────
     // STYREDE PROFILER (family_members)
     // ─────────────────────────────────────
 
@@ -274,68 +184,6 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ─────────────────────────────────────
-    // INVITATIONER
-    // ─────────────────────────────────────
-
-    // POST — inviter medlem
-    if (method === "POST" && isInvite && !inviteId) {
-      const { family_id, user_id, managed_member_id } = await req.json();
-      if (!family_id) return new Response(JSON.stringify({ error: "family_id er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (!(await callerMembership(family_id))) return new Response(
-        JSON.stringify({ error: "Ikke autoriseret til at invitere til denne familie" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-      const { data: membership, error } = await supabase
-        .from("family_memberships")
-        .insert({
-          family_id,
-          user_id: user_id ?? null,
-          managed_member_id: managed_member_id ?? null,
-          role: "member",
-          status: "invited",
-        })
-        .select()
-        .single();
-
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      return new Response(
-        JSON.stringify({ success: true, membership }),
-        { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // PATCH — accepter eller afvis invitation
-    if (method === "PATCH" && isInvite && inviteId) {
-      const { status } = await req.json();
-      if (!status) return new Response(JSON.stringify({ error: "status er påkrævet" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      const { data: inviteRow } = await supabase.from("family_memberships").select("user_id").eq("id", inviteId).single();
-      if (!inviteRow || inviteRow.user_id !== caller.id) return new Response(
-        JSON.stringify({ error: "Ikke autoriseret til denne invitation" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-
-      const { data: membership, error } = await supabase
-        .from("family_memberships")
-        .update({
-          status,
-          joined_at: status === "active" ? new Date() : null,
-        })
-        .eq("id", inviteId)
-        .select()
-        .single();
-
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      return new Response(
-        JSON.stringify({ success: true, membership }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
