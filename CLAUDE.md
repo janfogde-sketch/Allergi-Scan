@@ -38,8 +38,7 @@
 
 ## 0b. Politikker og opbevaring (stående regler, Jan 2. okt. 2026)
 
-- **Tjek politikkerne mod appen i et naturligt interval.** Vilkår og privatlivspolitik (`src/TermsScreen.jsx` + `public/terms.html`,
-  `src/PrivacyScreen.jsx` + `public/privacy.html`, to kopier af samme tekst) skal følge appen. (a) Ved hver funktions- eller dataændring,
+- **Tjek politikkerne mod appen i et naturligt interval.** Vilkår og privatlivspolitik skal følge appen. **Teksten bor ét sted** (`src/legalText/terms.js`/`privacy.js`); skærmene læser den, og `public/terms.html`/`privacy.html` genereres med `node scripts/build-legal-pages.mjs` (test `src/legalText.test.js` fejler ved afvigelse). Ret aldrig HTML-filerne i hånden. (a) Ved hver funktions- eller dataændring,
   der rører personoplysninger (nye felter/tabeller, leverandører, notifikationstyper, lagring, login-metoder, AI-brug, opbevaring): tjek og
   ret teksterne i samme PR, og sæt "Sidst opdateret". (b) Ved sessionstart: har den tilbagevendende to do "Gennemgå politikker mod
   appændringer" overskredet sin frist, så gennemgå `git log` siden sidste gennemgang mod teksterne, opret fund som to do, luk opgaven og
