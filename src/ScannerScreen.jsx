@@ -744,8 +744,7 @@ export default function ScannerScreen({
                   ) : (
                     <div style={{ position:"relative", width:"clamp(119px, 30cqh, 197px)", height:"clamp(119px, 30cqh, 197px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                       {/* Bølgeringe (Bjørn, 7. okt. 2026, forslag A i roligt tempo): tre tynde grønne ringe glider
-                          ud fra knappen og forsvinder, forskudt i tid. Erstatter den tidligere halo-glød. Kun
-                          bevægelse, ingen gradient (BRAND.md); slås fra ved "Reducer bevægelse" (theme.jsx). */}
+                          ud fra knappen og forsvinder, forskudt i tid. Erstatter den tidligere halo-glød. Slås fra ved "Reducer bevægelse" (theme.jsx). */}
                       <div className="scan-cta-wave" aria-hidden="true" />
                       <div className="scan-cta-wave w2" aria-hidden="true" />
                       <div className="scan-cta-wave w3" aria-hidden="true" />
@@ -755,8 +754,10 @@ export default function ScannerScreen({
                         aria-label="Start kamera for at scanne stregkode"
                         style={{ position:"absolute", inset:"clamp(5px, 1.1cqh, 7px)", borderRadius:"50%", cursor:"pointer",
                           border:"none", fontFamily:"var(--f)",
-                          background:"var(--green)",
-                          boxShadow:"0 14px 28px -12px rgba(8,100,63,.45)",
+                          // Gradient og lyst skær bevidst bevaret (Bjørn, 7. okt. 2026): knappen skal ligne den gamle;
+                          // en bevidst undtagelse fra "ingen gradienter" i BRAND.md. Kun bølgeringene er nye.
+                          background:"linear-gradient(160deg,var(--green) 0%,var(--green-dark) 100%)",
+                          boxShadow:"0 14px 28px -12px rgba(8,115,74,.4), inset 0 2px 3px rgba(255,255,255,.3)",
                           display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"clamp(5px, 1.4cqh, 9px)" }}>
                         {/* Ikon/tekst/gap skaleret ~10% ned sammen med selve
                             knappen (samme runde) — bevarer de oprindelige

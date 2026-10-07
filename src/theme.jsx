@@ -434,7 +434,7 @@ body::-webkit-scrollbar{display:none;}
 /* Afløst 7. okt. 2026 (Bjørn): bølgeringe i stedet for halo-glød. Tre tynde
    ringe i --green starter ved knappens kant (samme inset som knappen) og glider
    roligt ud, mens de forsvinder; 6 s pr. ring, forskudt 2 s, så der altid er
-   en ring på vej ud. Ensfarvet, ingen gradient (BRAND.md). */
+   en ring på vej ud. Knappen selv beholder sin gradient (Bjørn, 7. okt.). */
 @keyframes scan-wave{
   0%{transform:scale(1);opacity:.5;}
   100%{transform:scale(1.3);opacity:0;}
