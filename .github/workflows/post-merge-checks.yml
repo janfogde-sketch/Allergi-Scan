@@ -1,0 +1,93 @@
+name: Tjek efter merge
+
+# Kører EFTER en ændring er på main. Holder intet tilbage (main skal være hurtig),
+# men en rød kørsel her betyder, at noget skal rettes bagefter.
+# Det gamle CI (ci.yml: lint, test, build) er uændret.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  pakker:
+    name: Sikkerhedshuller i pakker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Alvorlige huller i det, brugerne får (fejler)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Alle pakker inkl. byggeværktøj (kun advarsel)
+        run: npm audit || echo "::warning::Hul i byggeværktøj, se loggen (rammer ikke brugerne)"
+
+  tegn:
+    name: Ødelagte danske tegn
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kyrilliske tegn i stedet for æ/ø/å
+        run: |
+          python3 - <<'PY'
+          import re, subprocess, sys
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          exts = (".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".sql", ".toml", ".yml", ".yaml", ".txt")
+          bad = 0
+          for p in files:
+              if not p.endswith(exts):
+                  continue
+              try:
+                  text = open(p, encoding="utf-8").read()
+              except (UnicodeDecodeError, FileNotFoundError):
+                  continue
+              for m in re.finditer(r"[Ѐ-ӿ]{2,}", text):
+                  line = text.count("\n", 0, m.start()) + 1
+                  print(f"::error file={p},line={line}::Mulig tegnfejl: {m.group()}")
+                  bad += 1
+          sys.exit(1 if bad else 0)
+          PY
+
+  serverfunktioner:
+    name: Tjek af serverfunktioner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Findes alt, og kan det læses? (fejler)
+        run: |
+          set -u
+          fail=0; typewarn=0
+          for f in supabase/functions/*/index.ts; do
+            out=$(NO_COLOR=1 deno check --node-modules-dir=none "$f" 2>&1) && continue
+            if echo "$out" | grep -qE "TS(2307|1[0-9]{3}) \[ERROR\]|Module not found|Could not resolve|Unexpected token"; then
+              echo "::error file=$f::Manglende fil eller syntaksfejl"; echo "$out" | tail -15; fail=1
+            else
+              n=$(echo "$out" | grep -c "TS[0-9]* \[ERROR\]" || true)
+              typewarn=$((typewarn + n))
+              echo "::warning file=$f::$n typeadvarsler (påvirker ikke driften)"
+            fi
+          done
+          echo "Typeadvarsler i alt: $typewarn (kendt efterslæb, rettes senere)"
+          exit $fail
+
+  daekning:
+    name: Dækningsrapport
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Kør tests med dækning (kun information)
+        run: |
+          npm i --no-save "@vitest/coverage-v8@$(node -p "require('vitest/package.json').version")"
+          npx vitest run --coverage --coverage.reporter=text-summary --coverage.reporter=text | tee coverage.txt
+          { echo "### Testdækning"; echo '```'; grep -A5 "Coverage summary" coverage.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
