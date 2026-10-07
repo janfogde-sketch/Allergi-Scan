@@ -431,11 +431,17 @@ body::-webkit-scrollbar{display:none;}
    fjernet igen, samme afgørelse som sidste gang samme konflikt opstod.) */
 /* Opaciteten er dæmpet ~25% (29. sept. 2026, "en mere balanceret og rolig
    forside" — .7/.5 skaleret til .53/.38), samme skala/timing i øvrigt. */
-@keyframes scan-halo-pulse{
-  0%,100%{transform:scale(1);opacity:.53;}
-  50%{transform:scale(1.06);opacity:.38;}
+/* Afløst 7. okt. 2026 (Bjørn): bølgeringe i stedet for halo-glød. Tre tynde
+   ringe i --green starter ved knappens kant (samme inset som knappen) og glider
+   roligt ud, mens de forsvinder; 6 s pr. ring, forskudt 2 s, så der altid er
+   en ring på vej ud. Ensfarvet, ingen gradient (BRAND.md). */
+@keyframes scan-wave{
+  0%{transform:scale(1);opacity:.5;}
+  100%{transform:scale(1.3);opacity:0;}
 }
-.scan-cta-halo{animation:scan-halo-pulse 4s ease-in-out infinite;}
+.scan-cta-wave{position:absolute;inset:clamp(5px, 1.1cqh, 7px);border-radius:50%;border:2px solid var(--green);opacity:0;pointer-events:none;animation:scan-wave 6s cubic-bezier(.2,.6,.3,1) infinite;}
+.scan-cta-wave.w2{animation-delay:2s;}
+.scan-cta-wave.w3{animation-delay:4s;}
 .scan-cta-btn{transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
 .scan-cta-btn:active{transform:scale(.95);}
 /* Profilvælgeren under Scan-knappen ("Tjekker for: …", 4. okt. 2026): sekundær
@@ -463,7 +469,7 @@ body::-webkit-scrollbar{display:none;}
 .scan-tip-text{display:-webkit-box;margin-top:3px;font-size:12px;line-height:1.35;color:var(--ink2);-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 @container (max-height:500px){.scan-tip{display:none;}}
 @media (prefers-reduced-motion: reduce){
-  .scan-cta-halo{animation:none;}
+  .scan-cta-wave{animation:none;}
 }
 /* Admin er en arbejdssektion: bundnavigationen dæmpes, så den ikke konkurrerer med adminnavigationen */
 .bottom-nav.nav-muted{opacity:.72;}
@@ -887,7 +893,7 @@ body::-webkit-scrollbar{display:none;}
    wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
    knappen, og blev kortvarigt genbrugt på den grønne knap (24. sept. 2026).
    IKKE længere anvendt (25. sept. 2026) — brugeren præciserede at pulsen
-   skal ligge KUN i halo-gløden (.scan-cta-halo ovenfor), ikke på selve
+   skal ligge KUN i halo-gløden (nu .scan-cta-wave ovenfor), ikke på selve
    knappen. Keyframen er bevaret, ikke slettet, i tilfælde af senere
    genbrug samme sted i koden. */
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
