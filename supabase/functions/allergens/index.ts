@@ -1,6 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { logAiUsage } from "../_shared/aiCost.ts";
-import { withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
+import { reportLimitHit, withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import {
   ALL_ALLERGENS,
   analyzeIngredients,
@@ -146,6 +146,7 @@ Deno.serve(async (req) => {
       claudeAllowed = isInternalCall
         ? await withinGlobalLimit(usageClient, "claude_internal")
         : await withinUserLimit(usageClient, caller!.id, "claude_analysis");
+      if (!claudeAllowed && !isInternalCall) await reportLimitHit(usageClient, caller!.id, "claude_analysis", "Claude-analyse");
     }
     if (claudeAllowed) {
       const claudeFlags = await analyzeWithClaude(text);
