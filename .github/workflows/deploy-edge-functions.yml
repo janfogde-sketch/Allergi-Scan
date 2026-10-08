@@ -24,6 +24,9 @@ on:
         required: true
         default: ""
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-edge-functions
   cancel-in-progress: false

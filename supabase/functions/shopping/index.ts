@@ -478,6 +478,9 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
       const body = await req.json();
+      // Kolonne-whitelist: et punkt kan ikke flyttes til en anden liste (list_id) eller få ny ophavsmand (added_by).
+      const ITEM_FIELDS = ["name", "quantity", "checked", "store", "ean", "image_url", "product_id"];
+      const itemUpdate = Object.fromEntries(Object.entries(body ?? {}).filter(([k]) => ITEM_FIELDS.includes(k)));
 
       // .eq("list_id", listId) er tilføjet ved siden af .eq("id", itemId) —
       // uden den bandt kun canAccessList-tjekket ovenfor til listId, mens
@@ -487,7 +490,7 @@ Deno.serve(async (req) => {
       // brugers liste, hvis de kendte/gættede punktets id.
       const { data: item, error } = await supabase
         .from("shopping_list_items")
-        .update(body)
+        .update(itemUpdate)
         .eq("id", itemId)
         .eq("list_id", listId)
         .select()
