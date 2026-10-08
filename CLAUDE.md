@@ -12,7 +12,7 @@
 - **To do-listen** (admin-panelet, fanen To do, tabellen `admin_todos`, se `src/CONTEXT.md` §10). Starter sessionen med en konkret
   opgave (et to do-id), så læs kun den opgave (og dens kommentarer), og gå i gang; læs ikke hele listen. Starter den uden opgave:
   `select title, status, priority, track, due_date from admin_todos where status <> 'done'`, nævn de åbne punkter kort, og spørg hvad
-  der skal tages først. Afslut punkter (`status='done'`) og opret nye. Tickets ligger også på listen (status følger begge veje).
+  der skal tages først. Afslut punkter (`status='done'`) og opret nye. **Skriv til to do-listen via en migrationsfil** (`update admin_todos ...` plus `insert into admin_todo_comments (todo_id, body) ...` i `supabase/migrations/`, Jan 8. okt. 2026), aldrig med `execute_sql`: dialogen er usynlig for Jan og kaldet hænger. Tickets ligger også på listen (status følger begge veje).
 - **Databaseændringer** skrives som fil i `supabase/migrations/` (version = tidsstempel) og anvendes automatisk af workflowet `apply-migrations.yml`
   ved merge til main (Jans "push"). Brug ikke `apply_migration`/`execute_sql` til skrivning (dialogen er usynlig for Jan); læsning er fint. Se `supabase/migrations/README.md`. Edge-funktioner deployes ved merge af `.github/workflows/deploy-edge-functions.yml`
   (secret `SUPABASE_ACCESS_TOKEN`; 401/403 = ny adgangsnøgle, udløber). `supabase/config.toml` har `verify_jwt` pr. funktion.
