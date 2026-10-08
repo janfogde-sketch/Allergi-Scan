@@ -9,7 +9,7 @@
 // Derefter sendes kun tilbagekaldelser, der er offentliggjort inden for de sidste 14 dage.
 // Sider uden gyldig EAN får status 'needs_review' og vises kun til admin.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { parseRecallFeed, parseRecallPage, isOfficialRecallUrl } from "../_shared/recallParser.js";
 
 const FEED_URL = "https://foedevarestyrelsen.dk/handlers/DynamicRss.ashx?id=8c2cdc12-6a58-43d1-8b4e-97aa96dedd0c";

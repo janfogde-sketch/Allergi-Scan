@@ -9,7 +9,7 @@
 // uanset brugerens indstillinger.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { sendWebPush } from "../_shared/webpush.ts";
 
 const CORS = {

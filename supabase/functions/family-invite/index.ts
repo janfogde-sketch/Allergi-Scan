@@ -5,7 +5,7 @@
 //   POST { email }      → opret invitation og send mail
 //   POST { kind: "link" } → opret et delt link (ingen e-mail); afsenderen får URL'en og skal selv godkende, hvem der bruger det
 //   POST { resend_id }  → send mailen igen (pause mellem hver afsendelse)
-import { createClient } from "jsr:@supabase/supabase-js@2.117.3";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
 import { renderInviteMail, inviteMailSubject } from "../_shared/inviteMail.ts";
 import {

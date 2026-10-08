@@ -26,7 +26,7 @@
 // Auth (kategori 2 og 4 i .claude/rules/edge-function-auth.md): kun admin-JWT eller service-role.
 // ─────────────────────────────────────────────────────────────────────────────
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { analyzeIngredients, liftGlutenFromWheat, ALL_ALLERGENS } from "../_shared/allergenEngine.js";
 
 const CORS = {

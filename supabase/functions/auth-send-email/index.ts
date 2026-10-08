@@ -12,7 +12,7 @@
 // {"error":{"http_code","message"}}, som Auth viser som en fejl (brugeren kan prøve igen).
 // Slås hook'en fra, bruger Auth igen Resend-SMTP'en og de skabeloner, der er sat i Supabase.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { verifyStandardWebhook } from "../_shared/standardWebhook.ts";
 import { buildAuthMails, AuthMailError, type AuthHookPayload } from "../_shared/authMail.ts";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
