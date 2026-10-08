@@ -40,7 +40,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
-import { Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
+import { Icon, showToast, ConfirmDialog, PushUnavailableNote } from "./SharedComponents.jsx";
 import { usePush, SAVE_FAILED_REASON } from "./usePush.js";
 import { useNotificationPrefs } from "./useNotificationPrefs.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -261,6 +261,8 @@ export default function SettingsScreen({
             disabled={pushLoading || pushDenied}
           />
         )}
+
+        {!pushSupported && <PushUnavailableNote style={{ margin:"10px 0 4px" }} />}
 
         <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5, margin:"12px 0 8px" }}>
           Vælg hvilke beskeder du vil have, og om de skal komme som push, e-mail — eller begge dele.
