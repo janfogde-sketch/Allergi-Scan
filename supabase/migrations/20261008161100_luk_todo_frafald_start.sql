@@ -1,4 +1,4 @@
--- Lukker to do'en "Mål frafald i første start" (kode i samme PR som 20261008160000_admin_onboarding_frafald.sql).
+-- Lukker to do'en "Mål frafald i første start" (kode i samme PR som 20261008161000_admin_onboarding_frafald.sql).
 -- Kommentaren indsættes kun hvis to do'en findes (rækken findes kun i produktion).
 update public.admin_todos set status = 'done' where id = '736d6ade-d01f-4b55-9b72-85f89a882c6b';
 insert into public.admin_todo_comments (todo_id, body)
