@@ -321,13 +321,18 @@ export default function SettingsScreen({
         <ChevronRow icon="file" label="Privatlivspolitik"
           onClick={() => openLegal(SCREENS.PRIVACY)} />
         <ChevronRow icon="shield" label="Samtykke til helbredsoplysninger"
-          value={consent.loaded ? (consent.given ? "Givet" : "Ikke givet") : ""}
+          value={consent.loaded ? (consent.stale ? "Skal fornyes" : consent.given ? "Givet" : "Ikke givet") : ""}
           sub={consent.given && consent.at ? `Givet ${new Date(consent.at).toLocaleDateString("da-DK", { day:"numeric", month:"long", year:"numeric" })}` : undefined}
           onClick={() => setShowConsent(v => !v)} last={false} />
         {showConsent && (
           <div style={{ background:"var(--surface2)", borderRadius:10, padding:"10px 12px", margin:"0 0 12px", fontSize:12, color:"var(--ink2)", lineHeight:1.55 }}>
             {consent.given ? (
               <>
+                {consent.stale && (
+                  <div style={{ marginBottom:10, fontWeight:700, color:"var(--ink)" }}>
+                    Ordlyden af samtykket er ændret. Du bliver bedt om at bekræfte det på ny, næste gang du gemmer allergier eller andre helbredsoplysninger. Indtil da gælder dit tidligere samtykke.
+                  </div>
+                )}
                 <div style={{ marginBottom:10 }}>
                   EatSafe behandler dine allergi- og helbredsoplysninger på grundlag af dit samtykke. Trækker du samtykket tilbage, slettes dine allergier og
                   intolerancer, allergener på dine familieprofiler, følsomhedsvalg, valgte E-numre, din scanningshistorik og beskeder om allergenændringer.

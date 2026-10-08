@@ -5,13 +5,16 @@ import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, HEALTH_CONSENT_VERSION } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
-import { consentFromRows } from "./healthConsent.js";
+import { consentFromRows, isConsentStale } from "./healthConsent.js";
 import { clearOfflineCache } from "./useOffline.js";
 
 export function useHealthConsent() {
   const { userId, accessToken } = useAuthContext();
   const noSession = !accessToken || !userId;
   const [state, setState] = useState({ loaded: noSession, given: noSession, at: null, version: null });
+  // `given` = der findes et samtykke; `current` = det er givet på den nuværende tekstversion. Gem-flows bruger `current`.
+  const stale = !noSession && isConsentStale(state, HEALTH_CONSENT_VERSION);
+  const current = state.given && !stale;
 
   const load = useCallback(async () => {
     if (noSession) return;
@@ -45,5 +48,5 @@ export function useHealthConsent() {
     await load();
   }, [noSession, accessToken, load]);
 
-  return { ...state, give, withdraw, reload: load };
+  return { ...state, stale, current, give, withdraw, reload: load };
 }

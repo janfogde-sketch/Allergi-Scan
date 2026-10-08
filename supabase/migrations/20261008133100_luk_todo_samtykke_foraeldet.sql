@@ -1,0 +1,7 @@
+-- (Rækken findes kun i produktion, så kommentaren indsættes kun hvis to do'en findes; ellers fejler testdatabasen i CI.)
+-- Lukker to do'en "samtykkeversion og genindhentning" (kode i samme PR som 20261008133000_samtykke_fornyelse.sql).
+update public.admin_todos set status = 'done' where id = 'e9dd6ec4-e0c8-499c-85f2-abad1cdc0aaf';
+insert into public.admin_todo_comments (todo_id, body)
+select t.id,
+  'Bygget 8. okt. 2026. Kontrollen: samtykket gemmer, hvilken version af samtykketeksten brugeren sagde ja til. Er den ikke den nuværende, står det som "Skal fornyes" i Indstillinger, og brugeren bliver bedt om at bekræfte på ny, næste gang allergier eller profiler gemmes (onboarding, Rediger præferencer, børneprofil). Det gamle samtykke gælder indtil da, og intet slettes. Databasen logger nu en ny række ved ny version (før ville fornyelsen aldrig være blevet gemt); testen supabase/tests/consent_renewal.sql kører i CI. Privatlivspolitikken har fået et afsnit om fornyelse. Alle eksisterende samtykker er på den nuværende version, så ingen bliver spurgt nu. Reglen i praksis: versionen i constants.jsx hæves kun, når ordlyden af selve samtykket ændres væsentligt; en test binder teksten til versionen, så den ikke glemmes. Ændringer i politikken alene kræver ikke nyt samtykke (min standardregel; sig til, hvis du vil have den strengere).'
+from public.admin_todos t where t.id = 'e9dd6ec4-e0c8-499c-85f2-abad1cdc0aaf';

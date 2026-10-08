@@ -420,17 +420,17 @@ export default function OnboardingScreen({
             det er det eneste brugeren har valgt (fundet som en reel bug,
             25. sept. 2026: "vælger et E-nummer og ikke en allergi... kan
             jeg ikke trykke fortsæt"). */}
-        {effectiveCount > 0 && !consent.given && (
+        {effectiveCount > 0 && !consent.current && (
           <HealthConsentBox checked={consentChecked} onChange={setConsentChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
         )}
         <PrimaryButton
           disabled={!(effectiveCount > 0 || selectedENumbers.length > 0 || noAllergiesConfirmed)
-            || !canSaveHealthData({ hasHealthData: effectiveCount > 0, given: consent.given, checked: consentChecked })}
+            || !canSaveHealthData({ hasHealthData: effectiveCount > 0, given: consent.current, checked: consentChecked })}
           onClick={async () => {
             try {
               const nextCustom = pendingCustom ? addUniqueCustom(customAllerg, customInput) : customAllerg;
               if (pendingCustom) { setCustomAllerg(nextCustom); setCustomInput(""); }
-              if (effectiveCount > 0 && !consent.given) await consent.give();
+              if (effectiveCount > 0 && !consent.current) await consent.give();
               await saveAllergensStep2(allergens, nextCustom);
               // Egne valg har ingen sporvalg, så trin 3 (spor) springes over, hvis der kun er egne valg
               setOnboardStep(DIETS_ENABLED || traceEligible(allergens).length > 0 ? 3 : 4); }
