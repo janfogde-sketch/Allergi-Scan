@@ -37,3 +37,18 @@ export function usePwaInstall() {
 
   return { canInstall: !!deferredPrompt, installed, promptInstall };
 }
+
+// F1-6 (8. okt. 2026): på iPhone/iPad virker web-push kun, når EatSafe er føjet til hjemmeskærmen.
+// Bruges til at forklare, hvorfor push-valget mangler, i stedet for grå kontakter uden tekst.
+export function isIosBrowserTab(nav = typeof navigator !== "undefined" ? navigator : {}, win = typeof window !== "undefined" ? window : {}) {
+  const ua = nav.userAgent || "";
+  const ios = /iPhone|iPad|iPod/.test(ua) || (nav.platform === "MacIntel" && nav.maxTouchPoints > 1);
+  const standalone = nav.standalone === true || !!win.matchMedia?.("(display-mode: standalone)").matches;
+  return ios && !standalone;
+}
+
+export function pushUnavailableText(iosTab) {
+  return iosTab
+    ? "Installér EatSafe på hjemmeskærmen for at få push-beskeder på iPhone."
+    : "Push-beskeder virker ikke i denne browser. Du kan stadig få beskeder i appen og på mail.";
+}

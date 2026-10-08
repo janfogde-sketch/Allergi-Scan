@@ -6,6 +6,7 @@ import { initials, compareAllergens, productDisplayName, computeProfileResults, 
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
 import { useDialogA11y } from "./useDialogA11y.js";
+import { isIosBrowserTab, pushUnavailableText } from "./usePwaInstall.js";
 import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
 import eatsafeLogoHorizontalMono from "./assets/logo/eatsafe-logo-horizontal-mono.svg";
 import eatsafeSymbol from "./assets/logo/eatsafe-symbol.svg";
@@ -973,5 +974,23 @@ export function ToastHost({ top = false }) {
       ))}
     </div>,
     document.body
+  );
+}
+
+// ── Push ikke tilgængelig (F1-6, 8. okt. 2026) ─────────────────────────────
+// Vises i Indstillinger og onboarding trin 5, når telefonen/browseren ikke kan få push.
+// På iPhone i Safari linker den til installationsguiden (public/install.html).
+export function PushUnavailableNote({ style }) {
+  const iosTab = isIosBrowserTab();
+  return (
+    <div role="note" style={{ display:"flex", gap:10, alignItems:"flex-start", padding:"10px 12px", borderRadius:12, background:"var(--surface2)", border:"1px solid var(--border)", ...style }}>
+      <Icon name="bell" size={16} color="var(--ink2)" />
+      <div style={{ fontSize:12.5, color:"var(--ink)", lineHeight:1.5 }}>
+        {pushUnavailableText(iosTab)}
+        {iosTab && (
+          <> <a href="/install.html" style={{ color:"var(--green)", fontWeight:700, textDecoration:"none" }}>Sådan gør du</a></>
+        )}
+      </div>
+    </div>
   );
 }

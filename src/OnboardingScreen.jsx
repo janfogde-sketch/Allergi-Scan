@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ALLERGENS, SCREENS, DIETS_ENABLED } from "./constants.jsx";
 import { initials, addUniqueCustom, PASSWORD_REQUIREMENTS_TEXT, pruneAllergenLevels, traceEligible } from "./helpers.js";
-import { EatSafeLogo, EatSafeWordmark, Icon, showToast, ConfirmDialog } from "./SharedComponents.jsx";
+import { EatSafeLogo, EatSafeWordmark, Icon, showToast, ConfirmDialog, PushUnavailableNote } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { AgeStepper, GenderPicker } from "./FormFields.jsx";
 import { MemberForm } from "./MemberForm.jsx";
@@ -1105,9 +1105,12 @@ export default function OnboardingScreen({
                   </FormCard>
 
                   {!pushSupported ? (
-                    <PrimaryButton onClick={finishOnboard}>
-                      Fortsæt →
-                    </PrimaryButton>
+                    <>
+                      <PushUnavailableNote style={UI.mb16} />
+                      <PrimaryButton onClick={finishOnboard}>
+                        Fortsæt →
+                      </PrimaryButton>
+                    </>
                   ) : pushDone ? (
                     pushDenied ? (
                       <div role="status" style={{ fontSize:13, color:"var(--ink2)", textAlign:"center", padding:"12px 0" }}>
