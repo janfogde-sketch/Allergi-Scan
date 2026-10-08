@@ -60,7 +60,7 @@ declare
   fid uuid; lid uuid; nid uuid; fmid uuid; iid uuid;
   r record; n int; res text := ''; val uuid; st text; sqls text[]; q text;
   role_before text; email_before text; plan_before timestamptz;
-  public_read text[] := array['allergen_flags','custom_allergens','ingredients','knowledge_base','plans','products','recipe_ingredients','recipes'];
+  public_read text[] := array['custom_allergens','knowledge_base','plans','products','recipe_ingredients','recipes'];
   claims text;
 begin
   insert into auth.users(id,email,aud,role) values (a,'a-'||substr(a::text,1,8)||'@example.invalid','authenticated','authenticated');
