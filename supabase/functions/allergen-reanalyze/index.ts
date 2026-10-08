@@ -18,6 +18,9 @@
 //      Skriver KUN de nedgange, der er godkendt i allergen_reanalysis_down_20261006 (decision='approved', felterne i
 //      approved_allergens, dvs. allergenet nævnes slet ikke i ingredienslisten). Gemmer først det gamle svar i
 //      products_allergen_down_backup_20261006 og sænker kun et felt, hvis produktet stadig har den gamle, højere værdi.
+//   5. { "mode": "claude_long", "limit": 10 } (8. okt. 2026, opfølgning på #621) kaldes af jobbet allergen-claude-long (service-role).
+//      Lader Claude læse lange lister (mindst 200 tegn) uden fund, via allergens (force_ai), så døgnloftet for interne kald gælder.
+//      Kun opadgående; gammelt svar gemmes først i allergen_claude_long_20261008. Stopper ved første kald uden Claude (loft/fejl).
 // Genanalysen er kun opadgående (Jan, 6. okt. 2026): pr. allergen vinder den mest forsigtige
 // værdi af gammel og ny for ALLE produkter, så en genkørsel aldrig sænker et ja/spor. Motoren
 // kender ikke fremmedsprog (tarwebloem, mjölk) eller fiskenavne (skrubbe), så nedgange
@@ -67,7 +70,46 @@ Deno.serve(async (req) => {
   try {
     const { mode, after = null, limit = 500 } = await req.json().catch(() => ({}));
     const batch = Math.min(Number(limit) || 500, 1000);
-    if (mode !== "dry_run" && mode !== "dry_run_down" && mode !== "apply" && mode !== "apply_down") return json({ error: "mode skal være dry_run, dry_run_down, apply eller apply_down" }, 400);
+    if (mode !== "dry_run" && mode !== "dry_run_down" && mode !== "apply" && mode !== "apply_down" && mode !== "claude_long") return json({ error: "mode skal være dry_run, dry_run_down, apply, apply_down eller claude_long" }, 400);
+
+    if (mode === "claude_long") {
+      if (!isInternalCall) return json({ error: "Kun systemkald" }, 401);
+      const size = Math.min(Number(limit) || 10, 20);
+      const { data: cands, error: cErr } = await supabase.rpc("allergen_claude_long_candidates", { p_limit: size });
+      if (cErr) throw cErr;
+      let processed = 0, changed = 0, stopped = false;
+      for (const p of cands ?? []) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/allergens`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": serviceRoleKey },
+          body: JSON.stringify({ text: p.ingredients_text, force_ai: true }),
+        });
+        const data = res.ok ? await res.json().catch(() => null) : null;
+        // Uden Claude (døgnloft ramt, API-fejl) røres intet; produktet prøves igen senere.
+        if (!data?.allergen_flags || !String(data.method ?? "").includes("claude")) { stopped = true; break; }
+        const old = p.allergen_flags ?? {};
+        const next: Record<string, string> = { ...old };
+        for (const a of ALL_ALLERGENS) {
+          const o = old[a] ?? "no";
+          const n = data.allergen_flags[a] ?? "no";
+          if ((RANK[n] ?? 0) > (RANK[o] ?? 0)) next[a] = n;
+        }
+        const didChange = ALL_ALLERGENS.some((a) => (old[a] ?? "no") !== next[a]);
+        const { error: bErr } = await supabase.from("allergen_claude_long_20261008").upsert({
+          product_id: p.id, old_flags: old, new_flags: next, old_quality: p.allergen_quality,
+          old_method: p.allergen_source_method, changed: didChange,
+        }, { onConflict: "product_id" });
+        if (bErr) throw bErr;
+        const { error: uErr } = await supabase.from("products").update({
+          allergen_flags: next, allergen_quality: "high", allergen_source_method: "keyword+claude",
+          reparsed_at: new Date().toISOString(),
+        }).eq("id", p.id);
+        if (uErr) throw uErr;
+        processed++;
+        if (didChange) changed++;
+      }
+      return json({ mode, processed, changed, stopped });
+    }
 
     if (mode === "apply_down") {
       const size = Math.min(Number(limit) || 200, 200);
