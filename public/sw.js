@@ -8,18 +8,38 @@
 // næste besøg, og "beforeinstallprompt" udebliver — selvom koden ser korrekt ud.
 // skipWaiting + clients.claim() tvinger den nye version til at overtage med det
 // samme, uden at kræve at brugeren lukker og genåbner browseren.
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
-// En kontrolleret fetch-handler er et af Chromes kriterier for at appen regnes
-// som "installerbar" (og dermed sender "beforeinstallprompt") — uden denne
-// kunne browseren i praksis aldrig tilbyde installation, uanset hvor korrekt
-// manifestet ellers er sat op. Ren gennemstrømning, ingen caching-strategi.
-// Kun egne adresser sendes igennem: indholdsspærren (vercel.json) lader service workeren kun hente fra
-// eatsafe.dk og Supabase, så billeder fra Open Food Facts m.fl. hentes direkte af siden i stedet.
+// Offline-side (8. okt. 2026): ved en navigation uden net vises den forhåndshentede /offline.html i stedet for
+// browserens fejlside (vigtigt i en TWA). Alt andet går direkte til netværket uden om service workeren.
+// Selve fetch-handleren skal fortsat findes: det er et af Chromes kriterier for, at appen kan installeres.
+const OFFLINE_CACHE = "eatsafe-offline-v1";
+const OFFLINE_URL = "/offline.html";
+const OFFLINE_FILES = [OFFLINE_URL, "/js/offline.js", "/fonts/fonts.css", "/fonts/dm-sans-latin-opsz-normal.woff2", "/fonts/dm-sans-latin-ext-opsz-normal.woff2", "/brand/EatSafe_Master_Logo_Horizontal.svg", "/favicon.svg"];
+
+// Et filfejl under forhåndshentningen må ikke blokere installationen af service workeren.
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(OFFLINE_CACHE).then((cache) =>
+      Promise.all(OFFLINE_FILES.map((url) => cache.add(url).catch(() => {})))
+    ).catch(() => {})
+  );
+});
+
+// Fjerner gamle versioner af offline-cachen.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(Promise.all([
+    self.clients.claim(),
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith("eatsafe-offline-") && k !== OFFLINE_CACHE).map((k) => caches.delete(k)))).catch(() => {}),
+  ]));
+});
+
 self.addEventListener("fetch", (event) => {
-  if (new URL(event.request.url).origin !== self.location.origin) return;
-  event.respondWith(fetch(event.request));
+  const req = event.request;
+  if (req.mode !== "navigate" || new URL(req.url).origin !== self.location.origin) return;
+  event.respondWith(
+    fetch(req).catch(async () => (await caches.match(OFFLINE_URL)) || Response.error())
+  );
 });
 
 // Push er kun den korte tekst; den fulde besked ligger i appen og åbnes via

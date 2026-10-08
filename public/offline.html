@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Du er offline — EatSafe</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    @import url('/fonts/fonts.css');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root{
+      --ink:#15201A; --ink2:rgba(21,32,26,.78); --muted:rgba(21,32,26,.58);
+      --paper:#FFFFFF; --green:#0F7D4F; --surface:#FFFFFF; --border:rgba(21,32,26,.10);
+      --f:'DM Sans',system-ui,-apple-system,sans-serif;
+    }
+    body { font-family: var(--f); background: var(--paper); color: var(--ink); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 24px; display: flex; align-items: center; gap: 12px; }
+    .logo img { height: 26px; width: auto; display: block; }
+    .container { max-width: 520px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 24px; font-weight: 900; letter-spacing: -.4px; margin-bottom: 12px; line-height: 1.25; }
+    p { font-size: 15px; color: var(--ink2); margin-bottom: 14px; }
+    .btn {
+      display: block; width: 100%; min-height: 52px; margin-top: 24px; padding: 14px 20px;
+      border: 0; border-radius: 12px; background: var(--green); color: #FFFFFF;
+      font-family: var(--f); font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .btn:active { transform: scale(.97); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo"><img src="/brand/EatSafe_Master_Logo_Horizontal.svg" alt="EatSafe" /></div>
+  </div>
+  <div class="container">
+    <h1>Du er offline</h1>
+    <p>EatSafe kan ikke hente noget, før du har internet igen. Tjek din forbindelse, og prøv igen.</p>
+    <button class="btn" id="retry" type="button">Prøv igen</button>
+  </div>
+  <script src="/js/offline.js"></script>
+</body>
+</html>
