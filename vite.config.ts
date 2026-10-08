@@ -25,6 +25,18 @@ export default defineConfig({
         main: resolve(rootDir, 'index.html'),
         admin: resolve(rootDir, 'admin.html'),
       },
+      output: {
+        // React får sin egen, navngivne pakke: den ændrer sig næsten aldrig, så
+        // telefonen kan genbruge den fra sidste besøg, selv om appens egen kode
+        // er opdateret.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            // Kode som både appen og admin-panelet bruger.
+            { name: 'shared', test: /src[\\/](constants|helpers|SharedComponents|styleUtils|useAdmin|allergenKeywords)\.(js|jsx)$|_shared[\\/]/, minShareCount: 2 },
+          ],
+        },
+      },
     },
   },
   test: {

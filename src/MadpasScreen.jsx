@@ -1,9 +1,13 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS, DIETS_ENABLED, MADPAS_LANGUAGES, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./constants.jsx";
+import { ALLERGENS, SCREENS, DIETS_ENABLED, MADPAS_LANGUAGES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
-import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage } from "./useMadpas.js";
+import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./madpasText.js";
+import { preloadMadpasText } from "./useMadpas.js";
+
+// Gør oplæsningen klar, så "Læs højt" kan starte direkte fra knaptrykket.
+preloadMadpasText();
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
