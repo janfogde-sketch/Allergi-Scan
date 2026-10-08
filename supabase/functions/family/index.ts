@@ -153,15 +153,12 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
       const body = await req.json();
-      // Ejerskab og id må aldrig ændres via PATCH (ellers kunne en profil lægges ind på en andens konto).
-      const { id: _id, user_id: _uid, family_owner_id: _owner, created_at: _created, ...patch } = body ?? {};
-      if (Object.keys(patch).length === 0) return new Response(
-        JSON.stringify({ error: "Intet at opdatere" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Kolonne-whitelist: ejer og tilhørsforhold (user_id, family_owner_id) kan ikke flyttes via PATCH.
+      const MEMBER_FIELDS = ["name", "color", "gender", "birth_year", "allergens", "custom_allergens", "diets", "e_numbers", "allergen_levels"];
+      const memberUpdate = Object.fromEntries(Object.entries(body ?? {}).filter(([k]) => MEMBER_FIELDS.includes(k)));
       const { data: member, error } = await supabase
         .from("family_members")
-        .update(patch)
+        .update(memberUpdate)
         .eq("id", memberId)
         .select()
         .single();

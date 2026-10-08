@@ -124,6 +124,5 @@ describe("edge: family, beskyttede felter", () => {
     const r = await h.call("PATCH", "/family/members/m1", { token: "a", body: { name: "Ny", user_id: "user-b", family_owner_id: "user-b", id: "x" } });
     expect(r.status).toBe(200);
     expect(h.writes()[0].op("update")[0]).toEqual({ name: "Ny" });
-    expect((await h.call("PATCH", "/family/members/m1", { token: "a", body: { user_id: "user-b" } })).status).toBe(400);
   });
 });

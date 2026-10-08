@@ -270,11 +270,13 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
       const body = await req.json();
-      const { status, reviewed_by, review_note } = body;
+      const { status, review_note } = body;
+      // Revisionsspor: den der godkender er altid kalderen, aldrig en værdi fra klienten.
+      const reviewed_by = caller.id;
 
-      if (!status || !reviewed_by) {
+      if (!status) {
         return new Response(
-          JSON.stringify({ error: "status og reviewed_by er påkrævet" }),
+          JSON.stringify({ error: "status er påkrævet" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
