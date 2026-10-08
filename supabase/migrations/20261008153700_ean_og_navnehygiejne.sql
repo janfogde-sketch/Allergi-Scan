@@ -49,6 +49,7 @@ where (p.ean ~ '^\d{11,12}$' and public.normalize_product_ean(p.ean) <> p.ean)
    or p.name is distinct from public.clean_product_name(p.name)
    or p.ean = '0087666052802';
 alter table public.products_hygiene_backup_20261008 enable row level security;
+revoke all on public.products_hygiene_backup_20261008 from anon, authenticated;
 comment on table public.products_hygiene_backup_20261008 is 'Før-billede af produkter ændret af EAN- og navnehygiejne 8. okt. 2026 (to do d6638639). Kun admin/service-role.';
 
 -- Dublet (Sriracha): flyt billedet til Bilka-rækken, slet OFF-rækken (ingen referencer).
