@@ -2,7 +2,7 @@
 insert into public.admin_todos (title, description, status, priority, track, assignee_id)
 select '[Efter beta] Kode: udvid typetjekket til flere filer',
        'Forslag fra 3498081d. Typetjekket (npm run typecheck, i CI) dækker nu kernefilerne, jf. tsconfig.check.json. Tilbage: allergenmotoren i supabase/functions/_shared (Deno-tjekket er strengere og kræver typer på alle parametre), de øvrige hooks (useShoppingList, useHistory, useLoadUserData m.fl.) og derefter skærmene. Pr. fil: skift // @ts-nocheck til // @ts-check, tilføj filen i include, ret fejlene med JSDoc uden at ændre adfærd. Tag få filer ad gangen.',
-       'todo', 'low', 'code', public._admin_id('jafo')
+       'todo', 'low', 'backend', public._admin_id('jafo')
 where not exists (select 1 from public.admin_todos where title like '[Efter beta] Kode: udvid typetjekket%');
 
 update public.admin_todos
