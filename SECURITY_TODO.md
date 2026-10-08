@@ -1,3 +1,5 @@
+> Historisk log over sikkerhedsfund og rettelser. **Gyldig pr. 8. okt. 2026**: afsnit dateret før da beskriver tilstanden på det tidspunkt og kan være overhalet. `CLAUDE.md` og `src/CONTEXT.md` er den gældende nutidstilstand.
+
 # ✅ 17. sept. 2026 — "Gennemgå de 66": resten af multiple_permissive_policies-fundene konsolideret
 
 Afslutter "Gennemgå de 66"-performance-reviewet (de to sikkerhedsfund det
