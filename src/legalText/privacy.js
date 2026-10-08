@@ -255,7 +255,7 @@ export default {
     ],
     [
       "p",
-      "Hvis EatSafe anvender Anthropic API som kommerciel tjeneste, oplyser Anthropic aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning."
+      "EatSafe anvender Anthropic API som kommerciel tjeneste til aflæsning af emballagebilleder og vurdering af ingredienstekst; der sendes aldrig konto-, profil- eller helbredsoplysninger til Anthropic. Anthropic oplyser aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning."
     ],
     [
       "h2",
@@ -287,7 +287,7 @@ export default {
     ],
     [
       "p",
-      "**Anthropic**\nKan anvendes til automatisk analyse af produktbilleder og tekst."
+      "**Anthropic**\nAnvendes til automatisk analyse af produktbilleder og ingredienstekst."
     ],
     [
       "p",
@@ -300,6 +300,10 @@ export default {
     [
       "p",
       "**Google og Facebook**\nHvis du vælger at logge ind med din Google- eller Facebook-konto, modtager vi dit navn og din e-mailadresse fra udbyderen."
+    ],
+    [
+      "p",
+      "**EatSafes personale**\nTil support og fejlfinding kan udvalgte personer hos EatSafe se kontooplysninger og de oplysninger, du har registreret i appen, herunder helbredsoplysninger. Adgangen er begrænset til de personer, der har brug for den, og bruges kun til drift, support og sikkerhed."
     ],
     [
       "p",

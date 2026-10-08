@@ -5,6 +5,7 @@ Undgå "sikkert", "præcis" og funktioner på pause (opskrifter, diæter), når 
 
 **Tjek tallene før hver indsendelse til butikkerne** (teksten i butikkerne opdateres ikke af sig selv, så tallene er rundet ned):
 `select (select count(*) from products) varer, (select count(*) from knowledge_base where category <> 'diet') opslag;`
+Deklarationerne (privacy labels / Data safety) står i `BUTIKSDEKLARATIONER.md`.
 Sprogene i madpasset tælles i `MADPAS_LANGUAGES` (`src/constants.jsx`, test i `src/useMadpas.test.js`).
 
 ## App-navn
