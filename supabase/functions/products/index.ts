@@ -230,22 +230,9 @@ Deno.serve(async (req) => {
         .single();
 
       if (product) {
-        let allergenFlags = product.allergen_flags
-          ? normalizeAllergenFlags(product.allergen_flags)
-          : null;
-
-        if (!allergenFlags) {
-          const { data: flagsRow } = await supabase
-            .from("allergen_flags").select("*").eq("product_id", product.id).single();
-          allergenFlags = flagsRow ? normalizeAllergenFlags(flagsRow) : normalizeAllergenFlags(null);
-        }
-
-        let ingredientsText = product.ingredients_text || null;
-        if (!ingredientsText) {
-          const { data: ingRow } = await supabase
-            .from("ingredients").select("*").eq("product_id", product.id).single();
-          ingredientsText = ingRow?.raw_text || null;
-        }
+        // Kilden er products.allergen_flags og products.ingredients_text; de gamle tabeller bruges ikke længere.
+        const allergenFlags = normalizeAllergenFlags(product.allergen_flags ?? null);
+        const ingredientsText = product.ingredients_text || null;
 
         return new Response(JSON.stringify({
           found: true,
