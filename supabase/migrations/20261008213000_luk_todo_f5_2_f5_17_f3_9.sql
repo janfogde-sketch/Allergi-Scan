@@ -18,7 +18,7 @@ select t.id, case
 insert into public.admin_todos (title, description, status, priority, track, assignee_id)
 select '[Før beta] Mail: opdatér feedback-skabelonerne i Resend',
        'F5-17 ændrede ordvalget i N3 og N6a-d (supabase/templates/resend/) til "Din feedback" og "Svar fra EatSafe". Repo-filerne er rettet, men mailene sendes fra kopierne hostet i Resend, som kun ændres via Resend (RESEND_API_KEY findes kun som edge-secret). Opdatér de fem skabeloner i Resend med indholdet fra repoet, og send en testmail til egen konto.',
-       'todo', 'medium', 'backend', public._admin_id('jafo')
+       'todo', 'normal', 'backend', public._admin_id('jafo')
 where not exists (select 1 from public.admin_todos where title like '[Før beta] Mail: opdatér feedback-skabelonerne i Resend%');
 
 -- F3-9: Bjørn valgte B (let skygge) 8. okt. 2026.
