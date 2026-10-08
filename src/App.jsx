@@ -2,30 +2,21 @@
 import React, { useState, Suspense, useEffect, useCallback, useRef, useMemo } from "react";
 
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
-import {
-  SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS, SCREENS, DIETS,
-  AVATAR_COLORS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
-  E_NUMBERS, E_CATEGORIES,
-  MADPAS_LANGUAGES,
-  PAGE_IDS, uid
-} from "./constants.jsx";
+import { SCREENS } from "./constants.jsx";
 
-import {
-  initials, timeAgo, getAllergenLabels, verifiedBadge,
-  makeHeaders, apiCall,
-  getTraceLog, householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, visibleDiets, mergeAllergenLevels
-} from "./helpers.js";
+import { householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, visibleDiets, mergeAllergenLevels } from "./helpers.js";
 
-import {
-  Icon, IngredientsList, ProfileBadges,
-  getProductIcon, ProductImage, LazyFallback, ToastHost, showToast,
-  ScanLoadingOverlay
-} from "./SharedComponents.jsx";
+import { Icon, LazyFallback, ToastHost, showToast, ScanLoadingOverlay } from "./SharedComponents.jsx";
 
 import AppHeader from "./AppHeader.jsx";
-import { ENumberPicker } from "./AllergenPicker.jsx";
-import { MemberForm, CategorySelect } from "./MemberForm.jsx";
+
 import { ProgressIndicator } from "./DesignSystem.jsx";
+import AppProviders from "./AppProviders.jsx";
+import BottomNav from "./BottomNav.jsx";
+import { useAppContextValues } from "./useAppContextValues.js";
+import { useAndroidBack } from "./useAndroidBack.js";
+import { useArtifactPreview } from "./useArtifactPreview.js";
+import { ONBOARDING_EXEMPT_SCREENS, AUTH_FLOW_SCREENS } from "./appScreens.js";
 const AdminScreen = React.lazy(() => import('./AdminScreen.jsx'));
 const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
 const MadpasScreen = React.lazy(() => import('./MadpasScreen.jsx'));
@@ -46,7 +37,7 @@ import { useOffline } from './useOffline.js';
 import { useScreenFocus } from './useScreenFocus.js';
 
 import { appCss } from './theme.jsx';
-import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from './utils.jsx';
+import { formatBuildTime } from './utils.jsx';
 import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHousehold } from './useHousehold.js';
@@ -59,19 +50,11 @@ import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
 import { useRecipes } from './useRecipes.js';
-import { useProduct, runLookupProduct, buildScanResultFromProductData } from './useProduct.js';
-import { PREVIEW_MOCK_PRODUCTS } from './previewMockData.js';
+import { useProduct, runLookupProduct } from './useProduct.js';
+
 import { useMadpas } from './useMadpas.js';
 import { useAlternatives } from './useAlternatives.js';
-import { AuthProvider } from './AuthContext.jsx';
-import { ProfileProvider } from './ProfileContext.jsx';
-import { AdminProvider } from './AdminContext.jsx';
-import { NavigationProvider } from './NavigationContext.jsx';
-import { HistoryProvider } from './HistoryContext.jsx';
-import { ShoppingProvider } from './ShoppingContext.jsx';
-import { FamilyFormProvider } from './FamilyFormContext.jsx';
-import { AllergenPrefsProvider } from './AllergenPrefsContext.jsx';
-import { UI } from "./styleUtils.js";
+
 import InstallPrompt from "./InstallPrompt.jsx";
 import HelpModal from "./HelpModal.jsx";
 import SafetyInfoModal from "./SafetyInfoModal.jsx";
@@ -85,16 +68,6 @@ import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
 import { hasStoredSession } from "./sessionStore.js";
-
-// Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.
-// sept. 2026, "Onboarding-persistens") — se setScreen-wrapperen i
-// EatSafe()-komponenten nedenfor, som håndhæver dette for enhver anden skærm.
-// TERMS/PRIVACY tilføjet 29. sept. 2026 ("Opdater siderne Brugsvilkår og
-// Privatlivspolitik") — juridiske sider skal altid kunne ses, uanset
-// onboarding-status, præcis samme begrundelse som WELCOME/LOGIN/ONBOARD.
-const ONBOARDING_EXEMPT_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.RESETPASSWORD, SCREENS.BOOT, SCREENS.TERMS, SCREENS.PRIVACY];
-// Skærme uden AppHeader/bundnavigation (login, bekræftelse, onboarding).
-const AUTH_FLOW_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.VERIFYEMAIL, SCREENS.RESETPASSWORD, SCREENS.BOOT];
 
 // Startskærm (30. sept. 2026): kun en enhed, der har set onboarding færdig
 // (ONBOARDED_KEY), starter direkte på forsiden. Andre med en session venter
@@ -585,31 +558,6 @@ export default function EatSafe() {
   // Bidragsflowet (foto/indtastning) skjuler bundnavigationen, så brugeren holder fokus og ikke navigerer væk ved et uheld. Valgmenuen (start) og kvitteringen (done) viser den.
   const hideNavForContribution = screen === SCREENS.SUGGEST_EDIT && ["guide", "scanning", "review", "sending"].includes(editStep);
 
-  const FamilyChips = () => {
-    const allIds = ["me", ...scanFamily.map(m => m.id)];
-    const isAll = allIds.every(id => activeProfiles.includes(id));
-    const toggleAll = () => setActiveProfiles(isAll ? ["me"] : allIds);
-    const toggleOne = (id) => {
-      if (isAll) { setActiveProfiles([id]); return; }
-      const next = activeProfiles.includes(id) ? activeProfiles.filter(x => x !== id) : [...activeProfiles, id];
-      setActiveProfiles(next.length === 0 ? [id] : next);
-    };
-    return (
-      <div style={UI.wrapGap7}>
-        <div className={`ap-chip${isAll?" on":""}`} onClick={toggleAll}>Hele familien</div>
-        <div className={`ap-chip${!isAll&&activeProfiles.includes("me")?" on":""}`} onClick={() => toggleOne("me")}>
-          <div style={UI.uw20_h20_br50_bggreen_dflex_aicenter_jccenter_fs10_fw800_cin}>{initials(user.name||"Mig")}</div>
-          {(user.name||"Mig").split(" ")[0]}
-        </div>
-        {scanFamily.map(m => (
-          <div key={m.id} className={`ap-chip${!isAll&&activeProfiles.includes(m.id)?" on":""}`} onClick={() => toggleOne(m.id)}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:m.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"var(--ink)"}}>{initials(m.name)}</div>
-            {m.name.split(" ")[0]}
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   {/* Trin-bar — flyttet til DesignSystem.jsx som den låste, navngivne
       ProgressIndicator-komponent (25. sept. 2026-designsystem), i stedet
@@ -755,38 +703,7 @@ export default function EatSafe() {
   // Madpas (opfølgende polish-runde, samme dag) sammen med link/QR-deling.
   const mpDiets = visibleDiets(madpasActiveProfile ? madpasActiveProfile.diets : user.diets);
 
-  // ── Android tilbageknap ─────────────────────────────────────────────────────
-  React.useEffect(() => {
-    // Push en state så vi kan fange tilbageknap
-    window.history.pushState({ screen: "app" }, "");
-    const handleBack = (e) => {
-      // Forhindre at vi navigerer væk fra appen
-      e.preventDefault();
-      window.history.pushState({ screen: "app" }, "");
-      // Navigér inden i appen i stedet
-      if (helpOpen) { setHelpOpen(false); return; }
-      if (feedbackOpen) { setFeedbackOpen(false); return; }
-      if (profilePopup) { setProfilePopup(null); return; }
-      if (showProfileMenu) { setShowProfileMenu(false); return; }
-      if (cameraActive) { closeCameraFully(); return; }
-      // Bundmenu-skærmene og selve login/onboarding — gør ingenting
-      // (forhindrer at tilbage forlader appen eller afbryder onboarding).
-      const STAY = [SCREENS.HOME, SCREENS.LIST, SCREENS.HISTORY, ...AUTH_FLOW_SCREENS];
-      if (STAY.includes(screen)) return;
-      // Redigering åbnes fra Profil og går tilbage dertil; alt andet (menu-
-      // skærme, resultat, indsendelse, Madpas m.fl.) går til forsiden.
-      if (screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES) { setScreen(SCREENS.PROFILE); return; }
-      // Bidragsflowet har sin egen trin-stak: systemets tilbage går ét trin tilbage (SuggestEditScreen lytter og afbryder hændelsen).
-      if (screen === SCREENS.SUGGEST_EDIT) {
-        const ev = new CustomEvent("eatsafe:back", { cancelable: true });
-        window.dispatchEvent(ev);
-        if (ev.defaultPrevented) return;
-      }
-      setScreen(SCREENS.HOME);
-    };
-    window.addEventListener("popstate", handleBack);
-    return () => window.removeEventListener("popstate", handleBack);
-  }, [screen, helpOpen, feedbackOpen, profilePopup, cameraActive, showProfileMenu]);
+  useAndroidBack({ screen, setScreen, helpOpen, setHelpOpen, feedbackOpen, setFeedbackOpen, profilePopup, setProfilePopup, showProfileMenu, setShowProfileMenu, cameraActive, closeCameraFully });
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   // Load admin stats when entering admin screen
@@ -796,162 +713,37 @@ export default function EatSafe() {
     }
   }, [screen, user?.role]);
 
-  // ── Artifact-preview: "Se app uden login"-knappen (se OnboardingScreen.jsx)
-  // Kaldes KUN i --mode artifact-preview (login mod Supabase er upålideligt
-  // fra Artifact-domænet, se CLAUDE.md afsnit 4). Sætter en mock-bruger +
-  // mock-allergener, forudfylder produkt-cachen med mock-produkter (samme
-  // EAN'er som Søg og Indkøbsliste bruger, se previewMockData.js — sikrer at
-  // et klik på et søgeresultat eller en vare i indkøbslisten åbner korrekt i
-  // Produkt-view via runLookupProduct's cache-first-gren, helt uden netværk),
-  // og indlæser den samme mock-indkøbsliste som useShoppingList.js's egen
-  // artifact-preview-gren i loadShoppingList. Udvidet til også at dække
-  // Profil (fødselsår/køn — ellers viser "udfyld din profil"-banneret sig
-  // konstant), Familie, Scanningshistorik og Favoritter — alle resterende
-  // steder i appen der ellers ville stå tomme uden en rigtig session.
-  const PREVIEW_MOCK_ALLERGENS = ["gluten", "noedder"];
-  const activatePreviewMode = useCallback(() => {
-    setUserId("preview-demo-bruger");
-    setUser(u => ({ ...u, name: "Mille Nielsen", email: "preview@eatsafe.dk", birth_year: "1991", gender: "Kvinde" }));
-    setAllergens(PREVIEW_MOCK_ALLERGENS);
-    for (const product of PREVIEW_MOCK_PRODUCTS) {
-      productCacheRef.current[product.ean] = buildScanResultFromProductData({
-        product, data: {}, ean: product.ean,
-        activeIds: PREVIEW_MOCK_ALLERGENS, activeENumbers: [], family: [], activeProfiles: [],
-      });
-    }
-    loadShoppingList();
+  const activatePreviewMode = useArtifactPreview({ setUserId, setUser, setAllergens, productCacheRef, loadShoppingList, setFamily, setHistory, setFavorites, setScreen });
 
-    setFamily([
-      { id:"preview-fam-1", name:"Oskar Nielsen", color:AVATAR_COLORS[0], birth_year:2016, gender:"Mand", allergens:["jordnoedder"], custom:[], diets:[], eNumbers:[] },
-      { id:"preview-fam-2", name:"Sofie Nielsen", color:AVATAR_COLORS[1], birth_year:2019, gender:"Kvinde", allergens:[], custom:["Kiwi"], diets:["vegetarian"], eNumbers:[] },
-    ]);
-
-    const now = Date.now();
-    setHistory([
-      { ean_scanned:PREVIEW_MOCK_PRODUCTS[0].ean, products:{ name:PREVIEW_MOCK_PRODUCTS[0].name, brand:PREVIEW_MOCK_PRODUCTS[0].brand }, result:"danger", scanned_at:new Date(now - 1000*60*30).toISOString() },
-      { ean_scanned:PREVIEW_MOCK_PRODUCTS[3].ean, products:{ name:PREVIEW_MOCK_PRODUCTS[3].name, brand:PREVIEW_MOCK_PRODUCTS[3].brand }, result:"safe", scanned_at:new Date(now - 1000*60*60*4).toISOString() },
-      { ean_scanned:PREVIEW_MOCK_PRODUCTS[1].ean, products:{ name:PREVIEW_MOCK_PRODUCTS[1].name, brand:PREVIEW_MOCK_PRODUCTS[1].brand }, result:"warn", scanned_at:new Date(now - 1000*60*60*24).toISOString() },
-      { ean_scanned:PREVIEW_MOCK_PRODUCTS[2].ean, products:{ name:PREVIEW_MOCK_PRODUCTS[2].name, brand:PREVIEW_MOCK_PRODUCTS[2].brand }, result:"safe", scanned_at:new Date(now - 1000*60*60*24*2).toISOString() },
-    ]);
-
-    setFavorites([
-      { name:PREVIEW_MOCK_PRODUCTS[3].name, brand:PREVIEW_MOCK_PRODUCTS[3].brand, ean:PREVIEW_MOCK_PRODUCTS[3].ean, image_url:null, category:"Slik & snacks", savedAt:now - 1000*60*60*24*3, savedByMe:true },
-      { name:PREVIEW_MOCK_PRODUCTS[2].name, brand:PREVIEW_MOCK_PRODUCTS[2].brand, ean:PREVIEW_MOCK_PRODUCTS[2].ean, image_url:null, category:"Mejeri", savedAt:now - 1000*60*60*24*6, savedByMe:true },
-    ]);
-
-    setScreen(SCREENS.HOME);
-  }, [setUserId, setUser, setAllergens, productCacheRef, loadShoppingList, setFamily, setHistory, setFavorites, setScreen]);
-
-  // Context-værdierne memoiseres, så et Provider ikke sender et nyt objekt
-  // videre (og dermed tvinger ALLE dets consumers til at re-rendere) ved
-  // hver App-render — kun når noget de faktisk indeholder ændrer sig.
-  const authContextValue = useMemo(() => ({
-    user, setUser, userId, setUserId, accessToken,
-    loginEmail, setLoginEmail, loginPassword, setLoginPassword,
-    authError, setAuthError, authInfo, emailTakenError, setEmailTakenError,
-    emailError, setEmailError, passwordError, setPasswordError,
-    authLoading, authTab, setAuthTab,
-    isOAuth, rememberMe, setRememberMe,
-    handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-    verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
-    checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
-    resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
-  }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-       verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset]);
-
-  const profileContextValue = useMemo(() => ({
-    allergens, setAllergens, customAllerg, setCustomAllerg,
-    family, setFamily, activeProfiles, setActiveProfiles,
-    scanFamily, household, setHousehold, householdLoading, loadHousehold,
-    profileLoadStatus, retryProfileLoad,
-  }), [allergens, customAllerg, family, activeProfiles, scanFamily, household, householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad]);
-
-  const adminContextValue = useMemo(() => ({
-    adminSection, setAdminSection, adminStats,
-    adminUsers, adminUsersLoading,
-    adminTickets, adminTicketFilter, setAdminTicketFilter,
-    submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
-    openSubmission, setOpenSubmission,
-    editingSubmission, setEditingSubmission,
-    openAdminUser, setOpenAdminUser,
-    openTicket, setOpenTicket,
-    cleanedOcrText, cleaningOcr,
-    loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets,
-    updateUserRole, deleteUser,
-    updateSubmissionAndApprove, rejectSubmission,
-    updateTicketStatus, cleanOcrWithAI,
-    ticketsLoading,
-    userSearch, setUserSearch, userSearchParam, setUserSearchParam,
-    missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-    importLog, importLoading, runImport,
-    reparseLog, reparseLoading, runReparse,
-  }), [
-    adminSection, adminStats, adminUsers, adminUsersLoading,
-    adminTickets, adminTicketFilter, submissions, submissionsLoading, submissionFilter,
-    openSubmission, editingSubmission, openAdminUser, openTicket,
-    cleanedOcrText, cleaningOcr,
-    loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets,
-    updateUserRole, deleteUser, updateSubmissionAndApprove, rejectSubmission,
-    updateTicketStatus, cleanOcrWithAI, ticketsLoading,
-    userSearch, userSearchParam, missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-    importLog, importLoading, runImport, reparseLog, reparseLoading, runReparse,
-  ]);
-
-  const navigationContextValue = useMemo(() => ({ screen, setScreen, openLegal, legalReturnScreen }), [screen, openLegal, legalReturnScreen]);
-
-  const historyContextValue = useMemo(() => ({
-    history, setHistory, historyLoading, historyScope, historyError, favoritesError,
-    favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
-  }), [history, historyLoading, historyScope, historyError, favoritesError, favorites, favoritesScope, loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite]);
-
-  const shoppingContextValue = useMemo(() => ({
-    lists, activeList, activeListId, setActiveListId,
-    shoppingList, setShoppingList, shoppingListId, setShoppingListId,
-    newItemName, setNewItemName, loadShoppingList, listsError,
-    familyMembers, loadFamilyMembers,
-    createList, renameList, setListType, deleteList, joinByCode,
-    getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
-    addToList, toggleItem, removeItem, clearDone,
-  }), [lists, activeList, activeListId, setActiveListId, shoppingList, shoppingListId, newItemName, loadShoppingList, listsError,
-       familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
-       getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList, addToList, toggleItem, removeItem, clearDone]);
-
-  const familyFormContextValue = useMemo(() => ({
-    newMemberName, setNewMemberName,
-    newMemberBirthYear, setNewMemberBirthYear,
-    newMemberGender, setNewMemberGender,
-    newMemberAllerg, setNewMemberAllerg,
-    newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
-    newMemberLevels, setNewMemberLevels,
-    newMemberENumbers, setNewMemberENumbers,
-    newMemberSubtypes, setNewMemberSubtypes,
-    newMemberCustomInput, setNewMemberCustomInput,
-    editingMemberId, retryLoadFamily, familyError,
-    addMember, updateMember, removeMember, startEditMember, cancelEditMember,
-  }), [
-    newMemberName, newMemberBirthYear, newMemberGender, newMemberAllerg,
-    newMemberCustomAllerg, newMemberDiets, newMemberLevels, newMemberENumbers, newMemberSubtypes,
-    newMemberCustomInput, editingMemberId, addMember, updateMember, removeMember,
-    startEditMember, cancelEditMember, retryLoadFamily, familyError,
-  ]);
-
-  const allergenPrefsContextValue = useMemo(() => ({
-    eSearch, setESearch, eCategory, setECategory,
-    allergenSubtypes, setAllergenSubtypes,
-    selectedENumbers, setSelectedENumbers,
-    activeSubtypeModal, setActiveSubtypeModal,
-  }), [eSearch, eCategory, allergenSubtypes, selectedENumbers, activeSubtypeModal]);
+  const contextValues = useAppContextValues({
+    user, setUser, userId, setUserId, accessToken, loginEmail, setLoginEmail, loginPassword,
+    setLoginPassword, authError, setAuthError, authInfo, emailTakenError, setEmailTakenError, emailError, setEmailError,
+    passwordError, setPasswordError, authLoading, authTab, setAuthTab, isOAuth, rememberMe, setRememberMe,
+    handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth, verifyEmail, verifyStatus, verifyError,
+    verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError,
+    resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset, allergens, setAllergens, customAllerg,
+    setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles, scanFamily, household, setHousehold,
+    householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad, adminSection, setAdminSection, adminStats, adminUsers,
+    adminUsersLoading, adminTickets, adminTicketFilter, setAdminTicketFilter, submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
+    openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission, openAdminUser, setOpenAdminUser, openTicket, setOpenTicket,
+    cleanedOcrText, cleaningOcr, loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets, updateUserRole, deleteUser,
+    updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI, ticketsLoading, userSearch, setUserSearch, userSearchParam,
+    setUserSearchParam, missingEans, missingEansLoading, loadMissingEans, deleteMissingEan, importLog, importLoading, runImport,
+    reparseLog, reparseLoading, runReparse, screen, setScreen, openLegal, legalReturnScreen, history,
+    setHistory, historyLoading, historyScope, historyError, favoritesError, favorites, favoritesScope, loadHistory,
+    clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite, lists, activeList, activeListId,
+    setActiveListId, shoppingList, setShoppingList, shoppingListId, setShoppingListId, newItemName, setNewItemName, loadShoppingList,
+    listsError, familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
+    getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList, addToList, toggleItem, removeItem,
+    clearDone, newMemberName, setNewMemberName, newMemberBirthYear, setNewMemberBirthYear, newMemberGender, setNewMemberGender, newMemberAllerg,
+    setNewMemberAllerg, newMemberCustomAllerg, setNewMemberCustomAllerg, newMemberDiets, setNewMemberDiets, newMemberLevels, setNewMemberLevels, newMemberENumbers,
+    setNewMemberENumbers, newMemberSubtypes, setNewMemberSubtypes, newMemberCustomInput, setNewMemberCustomInput, editingMemberId, retryLoadFamily, familyError,
+    addMember, updateMember, removeMember, startEditMember, cancelEditMember, eSearch, setESearch, eCategory,
+    setECategory, allergenSubtypes, setAllergenSubtypes, selectedENumbers, setSelectedENumbers, activeSubtypeModal, setActiveSubtypeModal,
+  });
 
   return (
-    <AuthProvider value={authContextValue}>
-    <ProfileProvider value={profileContextValue}>
-    <AdminProvider value={adminContextValue}>
-    <NavigationProvider value={navigationContextValue}>
-    <HistoryProvider value={historyContextValue}>
-    <ShoppingProvider value={shoppingContextValue}>
-    <FamilyFormProvider value={familyFormContextValue}>
-    <AllergenPrefsProvider value={allergenPrefsContextValue}>
+    <AppProviders values={contextValues}>
     <>
       <style>{appCss}</style>
       <div className="app" role="application" aria-label="EatSafe">
@@ -1379,45 +1171,12 @@ export default function EatSafe() {
           </Suspense>
         )}
 
-        {/* BUNDNAVIGATION — skjult på Brugsvilkår/Privatlivspolitik (29.
-            sept. 2026), samme begrundelse som TOPBAR ovenfor: siderne kan
-            åbnes fra kontekster uden bundnav (Velkommen/Log ind), så den
-            skal være konsekvent fraværende uanset hvor siden blev åbnet
-            fra, i stedet for at dukke op/forsvinde afhængigt af indgang. */}
+        {/* BUNDNAVIGATION — skjult på Brugsvilkår/Privatlivspolitik (29. sept. 2026), samme begrundelse som TOPBAR ovenfor. */}
         {!isOnboard && !madpasWaiterView && !isLegalPage && !hideNavForContribution && (
-          <nav className={`bottom-nav${screen === SCREENS.ADMIN ? " nav-muted" : ""}`} role="navigation" aria-label="Hovednavigation">
-            {[
-              [SCREENS.LIST,    "cart",     "Indkøbsliste"],
-              [SCREENS.HOME,    "scanframe","Scan"],
-              [SCREENS.HISTORY, "clock",    "Historik"],
-            ].map(([s,icon,lbl]) => (
-              <div key={s} className={`nav-item${(
-                screen===s ||
-                (screen===SCREENS.RESULT && s===SCREENS.HOME) ||
-                (screen===SCREENS.NOTFOUND && s===SCREENS.HOME) ||
-                (screen===SCREENS.SUBMITTED && s===SCREENS.HOME)
-              )?" active":""}`}
-                onClick={() => setScreen(s)}
-                role="button"
-                aria-label={lbl}
-                aria-current={screen===s ? "page" : undefined}
-                tabIndex={0}
-                onKeyDown={e => e.key === "Enter" && setScreen(s)}>
-                <div className="nav-icon"><Icon name={icon} size={22} /></div>
-                <div className="nav-lbl">{lbl}</div>
-              </div>
-            ))}
-          </nav>
+          <BottomNav screen={screen} setScreen={setScreen} />
         )}
       </div>
     </>
-    </AllergenPrefsProvider>
-    </FamilyFormProvider>
-    </ShoppingProvider>
-    </HistoryProvider>
-    </NavigationProvider>
-    </AdminProvider>
-    </ProfileProvider>
-    </AuthProvider>
+    </AppProviders>
   );
 }
