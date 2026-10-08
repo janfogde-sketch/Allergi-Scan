@@ -478,6 +478,13 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
       const body = await req.json();
+      // Kun disse felter må ændres. Uden listen kunne et punkt flyttes over på en andens liste (list_id) eller få et andet id/added_by.
+      const ITEM_FIELDS = ["name", "quantity", "checked", "store", "ean", "image_url", "product_id"];
+      const patch = Object.fromEntries(Object.entries(body ?? {}).filter(([k]) => ITEM_FIELDS.includes(k)));
+      if (Object.keys(patch).length === 0) return new Response(
+        JSON.stringify({ error: "Intet at opdatere" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
       // .eq("list_id", listId) er tilføjet ved siden af .eq("id", itemId) —
       // uden den bandt kun canAccessList-tjekket ovenfor til listId, mens
@@ -487,7 +494,7 @@ Deno.serve(async (req) => {
       // brugers liste, hvis de kendte/gættede punktets id.
       const { data: item, error } = await supabase
         .from("shopping_list_items")
-        .update(body)
+        .update(patch)
         .eq("id", itemId)
         .eq("list_id", listId)
         .select()

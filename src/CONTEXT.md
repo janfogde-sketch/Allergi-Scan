@@ -110,6 +110,10 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 | `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets + tilbagekaldelser uden stregkode (`needs_review`), kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
 | `food-waste` | **I KØLESKABET** (17. sept. 2026) — tjekker om et EAN er nedsat pga. udløb i en nærliggende Netto/Føtex/Bilka, via Salling Groups officielle "Anti Food Waste"-API (`geo`-baseret opslag). Kræver bruger-login. Deployet og virker (testet live med `SALLING_API_TOKEN` sat) — men UI-knappen på `ResultScreen` er bevidst fjernet igen efter brugerens ønske. `useFoodWaste.js`-hooken ligger stadig i `src/`, klar til at blive genkoblet til en skærm når featuren skal genoptages — se punkt 13 |
 
+### Test af edge-funktionernes handlere (8. okt. 2026)
+
+`src/testing/edgeHarness.js` indlæser en `supabase/functions/<navn>/index.ts` uden Deno, netværk eller database: `Deno.serve` og `createClient` er stubbet (aliasser i `vite.config.ts`), og testen giver en `resolver`, der svarer på hvert databasekald (`c.table`, `c.kind`, `c.rpc`, `c.has("eq", kolonne, værdi)`). `h.call(metode, sti, { token, body, headers })` sender en rigtig `Request`; `h.writes()` viser alle skrivninger, så en test kan bevise, at et afvist kald intet skrev. Tests: `src/edge*.test.js` (family, shopping, delete-user, allergens/ocr, products/submissions, family-invite, notify, og `edgeAuthCategories` med loginkrav på alle beskyttede funktioner, signerede kald og en vagt der fejler, hvis en ny funktion ikke står i `config.toml` eller mangler adgangstjek). Stub `fetch` med `vi.stubGlobal`, så intet kan sende mail/push; ny funktion med adgangstjek = tilføj den til `PROTECTED` i `edgeAuthCategories.test.js`.
+
 ## 5. Auto-import (OFF) og Familie-deling
 
 - **Auto-import:** edge-funktionen `auto-import-off`, pg_cron dagligt kl. 02:00 UTC (manuelt: Admin → Import → "Kør import nu"). Flow: `missing_ean_log` → OFF API →
