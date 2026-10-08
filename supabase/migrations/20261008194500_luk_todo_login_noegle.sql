@@ -2,7 +2,7 @@
 insert into public.admin_todos (title, description, status, priority, track, assignee_id, completed_at)
 select '[Før beta] Kode: login-nøglen ud af let lagring',
        'Opfølgning på indholdsspærren (CSP). Den lange login-nøgle lå i telefonens lokale lager, hvor fremmed kode i princippet kunne læse den.',
-       'done', 'medium', 'backend', public._admin_id('jafo'), now()
+       'done', 'high', 'backend', public._admin_id('jafo'), now()
 where not exists (select 1 from public.admin_todos where title like '[Før beta] Kode: login-nøglen ud af let lagring%');
 
 insert into public.admin_todo_comments (todo_id, body)
