@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "7. oktober 2026",
+  "updated": "8. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -62,7 +62,7 @@ export default {
     ],
     [
       "p",
-      "**Scanningshistorik og favoritter**\nProdukter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes."
+      "**Scanningshistorik, søgehistorik og favoritter**\nProdukter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes. Når du søger efter et produkt og vælger et i resultatet, gemmer vi dit søgeord og det valgte produkt, så søgningen bliver bedre for dig."
     ],
     [
       "p",
@@ -348,7 +348,7 @@ export default {
     ],
     [
       "p",
-      "Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger."
+      "Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, søgehistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger."
     ],
     [
       "p",
@@ -358,6 +358,7 @@ export default {
       "ul",
       [
         "scanningshistorik: slettes automatisk 24 måneder efter scanningen",
+        "søgehistorik (dine søgeord og de produkter, du valgte): slettes automatisk 12 måneder efter, den er gemt",
         "beskeder i appen: slettes automatisk efter 12 måneder",
         "tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage",
         "tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning",
