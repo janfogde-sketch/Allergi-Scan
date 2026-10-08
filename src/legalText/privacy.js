@@ -307,7 +307,7 @@ export default {
     ],
     [
       "p",
-      "**Google og Facebook**\nHvis du vælger at logge ind med din Google- eller Facebook-konto, modtager vi dit navn og din e-mailadresse fra udbyderen."
+      "**Google, Facebook og Apple**\nHvis du vælger at logge ind med din Google-, Facebook- eller Apple-konto, modtager vi dit navn og din e-mailadresse fra udbyderen. Hos Apple kan du vælge at skjule din e-mailadresse; så modtager vi i stedet en adresse fra Apple, som videresender vores mails til dig."
     ],
     [
       "p",

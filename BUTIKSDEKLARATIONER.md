@@ -78,7 +78,7 @@ Ikke indsamlet: Location, Financial info, Contacts, Calendar, Messages, Audio, F
 - **Reklame:** Nej. **Betalinger i appen:** Nej (premium kommer først efter lancering og skal så via Apple IAP/Google Billing).
 - **Kontosletning (Google):** URL `https://www.eatsafe.dk/slet-konto`.
 - **Eksportkontrol (Apple):** appen bruger kun standard-kryptering (HTTPS) → "Nej" til proprietær kryptering.
-- **Sign in with Apple (iOS):** åbent valg for Jan og Bjørn; hører under iOS-sporet.
+- **Sign in with Apple (iOS):** bygget (8. okt. 2026) og vises, når Apple er slået til i Supabase; opsætning i `docs/apple-login-opsaetning.md`. Skal være aktiv, før iOS-appen indsendes (Apple 4.8). Demokontoen til anmelderne står i udfyldningsarket i projektmappen.
 
 ## Aldersrating (svar til spørgeskemaerne)
 
