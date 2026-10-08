@@ -476,11 +476,11 @@ export default function ScannerScreen({
                     flytter sig under scanningen. Luk øverst til venstre, lygte
                     øverst til højre, rammen i midten med tynde hjørner og en rolig
                     linje i EatSafe-grøn, instruktion under rammen og 2×-zoom lige
-                    over rammen. "Vælg billede"/"Indtast stregkode" står under
+                    over rammen. "Vælg billede"/"Indtast kode" står under
                     kamerabilledet, og hjælpeteksten efter 5 s har en fast plads. */}
                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
                   <div style={{
-                    position:"absolute", top:72, bottom:48, left:"6%", right:"6%",
+                    position:"absolute", top:72, bottom:66, left:"6%", right:"6%",
                     boxShadow:"0 0 0 9999px rgba(0,0,0,.32)", borderRadius:12,
                   }}>
                     {["tl","tr","bl","br"].map(key => (
@@ -511,8 +511,13 @@ export default function ScannerScreen({
                       </div>
                     )}
                   </div>
-                  <div style={{ position:"absolute", bottom:14, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
+                  <div style={{ position:"absolute", bottom:42, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
                     Placér stregkoden inden for rammen
+                  </div>
+                  {/* Hjælpeteksten har en fast plads under instruktionen og toner
+                      kun ind (opacity), så intet flytter sig. */}
+                  <div aria-live="polite" className={"scan-hint" + (showPhotoHint ? " on" : "")}>
+                    Kan stregkoden ikke scannes? Prøv at justere afstanden.
                   </div>
                 </div>
 
@@ -524,7 +529,7 @@ export default function ScannerScreen({
                   <button onClick={toggleZoom} aria-label={scanZoom >= 2 ? "Slå zoom fra" : "Zoom 2 gange ind"} aria-pressed={scanZoom >= 2}
                     style={{
                       position:"absolute", top:38, left:"50%", transform:"translateX(-50%)", zIndex:2,
-                      minWidth:44, height:28, padding:"0 10px", borderRadius:999,
+                      width:44, height:28, padding:0, borderRadius:999,
                       fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer",
                       background: scanZoom >= 2 ? "#fff" : "rgba(0,0,0,.45)",
                       color: scanZoom >= 2 ? "var(--ink)" : "#fff",
@@ -535,20 +540,13 @@ export default function ScannerScreen({
                 )}
               </div>
               {cameraActive && (
-                <div style={{ padding:"10px 14px 14px" }}>
-                  <div aria-live="polite" style={{ minHeight:18, fontSize:12.5, color:"var(--muted)", textAlign:"center", marginBottom:10, visibility: showPhotoHint ? "visible" : "hidden" }}>
-                    Kan stregkoden ikke scannes? Prøv at justere afstanden.
-                  </div>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                    <button className="btn btn-outline" style={{ minHeight:44, padding:"10px 8px", fontSize:13.5, whiteSpace:"nowrap", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
-                      onClick={() => galleryInputRef.current?.click()}>
-                      <Icon name="image" size={17} /> Vælg billede
-                    </button>
-                    <button className="btn btn-outline" style={{ minHeight:44, padding:"10px 8px", fontSize:13.5, whiteSpace:"nowrap", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
-                      onClick={() => openManualEan()}>
-                      <Icon name="edit" size={17} /> Indtast stregkode
-                    </button>
-                  </div>
+                <div className="scan-actions">
+                  <button className="btn btn-outline scan-action" onClick={() => galleryInputRef.current?.click()}>
+                    <Icon name="image" size={18} /> Vælg billede
+                  </button>
+                  <button className="btn btn-outline scan-action" onClick={() => openManualEan()}>
+                    <Icon name="edit" size={18} /> Indtast kode
+                  </button>
                 </div>
               )}
               <div id="qr-reader-gallery" style={S.none} />

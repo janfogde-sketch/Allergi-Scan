@@ -289,7 +289,9 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
             setZoomSupported(!!(caps.zoom && caps.zoom.max >= 2));
           } catch { setZoomSupported(false); }
 
-          setTimeout(() => setShowPhotoHint(true), 5000);
+          // Hjælpeteksten efter 5 s; timeren ryddes i stopCamera, så den ikke
+          // dukker op efter en vellykket scanning.
+          noScanTimerRef.current = setTimeout(() => setShowPhotoHint(true), 5000);
 
           // Tap-to-focus
           videoEl.onclick = async (ev) => {
