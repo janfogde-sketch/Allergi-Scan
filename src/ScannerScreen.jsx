@@ -3,8 +3,10 @@ import React, { useState, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, normalizeScannedBarcode, initials, scanTargetCopy } from "./helpers.js";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, initials, scanTargetCopy } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback, CloseButton } from "./SharedComponents.jsx";
+import ManualBarcodeSheet from "./ManualBarcodeSheet.jsx";
+import { primeBarcodeKeyboard } from "./barcodeKeyboard.js";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -322,6 +324,7 @@ export default function ScannerScreen({
   scanZoom,
   zoomSupported,
   toggleZoom,
+  pauseCamera, resumeCamera,
   showPhotoHint,
   photoScanLoading,
   cameraPermissionDenied,
@@ -345,8 +348,11 @@ export default function ScannerScreen({
 
   // ── Guide modal state ─────────────────────────────────────────────────────
   const [showGuide, setShowGuide] = React.useState(false);
-  const [manualEanError, setManualEanError] = React.useState("");
-  const [manualEanValue, setManualEanValue] = React.useState("");
+  const [manualSubmitting, setManualSubmitting] = React.useState(false);
+  const [manualTried, setManualTried] = React.useState(false);
+  // Aktuel skærm i en ref, så et afsluttet opslag kan se, om appen er gået videre til resultatet.
+  const screenRef = React.useRef(screen);
+  React.useEffect(() => { screenRef.current = screen; }, [screen]);
   const [showScanProfilePicker, setShowScanProfilePicker] = React.useState(false);
 
   // ── Kamera-permission-primer, første gang (28. sept. 2026, FINAL POLISH –
@@ -376,10 +382,15 @@ export default function ScannerScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: kører kun når autostart-flaget skifter; handleren læser friske værdier ved kaldet
   }, [autoStartScan]);
 
-  // Åbner manuel EAN-indtastning frisk hver gang — rydder en evt. tidligere
-  // værdi/fejl fra sidste åbning, i stedet for at genbruge et forladt
-  // udkast (28. sept. 2026, FINAL POLISH – SCANNER, krav 7).
-  const openManualEan = () => { setManualEanValue(""); setManualEanError(""); setShowManualEan(true); };
+  // Manuel indtastning i et bottom sheet (Bjørn, 8. okt. 2026). Arket åbner tomt hver gang, tastaturet åbnes i selve trykket
+  // (iOS), og kameraet står stille, mens arket er åbent; det genoptages ved lukning.
+  const openManualEan = () => {
+    primeBarcodeKeyboard();
+    setManualTried(false); setManualSubmitting(false);
+    pauseCamera?.();
+    setShowManualEan(true);
+  };
+  const closeManualEan = () => { setShowManualEan(false); resumeCamera?.(); };
 
   // Luk kamera-visningen helt (28. sept. 2026, BUGFIX – scanner state) —
   // `stopCamera()` (useScanner.js) nulstiller selve kamera-/zoom-/fejl-
@@ -391,30 +402,16 @@ export default function ScannerScreen({
   const handleCloseCamera = () => {
     stopCamera();
     setShowManualEan(false);
-    setManualEanValue("");
-    setManualEanError("");
   };
 
-  // Delt EAN-validering (krav 7/12) — to adskilte, specifikke fejltekster:
-  // forkert LÆNGDE (kan slet ikke være en EAN) vs. korrekt længde men
-  // ugyldig CHECKSUM (en formentlig tastefejl). `digits` er allerede
-  // renset for alt andet end tal via input'ets onChange, men trimmes her
-  // igen for en sikkerheds skyld ved direkte kald.
-  const submitManualEan = (rawValue) => {
-    const digits = rawValue.replace(/\D/g, "");
-    if (![8, 12, 13, 14].includes(digits.length)) {
-      setManualEanError("Stregkodenummeret skal have 8 eller 13 cifre.");
-      return;
-    }
-    const code = normalizeScannedBarcode(digits);
-    if (!code) {
-      setManualEanError("Nummeret er ikke et gyldigt EAN. Tjek at alle cifre er tastet rigtigt.");
-      return;
-    }
-    setShowManualEan(false); setManualEanError(""); setManualEanValue("");
-    lookupProduct(code);
+  // Søgning fra arket: koden er allerede valideret i arket. Lykkes opslaget, viser appen resultatet (eller "ikke fundet") via det
+  // eksisterende flow, og kameraet lukkes som ved en scanning. Fejler det (fx offline), bliver arket stående med koden og fejlen.
+  const submitManualEan = async (code) => {
+    if (manualSubmitting) return;
+    setManualSubmitting(true); setManualTried(true);
+    try { await lookupProduct(code); } finally { setManualSubmitting(false); }
+    if (screenRef.current !== SCREENS.HOME) { setShowManualEan(false); stopCamera(); }
   };
-  const manualEanReadyLength = [8, 12, 13, 14].includes(manualEanValue.length);
 
   // Vælgeren vises kun når husstanden reelt har mere end én profil (mig +
   // mindst ét familiemedlem) — med kun én profil er der intet at vælge
@@ -801,7 +798,7 @@ export default function ScannerScreen({
                 skjult/utrykbare bag den, nu hvor HOME-skærmens normale 110px
                 bund-reserve er fjernet til fordel for hero-boksens
                 kant-til-kant-udfyldning ovenfor. */}
-            <div style={{ paddingBottom: (scanError || showManualEan) ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
+            <div style={{ paddingBottom: scanError ? "calc(77px + env(safe-area-inset-bottom) + 12px)" : 0 }}>
             {/* Fejlbesked + Manuel EAN — kun til loggede */}
             {!!userId && <>
             {/* Fejlbesked fra kamera */}
@@ -811,59 +808,10 @@ export default function ScannerScreen({
               </div>
             )}
 
-            {/* Manuel EAN-input — åbnes via "Indtast"-kontrollen i kameraet,
-                eller herunder ved fejl. Kontrolleret input (28. sept. 2026,
-                FINAL POLISH – SCANNER, krav 7) — `type="text"` +
-                `inputMode="numeric"` i stedet for `type="number"` giver
-                stadig et numerisk tastatur på mobil, men undgår number-
-                inputtets egne kvirks (kan skrive "e"/"+"/"-", mister
-                foranstillede nuller) og lader os selv trimme/filtrere
-                ethvert ikke-ciffer-tegn (mellemrum, bindestreger fra en
-                indsat stregkode) fortløbende i onChange. */}
             {showManualEan && (
-              <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
-                <div style={S.rowBetweenMb10}>
-                  <div style={S.h13}>Indtast EAN-nummer</div>
-                  <span style={{ margin:-10 }}><CloseButton onClick={() => setShowManualEan(false)} plain /></span>
-                </div>
-                <div style={S.rowGap8}>
-                  <input
-                    id="manual-ean-input"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    enterKeyHint="search"
-                    placeholder="fx 5712873099443"
-                    autoFocus
-                    className="field"
-                    value={manualEanValue}
-                    aria-label="EAN-nummer"
-                    aria-invalid={!!manualEanError}
-                    style={{ flex:1, fontSize:16, letterSpacing:1, borderColor: manualEanError ? "var(--red)" : undefined }}
-                    onChange={e => { setManualEanValue(e.target.value.replace(/\D/g, "").slice(0, 14)); if (manualEanError) setManualEanError(""); }}
-                    onKeyDown={e => { if (e.key === "Enter") submitManualEan(manualEanValue); }}
-                  />
-                  <button
-                    disabled={!manualEanReadyLength}
-                    style={{ padding:"0 16px", borderRadius:10, border:"none",
-                      background: manualEanReadyLength ? "var(--green)" : "var(--border2)",
-                      color: manualEanReadyLength ? "var(--on-green)" : "var(--muted)",
-                      fontWeight:800, fontSize:14, cursor: manualEanReadyLength ? "pointer" : "default", fontFamily:"var(--f)", flexShrink:0, minHeight:44,
-                      boxShadow: manualEanReadyLength ? "var(--sh-green)" : "none" }}
-                    onClick={() => submitManualEan(manualEanValue)}>
-                    Søg
-                  </button>
-                </div>
-                {manualEanError ? (
-                  <div style={{ fontSize:11, color:"var(--red)", marginTop:8, fontWeight:600 }} role="alert">{manualEanError}</div>
-                ) : (
-                  <div style={UI.ufs10_cmuted_mt8}>
-                    EAN-nummeret er stregkodens tal — typisk 8 eller 13 cifre.
-                  </div>
-                )}
-              </div>
+              <ManualBarcodeSheet onClose={closeManualEan} onSubmit={submitManualEan}
+                submitting={manualSubmitting} submitError={manualTried ? scanError : ""} />
             )}
-
             </>}
             </div>
 
