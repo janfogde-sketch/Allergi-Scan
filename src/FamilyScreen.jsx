@@ -94,8 +94,11 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     if (!accessToken) return;
     loadHousehold();
     loadPendingInvites();
-    const interval = setInterval(() => { loadHousehold(); loadPendingInvites(); }, 12000);
-    return () => clearInterval(interval);
+    // Hvert 60. sekund, og kun mens appen er synlig; kommer man tilbage til appen, hentes der straks.
+    const refresh = () => { if (document.visibilityState === "visible") { loadHousehold(); loadPendingInvites(); } };
+    const interval = setInterval(refresh, 60000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", refresh); };
   }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: intervallet startes igen ved nyt token; loadHousehold/loadPendingInvites genskabes hver render og må ikke genstarte det
 
   // ── Scanningsrelevante chips (allergier → kostpræferencer → E-numre) ───────

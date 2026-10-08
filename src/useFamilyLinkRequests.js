@@ -9,7 +9,7 @@ import { showToast } from "./SharedComponents.jsx";
 const rpc = (name, accessToken, body = {}) =>
   apiCall(`${SUPABASE_URL}/rest/v1/rpc/${name}`, { method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify(body) });
 
-const POLL_MS = 30000;
+const POLL_MS = 60000;
 
 export function useFamilyLinkRequests({ accessToken, userId, user, loadFamily }) {
   const [requests, setRequests] = useState([]);
