@@ -173,7 +173,7 @@ Mail i mørk tilstand bruger hvid + `#79D5A7`. Master-SVG'er i `src/assets/logo/
 under logoet på velkomstsiden og i "Om EatSafe". Fast disclaimer i `ResultScreen.jsx` ("EatSafe er vejledende...", ikke "ved
 alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knappen bruger `--green`→`--green-dark` med `--green-halo`.
 
-**Fladhed-bug:** delte kort-/knap-klasser uden `box-shadow` ser flade ud; brug `--sh2`/`--sh`/flad+kant-hierarki bevidst.
+**Fladhed-bug:** delte kort-/knap-klasser uden `box-shadow` ser flade ud; brug `--sh2`/`--sh`/flad+kant-hierarki bevidst. Liste-, familie- og historikrækker (`.list-item`, `.family-member`, `.hist-row`) har `--sh` som de øvrige kort (Bjørn, 8. okt. 2026, F3-9).
 
 **Feature-flag og pauser**
 - `DIETS_ENABLED=false` (`constants.jsx`): kostpræferencer er skjult i hele appen (kode, kolonner `users.diets`/`family_members.diets`,
