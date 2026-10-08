@@ -14,7 +14,7 @@
 // Kald: POST {}                  → behandl ventende hændelser (ældre end 15 sek.)
 //       POST { event_id: "…" }   → behandl netop den hændelse
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
 import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, retryDelayMinutes, RETRY_DELAYS_MIN } from "../_shared/notifyHelpers.js";

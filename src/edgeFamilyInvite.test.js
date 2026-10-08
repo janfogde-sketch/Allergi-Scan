@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { loadHandler } from "./testing/edgeHarness.js";
-import { MAX_INVITE_MAILS_PER_DAY } from "../supabase/functions/_shared/familyInvite.ts";
+import { MAX_INVITE_MAILS_PER_DAY, MAX_INVITES_PER_RECIPIENT_PER_DAY } from "../supabase/functions/_shared/familyInvite.ts";
 
 const tokens = { "Bearer a": "user-a" };
 const env = { RESEND_API_KEY: "re_test" };
@@ -9,9 +9,9 @@ afterEach(() => vi.unstubAllGlobals());
 
 const okMail = () => vi.fn(async () => new Response(JSON.stringify({ id: "m1" }), { status: 200 }));
 
-const resolver = ({ sentToday = 0, connected = false, pending = null, inv = null, mailFails = false } = {}) => (c) => {
+const resolver = ({ sentToday = 0, connected = false, pending = null, inv = null, mailFails = false, toRecipient = 0 } = {}) => (c) => {
   if (c.table === "family_invites" && c.kind === "select") {
-    if (c.op("select")[1]?.head) return { count: sentToday, error: null };
+    if (c.op("select")[1]?.head) return { count: c.has("eq", "invitee_email", "b@test.dk") ? toRecipient : sentToday, error: null };
     return { data: c.has("eq", "id") ? inv : pending, error: null };
   }
   if (c.rpc === "invitee_already_connected") return { data: connected, error: null };
@@ -45,6 +45,15 @@ describe("edge: family-invite", () => {
     const h = await loadHandler("family-invite", { tokens, env, resolver: resolver({ sentToday: MAX_INVITE_MAILS_PER_DAY }) });
     expect((await h.call("POST", "/family-invite", { token: "a", body: { email: "b@test.dk" } })).status).toBe(429);
     expect((await h.call("POST", "/family-invite", { token: "a", body: { kind: "link" } })).status).toBe(429);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(h.writes()).toHaveLength(0);
+  });
+
+  it("højst få invitationer pr. modtageradresse pr. døgn, uanset afsender (429)", async () => {
+    const fetchMock = okMail();
+    vi.stubGlobal("fetch", fetchMock);
+    const h = await loadHandler("family-invite", { tokens, env, resolver: resolver({ toRecipient: MAX_INVITES_PER_RECIPIENT_PER_DAY }) });
+    expect((await h.call("POST", "/family-invite", { token: "a", body: { email: "b@test.dk" } })).status).toBe(429);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(h.writes()).toHaveLength(0);
   });

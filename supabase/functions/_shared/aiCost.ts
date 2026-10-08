@@ -1,4 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 
 // Logger forbrug (kald og tokens) for ét betalt Claude-kald i ai_usage_daily (vises i admin → AI-forbrug).
 // Kun summer, ingen bruger-id eller tekst. Fejl her må aldrig påvirke selve kaldet, så alt sluges.

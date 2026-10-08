@@ -13,7 +13,7 @@
 // at logge ind som en almindelig bruger — dette er et
 // vedligeholdelsesværktøj, ikke noget klientappen kalder direkte.
 
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
 
 const corsHeaders = {
