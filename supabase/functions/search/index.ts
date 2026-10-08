@@ -1,4 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.3";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 const corsHeaders = {

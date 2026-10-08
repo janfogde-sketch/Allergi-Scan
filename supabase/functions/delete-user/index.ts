@@ -3,7 +3,7 @@
 // En bruger kan altid slette sin egen konto (uid === den kaldende bruger).
 // Sletning af en ANDEN bruger kræver admin-rolle på den kaldende bruger.
 
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.3";
 import { TRANSACTIONAL_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 import { formatDanishDateTime } from "../_shared/notifyHelpers.js";
 import { PRODUCT_IMAGES_BUCKET, pathsToDelete } from "../_shared/productImages.js";

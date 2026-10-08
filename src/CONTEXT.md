@@ -114,6 +114,8 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 
 `src/testing/edgeHarness.js` indlæser en `supabase/functions/<navn>/index.ts` uden Deno, netværk eller database: `Deno.serve` og `createClient` er stubbet (aliasser i `vite.config.ts`), og testen giver en `resolver`, der svarer på hvert databasekald (`c.table`, `c.kind`, `c.rpc`, `c.has("eq", kolonne, værdi)`). `h.call(metode, sti, { token, body, headers })` sender en rigtig `Request`; `h.writes()` viser alle skrivninger, så en test kan bevise, at et afvist kald intet skrev. Tests: `src/edge*.test.js` (family, shopping, delete-user, allergens/ocr, products/submissions, family-invite, notify, og `edgeAuthCategories` med loginkrav på alle beskyttede funktioner, signerede kald og en vagt der fejler, hvis en ny funktion ikke står i `config.toml` eller mangler adgangstjek). Stub `fetch` med `vi.stubGlobal`, så intet kan sende mail/push; ny funktion med adgangstjek = tilføj den til `PROTECTED` i `edgeAuthCategories.test.js`.
 
+**Fastlåste versioner (8. okt. 2026):** workflows bruger handlinger med SHA, og Supabase-CLI kører en fast version; alle edge-funktioner importerer `supabase-js` i en fast version (nu 2.117.3, via esm.sh og jsr). Opdatér dem bevidst, og ret aliasserne i `vite.config.ts` kun hvis formatet ændres. `family-invite` tillader højst 3 invitationer pr. modtageradresse pr. døgn (`MAX_INVITES_PER_RECIPIENT_PER_DAY`).
+
 ## 5. Auto-import (OFF) og Familie-deling
 
 - **Auto-import:** edge-funktionen `auto-import-off`, pg_cron dagligt kl. 02:00 UTC (manuelt: Admin → Import → "Kør import nu"). Flow: `missing_ean_log` → OFF API →
