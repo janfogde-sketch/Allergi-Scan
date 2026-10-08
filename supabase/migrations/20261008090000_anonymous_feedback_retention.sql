@@ -16,6 +16,7 @@ as $function$
   delete from public.api_usage where day < current_date - 30;
   delete from public.api_usage_global where day < current_date - 30;
   delete from public.scan_history where scanned_at < now() - interval '24 months';
+  delete from public.search_selections where created_at < now() - interval '12 months';
   delete from public.feedback_tickets where submitted_by is null and created_at < now() - interval '12 months';
 $function$;
 
