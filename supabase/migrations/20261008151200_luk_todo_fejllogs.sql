@@ -2,7 +2,7 @@
 insert into public.admin_todos (title, description, status, priority, track, assignee_id, due_date)
 select '[Før beta] Slet den midlertidige serverfunktion tmp-move-base64-images i Supabase',
        'Funktionen blev brugt én gang 6. okt. 2026 til at flytte billeder, ligger ikke længere i koden, men er stadig udrullet (Edge Functions i Supabase-dashboardet). Den gav 1 fejl (500) 6. okt. kl. 19.20 dansk tid. Slet den i dashboardet (Edge Functions > tmp-move-base64-images > Delete). Forslag til frist.',
-       'todo', 'low', 'backend', 'c9616e21-ebb5-4b49-aa69-19f0a4e9410e', date '2026-10-15'
+       'todo', 'low', 'backend', (select id from public.users where email = 'janfogde@gmail.com'), date '2026-10-15'
 where not exists (select 1 from public.admin_todos where title like '%tmp-move-base64-images%');
 
 update public.admin_todos
