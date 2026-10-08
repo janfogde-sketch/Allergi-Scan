@@ -20,6 +20,8 @@ import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
 import AiUsageSection from "./sections/AiUsageSection.jsx";
 import { useAiUsage } from "./useAiUsage.js";
+import OnboardingFunnelSection from "./sections/OnboardingFunnelSection.jsx";
+import { useOnboardingFunnel } from "./useOnboardingFunnel.js";
 import RecallsSection from "./sections/RecallsSection.jsx";
 import { useAdminRecalls } from "./useAdminRecalls.js";
 import NotificationsSection from "./sections/NotificationsSection.jsx";
@@ -41,6 +43,7 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
   const aiUsage = useAiUsage(accessToken);
+  const onboardingFunnel = useOnboardingFunnel(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
@@ -155,6 +158,7 @@ export default function AdminApp() {
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
+    if (section === "onboarding") onboardingFunnel.load();
     if (section === "todo") todos.load();
     if (section === "recalls") recalls.load();
     if (section === "notifications") notifications.load();
@@ -320,6 +324,7 @@ export default function AdminApp() {
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
       {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
+      {section === "onboarding" && <OnboardingFunnelSection {...onboardingFunnel} />}
       {section === "recalls" && <RecallsSection {...recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && (

@@ -25,6 +25,7 @@ const NAV_GROUPS = [
     { id: "users",         icon: "family", label: "Brugere" },
     { id: "family",        icon: "heart",  label: "Familie" },
     { id: "notifications", icon: "bell",   label: "Notifikationer" },
+    { id: "onboarding",    icon: "chart",  label: "Frafald i start" },
   ] },
   { id: "system", label: "Drift", items: [
     { id: "errors",      icon: "warning",  label: "Fejl" },

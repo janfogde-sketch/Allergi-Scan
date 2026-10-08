@@ -97,6 +97,8 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 
 ---
 
+**Stregkode- og navnehygiejne (8. okt. 2026):** triggeren `products_hygiene` (`normalize_product_ean`, `clean_product_name`) gør 11-/12-cifrede koder til 13 cifre (kun hvis resultatet er et gyldigt GTIN), rydder mellemrum og giver versalnavne normal skrift (korte enkeltord som IPA røres ikke). `products`-funktionen prøver også de andre skrivemåder af en kode (`eanVariants`). 4- og 6-cifrede Bilka-numre er butiksnumre, ikke stregkoder. Kendt og urettet: ca. 78 OFF-koder med forkert kontrolciffer. Før-billede: `products_hygiene_backup_20261008`. Test: `supabase/tests/product_hygiene.sql`.
+
 ## 4. Edge Functions (Supabase)
 
 | Funktion | Beskrivelse |
@@ -327,6 +329,9 @@ henter som standard kun åbne/aktive; de færdige hentes først, når Færdige/A
 (`useAdminTodos.loadDone`, `useAdmin.loadTickets({ includeDone })`), og antallet af færdige opgaver kommer fra serveren.
 
 **Link fra opgave til ticket (2. okt. 2026):** en opgave, der stammer fra en ticket (`admin_todos.ticket_id`), har knappen "Åbn ticket" i listen og i opgavens vindue. Den skifter til fanen Tickets og åbner ticketten via `openTicketById(id)` i `useAdmin.js`, som henter ticketten direkte (virker også for løste tickets, som ikke står i den indlæste liste).
+
+
+**Frafald i start (8. okt. 2026):** admin → Brugere & kommunikation → "Frafald i start" viser fordelingen af `users.onboarding_step` for ikke-færdige konti (RPC `admin_onboarding_funnel()`, kun admins, kun tællinger).
 
 ## 11. Auth-mails fra Resend via Send Email Hook (slået til 1. okt. 2026)
 
