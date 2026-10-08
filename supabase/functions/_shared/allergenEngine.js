@@ -129,7 +129,7 @@ export function matchIndex(lower, kw) {
 const SEGMENT_BREAKS = ",;.!?:\n";
 const NEGATION_WORDS = new RegExp(`(^|[^${L}])(uden|ingen|ohne|sans|without|fri for|free from|free of|frei von|utan|uten|zonder|ilman)(?=[^${L}]|$)`);
 const NEGATION_CUT = new RegExp(`(^|[^${L}])(med|men|but|with)(?=[^${L}]|$)`, "g");
-const NEGATION_AFTER = new RegExp(`^(?:e|s)?[\\s-]?(?:fri|frei|free|ton|tonta|vrij)(?![${L}])`);
+const NEGATION_AFTER = new RegExp(`^(?:e|s)?[\\s-]?(?:fri(?:t|e)?|frei|free|ton|tonta|vrij)(?![${L}])`);
 const UNDER_ZERO_AFTER = /^[\s(]*(?:under|<|mindre end|less than)\s*0/;
 
 function segmentStart(lower, idx) {
@@ -391,8 +391,17 @@ export function liftGlutenFromWheat(flags) {
 }
 
 // Vurder om keyword-resultatet er "usikkert" og bør verificeres med Claude
-export function shouldUseClaudeFallback(text) {
+// Bredt reserve-tjek (8. okt. 2026, E4): en lang ingrediensliste uden ét eneste fund (hverken ja eller spor) læses også af Claude,
+// fordi "ingen fund" på en lang liste oftest er et ord motoren ikke kender. Claude kan kun HÆVE et flag (den forsigtigste værdi
+// vinder), så det kan ikke gøre et resultat mindre sikkert. Få produkter rammer reglen (nye produkter og natlig reparse), så
+// døgnloftene i apiUsage.ts holder. `flags` er nøgleordsmotorens resultat; uden flags gælder kun de gamle regler.
+export const LONG_LIST_MIN_CHARS = 200;
+export function hasNoFindings(flags) {
+  return !!flags && Object.values(flags).every((v) => v === "no");
+}
+export function shouldUseClaudeFallback(text, flags) {
   const lower = text.toLowerCase();
+  if (flags && text.length >= LONG_LIST_MIN_CHARS && hasNoFindings(flags)) return true;
   if (looksNonDanish(text)) return true;
   if (/uden|ingen|ohne|fri for|free|laktosefri|under 0/.test(lower)) return true;
   const commaCount = (text.match(/,/g) || []).length;
