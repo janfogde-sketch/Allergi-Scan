@@ -105,6 +105,8 @@ TERMS/PRIVACY, ADMIN (mobil), RECIPES (på pause).
 7. Postgres: `REVOKE EXECUTE ... FROM <rolle>` er en no-op, hvis PUBLIC har adgangen. Verificér med
    `has_function_privilege(rolle, funktion, 'EXECUTE')`.
 
+**Store filer er delt op (8. okt. 2026, ren omflytning):** `SharedComponents.jsx` og `constants.jsx` er samlefiler, der genudgiver fra `Icons`/`Sheets`/`ProductParts`/`ToastAndMisc`/`EatSafeLogo`/`IngredientsList` og `src/data/`; ret i den fil, tingen bor i, import stadig fra samlefilen. App.jsx har udbydere (`AppProviders`), context-værdier (`useAppContextValues`), `BottomNav`; Onboarding-, Result- og Scanner-skærmene er delt i `OnboardingStep1-5`/`Welcome`/`Login`, `ResultSections` og `ScannerHome`/`ScannerParts`, som får skærmens lokale tilstand som `ctx`.
+
 **Delte komponenter (`SharedComponents.jsx`):** `Icon` (ét SVG-bibliotek; ingen emoji i UI-chrome, kun indholds-emoji som
 allergen-glyffer; tilføj nye ikoner her), `showToast(msg, "success"|"error")` + `<ToastHost/>` (brug ikke native `alert()` til
 beskeder), `ListPickerSheet`, `InfoSheet` (bottom-sheet til info-ikoner), `EatSafeLogo` (varianter horizontal/symbol, bruges på
