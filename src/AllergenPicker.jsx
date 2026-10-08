@@ -29,7 +29,7 @@ export function useGlutenFreeSync(allergens, diets, setDiets) {
       setDiets(diets.filter(d => d !== "gluten-free"));
       setGlutenFreeAutoApplied(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: reagerer kun på ændret allergenvalg; diets/setDiets læses friskt i samme render
   }, [allergens]);
   return [glutenFreeAutoApplied, setGlutenFreeAutoApplied];
 }

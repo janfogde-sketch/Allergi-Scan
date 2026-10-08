@@ -7,7 +7,7 @@ import { Icon, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents
 import { timeAgo } from "./helpers.js";
 
 export default function NotificationsScreen({ items, loading, listError, loadList, onOpen, onDelete }) {
-  useEffect(() => { loadList(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadList(); }, []); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: listen hentes ved hvert besøg (mount); loadList kommer fra App og skifter identitet hver render
   // Besked, der afventer "Slet besked"-bekræftelse (ConfirmDialog, samme mønster som Familie/Indkøbsliste).
   const [confirmDelete, setConfirmDelete] = useState(null);
 

@@ -28,7 +28,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // gør det samme.
   useEffect(() => {
     if (userId && accessToken) loadHistory(historyScope);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: historikken hentes ved hvert besøg (mount) med det aktuelle scope
 
   // ── Historik: kompakt filter + status pr. post ──────────────────────────────
   const [historyFilter, setHistoryFilter] = useState("all");

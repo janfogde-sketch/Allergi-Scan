@@ -41,7 +41,7 @@ function RecallModal({ recall, onClose, searchProducts, affectedCount, resolve }
     setAffected(null);
     affectedCount(selected.map((p) => p.ean)).then((n) => { if (!cancelled) setAffected(n); });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: tæller kun ved ændret udvalg; affectedCount genskabes hver gang
   }, [selected, reviewable]);
 
   const finish = async (action) => {
