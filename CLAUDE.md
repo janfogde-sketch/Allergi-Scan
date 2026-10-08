@@ -251,7 +251,7 @@ bruger `maelkeallergi` (mælkeprotein) og `hvede`.
 
 **Beta-installation:** admin-knap → `public/install.html` (iPhone: 3-trins guide, andet redirecter til `eatsafe.dk/?src=beta-qr`).
 `usePwaInstall.js` + `InstallPrompt.jsx`. `public/sw.js` bruger `skipWaiting()`+`clients.claim()`, og `index.html` genindlæser én gang
-ved `controllerchange` (nødvendigt for at opdateringen overtager åbne faner).
+ved `controllerchange`, men kun når en ældre service worker blev afløst (ikke ved første besøg; nødvendigt for at opdateringen overtager åbne faner).
 
 **Logout:** `ProfileMenu.handleItemClick` kalder `onClose()` før action, og `App.jsx` nulstiller `showProfileMenu` ved
 `accessToken===null`. Alle logout-veje skal lukke egne overlays.

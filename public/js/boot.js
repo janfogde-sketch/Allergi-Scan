@@ -14,13 +14,14 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
   // sw.js bruger skipWaiting + clients.claim() til at overtage med det
-  // samme i stedet for at vente på at gamle faner lukkes. Det udløser et
-  // "controllerchange"-event — genindlæs én gang, så siden er sikker på
-  // at køre under den nyeste service worker (bl.a. relevant for om
-  // browseren regner appen som installerbar).
+  // samme. Ved allerførste besøg er der ingen tidligere service worker, og
+  // siden er allerede hentet fra nettet, så der skal ikke genindlæses (det
+  // kunne afbryde indtastning). Genindlæs kun ÉN gang, når en ældre
+  // service worker blev afløst af en ny.
+  const hadController = !!navigator.serviceWorker.controller;
   let refreshedForSw = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshedForSw) return;
+    if (!hadController || refreshedForSw) return;
     refreshedForSw = true;
     window.location.reload();
   });
