@@ -47,7 +47,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
 // Genberegner vurderingen af et cachet resultat ud fra de profiler, der er valgt NU (F2-7, 6. okt. 2026).
 // Cachen gemmer de allerede normaliserede flag, så de bruges direkte; kun status, fund, advarsel og
 // alternativer følger de aktuelle profiler, ikke dem, der var valgt ved første scanning.
-export function rescoreCachedResult(cached, { activeIds, activeLevels, activeENumbers, family, activeProfiles }) {
+function rescoreCachedResult(cached, { activeIds, activeLevels, activeENumbers, family, activeProfiles }) {
   const base = {
     id: cached.id || null, code: cached.code, name: cached.name, brand: cached.brand || "",
     variant_label: cached.variant_label || null, image_url: cached.image_url || null,
@@ -107,7 +107,7 @@ function scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers,
   };
 }
 
-export function withCustomAllergenMatch(result, customTerms) {
+function withCustomAllergenMatch(result, customTerms) {
   const customMatches = matchCustomAllergens(result.ingredients, customTerms);
   if (customMatches.length === 0) return result;
   const alreadyDanger = result.status === "danger";

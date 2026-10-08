@@ -49,7 +49,7 @@ export function linkStatusMessage(status) {
 }
 
 // ── Gemt invitationstoken (localStorage) ────────────────────────────────────
-export const INVITE_TOKEN_KEY = "as_pending_invite";
+const INVITE_TOKEN_KEY = "as_pending_invite";
 const INVITE_TS_KEY = "as_pending_invite_ts";
 /** Så længe efter et fulgt link starter en udlogget bruger på login/oprettelse i stedet for velkomstsiden. */
 export const INVITE_ROUTE_WINDOW_MS = 30 * 60 * 1000;

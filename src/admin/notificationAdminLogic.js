@@ -12,7 +12,7 @@ export function resendTemplateUrl(key) {
 
 export { PUSH_TITLE_MAX, PUSH_BODY_MAX, pushVariablesFor, validatePushOverride };
 
-export const NOTIFICATION_NAMES = {
+const NOTIFICATION_NAMES = {
   "N2a:default": "Produkt godkendt",
   "N2b:default": "Rettelse godkendt",
   "N3:default": "Indsendelse afvist",

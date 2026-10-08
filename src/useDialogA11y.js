@@ -12,7 +12,7 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
 // Åbne ark i rækkefølge: kun det øverste reagerer på Esc/Tab (fx en bekræftelse oven på et ark).
 const stack = [];
 
-export function focusableIn(root) {
+function focusableIn(root) {
   return root ? Array.from(root.querySelectorAll(FOCUSABLE)).filter(el => !el.hasAttribute("aria-hidden")) : [];
 }
 

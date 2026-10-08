@@ -192,7 +192,7 @@ const normName = (t) => (t || "").toLowerCase().replace(/[^a-zæøåäöü0-9]+/
 
 // Importerede produkter har ofte produktnavnet som "ingrediensliste" (fx "Skrabeæg 8 M/L",
 // "Hvidløgssmør"). Det er ingen liste, og nøgleordsmotoren svarede "ingen allergener".
-export function hasRealIngredients(text, productName) {
+function hasRealIngredients(text, productName) {
   const t = (text || "").trim();
   if (t.length === 0 || /^ingen ingrediensliste/i.test(t)) return false;
   return !(productName && normName(t) === normName(productName));
@@ -233,7 +233,7 @@ export function normalizeProductFlagsFor(product) {
 // Følsomhed pr. allergen (allergen_levels, 1. okt. 2026): "direct_only" = brugeren reagerer kun på direkte indhold,
 // så spor flagges ikke som advarsel, men returneres som ignoredTraces (vises som en rolig info-linje). Alt andet,
 // også manglende niveau, er "strict" (spor giver en advarsel, som hidtil).
-export const LEVEL_DIRECT_ONLY = "direct_only";
+const LEVEL_DIRECT_ONLY = "direct_only";
 export const ignoresTraces = (levels, id) => levels?.[id] === LEVEL_DIRECT_ONLY;
 
 // Fjerner sporvalg for allergener, der ikke (længere) er valgt, så der aldrig ligger skjulte værdier i state eller profil
@@ -785,7 +785,7 @@ export function getTraceLog(id = null) {
   return [..._traceLog];
 }
 
-export function clearTraceLog() {
+function clearTraceLog() {
   _traceLog.length = 0;
 }
 
@@ -799,12 +799,12 @@ export function clearTraceLog() {
 // Supabase afviste ellers koder, som appen havde godkendt, med en tekst der
 // ikke forklarede hvorfor. Retter man kravene i Supabase, skal de også
 // rettes her.
-export const PASSWORD_MIN_LENGTH = 10;
+const PASSWORD_MIN_LENGTH = 10;
 // Hjælpetekst under feltet (vises kun, mens der ikke er en fejl) og den korte fejltekst, når kravene ikke er opfyldt
 export const PASSWORD_REQUIREMENTS_TEXT = "Mindst 10 tegn med store og små bogstaver og mindst ét tal.";
 export const PASSWORD_REQUIREMENTS_ERROR = "Brug mindst 10 tegn med store og små bogstaver og mindst ét tal.";
 
-export function passwordProblems(pw) {
+function passwordProblems(pw) {
   const p = pw || "";
   const missing = [];
   if (!/[a-zæøå]/.test(p)) missing.push("et lille bogstav");
@@ -885,7 +885,7 @@ export function localDayNumber(date = new Date()) {
 // flag (ændrede produktdata giver en ny post), og når der højst er `windowMs` mellem to scanninger i
 // gruppen. "Ikke fundet" samles som før pr. stregkode og bruger uanset tid (ingen data at skelne på).
 // Søgning kan senere lægges ovenpå uden at ændre dette.
-export const HISTORY_GROUP_WINDOW_MS = 30 * 60 * 1000;
+const HISTORY_GROUP_WINDOW_MS = 30 * 60 * 1000;
 
 const historyTime = h => new Date(h.scanned_at || h.timestamp || 0).getTime();
 const historyProductKey = h => {

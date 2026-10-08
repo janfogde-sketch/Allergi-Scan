@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { createPortal } from "react-dom";
-import { ALLERGENS, PAGE_IDS } from "./constants.jsx";
+import { ALLERGENS } from "./constants.jsx";
 import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileWarnLabel, profileMatchLabel, imageAttribution } from "./helpers.js";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 import { UI } from "./styleUtils.js";
@@ -232,7 +232,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
 // kurve via Catmull-Rom→Bezier), i stedet for et pixel-baseret
 // baggrunds-fjernelsesværktøj (upålideligt her, da dråbens egen cremefarve
 // mange steder ligger meget tæt på selve baggrundens hvide tone).
-export const LactoseIcon = ({ size = 16, style }) => {
+const LactoseIcon = ({ size = 16, style }) => {
   const clipId = React.useId();
   return (
     // viewBox er beskåret stramt til selve dråbens silhuet (30. sept. 2026,
@@ -584,38 +584,6 @@ export function SafetyPill({ name, status }) {
     <div style={{ display:"flex", alignItems:"center", gap:4, padding:"3px 8px", borderRadius:100, border:`1px solid ${s.color}`, background:s.bg, fontSize:10, fontWeight:700, color:s.color }}>
       <span>{s.icon}</span>
       <span>{name}</span>
-    </div>
-  );
-}
-
-export function PageID({ screen }) {
-  const id = PAGE_IDS[screen] || "SCR-??";
-  const [copied, setCopied] = React.useState(false);
-  const copy = () => {
-    navigator.clipboard?.writeText(id).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-  return (
-    <div
-      onClick={copy}
-      title="Klik for at kopiere side-ID"
-      style={{
-        position:"fixed", top:8, left:"50%", transform:"translateX(-50%)",
-        zIndex:9999,
-        fontSize:10, fontWeight:800,
-        color: copied ? "var(--ink)" : "#1F2733",
-        background: copied ? "var(--green)" : "rgba(255,255,255,0.95)",
-        border: copied ? "1.5px solid var(--green)" : "1.5px solid #D0D0C8",
-        borderRadius:20, padding:"3px 12px", cursor:"pointer",
-        letterSpacing:"1px", fontFamily:"monospace",
-        boxShadow:"0 2px 10px rgba(0,0,0,0.15)",
-        transition:"all .15s",
-        userSelect:"none",
-        whiteSpace:"nowrap",
-      }}
-    >
-      {copied ? <span style={{ display:"inline-flex", alignItems:"center", gap:4 }}><Icon name="check" size={10} color="var(--ink)" /> kopieret</span> : id}
     </div>
   );
 }

@@ -78,16 +78,4 @@ export function clearOfflineCache() {
   try { localStorage.removeItem(CACHE_KEY); } catch { /* privat tilstand */ }
 }
 
-// ── Hent alle cachede produkter ───────────────────────────────────────────────
-export function getAllCachedProducts() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return [];
-    const cache = JSON.parse(raw);
-    return Object.values(cache).sort((a, b) => (b._cached_at || 0) - (a._cached_at || 0));
-  } catch {
-    return [];
-  }
-}
-
 export default useOffline;

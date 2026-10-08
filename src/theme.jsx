@@ -8,7 +8,7 @@
 
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
 
-export const THEME = {
+const THEME = {
   // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
   paper:   "#FFFFFF",
   paper2:  "#F3F3F1",

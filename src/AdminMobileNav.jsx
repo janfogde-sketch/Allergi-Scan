@@ -4,7 +4,7 @@ import { Icon } from "./SharedComponents.jsx";
 
 // Mobil-adminens navigation: fire hovedfaner, og under dem den valgte gruppes sider som en let sekundær fane-række.
 // "Oversigt" under Indhold og Drift er en samlet side med gruppens værktøjer og korte beskrivelser.
-export const ADMIN_NAV_GROUPS = [
+const ADMIN_NAV_GROUPS = [
   { id: "overview", label: "Overblik", items: [
     { id: "dashboard",   icon: "chart",    label: "Dashboard" },
     { id: "users",       icon: "family",   label: "Brugere" },

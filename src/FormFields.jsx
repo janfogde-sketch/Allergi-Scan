@@ -59,7 +59,7 @@ export function AgeStepper({ value, onChange, min = 1, max = 120, placeholder = 
 // som ikke ændrer alderen, men kalder onOverMax, så skærmen kan forklare, at voksne skal have egen konto. En ældre værdi over `max`
 // (en profil, der er fyldt 18) vises stadig, så den kan redigeres.
 const OVER_MAX = "over-max";
-export const ageLabel = a => (String(a) === "0" ? "Under 1 år" : `${a} år`);
+const ageLabel = a => (String(a) === "0" ? "Under 1 år" : `${a} år`);
 export function AgeSelect({ value, onChange, max = 17, onOverMax, placeholder = "Vælg alder", id }) {
   const ages = Array.from({ length: max + 1 }, (_, i) => String(i));
   const hasValue = value !== "" && value != null;
