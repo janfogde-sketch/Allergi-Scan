@@ -1,12 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
+import { corsFor, getCaller } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-};
+const corsHeaders = corsFor("GET, POST, PATCH, DELETE, OPTIONS");
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // uden forvekslelige tegn (0/O, 1/I/L); 32 tegn deler 256 op uden skævhed
 const CODE_LENGTH = 10; // ca. 1,1 billiard koder (ældre lister har stadig 6 tegn, indtil ejeren laver nyt link)
@@ -30,17 +26,7 @@ Deno.serve(async (req) => {
   // Verificér at den kaldende bruger faktisk er logget ind — ellers kan
   // enhver læse/oprette/redigere/slette en hvilken som helst brugers
   // indkøbsliste ved blot at kende eller gætte et owner_id/list_id.
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return new Response(
-    JSON.stringify({ error: "Ikke autoriseret" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-  const userClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user: caller } } = await userClient.auth.getUser();
+  const caller = await getCaller(req);
   if (!caller) return new Response(
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -15,11 +15,9 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
+import { corsFor } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = corsFor();
 
 const TAXONOMY: Record<string, string[]> = {
   "Drikkevarer": [

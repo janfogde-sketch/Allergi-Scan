@@ -1,11 +1,9 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
 import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
+import { corsFor, getCaller } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = corsFor();
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,17 +14,7 @@ Deno.serve(async (req) => {
   // et helt åbent, ubegrænset kald ind til en betalt Vision/LLM-baseret
   // funktion, som hvem som helst kan spamme uden login (samme mønster som
   // allergens-funktionen).
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return new Response(
-    JSON.stringify({ error: "Ikke autoriseret" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-  const userClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user: caller } } = await userClient.auth.getUser();
+  const caller = await getCaller(req);
   if (!caller) return new Response(
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }

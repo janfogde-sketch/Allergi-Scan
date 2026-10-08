@@ -7,11 +7,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { TRANSACTIONAL_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 import { formatDanishDateTime } from "../_shared/notifyHelpers.js";
 import { PRODUCT_IMAGES_BUCKET, pathsToDelete } from "../_shared/productImages.js";
+import { corsFor } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = corsFor();
 
 const DELETE_FAILED_TEXT = "Kontoen kunne ikke slettes helt. Prøv igen, eller kontakt support@eatsafe.dk.";
 

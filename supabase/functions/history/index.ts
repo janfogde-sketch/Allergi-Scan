@@ -1,11 +1,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { corsFor, getCaller } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-};
+const corsHeaders = corsFor("GET, POST, PATCH, DELETE, OPTIONS");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,17 +17,7 @@ Deno.serve(async (req) => {
   // JWT'en beviser matcher det user_id anmodningen forsøger at tilgå —
   // ellers kan enhver læse/slette en hvilken som helst brugers historik
   // ved blot at sende deres user_id som query-param.
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return new Response(
-    JSON.stringify({ error: "Ikke autoriseret" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-  const userClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user: caller } } = await userClient.auth.getUser();
+  const caller = await getCaller(req);
   if (!caller) return new Response(
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
