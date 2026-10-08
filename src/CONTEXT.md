@@ -105,7 +105,7 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 |----------|-------------|
 | `products` | GET/POST/PATCH/DELETE produkt-CRUD + OFF fallback |
 | `allergens` | Keyword-engine + Claude Haiku fallback |
-| `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` |
+| `ocr` | OCR: `ingredients` / `product_name` / `nutrition` / `ean_from_image` Claude er eneste læser: gratis OCR på telefonen (Tesseract.js) er målt 8. okt. 2026 og forkastet (12 % af allergenerne overset), prøv ikke igen uden ny læser. |
 | _Døgnlofter_ | `_shared/apiUsage.ts` (`LIMITS`): ocr 60, claude_analysis 100, off_lookup 300, list_code 30, **submission 30** (rammer en bruger det (også ocr og claude_analysis), får admin en høj to do "Døgnloft ramt", `reportLimitHit`), search_selection 200. Tællere i `api_usage`, ryddes efter 30 dage af `cleanup_notifications()`. |
 | `search` | Fuldtekst-søgning. Matchning, scoring og sideinddeling sker i RPC'en `search_products` (kun `service_role`; verificeret bruger sendes som `p_user_id`). Trigram-indekser på `products.name/brand/category/subcategory`. Rangeringen i SQL skal følge `normalize()` i funktionen. Klienten (`ListScreen.jsx`) har 70 ms debounce og en 5 min cache pr. søgetekst POST (søgevalg): højst 100 tegn søgeord, loft 200 pr. bruger pr. døgn (`search_selection`), over loftet ignoreres kaldet stille. |
 | `send-email` | Resend-mail; `type` er `welcome_onboarded`, en servicemail fra `TRANSACTIONAL_TEMPLATES` (`_shared/mailSend.ts`) eller `"raw"` (direkte `subject`+`html`, til interne mails som `admin-digest`). Mails om indsendelser/tickets sendes af `notify` (N2a, N3, N6) |
