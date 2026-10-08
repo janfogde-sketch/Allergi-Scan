@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useProduct.js
 // Produkt-relateret state: OCR, indsend nyt produkt, suggest-edit flow.
@@ -179,7 +179,7 @@ function fireWarningAlert(vibrateOn, soundOn) {
   if (vibrateOn !== false && navigator.vibrate) navigator.vibrate([50, 60, 50, 60, 90]);
   if (soundOn !== false) {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const AudioCtx = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator(); const gain = ctx.createGain();

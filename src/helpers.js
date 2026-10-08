@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { ALLERGENS, DIETS, DIETS_ENABLED, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
 import { looksNonDanish } from "../supabase/functions/_shared/allergenEngine.js";
@@ -166,7 +166,7 @@ export async function apiCall(url, options = {}) {
   if (!res.ok) {
     const bodyText = await res.text().catch(() => "");
     const parsed = (() => { try { return JSON.parse(bodyText); } catch { return {}; } })();
-    const err = new Error(parsed.message || parsed.error_description || parsed.error || `HTTP ${res.status}`);
+    const err = /** @type {Error & { status?: number, body?: string }} */ (new Error(parsed.message || parsed.error_description || parsed.error || `HTTP ${res.status}`));
     // Rå status + response-body bevares på fejlen, så kaldere der reelt har
     // brug for det (fx et 401 der skal give en anden besked end en 500) kan
     // tjekke e.status/e.body i stedet for at falde tilbage til rå fetch —
@@ -227,7 +227,9 @@ function hasRealIngredients(text, productName) {
 // kan læse) gøres til "unknown", så appen aldrig viser "ingen advarsler" for
 // noget den ikke har kontrolleret. Producent-verificerede eller AI-læste
 // (Claude) flag stoles der på uændret.
-export function normalizeProductFlags(flags, { ingredientsText = "", productName = "", verifiedStatus, source, sourceMethod, quality } = {}) {
+/** @param {{ ingredientsText?: string, productName?: string, verifiedStatus?: string, source?: string, sourceMethod?: string, quality?: string }} [info] */
+export function normalizeProductFlags(flags, info = {}) {
+  const { ingredientsText = "", productName = "", verifiedStatus, source, sourceMethod, quality } = info;
   const out = { ...(flags || {}) };
   // Uden ingrediensliste har hverken nøgleord eller Claude læst noget — da
   // stoles der kun på producent-verificerede data.
@@ -859,6 +861,7 @@ export function normalizeProductName(name) {
 // under "Andre deklarerede allergener". Hvede er ikke med (det er et eget allergen med eget tag).
 export function glutenCerealsIn(text) {
   const direct = (text || "").toLowerCase().split(/kan indeholde|may contain/)[0];
+  /** @type {[string, RegExp][]} */
   const cereals = [
     ["rug", /\brug|rugmel|\brye\b|secale/],
     ["byg", /\bbyg|perlebyg|barley|hordeum/],

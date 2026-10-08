@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─── EATSAFE KONSTANTER ─────────────────────────────────────────────────────
 
 export const SUPABASE_URL = "https://jegrpcflyguadyxialkm.supabase.co";

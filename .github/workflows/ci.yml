@@ -21,6 +21,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Typetjek (kernefiler, se tsconfig.check.json)
+        run: npm run typecheck
+
       - name: Test
         run: npm test
 

@@ -73,7 +73,7 @@ sikre alternativer og indkøbsliste.
 
 - React 18 + Vite 5, almindelig JSX (`// @ts-nocheck` øverst i alle `.jsx`), Supabase (Postgres, Edge Functions i Deno, Auth,
   Realtime kun til indkøbslisten), Claude Haiku som allergen-fallback + OCR (`ANTHROPIC_API_KEY`), Open Food Facts, TheMealDB.
-- Test: `npx vitest run` (alle skal være grønne). Lint: `npm run lint`.
+- Test: `npx vitest run` (alle skal være grønne). Lint: `npm run lint`. Typetjek: `npm run typecheck` (kører i CI; kun filerne i `tsconfig.check.json` har `// @ts-check`, resten `// @ts-nocheck`; udvid listen gradvist: ret filens header, tilføj den i `include`, ret fejlene).
 - Styling: ingen CSS-filer. Al CSS er én streng i `src/theme.jsx` (`appCss`). Kun CSS-variabler i komponenter, ingen hardkodede
   farver. Backticks i CSS-kommentarer bryder template-literalen. Tokens og antimønstre: `.claude/rules/design-tokens.md`.
 

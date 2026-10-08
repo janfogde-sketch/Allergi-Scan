@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useFamily.js
 // Håndterer familiemedlemmer — hent, tilføj, slet.

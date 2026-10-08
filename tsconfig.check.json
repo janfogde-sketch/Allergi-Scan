@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "types": [
+      "vite/client"
+    ]
+  },
+  "include": [
+    "src/allergenKeywords.js",
+    "src/helpers.js",
+    "src/constants.jsx",
+    "src/healthConsent.js",
+    "src/listShare.js",
+    "src/useAuth.js",
+    "src/useProduct.js",
+    "src/useFamily.js"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

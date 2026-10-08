@@ -1,3 +1,4 @@
+// @ts-check
 // Ren logik for samtykke til helbredsoplysninger (GDPR art. 9, stk. 2, litra a), 2. okt. 2026.
 // Selve samtykket logges af serveren (RPC give_health_consent / withdraw_health_consent, tabellen consent_log).
 
@@ -35,7 +36,9 @@ export const HEALTH_CONSENT_WITHDRAW_TEXT =
 // Samtykke til en profil, der tilhører en ANDEN person (familiemodel: administrerede underprofiler). Kontoejeren må ikke sige "mine":
 // teksten tilpasses, hvem oplysningerne vedrører. Børn (under 18): forælder/værge-erklæring. Voksne: personens eget udtrykkelige samtykke
 // (voksne bør helst inviteres, så de selv styrer deres oplysninger, se Familie). `age` er et tal eller en tekst, tom = ukendt.
-export function memberConsentTexts({ name, age } = {}) {
+/** @param {{ name?: string, age?: number | string | null }} [member] */
+export function memberConsentTexts(member = {}) {
+  const { name, age } = member;
   const who = (name || "").trim() || "personen";
   const poss = /[sxz]$/i.test(who) ? `${who}'` : `${who}s`;
   const isChild = String(age ?? "") !== "" && Number(age) < 18;
