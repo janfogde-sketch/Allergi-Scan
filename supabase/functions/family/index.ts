@@ -153,9 +153,12 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
       const body = await req.json();
+      // Kolonne-whitelist: ejer og tilhørsforhold (user_id, family_owner_id) kan ikke flyttes via PATCH.
+      const MEMBER_FIELDS = ["name", "color", "gender", "birth_year", "allergens", "custom_allergens", "diets", "e_numbers", "allergen_levels"];
+      const memberUpdate = Object.fromEntries(Object.entries(body ?? {}).filter(([k]) => MEMBER_FIELDS.includes(k)));
       const { data: member, error } = await supabase
         .from("family_members")
-        .update(body)
+        .update(memberUpdate)
         .eq("id", memberId)
         .select()
         .single();

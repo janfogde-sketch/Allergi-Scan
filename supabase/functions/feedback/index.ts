@@ -30,8 +30,9 @@ async function sha256(text: string): Promise<string> {
 }
 
 function clientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for") ?? "";
-  return fwd.split(",")[0].trim() || req.headers.get("cf-connecting-ip") || "ukendt";
+  // Fra Supabase' kant tilføjes den rigtige adresse sidst i x-forwarded-for; første led kan forfalskes af klienten.
+  const fwd = (req.headers.get("x-forwarded-for") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  return req.headers.get("cf-connecting-ip") || fwd[fwd.length - 1] || "ukendt";
 }
 
 Deno.serve(async (req) => {
