@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { MADPAS_LANGUAGES, MADPAS_COELIAC_T, ALLERGEN_T, MADPAS_SAFETY_NOTE_T, MADPAS_SPEECH_INTRO_T, MADPAS_SPEECH_CANNOT_T, MADPAS_SPEECH_OUTRO_T } from "./constants.jsx";
-import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement, madpasAllergenExamples } from "./useMadpas.js";
+import { MADPAS_LANGUAGES } from "./constants.jsx";
+import { MADPAS_COELIAC_T, ALLERGEN_T, MADPAS_SAFETY_NOTE_T, MADPAS_SPEECH_INTRO_T, MADPAS_SPEECH_CANNOT_T, MADPAS_SPEECH_OUTRO_T } from "./madpasText.js";
+import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement, madpasAllergenExamples } from "./madpasText.js";
 
 describe("Madpas-sætninger", () => {
   it("sænker navnet midt i sætningen på dansk/engelsk", () => {

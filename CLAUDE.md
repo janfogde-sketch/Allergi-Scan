@@ -149,7 +149,7 @@ en webhook-hik: udløs `mcp__Vercel__create_deployment` med `gitSource` (ref `ma
 **Design verificeres i en Artifact-preview** i stedet for et deploy: `npx vite build --base=./ --outDir dist-preview --mode
 artifact-preview`; flyt `index.html` til `app.html`; skriv en lille `index.html` der viser den i en 393×852-telefonramme
 (`<iframe>`, skaleret med `transform:scale()` ud fra vinduet, `overflow:hidden`, rammen fjernet under 460 px); publicér alle filer
-(også admin-chunks som `useAdmin-*.js`, som `main` importerer) til det eksisterende link i `.claude/HISTORY.md` med `url`; ryd
+(også admin-chunks som `shared-*.js` og `react-*.js`, som `main` importerer) til det eksisterende link i `.claude/HISTORY.md` med `url`; ryd
 `dist-preview/` bagefter. `--mode artifact-preview` viser en "Se app uden login (preview)"-knap på WELCOME (aldrig i produktion).
 Preview kalder den LIVE database og kan ikke teste service worker/PWA-installation.
 

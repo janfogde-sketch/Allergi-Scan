@@ -11,22 +11,22 @@ import eatsafeLogoHorizontal from "./assets/logo/eatsafe-logo-horizontal.svg";
 import eatsafeLogoHorizontalMono from "./assets/logo/eatsafe-logo-horizontal-mono.svg";
 import eatsafeSymbol from "./assets/logo/eatsafe-symbol.svg";
 import eatsafeSymbolMono from "./assets/logo/eatsafe-symbol-mono.svg";
-import lactoseDropImg from "./assets/icons/lactose-drop.png";
-import allergenHvedeImg from "./assets/icons/allergen-hvede.png";
-import allergenMaelkImg from "./assets/icons/allergen-maelk.png";
-import allergenAegImg from "./assets/icons/allergen-aeg.png";
-import allergenNoedderImg from "./assets/icons/allergen-noedder.png";
-import allergenJordnoedderImg from "./assets/icons/allergen-jordnoedder.png";
-import allergenSojaImg from "./assets/icons/allergen-soja.png";
-import allergenFiskImg from "./assets/icons/allergen-fisk.png";
-import allergenSkaldyrImg from "./assets/icons/allergen-skaldyr.png";
-import allergenSelleriImg from "./assets/icons/allergen-selleri.png";
-import allergenSennepImg from "./assets/icons/allergen-sennep.png";
-import allergenSesamImg from "./assets/icons/allergen-sesam.png";
-import allergenLupinImg from "./assets/icons/allergen-lupin.png";
-import allergenBloeddyrImg from "./assets/icons/allergen-bloeddyr.png";
-import allergenGlutenImg from "./assets/icons/allergen-gluten.png";
-import allergenSvovlImg from "./assets/icons/allergen-svovl.png";
+import lactoseDropImg from "./assets/icons/lactose-drop.webp";
+import allergenHvedeImg from "./assets/icons/allergen-hvede.webp";
+import allergenMaelkImg from "./assets/icons/allergen-maelk.webp";
+import allergenAegImg from "./assets/icons/allergen-aeg.webp";
+import allergenNoedderImg from "./assets/icons/allergen-noedder.webp";
+import allergenJordnoedderImg from "./assets/icons/allergen-jordnoedder.webp";
+import allergenSojaImg from "./assets/icons/allergen-soja.webp";
+import allergenFiskImg from "./assets/icons/allergen-fisk.webp";
+import allergenSkaldyrImg from "./assets/icons/allergen-skaldyr.webp";
+import allergenSelleriImg from "./assets/icons/allergen-selleri.webp";
+import allergenSennepImg from "./assets/icons/allergen-sennep.webp";
+import allergenSesamImg from "./assets/icons/allergen-sesam.webp";
+import allergenLupinImg from "./assets/icons/allergen-lupin.webp";
+import allergenBloeddyrImg from "./assets/icons/allergen-bloeddyr.webp";
+import allergenGlutenImg from "./assets/icons/allergen-gluten.webp";
+import allergenSvovlImg from "./assets/icons/allergen-svovl.webp";
 
 // ─── EATSAFE-LOGO (nu låst brandasset, 28. sept. 2026) ──────────────────────
 // Ét fast sæt vektor-assets (src/assets/logo/, eksporteret fra den godkendte
