@@ -128,7 +128,11 @@ begin
   insert into security_reports(user_id,kind,created_at) values (uid,'unrequested_password_reset',now()-interval '13 months'),(uid,'unrequested_password_reset',now()-interval '11 months');
   insert into notification_events(kind,event_key,status,created_at) values ('k','old'||uid,'done',now()-interval '91 days'),('k','new'||uid,'done',now()-interval '89 days'),('k','pend'||uid,'pending',now()-interval '100 days');
   insert into api_usage(user_id,kind,day) values (uid,'old',current_date-31),(uid,'new',current_date-29);
+  insert into feedback_tickets(type,description,created_at) values ('bug','gammel anonym',now()-interval '13 months'),('bug','ny anonym',now()-interval '11 months');
+  insert into feedback_tickets(type,description,submitted_by,created_at) values ('bug','gammel med konto',uid,now()-interval '13 months');
   perform public.cleanup_notifications();
+  select count(*) into n from feedback_tickets where description in ('gammel anonym'); if n<>0 then raise exception 'OPBEVARING: gammel anonym feedback skulle slettes, fik %', n; end if;
+  select count(*) into n from feedback_tickets where description in ('ny anonym','gammel med konto'); if n<>2 then raise exception 'OPBEVARING: ny anonym og feedback med konto skulle blive, fik %', n; end if;
   select count(*) into n from notifications where user_id=uid; if n<>1 then raise exception 'OPBEVARING: notifications forventet 1 efter oprydning, fik %', n; end if;
   select count(*) into n from client_errors where fingerprint in ('old'||uid,'new'||uid); if n<>1 then raise exception 'OPBEVARING: client_errors forventet 1, fik %', n; end if;
   select count(*) into n from security_reports where user_id=uid; if n<>1 then raise exception 'OPBEVARING: security_reports forventet 1, fik %', n; end if;

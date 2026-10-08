@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "7. oktober 2026",
+  "updated": "8. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -363,6 +363,7 @@ export default {
         "tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning",
         "tællere for dagligt forbrug af tekniske funktioner (beskyttelse mod misbrug): slettes automatisk efter 30 dage og slettes med din konto",
         "e-mailadressen på en person, du har inviteret til din familie: slettes, så snart invitationen er besvaret eller udløbet (invitationen virker højst 24 timer, og oprydningen sker dagligt), og senest når du sletter din konto",
+        "feedback og fejlmeldinger sendt uden at være logget ind: slettes automatisk 12 måneder efter, at du sendte dem (sendt som logget ind slettes de med din konto)",
         "sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder",
         "logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister",
         "sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber."
