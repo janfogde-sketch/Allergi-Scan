@@ -80,7 +80,7 @@ sikre alternativer og indkøbsliste.
 ## 3. Arkitektur
 
 **Bundmenu:** Indkøbsliste | Scan (midten) | Historik. Øverst til højre et hamburger-ikon (tre streger) der åbner `ProfileMenu.jsx`
-(profil-hero → `SCREENS.PROFILE`, Favoritter, Familie, Scanningshistorik, Opskrifter, Viden, Madpas, Indstillinger, Admin hvis
+(profil-hero → `SCREENS.PROFILE`, Favoritter, Familie, Scanningshistorik, Opskrifter, Allergileksikon, Madpas, Indstillinger, Admin hvis
 admin). Header: `AppHeader.jsx` med ren tekst-wordmark.
 
 **Skærme:** se `SCREENS` i `src/constants.jsx`. Én screen = én fil (`XxxScreen.jsx`). Vigtigste: HOME (`ScannerScreen.jsx`, også en
@@ -173,7 +173,7 @@ Mail i mørk tilstand bruger hvid + `#79D5A7`. Master-SVG'er i `src/assets/logo/
 under logoet på velkomstsiden og i "Om EatSafe". Fast disclaimer i `ResultScreen.jsx` ("EatSafe er vejledende...", ikke "ved
 alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knappen bruger `--green`→`--green-dark` med `--green-halo`.
 
-**Fladhed-bug:** delte kort-/knap-klasser uden `box-shadow` ser flade ud; brug `--sh2`/`--sh`/flad+kant-hierarki bevidst.
+**Fladhed-bug:** delte kort-/knap-klasser uden `box-shadow` ser flade ud; brug `--sh2`/`--sh`/flad+kant-hierarki bevidst. Liste-, familie- og historikrækker (`.list-item`, `.family-member`, `.hist-row`) har `--sh` som de øvrige kort (Bjørn, 8. okt. 2026, F3-9).
 
 **Feature-flag og pauser**
 - `DIETS_ENABLED=false` (`constants.jsx`): kostpræferencer er skjult i hele appen (kode, kolonner `users.diets`/`family_members.diets`,
@@ -182,14 +182,14 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 - `RECIPES_ENABLED=false` (`RecipesScreen.jsx`): Opskrifter på pause; alle 629 opskrifter er slettet permanent. Skal funktionen
   tilbage, sættes flaget til true OG opskrifter importeres forfra.
 - Restaurantguiden er slettet (Madpas dækker behovet); kan hentes fra git. `SCR-20` i `PAGE_IDS` genbruges ikke.
-- "Fortsæt med Apple" er ikke implementeret (kræver Apple Developer-setup og er en distributionsbeslutning).
+- "Fortsæt med Apple" (8. okt. 2026) er bygget og vises øverst på Log ind/Ny bruger, så snart Apple-udbyderen er slået til i Supabase (`useOAuthProviders.js` læser `/auth/v1/settings`); ingen kodeændring ved aktivering. Opsætning: `docs/apple-login-opsaetning.md`.
 
-**Følsomhed pr. allergen (spor):** pr. valgt allergen vælger brugeren "Advar mig" (standard) eller "Kun ved ingrediens" for "Kan
+**Følsomhed pr. allergen (spor):** pr. valgt allergen vælger brugeren "Advar ved spor" (standard; ordet bruges ens i hele appen, Bjørn 8. okt. 2026) eller "Kun ved ingrediens" for "Kan
 indeholde spor af". Data `allergen_levels` (jsonb, `direct_only`) på `users`/`family_members`. Spor er GULE overalt, kun direkte
 indhold er rødt. Eget trin 3 i onboarding, plus Rediger præferencer og familieformularen. Hvert valgt allergen har sin egen række (også Glutenfølsomhed
 [`pickerLabel` for id `gluten`] og Hvede), og sporvalget fjernes sammen med allergenet (`pruneAllergenLevels`). Laktose (`traceOk:false`) og egne valg har ingen
 sporvalg (`traceEligible()`); trin 3 springes over, hvis intet valgt allergen har det. Ingen medicinske antagelser: **Cøliaki er et eget, eksplicit valg** (id `coeliaki`, `profileOnly`, 2. okt.),
-aldrig udledt af Gluten/Hvede. Cøliaki-vejledningen under sporvalget ("Har du cøliaki, bør du vælge Advar mig …") vises KUN for rækken Cøliaki; Gluten/Hvede får kun
+aldrig udledt af Gluten/Hvede. Cøliaki-vejledningen under sporvalget ("Har du cøliaki, bør du vælge Advar ved spor …") vises KUN for rækken Cøliaki; Gluten/Hvede får kun
 generel sporinfo. Cøliaki matches mod produktets gluten-/hvedeflag (`effectiveAllergenFlag`) og har ingen egne produktflag (`PRODUCT_ALLERGENS` udelader det). Logik: `helpers.js` (`mergeAllergenLevels` m.fl.), notifikation P1 (`tracesIgnored`), UI
 `AllergenSensitivity` (finpudset 2. okt.: segmenteret kontrol `.trace-seg`, kort linje under valget; ignorerede spor er en neutral info-strimmel under banneret). Detaljer: `src/CONTEXT.md` §3.
 
@@ -207,12 +207,12 @@ eksplicitte beslutning; foreslå ikke at fjerne dem). Telefon indsamles ikke. "R
 
 **Madpas:** kun on-device (link/QR/PDF-deling blev bygget og fjernet igen, tilføj det ikke uden bestilling). Hver allergi har et
 to-sætnings-budskab på 17 sprog, krydskontaminering er opt-in (toggle, info-ikon via `InfoSheet`), oplæsning "Læs højt"/"Stop".
-Struktur og tekster: `src/CONTEXT.md` §6.
+Egne allergier er fritekst og oversættes ikke; på andre sprog end dansk står "Skrevet på dansk" på madpassets sprog under dem (`MADPAS_WRITTEN_IN_DANISH_T`, F5-2). Struktur og tekster: `src/CONTEXT.md` §6.
 
 **Indstillinger:** seks sektioner (Konto, Madpas-sprog, Scanning, Notifikationer, Privatliv & data, Om EatSafe). Privatlivspolitik-
 link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selvstændig vilkårs-side.
 
-**Scanner-forsiden (Bjørn, 4. okt.):** forklaringen følger valget ("passer til" dig/navn/de valgte personer, `scanTargetCopy()`), profilvælgeren hedder "Tjekker for: …", teksten står fast 28 px over Scan-knappen. Nederst et "Vidste du, at …"-kort (`useDailyTip.js`, `pickDailyTip()`): KUN godkendte tips fra `knowledge_base.tips`, aldrig genereret tekst; ét tip pr. dag, relevante allergener 2 ud af 3 dage, link til den præcise artikel, samme indholdsbredde som øvrige kort med ens margin i begge sider (5. okt.; afløser bredde efter indhold), skjult under 500 px hero-højde. Nye tips godkendes af Bjørn/Jan og skal stå i artiklen.
+**Scanner-forsiden (Bjørn, 4. okt.):** forklaringen følger valget ("passer til" dig/navn/de valgte personer, `scanTargetCopy()`), profilvælgeren hedder "Tjekker for: …", teksten står fast 28 px over Scan-knappen. Nederst et "Vidste du, at …"-kort (altid med komma) (`useDailyTip.js`, `pickDailyTip()`): KUN godkendte tips fra `knowledge_base.tips`, aldrig genereret tekst; ét tip pr. dag, relevante allergener 2 ud af 3 dage, link til den præcise artikel, samme indholdsbredde som øvrige kort med ens margin i begge sider (5. okt.; afløser bredde efter indhold), skjult under 500 px hero-højde. Nye tips godkendes af Bjørn/Jan og skal stå i artiklen.
 
 **Historik (Bjørn, 5. okt.):** gentagne scanninger vises som én post med "Scannet N gange, senest …" (`groupHistoryDuplicates()` i `helpers.js`, kun visning; databasen beholder hver række). Fundne produkter samles kun ved samme EAN/produkt-ID (aldrig kun navn), bruger, valgte personer, resultat og allergen-flag, lige efter hinanden med højst 30 min. mellem; "ikke fundet" pr. stregkode. "Ryd" er neutral og skjult uden egen historik; kun bekræftelsen er rød. Ingen søgning/filtre ud over det eksisterende filter ved 10+ poster.
 
@@ -223,7 +223,7 @@ link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selv
 **Scanner:** `stopCamera()` nulstiller al scanner-state (også det manuelle EAN-panel via `closeCameraFully()` i `App.jsx`) ved
 ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsvibration/-lyd via `fireWarningAlert()`.
 
-**Feedback-modal** (`FeedbackModal.jsx`): fast header og Send-knap, scrollende midte, følger `visualViewport` (tastatur) og safe-area. Typerne står i `feedbackTypes.js` (line-ikoner; id'et `crash` hedder "Appen lukker ned"). Diagnostikken er sammenfoldet og bygges ét sted (`feedbackDiagnostics.js`), så oversigten viser præcis det, der sendes; den indeholder kun tekniske felter (ingen navn, e-mail, allergier, familie eller andre helbredsdata; kun internt bruger-ID, trace-linjer hvidlistes, URL uden query/hash). Ved "Appen lukker ned" sendes kun den seneste registrerede fejl (`getRecentErrors()` i `errorReporter.js`, lokalt på enheden), og hjælpeteksten lover det kun, hvis der findes en. Admin viser nye tickets som "Konto <id>" (`ticketReporter.js`).
+**Feedback-modal** (`FeedbackModal.jsx`): fast header og Send-knap, scrollende midte, følger `visualViewport` (tastatur) og safe-area. Ordvalg (Bjørn, 8. okt. 2026): det, brugeren sender, hedder altid "feedback" ("Din feedback", "Tak for din feedback"), og svaret hedder "Svar fra EatSafe"; brug ikke "tilbagemelding". Typerne står i `feedbackTypes.js` (line-ikoner; id'et `crash` hedder "Appen lukker ned"). Diagnostikken er sammenfoldet og bygges ét sted (`feedbackDiagnostics.js`), så oversigten viser præcis det, der sendes; den indeholder kun tekniske felter (ingen navn, e-mail, allergier, familie eller andre helbredsdata; kun internt bruger-ID, trace-linjer hvidlistes, URL uden query/hash). Ved "Appen lukker ned" sendes kun den seneste registrerede fejl (`getRecentErrors()` i `errorReporter.js`, lokalt på enheden), og hjælpeteksten lover det kun, hvis der findes en. Admin viser nye tickets som "Konto <id>" (`ticketReporter.js`).
 
 **Login, oprettelse, onboarding**
 - Felt-specifikke inline-fejl (`emailError`/`passwordError` i `useAuth.js`); `authError` kun til fejl, der ikke kan knyttes til ét
@@ -244,7 +244,7 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   Bekræftelseslinket registrerer e-mailen af sig selv og går direkte videre til onboarding (ingen mellemskærm). `VerifyEmailScreen` tjekker stille, når
   brugeren vender tilbage til appen (og viser så "bekræftet" med "Fortsæt →"); knappen hedder "Tjek bekræftelse", og "ikke bekræftet endnu" er en neutral besked, ikke en fejl. Et PWA kan ikke åbne linket
   i den installerede app på iOS (kræver native Universal Links); manifestet har `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `resolveOnboardingRoute` genoptager.
-- Google/Facebook går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
+- Google/Facebook/Apple går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
 
 **Allergileksikon:** `knowledge_base` har EU's 14 allergener + hvede med neutral `status_label`; laktose ligger under Ingredienser;
 retter (`dish`) kun via søgning. Risikoniveauer er fjernet og må ikke genindføres uden klar faglig definition. `allergen_ids`

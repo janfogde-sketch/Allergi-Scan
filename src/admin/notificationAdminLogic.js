@@ -42,7 +42,7 @@ export const CATEGORY_LABELS = {
 };
 
 export const VARIABLE_LABELS = {
-  productName: "Produktnavn", reason: "Begrundelse", memberName: "Medlemmets navn", ticketExcerpt: "Uddrag af tilbagemelding",
+  productName: "Produktnavn", reason: "Begrundelse", memberName: "Medlemmets navn", ticketExcerpt: "Uddrag af feedback",
   message: "Teamets besked", expiresAt: "Udløbstidspunkt", changeSummary: "Hvad er ændret", listName: "Listens navn",
   adders: "Hvem har tilføjet", countText: "Antal varer", itemList: "Tilføjede varer", recallReason: "Årsag", affectedBatches: "Berørte partier", recallAction: "Anvisning", recallUrl: "Link",
 };

@@ -17,7 +17,7 @@ import { reportError } from "./errorReporter.js";
 // opfølgning: "undgå at bruge samme orange farve til både kategori-identitet
 // OG advarsler" — peach lå visuelt for tæt på risiko-amberen, så et
 // krydsreaktions-ikon kunne fejlagtigt læses som en aktiv advarsel i sig
-// selv). "Vidste du at" beholder sin peach — den kategori viser aldrig
+// selv). "Vidste du, at" beholder sin peach — den kategori viser aldrig
 // risikoniveauer, så der er intet reelt kollisionsscenarie der.
 const CATEGORIES = [
   { id:"allergen",       icon:"shield",   label:"Allergener",      color:"var(--red)",   bg:"rgba(255,82,82,.10)", border:"var(--red-md)" },
@@ -25,7 +25,7 @@ const CATEGORIES = [
   { id:"e_number",       icon:"hash",     label:"E-numre",         color:"var(--amber)", bg:"rgba(255,186,59,.10)", border:"var(--amber-md)" },
   { id:"diet",           icon:"utensils", label:"Diæter",          color:"var(--green)", bg:"rgba(14,143,90,.10)", border:"var(--green-mid)" },
   { id:"cross_reaction", icon:"refresh",  label:"Krydsreaktioner", color:"var(--blue)",  bg:"var(--blue-lt)", border:"var(--blue-md)" },
-  { id:"fun_fact",       icon:"bulb",     label:"Vidste du at",    color:"#E8A87C",      bg:"rgba(232,168,124,.10)", border:"rgba(232,168,124,.20)" },
+  { id:"fun_fact",       icon:"bulb",     label:"Vidste du, at",    color:"#E8A87C",      bg:"rgba(232,168,124,.10)", border:"rgba(232,168,124,.20)" },
 ];
 // "FAQ" → "Ofte stillede spørgsmål" (26. sept. 2026, brugerfeedback) — egen
 // hjælpesektion i stedet for en kategori-flise, men stadig en del af
@@ -122,7 +122,7 @@ const S = {
 const DESC_CLAMP_THRESHOLD = 220;
 
 // Fælles opslagskort — bruges af kategorilister, søgeresultater, krydsreaktioner
-// på en detaljeside og "Vidste du at"-teaserne, så alle følger samme struktur.
+// på en detaljeside og "Vidste du, at"-teaserne, så alle følger samme struktur.
 function EntryCard({ entry, cat, onOpen, style, summaryStyle }) {
   return (
     <div role="button" tabIndex={0} className="kb-card" style={style ? { ...S.card, ...style } : S.card} onClick={onOpen}

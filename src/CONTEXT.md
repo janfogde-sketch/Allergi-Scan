@@ -248,7 +248,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   Varer tilføjet efter afsendelsen i samme vindue får først en besked, hvis der kommer en ny tilføjelse i
   næste vindue (bevidst grænse: højst én besked pr. modtager pr. liste pr. 30 min).
 - **Ticket-visning, N1, P4:** *Se din feedback*: `SCREENS.TICKET` (`TicketScreen.jsx`) viser egen ticket
-  (tilbagemelding, status, teamets svar) og åbnes fra `open_ticket` på beskedsiden (RLS: kun ejeren).
+  (feedback, status, svar fra EatSafe) og åbnes fra `open_ticket` på beskedsiden (RLS: kun ejeren).
   **N1** (velkomstmail efter onboarding): `users.welcome_sent_at`; trigger `on_onboarding_completed` sender
   én gang, når `onboarding_completed` bliver true og e-mailen er bekræftet (adressen hentes fra `auth.users`);
   brugeren kan ikke nulstille kolonnen. **P4** (slettekvittering): `delete-user` henter e-mail/navn FØR

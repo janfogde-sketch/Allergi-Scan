@@ -37,7 +37,7 @@ describe("Rediger præferencer: Gem ændringer vises kun ved ugemte ændringer",
     const milk = screen.getByRole("group", { name: /Mælk/ });
     fireEvent.click(milk.querySelectorAll("button")[1]); // "Kun ved ingrediens"
     expect(screen.getByText("Gem ændringer")).toBeTruthy();
-    fireEvent.click(milk.querySelectorAll("button")[0]); // tilbage til "Advar mig"
+    fireEvent.click(milk.querySelectorAll("button")[0]); // tilbage til "Advar ved spor"
     expect(screen.queryByText("Gem ændringer")).toBeNull();
   });
 

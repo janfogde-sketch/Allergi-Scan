@@ -835,8 +835,8 @@ body::-webkit-scrollbar{display:none;}
 .tab.active{background:var(--surface);color:var(--green);box-shadow:0 1px 3px rgba(21,32,26,.10);}
 /* Sociale login-knapper — hvide/neutrale med platformens eget ikon (25.
    sept. 2026-brief: "undgå en stor blå Facebook-knap, fordi den stjæler
-   fokus fra EatSafe"). Én delt klasse for Google/Facebook (Apple fjernet
-   igen samme dag), så begge reelt er visuelt lige stærke — og altid
+   fokus fra EatSafe"). Én delt klasse for Apple/Google/Facebook, så de
+   reelt er visuelt lige stærke — og altid
    svagere end .welcome-btn (den primære CTA), som briefen kræver. */
 .social-btn{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;padding:14px 16px 14px max(16px,calc(50% - 106px));background:var(--surface);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-family:var(--f);font-size:14px;font-weight:600;color:var(--ink);transition:all .15s;}
 .social-btn:hover{background:var(--surface2);border-color:var(--ink2);}
@@ -970,7 +970,7 @@ button.filter-chip{width:auto;}
    "Polér designet på Indkøbsliste") — trygt at justere direkte uden at
    røre andre skærme. */
 /* Top/bund-padding 12→8px, ~15% lavere kort, samme vandrette padding. */
-.list-item{display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;}
+.list-item{display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;box-shadow:var(--sh);}
 .list-item.done{opacity:.4;}
 /* Størrelse 20→17px (en smule mindre, mere fokus til varenavnet) —
    ::before-tap-området er udvidet tilsvarende (13→14.5px) for stadig at
@@ -1008,7 +1008,8 @@ button.filter-chip{width:auto;}
 .stat3-lbl{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:3px;letter-spacing:.2px;}
 
 /* ── FAMILY ── */
-.family-member{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+/* F3-9 (Bjørn, 8. okt. 2026): liste-, familie- og historikrækker har let skygge (--sh) som appens andre kort. */
+.family-member{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--sh);}
 .fm-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
 .ap-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .ap-chip:hover{border-color:var(--border2);color:var(--ink);}
@@ -1023,7 +1024,7 @@ button.filter-chip{width:auto;}
    til samme bordered-card-behandling som .list-item — samme padding/
    baggrund/kant/radius/margin, plus samme tryk-feedback-mønster
    (:active{scale(.99)}) som andre trykbare kort i appen (fx .recipe-card). */
-.hist-row{display:flex;align-items:center;gap:12px;padding:10px 14px;min-height:60px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;transition:opacity .1s,transform .1s;}
+.hist-row{display:flex;align-items:center;gap:12px;padding:10px 14px;min-height:60px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);transition:opacity .1s,transform .1s;}
 @media (hover:hover){.hist-row:hover{opacity:.85;}}
 .hist-row:active{transform:scale(.99);}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // SCREENS.TICKET — brugerens egen feedback-ticket (åbnes fra "Se din feedback" på en besked).
-// Kun ejeren kan læse den (RLS). Viser den oprindelige tilbagemelding, status og teamets seneste svar.
+// Kun ejeren kan læse den (RLS). Viser den oprindelige feedback, status og teamets seneste svar.
 import React, { useEffect, useState, useCallback } from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -59,19 +59,19 @@ export default function TicketScreen({ ticketId, onBack }) {
           </div>
 
           <div className="card">
-            <div style={LABEL}>Din tilbagemelding</div>
+            <div style={LABEL}>Din feedback</div>
             <div style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.55, whiteSpace:"pre-wrap", overflowWrap:"anywhere" }}>{t.description}</div>
           </div>
 
           <div className="card">
-            <div style={LABEL}>Svar fra vores team</div>
+            <div style={LABEL}>Svar fra EatSafe</div>
             {t.admin_note
               ? <div style={{ fontSize:14, color:"var(--ink)", lineHeight:1.55, whiteSpace:"pre-wrap", overflowWrap:"anywhere" }}>{t.admin_note}</div>
               : <div style={{ fontSize:13.5, color:"var(--muted)", lineHeight:1.5 }}>Der er endnu ikke skrevet et svar. Du får besked, når vi har kigget på den.</div>}
           </div>
 
           <p style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5 }}>
-            Har du flere oplysninger, kan du sende dem via feedbackknappen i appen. Henvis gerne til din tidligere tilbagemelding.
+            Har du flere oplysninger, kan du sende dem via feedbackknappen i appen. Henvis gerne til din tidligere feedback.
           </p>
         </>
       )}

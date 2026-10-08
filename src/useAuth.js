@@ -652,7 +652,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
     } catch (e) {
       reportError(e, { source: "oauth-start" });
-      setAuthError(`Login med ${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : provider} mislykkedes. Prøv igen.`);
+      setAuthError(`Login med ${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : provider === "apple" ? "Apple" : provider} mislykkedes. Prøv igen.`);
       setAuthLoading(false);
     }
   }, []);
