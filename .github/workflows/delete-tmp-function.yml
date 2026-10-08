@@ -1,0 +1,21 @@
+# Engangs-workflow (to do 56cc28df): sletter den gamle serverfunktion
+# tmp-move-base64-images fra Supabase. Fjernes igen efter kørslen.
+name: Delete tmp edge function
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - name: Slet funktionen
+        run: supabase functions delete tmp-move-base64-images --project-ref jegrpcflyguadyxialkm --yes
