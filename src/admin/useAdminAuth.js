@@ -1,15 +1,16 @@
 // @ts-nocheck
 // ─────────────────────────────────────────────────────────────────────────────
 // useAdminAuth.js — login/session for det separate desktop-admin-panel.
-// Deler localStorage-nøgler med den mobile PWA (as_token/as_refresh/
-// as_user_id) — samme origin, så en bruger der allerede er logget ind i
-// hovedappen i samme browser er automatisk logget ind her også. Ingen
+// Deler session med den mobile PWA (cookie + mærke, se sessionStore.js) — samme
+// origin, så en bruger der allerede er logget ind i hovedappen i samme browser
+// er automatisk logget ind her også. Ingen
 // signup/OAuth her (kun admin-konti bruger dette panel), kun almindeligt
 // email+password-login mod Supabase, samme kald som useAuth.js's handleLogin.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../constants.jsx";
+import { setMemoryToken, hasStoredSession, persistRefreshToken, restoreSession, endSession } from "../sessionStore.js";
 
 // Udløbstidspunktet (ms) fra access-tokenets payload; null hvis det ikke kan læses.
 export function jwtExpiryMs(token) {
@@ -22,9 +23,10 @@ export function jwtExpiryMs(token) {
 const REFRESH_MARGIN_MS = 60_000;
 
 export function useAdminAuth() {
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem("as_token") || null);
-  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || null);
+  const [accessToken, setAccessToken] = useState(/** @type {string | null} */ (null));
   const [userId, setUserId] = useState(() => localStorage.getItem("as_user_id") || null);
+  // Sand, mens en gemt session hentes via cookien, så login-formularen ikke blinker forbi.
+  const [restoring, setRestoring] = useState(() => hasStoredSession());
 
   const [checkingRole, setCheckingRole] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -37,26 +39,37 @@ export function useAdminAuth() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const saveTokens = useCallback((access, refresh, uid) => {
+    setMemoryToken(access);
     setAccessToken(access);
-    setRefreshToken(refresh);
-    setUserId(uid);
-    localStorage.setItem("as_token", access);
-    localStorage.setItem("as_refresh", refresh);
-    localStorage.setItem("as_user_id", uid);
+    if (uid) { setUserId(uid); localStorage.setItem("as_user_id", uid); }
+    if (refresh) persistRefreshToken(refresh, true);
   }, []);
 
   const logout = useCallback(() => {
-    setAccessToken(null); setRefreshToken(null); setUserId(null);
+    setAccessToken(null); setUserId(null);
     setIsAdmin(false); setUserEmail("");
-    localStorage.removeItem("as_token");
-    localStorage.removeItem("as_refresh");
     localStorage.removeItem("as_user_id");
+    endSession();
+  }, []);
+
+  // ── Gendan sessionen ved indlæsning ───────────────────────────────────────
+  useEffect(() => {
+    if (!hasStoredSession()) { setRestoring(false); return; }
+    let cancelled = false;
+    (async () => {
+      const r = await restoreSession();
+      if (cancelled) return;
+      if (r.status === "ok") saveTokens(r.accessToken, null, r.userId || userId);
+      else if (r.status === "expired") logout();
+      setRestoring(false);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // ── Hold access-tokenet frisk ─────────────────────────────────────────────
   // Supabase-tokens udløber efter ca. en time, og panelet står ofte åbent
   // længere. Vi fornyer et minut før udløb (eller med det samme, hvis det
-  // allerede er udløbet ved indlæsning). Afvises refresh-tokenet, logges der ud.
+  // allerede er udløbet ved indlæsning). Afvises sessionen, logges der ud.
   useEffect(() => {
     if (!accessToken) return;
     const exp = jwtExpiryMs(accessToken);
@@ -64,30 +77,15 @@ export function useAdminAuth() {
     let cancelled = false;
     let timer;
     const refresh = async () => {
-      const stored = localStorage.getItem("as_refresh") || refreshToken;
-      if (!stored) { logout(); return; }
-      try {
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
-          body: JSON.stringify({ refresh_token: stored }),
-        });
-        if (cancelled) return;
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && data.access_token) {
-          saveTokens(data.access_token, data.refresh_token, data.user?.id || userId);
-        } else if (res.status >= 400 && res.status < 500) {
-          logout();
-        } else {
-          timer = setTimeout(refresh, 30_000);
-        }
-      } catch {
-        if (!cancelled) timer = setTimeout(refresh, 30_000);
-      }
+      const r = await restoreSession();
+      if (cancelled) return;
+      if (r.status === "ok") saveTokens(r.accessToken, null, r.userId || userId);
+      else if (r.status === "expired" || r.status === "none") logout();
+      else timer = setTimeout(refresh, 30_000);
     };
     timer = setTimeout(refresh, Math.max(0, exp - Date.now() - REFRESH_MARGIN_MS));
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [accessToken, refreshToken, userId, saveTokens, logout]);
+  }, [accessToken, userId, saveTokens, logout]);
 
   // ── Verificér admin-rolle hver gang accessToken ændrer sig ────────────────
   // Frontend-tjekket er bekvemmelighed, ikke sikkerheden — RLS på
@@ -148,8 +146,8 @@ export function useAdminAuth() {
   }, [loginEmail, loginPassword, saveTokens]);
 
   return {
-    accessToken, refreshToken, userId, userEmail,
-    checkingRole, isAdmin, roleCheckError,
+    accessToken, userId, userEmail,
+    checkingRole: checkingRole || restoring, isAdmin, roleCheckError,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, authLoading, handleLogin, logout,
   };

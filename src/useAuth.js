@@ -10,6 +10,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { forgetPushTokenForDevice } from "./usePush.js";
+import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, restoreSession, endSession } from "./sessionStore.js";
 import { reportError } from "./errorReporter.js";
 import { clearOfflineCache } from "./useOffline.js";
 
@@ -94,12 +95,9 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     }
   }, [setScreen, setOnboardStep, goHomeUnlessDeepLink]);
 
-  // ── Token state — persisteret i localStorage (eller sessionStorage, se
-  // rememberMe nedenfor) — falder tilbage til sessionStorage ved opstart,
-  // så et token gemt dér (rememberMe=false) også findes igen efter en
-  // genindlæsning inden for samme faneblad. ────────────────────────────────
-  const [accessToken, setAccessToken]   = useState(() => localStorage.getItem("as_token") || sessionStorage.getItem("as_token") || null);
-  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("as_refresh") || sessionStorage.getItem("as_refresh") || null);
+  // ── Token state — den korte nøgle (accessToken) lever kun i hukommelsen og hentes ved start via cookien
+  // (se sessionStore.js); den lange nøgle ligger i en HttpOnly-cookie og kan ikke læses herfra. userId er ikke hemmeligt.
+  const [accessToken, setAccessToken]   = useState(/** @type {string | null} */ (null));
   const [userId, setUserId]             = useState(() => localStorage.getItem("as_user_id") || sessionStorage.getItem("as_user_id") || null);
 
   // ── Login-formular state ───────────────────────────────────────────────────
@@ -158,35 +156,31 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const arrivedViaAuthLinkRef = useRef(
     typeof window !== "undefined" && window.location.hash.includes("access_token")
   );
-  // "Husk mig" (25. sept. 2026-brief) — sand som standard (uændret adfærd:
-  // token i localStorage, overlever browseren lukkes). Slået fra gemmes
-  // tokenet i sessionStorage i stedet, så det forsvinder når fanebladet
-  // lukkes. saveTokens rydder altid den ANDEN storage for de samme nøgler,
-  // så der aldrig ligger to modstridende kopier af det samme token.
+  // "Husk mig" (25. sept. 2026-brief) — sand som standard: cookien er vedvarende. Slået fra bliver den en sessionscookie,
+  // der forsvinder, når browseren lukkes (mærket lægges i sessionStorage).
   const [rememberMe, setRememberMe]     = useState(true);
 
-  // ── Gem tokens i localStorage/sessionStorage ──────────────────────────────
+  // ── Gem sessionen: kort nøgle i hukommelsen, lang nøgle i cookien (kun når en ny er givet) ──
   const saveTokens = useCallback((access, refresh, uid) => {
+    setMemoryToken(access);
     setAccessToken(access);
-    setRefreshToken(refresh);
-    setUserId(uid);
-    const store = rememberMe ? localStorage : sessionStorage;
-    const other = rememberMe ? sessionStorage : localStorage;
-    store.setItem("as_token", access);
-    store.setItem("as_refresh", refresh);
-    store.setItem("as_user_id", uid);
-    other.removeItem("as_token");
-    other.removeItem("as_refresh");
-    other.removeItem("as_user_id");
+    if (uid) {
+      setUserId(uid);
+      const store = rememberMe ? localStorage : sessionStorage;
+      const other = rememberMe ? sessionStorage : localStorage;
+      store.setItem("as_user_id", uid);
+      other.removeItem("as_user_id");
+    }
+    if (refresh) return persistRefreshToken(refresh, rememberMe);
+    return Promise.resolve(true);
   }, [rememberMe]);
 
   // ── Ryd auth ved logout / slet konto ─────────────────────────────────────
   const clearAuth = useCallback(() => {
     // Enhedens push-abonnement tilhører ikke længere den konto, der logger ud (fire-and-forget).
-    forgetPushTokenForDevice(localStorage.getItem("as_token") || sessionStorage.getItem("as_token"));
-    setAccessToken(null); setRefreshToken(null); setUserId(null);
-    localStorage.removeItem("as_token"); sessionStorage.removeItem("as_token");
-    localStorage.removeItem("as_refresh"); sessionStorage.removeItem("as_refresh");
+    forgetPushTokenForDevice(getAccessToken());
+    setAccessToken(null); setUserId(null);
+    endSession();
     localStorage.removeItem("as_user_id"); sessionStorage.removeItem("as_user_id");
     setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
     try { localStorage.removeItem(ONBOARDED_KEY); } catch { /* privat tilstand */ }
@@ -276,77 +270,35 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     }
   }, [saveTokens]);
 
-  // ── Verificér gemt session ved opstart ────────────────────────────────────
-  // App.jsx viser "Hjem" allerede ved opstart blot fordi der ligger et token
-  // i localStorage — uden nogensinde at tjekke om det stadig er gyldigt hos
-  // Supabase. Et udløbet token (fx efter en JWT-nøglerotation, eller bare
-  // naturligt udløb + fejlet baggrunds-fornyelse) efterlod brugeren på
-  // Hjem-skærmen som om de var logget ind, indtil et API-kald fejlede.
+  // ── Gendan sessionen ved opstart ──────────────────────────────────────────
+  // App.jsx viser "Hjem" ved opstart blot fordi der er en session på enheden (mærket i sessionStore.js). Her hentes en ny kort nøgle
+  // via cookien, og startskærmen rettes ud fra reel onboarding-status (29. sept. 2026, "Onboarding-persistens"): en bruger, der lukkede
+  // appen midt i onboardingen, sendes tilbage dertil. Sessionen afvist af Supabase = logget ud. Ingen forbindelse = sessionen røres ikke,
+  // og der prøves igen, når enheden er online. Kører kun én gang ved start (ikke ved senere fornyelser, som ikke må afbryde noget i gang).
   useEffect(() => {
-    // Et frisk login-/nulstillingslink har lige gemt en ny session — tjek ikke
-    // en gammel, evt. udløbet session fra browseren (kunne rydde den nye).
+    // Et frisk login-/nulstillingslink har lige gemt en ny session og håndterer selv routingen (effekten ovenfor).
     if (arrivedViaAuthLinkRef.current) return;
-    const tokenFromStorage = localStorage.getItem("as_token") || sessionStorage.getItem("as_token");
-    if (!tokenFromStorage) return;
+    if (!hasStoredSession()) return;
     let cancelled = false;
-
-    (async () => {
-      let checkRes;
-      try {
-        checkRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${tokenFromStorage}` },
-        });
-      } catch {
-        return; // Netværksfejl — rør ikke ved en session vi ikke kunne verificere
-      }
-      if (cancelled || checkRes.ok) return; // Tokenet er gyldigt
-
-      // Tokenet blev afvist af Supabase — prøv at forny det med det samme
-      const storedRefresh = localStorage.getItem("as_refresh") || sessionStorage.getItem("as_refresh");
-      if (!storedRefresh) { if (!cancelled) clearAuth(); return; }
-
-      let refreshRes;
-      try {
-        refreshRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
-          body: JSON.stringify({ refresh_token: storedRefresh }),
-        });
-      } catch {
-        return; // Netværksfejl under fornyelsesforsøg — log ikke ud pga. det alene
-      }
+    const attempt = async () => {
+      const r = await restoreSession();
       if (cancelled) return;
-      if (refreshRes.ok) {
-        const data = await refreshRes.json();
-        if (data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
-        else clearAuth();
-      } else {
-        clearAuth(); // Refresh-tokenet er også ugyldigt — sessionen er reelt udløbet
+      if (r.status === "ok") {
+        window.removeEventListener("online", attempt);
+        let uid = r.userId;
+        try { uid = uid || decodeJwtPayload(r.accessToken).sub; } catch { /* ugyldigt token */ }
+        saveTokens(r.accessToken, null, uid);
+        if (!uid) { setScreen(SCREENS.HOME); return; }
+        resolveOnboardingRoute(uid, r.accessToken);
+      } else if (r.status === "expired") {
+        window.removeEventListener("online", attempt);
+        clearAuth(); // sessionen er reelt udløbet
       }
-    })();
-
-    return () => { cancelled = true; };
-  }, []);
-
-  // ── App-boot: korrigér startskærmen ud fra reel onboarding-status ────────
-  // (29. sept. 2026, "Onboarding-persistens") — App.jsx's `screen`-useState
-  // gætter blindt HOME, blot fordi der ligger et token i localStorage/
-  // sessionStorage, uden nogensinde at tjekke onboarding_completed. En
-  // bruger der lukkede appen midt i onboardingen (eller aldrig gennemførte
-  // den) blev derfor altid sendt direkte til scanner-forsiden ved appstart.
-  // Kører KUN én gang ved mount (tomt dep-array) — ikke ved senere token-
-  // fornyelser, som ikke må afbryde et onboarding-forløb der er i gang
-  // inde i selve sessionen (resolveOnboardingRoute bruges dér IKKE).
-  useEffect(() => {
-    // En frisk OAuth-redirect (samme mount) håndterer sin egen routing i
-    // effekten ovenfor, inkl. genoptagelse af gemt trin — spring den her
-    // over for at undgå at de to konkurrerer om at afgøre skærmen to gange.
-    if (arrivedViaAuthLinkRef.current) return;
-    if (!accessToken) return;
-    let uid = userId;
-    try { uid = uid || decodeJwtPayload(accessToken).sub; } catch { /* ugyldigt token */ }
-    if (!uid) { setScreen(SCREENS.HOME); return; }
-    resolveOnboardingRoute(uid, accessToken);
+      // "error": ingen forbindelse eller midlertidig fejl; behold sessionen og prøv igen, når enheden er online
+    };
+    window.addEventListener("online", attempt);
+    attempt();
+    return () => { cancelled = true; window.removeEventListener("online", attempt); };
   }, []);
 
   // ── Auto-refresh token — planlagt efter tokenets faktiske udløbstid ──────
@@ -354,24 +306,17 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // enkelt fejlet forsøg, må ikke kunne efterlade et udløbet token i op til
   // 45 min før næste forsøg)
   useEffect(() => {
-    if (!refreshToken || !accessToken) return;
+    if (!accessToken) return;
     let cancelled = false;
     let timeoutId;
 
     const refresh = async (retry = 0) => {
-      try {
-        const data = await apiCall(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-        if (!cancelled && data.access_token) saveTokens(data.access_token, data.refresh_token, data.user?.id);
-      } catch {
-        // Prøv igen efter kort stigende ventetid, i stedet for at vente til næste planlagte refresh
-        if (!cancelled && retry < 3) {
-          timeoutId = setTimeout(() => refresh(retry + 1), Math.min(30000 * (retry + 1), 120000));
-        }
-      }
+      const r = await restoreSession();
+      if (cancelled) return;
+      if (r.status === "ok") { saveTokens(r.accessToken, null, r.userId); return; }
+      if (r.status === "expired" || r.status === "none") { clearAuth(); return; }
+      // Prøv igen efter kort stigende ventetid, i stedet for at vente til næste planlagte refresh
+      if (retry < 3) timeoutId = setTimeout(() => refresh(retry + 1), Math.min(30000 * (retry + 1), 120000));
     };
 
     let delay;
@@ -384,7 +329,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     }
     timeoutId = setTimeout(() => refresh(), delay);
     return () => { cancelled = true; clearTimeout(timeoutId); };
-  }, [refreshToken, accessToken, saveTokens]);
+  }, [accessToken, saveTokens, clearAuth]);
 
   // ── Bekræftelsesskærmen ──────────────────────────────────────────────────
   const openVerifyScreen = useCallback((email) => {
@@ -595,15 +540,18 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const checkEmailVerified = useCallback(async (opts) => {
     const silent = opts?.silent === true;
     if (!silent) { setVerifyError(""); setVerifyNotice(""); }
-    const storedToken = localStorage.getItem("as_token");
-    const storedUid = localStorage.getItem("as_user_id");
+    // Er linket åbnet i en anden fane, ligger sessionen som cookie; hent en kort nøgle derfra.
+    let storedToken = getAccessToken();
+    let storedUid = userId;
+    if (!storedToken && hasStoredSession()) {
+      const r = await restoreSession();
+      if (r.status === "ok") { storedToken = r.accessToken; storedUid = r.userId || storedUid; }
+    }
     let storedEmail = "";
     try { storedEmail = storedToken ? (decodeJwtPayload(storedToken).email || "").toLowerCase() : ""; } catch { /* ugyldigt token */ }
     // Kun en session for PRÆCIS denne e-mail — aldrig en anden kontos.
     if (storedToken && storedUid && storedEmail === (verifyEmail || "").toLowerCase()) {
-      setAccessToken(storedToken);
-      setRefreshToken(localStorage.getItem("as_refresh"));
-      setUserId(storedUid);
+      saveTokens(storedToken, null, storedUid);
       setVerifyLoading(true);
       await finishVerification(storedToken, storedUid);
       setVerifyLoading(false);
@@ -640,7 +588,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       if (!silent) setVerifyError("Der opstod en fejl. Prøv igen.");
     }
     setVerifyLoading(false);
-  }, [verifyEmail, loginPassword, saveTokens, finishVerification, setScreen]);
+  }, [verifyEmail, loginPassword, userId, saveTokens, finishVerification, setScreen]);
 
   // "Send mail igen" — Supabases resend-endpoint for signup-bekræftelse.
   const resendVerification = useCallback(async () => {
@@ -787,7 +735,6 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   return {
     resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
     accessToken, setAccessToken,
-    refreshToken, setRefreshToken,
     userId, setUserId,
     loginEmail, setLoginEmail,
     loginPassword, setLoginPassword,

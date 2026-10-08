@@ -33,7 +33,7 @@ export default function VerifyEmailScreen() {
   useEffect(() => {
     if (verified) return undefined;
     let last = 0;
-    const onStorage = (e) => { if (e.key === "as_token" && e.newValue) checkEmailVerified({ silent: true }); };
+    const onStorage = (e) => { if (e.key === "as_session" && e.newValue) checkEmailVerified({ silent: true }); };
     const onVisible = () => {
       if (document.visibilityState !== "visible" || Date.now() - last < 8000) return;
       last = Date.now();
