@@ -8,8 +8,7 @@
 // 'family', 'feedback', 'weekly_digest'). Uden den sendes push'en altid,
 // uanset brugerens indstillinger.
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { sendWebPush } from "../_shared/webpush.ts";
 
 const CORS = {
@@ -26,7 +25,7 @@ const VAPID_PUBLIC_KEY  = Deno.env.get("VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT     = Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.dk";
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   // Kategori 4: kun interne kald (service-role-nøglen), fx weekly-digest.

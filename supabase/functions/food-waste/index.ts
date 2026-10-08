@@ -19,12 +19,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { corsFor, getCaller } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
+const corsHeaders = corsFor("GET, OPTIONS");
 
 const SALLING_API = "https://api.sallinggroup.com/v1/food-waste";
 const DEFAULT_RADIUS_KM = 5;
@@ -79,15 +76,7 @@ Deno.serve(async (req) => {
     return json({ error: "Kun GET er understøttet" }, 405);
   }
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return json({ error: "Ikke autoriseret" }, 401);
-
-  const userClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user: caller } } = await userClient.auth.getUser();
+  const caller = await getCaller(req);
   if (!caller) return json({ error: "Ikke autoriseret" }, 401);
 
   const sallingToken = Deno.env.get("SALLING_API_TOKEN");

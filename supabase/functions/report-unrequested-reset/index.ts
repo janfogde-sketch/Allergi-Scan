@@ -12,7 +12,7 @@
 // opgave på den fælles to do-liste og mailer admins. Kontoen låses ikke, og der ændres intet ved den. Svaret er det
 // samme, uanset om brugeren findes (afslører ikke noget).
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { verifyReportToken } from "../_shared/reportLink.ts";
 import { sendHtmlMail, escapeHtml } from "../_shared/mailSend.ts";
 
