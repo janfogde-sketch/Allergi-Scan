@@ -20,6 +20,7 @@ import { useFamilyFormContext } from "./FamilyFormContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
 import { useHealthConsent } from "./useHealthConsent.js";
+import { useOAuthProviders } from "./useOAuthProviders.js";
 import HealthConsentBox from "./HealthConsentBox.jsx";
 import { canSaveHealthData } from "./healthConsent.js";
 
@@ -97,6 +98,7 @@ export default function OnboardingScreen({
     user, setUser, isOAuth, accessToken,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword,
   } = useAuthContext();
+  const oauthProviders = useOAuthProviders();
   const {
     allergens, setAllergens, customAllerg, setCustomAllerg,
     family, setFamily, activeProfiles, setActiveProfiles,
@@ -288,7 +290,7 @@ export default function OnboardingScreen({
             {emailIsSaved && (
               <div style={{ fontSize:10, color:"var(--green)", marginTop:3, display:"flex", alignItems:"center", gap:4 }}>
                 <Icon name="check" size={10} color="var(--green)" />
-                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth === "facebook" ? "Bekræftet via Facebook" : isOAuth ? "E-mail bekræftet" : "Allerede gemt fra din konto"}
+                {isOAuth === "google" ? "Bekræftet via Google" : isOAuth === "facebook" ? "Bekræftet via Facebook" : isOAuth === "apple" ? "Bekræftet via Apple" : isOAuth ? "E-mail bekræftet" : "Allerede gemt fra din konto"}
               </div>
             )}
           </div>
@@ -627,8 +629,7 @@ export default function OnboardingScreen({
             på denne skærm (.app-bg-dim i App.jsx), "Adgangskode" i stedet
             for "Kodeord" overalt, ét enkelt "Eller fortsæt med"-separator i
             stedet for to "eller"-linjer, og neutrale/hvide sociale
-            login-knapper (Google/Facebook — Apple fjernet igen 25. sept.
-            2026, samme dag) — ingen af dem må være visuelt stærkere end
+            login-knapper (Apple når slået til i Supabase, Google, Facebook) — ingen af dem må være visuelt stærkere end
             den grønne primær-CTA (.welcome-btn, genbrugt her for samme
             farvepalet/vægt som velkomstskærmen). */}
         {screen === SCREENS.LOGIN && (
@@ -837,6 +838,17 @@ export default function OnboardingScreen({
             {/* Sociale login-knapper — hvide/neutrale (.social-btn, theme.jsx),
                 aldrig visuelt stærkere end den grønne primær-CTA ovenfor. */}
             <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {/* Apple (8. okt. 2026) — vises først, når Apple er slået til i Supabase (useOAuthProviders), og
+                  øverst, som Apples retningslinjer anbefaler. Samme neutrale knap som de andre, Apple-mærket i tekstfarven. */}
+              {oauthProviders.apple && (
+                <button className="social-btn" onClick={() => handleOAuth("apple")} disabled={authLoading}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M16.365 1.43c0 1.14-.47 2.23-1.18 3.03-.76.86-2 1.53-3.03 1.45-.13-1.11.42-2.27 1.13-3.03.79-.86 2.13-1.5 3.08-1.45zM20.5 17.3c-.55 1.27-.82 1.84-1.53 2.96-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06.99-1.73-.02-3.05-1.77-4.04-3.33C-.04 16.08-.33 11 1.42 8.3c1.24-1.92 3.2-3.04 5.04-3.04 1.88 0 3.06 1.03 4.61 1.03 1.51 0 2.43-1.03 4.6-1.03 1.64 0 3.38.89 4.62 2.43-4.06 2.22-3.4 8.02.21 9.61z"/>
+                  </svg>
+                  Fortsæt med Apple
+                </button>
+              )}
+
               {/* Google */}
               <button className="social-btn" onClick={() => handleOAuth("google")} disabled={authLoading}>
                 <svg width="20" height="20" viewBox="0 0 24 24">

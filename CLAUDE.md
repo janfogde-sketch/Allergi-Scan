@@ -182,7 +182,7 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 - `RECIPES_ENABLED=false` (`RecipesScreen.jsx`): Opskrifter på pause; alle 629 opskrifter er slettet permanent. Skal funktionen
   tilbage, sættes flaget til true OG opskrifter importeres forfra.
 - Restaurantguiden er slettet (Madpas dækker behovet); kan hentes fra git. `SCR-20` i `PAGE_IDS` genbruges ikke.
-- "Fortsæt med Apple" er ikke implementeret (kræver Apple Developer-setup og er en distributionsbeslutning).
+- "Fortsæt med Apple" (8. okt. 2026) er bygget og vises øverst på Log ind/Ny bruger, så snart Apple-udbyderen er slået til i Supabase (`useOAuthProviders.js` læser `/auth/v1/settings`); ingen kodeændring ved aktivering. Opsætning: `docs/apple-login-opsaetning.md`.
 
 **Følsomhed pr. allergen (spor):** pr. valgt allergen vælger brugeren "Advar ved spor" (standard; ordet bruges ens i hele appen, Bjørn 8. okt. 2026) eller "Kun ved ingrediens" for "Kan
 indeholde spor af". Data `allergen_levels` (jsonb, `direct_only`) på `users`/`family_members`. Spor er GULE overalt, kun direkte
@@ -243,7 +243,7 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   Bekræftelseslinket registrerer e-mailen af sig selv og går direkte videre til onboarding (ingen mellemskærm). `VerifyEmailScreen` tjekker stille, når
   brugeren vender tilbage til appen (og viser så "bekræftet" med "Fortsæt →"); knappen hedder "Tjek bekræftelse", og "ikke bekræftet endnu" er en neutral besked, ikke en fejl. Et PWA kan ikke åbne linket
   i den installerede app på iOS (kræver native Universal Links); manifestet har `handle_links`/`launch_handler` til Chromium. Linket lander i browseren, og `resolveOnboardingRoute` genoptager.
-- Google/Facebook går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
+- Google/Facebook/Apple går direkte til onboarding. `onboardStep` ligger i `App.jsx` FØR `useAuth()` (ellers TDZ-krasch).
 
 **Allergileksikon:** `knowledge_base` har EU's 14 allergener + hvede med neutral `status_label`; laktose ligger under Ingredienser;
 retter (`dish`) kun via søgning. Risikoniveauer er fjernet og må ikke genindføres uden klar faglig definition. `allergen_ids`
