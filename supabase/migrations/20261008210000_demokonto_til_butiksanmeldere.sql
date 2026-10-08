@@ -60,10 +60,12 @@ begin
 end $$;
 
 -- To do: demokontoen er oprettet; Apple-login er bygget og venter på udviklerkontoen.
-update public.admin_todos set status = 'done', updated_at = now()
+update public.admin_todos
+   set status = 'done', completed_at = coalesce(completed_at, now()), updated_at = now()
  where id = '00dcb2d2-4a9f-455b-b2f2-364dbc4c4fbd' and status <> 'done';
-insert into public.admin_todo_comments (todo_id, body) values
-  ('00dcb2d2-4a9f-455b-b2f2-364dbc4c4fbd',
-   'Lukket 8. okt. 2026 (Claude, efter Bjørns ja): demokontoen appreview@eatsafe.dk er oprettet ved denne merge (bekræftet, onboarding færdig, samtykke, jordnødder/nødder/laktose og børneprofilen Emma med mælk og æg; mailkanalen slået fra). Login-oplysninger og noter til anmelderne (stregkoder at prøve, kontosletning, samtykke) står i /mnt/project-files/eatsafe/butikserklaeringer-udfyldningsark-2026-10-08.md. Kontoen må ikke slettes eller gøres til admin.'),
-  ('c9e99f2d-d86a-4c37-a612-6c33b7148e86',
-   '8. okt. 2026 (Claude): "Fortsæt med Apple" er bygget i appen og vises automatisk, når Apple-udbyderen slås til i Supabase. Opsætning hos Apple og Supabase: docs/apple-login-opsaetning.md. Mangler: Apple Developer-kontoen (næste uge), nøglen/Services ID og aktivering i Supabase. Apple-hemmeligheden udløber efter højst 6 måneder og skal fornyes.');
+insert into public.admin_todo_comments (todo_id, body)
+select '00dcb2d2-4a9f-455b-b2f2-364dbc4c4fbd', 'Lukket 8. okt. 2026 (Claude, efter Bjørns ja): demokontoen appreview@eatsafe.dk er oprettet ved denne merge (bekræftet, onboarding færdig, samtykke, jordnødder/nødder/laktose og børneprofilen Emma med mælk og æg; mailkanalen slået fra). Login-oplysninger og noter til anmelderne (stregkoder at prøve, kontosletning, samtykke) står i /mnt/project-files/eatsafe/butikserklaeringer-udfyldningsark-2026-10-08.md. Kontoen må ikke slettes eller gøres til admin.'
+where exists (select 1 from public.admin_todos where id = '00dcb2d2-4a9f-455b-b2f2-364dbc4c4fbd');
+insert into public.admin_todo_comments (todo_id, body)
+select 'c9e99f2d-d86a-4c37-a612-6c33b7148e86', '8. okt. 2026 (Claude): "Fortsæt med Apple" er bygget i appen og vises automatisk, når Apple-udbyderen slås til i Supabase. Opsætning hos Apple og Supabase: docs/apple-login-opsaetning.md. Mangler: Apple Developer-kontoen (næste uge), nøglen/Services ID og aktivering i Supabase. Apple-hemmeligheden udløber efter højst 6 måneder og skal fornyes.'
+where exists (select 1 from public.admin_todos where id = 'c9e99f2d-d86a-4c37-a612-6c33b7148e86');
