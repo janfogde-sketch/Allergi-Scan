@@ -32,6 +32,8 @@ revoke all on function public.run_classify_categories() from public, anon, authe
 -- Hvert 5. minut; gør intet, når alle produkter har underkategori.
 select cron.schedule('classify-categories-backlog', '*/5 * * * *', 'select public.run_classify_categories();');
 
-insert into admin_todo_comments (todo_id, body) values
-  ('08b2d37e-6beb-4375-b92e-6a661dcea2da',
-   'Status: planlagt job "classify-categories-backlog" kategoriserer de ca. 17.300 produkter uden underkategori (inkl. de 324 uden kategori og de 3 med rå tekst) i portioner à 300 hvert 5. minut, højst 1.000 Claude-kald i døgnet. Forventet færdigt i løbet af få timer efter merge. Lukkes, når kontroltal viser 0 mangler.');
+insert into public.admin_todo_comments (todo_id, body)
+select '08b2d37e-6beb-4375-b92e-6a661dcea2da',
+       'Status: planlagt job "classify-categories-backlog" kategoriserer de ca. 17.300 produkter uden underkategori (inkl. de 324 uden kategori og de 3 med rå tekst) i portioner à 300 hvert 5. minut, højst 1.000 Claude-kald i døgnet. Forventet færdigt i løbet af få timer efter merge. Lukkes, når kontroltal viser 0 mangler.'
+where exists (select 1 from public.admin_todos where id = '08b2d37e-6beb-4375-b92e-6a661dcea2da')
+  and not exists (select 1 from public.admin_todo_comments where todo_id = '08b2d37e-6beb-4375-b92e-6a661dcea2da' and body like 'Status: planlagt job "classify-categories-backlog"%');
