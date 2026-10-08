@@ -1,5 +1,7 @@
 # EatSafe — Historik (arkiv)
 
+> **Gyldig pr. 8. okt. 2026**: arkiv over historik og begrundelser. Ældre afsnit beskriver tilstanden på det tidspunkt og kan være overhalet; `CLAUDE.md` og `src/CONTEXT.md` er den gældende nutidstilstand.
+
 > Denne fil er IKKE automatisk loadet ved session-start — kun `CLAUDE.md`
 > er det. Flyttet herud 15. sept. 2026 efter `token-audit`-skillen fandt
 > at den dag-for-dag-loggede designforbedrings-historik (det gamle
