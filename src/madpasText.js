@@ -429,6 +429,15 @@ export const MADPAS_EXAMPLES_LABEL_T = {
   tr:"Şunlarda bulunabilir:", th:"อาจพบได้ใน:", el:"Μπορεί να βρεθεί σε:",
 };
 
+// F5-2 (Bjørn, 8. okt. 2026): egne allergier er fritekst og oversættes ikke. Under dem står en note på madpassets sprog,
+// så tjeneren forstår, hvorfor ordet står på dansk. Vises ikke, når madpasset selv er på dansk.
+export const MADPAS_WRITTEN_IN_DANISH_T = {
+  en:"Written in Danish", de:"Auf Dänisch geschrieben", fr:"Écrit en danois", es:"Escrito en danés",
+  it:"Scritto in danese", nl:"In het Deens geschreven", pt:"Escrito em dinamarquês", pl:"Napisane po duńsku",
+  sv:"Skrivet på danska", no:"Skrevet på dansk", ja:"デンマーク語で記載", zh:"以丹麦语书写", ar:"مكتوب باللغة الدنماركية",
+  tr:"Danca yazılmıştır", th:"เขียนเป็นภาษาเดนมาร์ก", el:"Γραμμένο στα δανικά",
+};
+
 export const ALLERGEN_T = {
   gluten:      { en:{n:"Gluten",d:"Contains gluten (wheat, rye, barley, oats, spelt)"},de:{n:"Gluten",d:"Enthält Gluten (Weizen, Roggen, Gerste, Hafer, Dinkel)"},fr:{n:"Gluten",d:"Contient du gluten (blé, seigle, orge, avoine, épeautre)"},es:{n:"Gluten",d:"Contiene gluten (trigo, centeno, cebada, avena, espelta)"},it:{n:"Glutine",d:"Contiene glutine (frumento, segale, orzo, avena, farro)"},nl:{n:"Gluten",d:"Bevat gluten (tarwe, rogge, gerst, haver, spelt)"},pt:{n:"Glúten",d:"Contém glúten (trigo, centeio, cevada, aveia, espelta)"},pl:{n:"Gluten",d:"Zawiera gluten (pszenica, żyto, jęczmień, owies, orkisz)"},sv:{n:"Gluten",d:"Innehåller gluten (vete, råg, korn, havre, dinkel)"},no:{n:"Gluten",d:"Inneholder gluten (hvete, rug, bygg, havre, spelt)"},ja:{n:"グルテン",d:"グルテン含有（小麦・ライ麦・大麦・燕麦・スペルト小麦）"},zh:{n:"麸质",d:"含麸质（小麦、黑麦、大麦、燕麦、斯佩尔特小麦）"},ar:{n:"الغلوتين",d:"يحتوي على الغلوتين (قمح، جاودار، شعير، شوفان)"},tr:{n:"Gluten",d:"Gluten içerir (buğday, çavdar, arpa, yulaf, kavılca)"},th:{n:"กลูเตน",d:"มีกลูเตน (ข้าวสาลี, ข้าวไรย์, ข้าวบาร์เลย์, ข้าวโอ๊ต)"},el:{n:"Γλουτένη",d:"Περιέχει γλουτένη (σιτάρι, σίκαλη, κριθάρι, βρώμη, ζέα)"} },
   // "hvede" og "maelkeallergi" manglede oprindeligt her (26. sept. 2026,

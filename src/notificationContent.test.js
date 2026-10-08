@@ -156,7 +156,7 @@ describe("indholdsregler fra pakken", () => {
     expect(quote.text.length).toBe(250);
     expect(quote.text.endsWith("…")).toBe(true);
     const none = renderNotification("N6:in_progress", { ...SAMPLE, description: "" });
-    expect(none.blocks.find((b) => b.type === "quote").text).toBe("Din tilbagemelding i EatSafe");
+    expect(none.blocks.find((b) => b.type === "quote").text).toBe("Din feedback i EatSafe");
   });
 
   it("N6 har fire varianter med hver sin status", () => {

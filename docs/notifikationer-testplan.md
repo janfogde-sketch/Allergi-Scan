@@ -80,7 +80,7 @@ Samme hændelser som i afsnit 2. Læs mailen på **iPhone Mail, Gmail-app og web
 ## 4. Fejl og kanttilfælde
 
 - [ ] Slettet besked/ticket/invitation → neutral besked, ingen crash.
-- [ ] "Se din feedback" viser tilbagemelding, status og teamets svar; anden kontos ticket kan ikke åbnes.
+- [ ] "Se din feedback" viser feedback, status og svar fra EatSafe; anden kontos ticket kan ikke åbnes.
 - [ ] Afvis flere indsendelser på én gang (bulk): der spørges om **én** begrundelse, som sendes til alle.
 - [ ] Tjek admin → Fejl: ingen nye `edge:notify`-fejl efter testen.
 

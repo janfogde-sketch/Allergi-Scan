@@ -6,7 +6,7 @@
 const PRODUCT = { productName: "Arla Økologisk Letmælk", ean: "5760466000000" };
 const TICKET = {
   ticketExcerpt: "Scanneren fandt ikke stregkoden på min havregryn.",
-  message: "Tak for din tilbagemelding. Vi har set på det og rettet fejlen.",
+  message: "Tak for din feedback. Vi har set på det og rettet fejlen.",
   ticketId: "00000000-0000-0000-0000-000000000000",
 };
 const LIST = { listName: "Weekendindkøb", listId: "00000000-0000-0000-0000-000000000000" };
