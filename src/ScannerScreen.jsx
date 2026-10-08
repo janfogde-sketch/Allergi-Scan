@@ -525,8 +525,7 @@ export default function ScannerScreen({
                     {scanReady && (
                       <div style={{
                         position:"absolute", left:4, right:4, height:2,
-                        background:"linear-gradient(90deg, transparent, var(--green-accent), rgba(134,239,172,.8), var(--green-accent), transparent)",
-                        boxShadow:"0 0 8px var(--green-accent), 0 0 16px var(--green-accent)",
+                        background:"linear-gradient(90deg, transparent, var(--green-accent) 15%, var(--green-accent) 85%, transparent)",
                         animation:"laserMove 1.8s ease-in-out infinite",
                         top:0,
                       }} />
@@ -565,7 +564,7 @@ export default function ScannerScreen({
                     brugeren aldrig står fast uden en vej videre. */}
                 <div style={{ position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)", zIndex:2, display:"flex", flexDirection:"column", alignItems:"center", gap:6, maxWidth:"88%" }}>
                   {scanZoom > 1.0 && (
-                    <div style={{ fontSize:10, fontWeight:600, color:"rgba(134,239,172,.85)", textShadow:"0 1px 2px rgba(0,0,0,.6)" }}>
+                    <div style={{ fontSize:10, fontWeight:600, color:"rgba(255,255,255,.85)", textShadow:"0 1px 2px rgba(0,0,0,.6)" }}>
                       {scanZoom}× zoom
                     </div>
                   )}

@@ -886,7 +886,7 @@ body::-webkit-scrollbar{display:none;}
 .reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
 .reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
 .reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
-.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
+.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
