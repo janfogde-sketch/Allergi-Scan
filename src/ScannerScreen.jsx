@@ -3,7 +3,7 @@ import React, { useState, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum, initials, scanTargetCopy } from "./helpers.js";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, normalizeScannedBarcode, initials, scanTargetCopy } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback, CloseButton } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -406,12 +406,13 @@ export default function ScannerScreen({
       setManualEanError("Stregkodenummeret skal have 8 eller 13 cifre.");
       return;
     }
-    if (!isValidEanChecksum(digits)) {
+    const code = normalizeScannedBarcode(digits);
+    if (!code) {
       setManualEanError("Nummeret er ikke et gyldigt EAN. Tjek at alle cifre er tastet rigtigt.");
       return;
     }
     setShowManualEan(false); setManualEanError(""); setManualEanValue("");
-    lookupProduct(digits);
+    lookupProduct(code);
   };
   const manualEanReadyLength = [8, 12, 13, 14].includes(manualEanValue.length);
 
@@ -480,7 +481,7 @@ export default function ScannerScreen({
                     kamerabilledet, og hjælpeteksten efter 5 s har en fast plads. */}
                 <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
                   <div style={{
-                    position:"absolute", top:72, bottom:66, left:"6%", right:"6%",
+                    position:"absolute", top:72, bottom:72, left:"6%", right:"6%",
                     boxShadow:"0 0 0 9999px rgba(0,0,0,.32)", borderRadius:12,
                   }}>
                     {["tl","tr","bl","br"].map(key => (
@@ -511,7 +512,7 @@ export default function ScannerScreen({
                       </div>
                     )}
                   </div>
-                  <div style={{ position:"absolute", bottom:42, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
+                  <div style={{ position:"absolute", bottom:48, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
                     Placér stregkoden inden for rammen
                   </div>
                   {/* Hjælpeteksten har en fast plads under instruktionen og toner
@@ -526,7 +527,7 @@ export default function ScannerScreen({
                   <CamCtrlBtn icon="flashlight" label={torchOn ? "Lygte til" : "Lygte"} ariaLabel={torchOn ? "Sluk lygte" : "Tænd lygte"} ariaPressed={torchOn} onClick={toggleTorch} active={torchOn} />
                 </div>
                 {zoomSupported && (
-                  <button onClick={toggleZoom} aria-label={scanZoom >= 2 ? "Slå zoom fra" : "Zoom 2 gange ind"} aria-pressed={scanZoom >= 2}
+                  <button onClick={toggleZoom} aria-label={scanZoom >= 2 ? "Zoom 2×, slå fra" : "Zoom 1×, zoom 2 gange ind"} aria-pressed={scanZoom >= 2}
                     style={{
                       position:"absolute", top:38, left:"50%", transform:"translateX(-50%)", zIndex:2,
                       width:44, height:28, padding:0, borderRadius:999,
@@ -535,7 +536,7 @@ export default function ScannerScreen({
                       color: scanZoom >= 2 ? "var(--ink)" : "#fff",
                       border:"1px solid rgba(255,255,255,.3)",
                     }}>
-                    2×
+                    {scanZoom >= 2 ? "2×" : "1×"}
                   </button>
                 )}
               </div>
@@ -616,7 +617,7 @@ export default function ScannerScreen({
                       størrelse/placering urørt. */}
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:500, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     {cameraPermissionDenied
-                      ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."
+                      ? "Kameraadgang er slået fra. Vælg et billede eller indtast koden i stedet."
                       : scanTarget.intro}
                   </div>
                 </div>
@@ -693,18 +694,21 @@ export default function ScannerScreen({
                         </div>
                         <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Kameraadgang er slået fra</div>
                         <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
-                          Tillad kameraadgang for at scanne stregkoder — eller brug en af mulighederne nedenfor.
+                          Giv adgang til kameraet i telefonens indstillinger (iPhone: Indstillinger › Safari › Kamera; Android: browserens webstedsindstillinger), og tryk Prøv igen. Du kan også bruge mulighederne nedenfor.
                         </div>
                         <div style={{ display:"flex", gap:8 }}>
                           <button onClick={() => galleryInputRef.current?.click()}
                             style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--surface2)", border:"1px solid var(--border2)", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                            <Icon name="image" size={13} color="var(--ink)" /> Billede
+                            <Icon name="image" size={13} color="var(--ink)" /> Vælg billede
                           </button>
                           <button onClick={() => openManualEan()}
                             style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--green)", border:"none", fontFamily:"var(--f)", fontSize:12.5, fontWeight:800, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                            <Icon name="edit" size={13} color="var(--on-green)" /> Indtast EAN
+                            <Icon name="edit" size={13} color="var(--on-green)" /> Indtast kode
                           </button>
                         </div>
+                        <button type="button" className="link-green" style={{ marginTop:14 }} onClick={() => startCamera()}>
+                          Prøv igen
+                        </button>
                       </div>
                     </div>
                   ) : (

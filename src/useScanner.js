@@ -10,7 +10,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
-import { compressImageToBase64, isValidEanChecksum, apiCall, makeHeaders } from "./helpers.js";
+import { compressImageToBase64, isValidEanChecksum, normalizeScannedBarcode, apiCall, makeHeaders } from "./helpers.js";
 import { reportError } from "./errorReporter.js";
 
 // ── Delt to-trins stregkode-afkodning fra et billede ──────────────────────
@@ -154,8 +154,9 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
         rotCtx.drawImage(frame, -w / 2, -h / 2);
         rotCtx.setTransform(1, 0, 0, 1, 0, 0);
         const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(rot)));
-        const code = reader.decode(bitmap).getText();
-        if (!code || !rotatedLoopRef.current || !isValidEanChecksum(code)) return;
+        const result = reader.decode(bitmap);
+        const code = normalizeScannedBarcode(result.getText(), Z.BarcodeFormat[result.getBarcodeFormat()]);
+        if (!code || !rotatedLoopRef.current) return;
         if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
         stopCamera();
         onScanSuccessRef.current?.(code);
@@ -235,14 +236,18 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
 
       await html5QrRef.current.start(
         { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
-        (code) => {
+        (rawCode, decoded) => {
+          // Kameraet er allerede stoppet (en kode er under behandling):
+          // ignorér sene afkodninger, så samme scanning ikke sendes to gange.
+          if (!html5QrRef.current) return;
           // Ugyldig/garblet afkodning ignoreres stille og scanningen
           // fortsætter (28. sept. 2026, FINAL POLISH – SCANNER, krav 12) —
           // et enkelt fejlaflæst frame er normalt og forbigående, så et
           // afbrydende fejlbanner ville være mere distraherende end
           // hjælpsomt her (i modsætning til manuel EAN-indtastning, hvor
           // samme validering VISER en fejltekst, se ScannerScreen.jsx).
-          if (!isValidEanChecksum(code)) return;
+          const code = normalizeScannedBarcode(rawCode, decoded?.result?.format?.formatName);
+          if (!code) return;
           const now = Date.now();
           if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
           lastScannedRef.current = { code, time: now };

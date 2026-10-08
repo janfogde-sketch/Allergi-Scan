@@ -1149,7 +1149,7 @@ button.filter-chip{width:auto;}
 @media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}}
 /* Kamerascannerens linje (Bjørn, 8. okt. 2026): tynd EatSafe-grøn, svag lyseffekt,
    glider langsomt frem og tilbage uden stop. Flyttes med transform. */
-.scan-hint{position:absolute;bottom:8px;left:12px;right:12px;text-align:center;font-size:12px;font-weight:500;line-height:1.3;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75);opacity:0;transition:opacity .45s ease;}
+.scan-hint{position:absolute;bottom:8px;left:12px;right:12px;text-align:center;font-size:12px;font-weight:400;line-height:1.3;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.75);opacity:0;transition:opacity .6s ease;}
 .scan-hint.on{opacity:1;}
 .scan-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 14px;}
 .btn.scan-action{min-height:46px;padding:10px 8px;font-size:14px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:8px;}
