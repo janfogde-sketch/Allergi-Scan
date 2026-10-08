@@ -997,5 +997,20 @@
    "maelkeallergi": "no"
   },
   "kilde": "Mælkefri margarine"
+ },
+ {
+  "text": "Produktet er glutenfrit. Majsstivelse, vand, salt",
+  "expect": {
+   "gluten": "no"
+  },
+  "kilde": "8. okt. E3: 'glutenfrit' er negation"
+ },
+ {
+  "text": "Chokolade uden sukker, hvedemel",
+  "expect": {
+   "hvede": "yes",
+   "gluten": "yes"
+  },
+  "kilde": "8. okt. E3: negation stopper ved komma"
  }
 ]

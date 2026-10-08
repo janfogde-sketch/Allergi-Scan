@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { ALLERGEN_KEYWORDS } from "../supabase/functions/_shared/allergenKeywords.js";
-import { SUBSTRING_KEYWORDS } from "../supabase/functions/_shared/allergenEngine.js";
+import { SUBSTRING_KEYWORDS, isNegatedAt } from "../supabase/functions/_shared/allergenEngine.js";
 
 export { ALLERGEN_KEYWORDS };
 
@@ -62,41 +62,17 @@ function findAllKeywordIndices(text, kw) {
   return indices;
 }
 
-// Negations-detektion: "mælkefri", "uden mælk", "gluten under 0,01%" — samme
-// heuristik (18-tegns kontekst-vindue) som backend allergens Edge Function's
-// isNegated(), porteret hertil fordi highlighting/diæt-tjek/custom-allergi-
-// matching selv scanner rå ingredienstekst i stedet for at gå via de allerede
-// analyserede allergen_flags. Korte nøgleord (<=4 tegn) er allerede delvist
-// beskyttet af ordgrænse-tjekket ("mælkefri" fejler boundary da "e" efter
-// "mælk" er et bogstav) — denne funktion lukker hullet for lange nøgleord som
-// "gluten", der ellers matcher som ren understreng inde i "glutenfri".
-function isNegatedAt(text, idx, kwLength) {
-  const before = text.substring(Math.max(0, idx - 18), idx);
-  const after = text.substring(idx + kwLength, idx + kwLength + 18);
-  return (
-    before.includes("uden") ||
-    before.includes("fri for") ||
-    before.includes("ingen") ||
-    before.includes("ohne") ||
-    after.startsWith("fri") ||
-    after.startsWith("-fri") ||
-    after.startsWith("frei") ||
-    after.startsWith("-frei") ||
-    after.includes("under 0") ||
-    after.includes("free")
-  );
-}
-
 export function keywordMatches(text, keyword) {
   const kw = keyword.toLowerCase();
   if (!kw) return false;
   // "spor afæg" (manglende mellemrum i butiksdata) skal behandles som "spor af æg", ellers matcher "æg" aldrig som eget ord
-  text = text.replace(/\bspor\s+af(?=[a-zæøå])/g, "spor af ");
+  // Én fælles negationsregel med backend-motoren (isNegatedAt i allergenEngine.js): kun inden for samme kommasegment.
+  text = text.toLowerCase().replace(/\bspor\s+af(?=[a-zæøå])/g, "spor af ");
   const indices = findAllKeywordIndices(text, kw);
   // "some" i stedet for kun at tjekke første forekomst — hvis BARE ÉN
   // forekomst af ordet er en ægte (ikke-negeret) omtale, skal det flages,
   // selvom en anden forekomst af samme ord et andet sted er negeret.
-  return indices.some(idx => !isNegatedAt(text, idx, kw.length));
+  return indices.some(idx => !isNegatedAt(text, idx, idx + kw.length));
 }
 
 // Fritekst-matching af brugerens EGNE, frit tilføjede allergier (feltet

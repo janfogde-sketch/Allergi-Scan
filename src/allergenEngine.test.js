@@ -178,6 +178,16 @@ describe("hjælpefunktioner", () => {
     expect(shouldUseClaudeFallback("Zutaten: Zucker, Weizenmehl")).toBe(true);
     expect(shouldUseClaudeFallback("Chokolade uden mælk")).toBe(true);
   });
+
+  it("reserve-tjek: lang liste uden fund læses af Claude, kort liste og lister med fund ikke", () => {
+    const lang = "majsstivelse, ".repeat(15) + "vand";
+    expect(lang.length).toBeGreaterThanOrEqual(200);
+    expect(shouldUseClaudeFallback(lang)).toBe(false); // uden flag gælder kun de gamle regler
+    expect(shouldUseClaudeFallback(lang, analyzeIngredients(lang))).toBe(true);
+    expect(shouldUseClaudeFallback("Sukker, vand", analyzeIngredients("Sukker, vand"))).toBe(false);
+    const medFund = lang + "hvedemel";
+    expect(shouldUseClaudeFallback(medFund, analyzeIngredients(medFund))).toBe(false);
+  });
 });
 
 describe("gennemgang af 100 produkter (2. okt.)", () => {

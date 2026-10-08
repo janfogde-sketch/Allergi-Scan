@@ -191,3 +191,13 @@ describe("sammensatte mælkeord i ingredienslisten (30. sept. 2026)", () => {
     expect(detectAllergensInText("syre: citronsyre. Kan indeholde: ÆG.")).not.toContain("maelkeallergi");
   });
 });
+
+describe("fælles negationsregel med backend", () => {
+  it("negation gælder kun inden for samme kommasegment", () => {
+    expect(keywordMatches("Chokolade uden sukker, hvedemel", "hvede")).toBe(true);
+    expect(keywordMatches("uden gluten", "gluten")).toBe(false);
+    expect(keywordMatches("Mælkefri chokolade", "mælk")).toBe(false);
+    expect(keywordMatches("free from milk, wheat flour", "wheat")).toBe(true);
+    expect(keywordMatches("free from milk, wheat flour", "milk")).toBe(false);
+  });
+});

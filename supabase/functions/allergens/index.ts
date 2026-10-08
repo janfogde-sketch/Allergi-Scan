@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     // Dagligt loft mod misbrug: pr. bruger for loggede kald, globalt for interne/anonyme kald.
     // Over loftet springes kun Claude over; nøgleordsmotoren kører som normalt.
     let claudeAllowed = false;
-    if (force_ai || shouldUseClaudeFallback(text)) {
+    if (force_ai || shouldUseClaudeFallback(text, allergenFlags)) {
       const usageClient = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
