@@ -50,6 +50,10 @@ Deno.serve(async (req) => {
         headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `welcome-${to}` },
         body: JSON.stringify({ from: FROM, to: [to], subject: WELCOME_MAIL_SUBJECT, html: renderWelcomeMail(data.name) }),
       });
+      // 409 = nøglen er brugt inden for 24 t med anden tekst: velkomstmailen er allerede sendt til adressen (fx ved gentest samme dag), så det er ikke en serverfejl.
+      if (res.status === 409) {
+        return new Response(JSON.stringify({ success: true, already_sent: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       if (!res.ok) throw new Error(`Resend fejl ${res.status}: ${await res.text()}`);
       const result = await res.json();
       return new Response(JSON.stringify({ success: true, id: result.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
