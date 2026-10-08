@@ -24,8 +24,8 @@ paths:
 --green-accent:#34D06A   Adskilt, lysere highlight-farve — KUN til små
                          positive mikro-elementer: checkmarks (.chip-check),
                          "safe"-badges/dots (.badge.safe, .recent-dot.safe,
-                         .hist-dot.safe), kamera-scan-reticle/laser-linje
-                         (--green-logo, ScannerScreen.jsx). Må IKKE bruges
+                         .hist-dot.safe). Kamerascannerens hjørner og
+                         linje bruger --green (Bjørn, 8. okt. 2026). Må IKKE bruges
                          til knapper eller andre aktive/valgt-tilstande —
                          den lyse grøn må ikke tage over som primær
                          handlingsfarve i appen (brugerens eksplicitte krav,

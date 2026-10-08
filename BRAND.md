@@ -62,7 +62,7 @@ Steder, der ikke kan læse appens CSS (mails, `public/*.html`, admin, edge-funkt
 | `--green-selected-bg` | `#EFF9F4` | baggrund for valgt chip/fane/filter (altid med `border-color:var(--green)`) |
 | `--green-halo` | `#DDF4E8` | glød bag Scan-knappen |
 | `--green-lt` / `--green-mid` | `#0F7D4F` ved 10 % / 18 % | bløde baggrunde og kanter (ikke valgt-tilstand) |
-| `--green-accent` | `#34D06A` | **kun** små positive mikro-elementer: flueben i chips, "sikker"-prikker og -badges, kamera-sigtekorn. Aldrig knapper eller valgt-tilstand |
+| `--green-accent` | `#34D06A` | **kun** små positive mikro-elementer: flueben i chips, "sikker"-prikker og -badges. Aldrig knapper eller valgt-tilstand |
 | `--on-green` | `#FFFFFF` | tekst på grøn |
 
 ### Status (resultatet af en scanning)

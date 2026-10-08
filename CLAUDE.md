@@ -218,6 +218,8 @@ link kun her og i Profil-footeren. Bevidst udeladt: app-sprog, dataeksport, selv
 
 **Fejltilstande (Bjørn, 6. okt.):** ét system i `theme.jsx` (`.state-box`, `.state-page`, `.offline-bar`) og `StateBox`/`LoadErrorBox` i `SharedComponents.jsx`. Rød kun ved egentlig fejl; offline/gemte data er neutral grå med `wifiOff`-ikonet og den globale bjælke siger status ("Du er offline · Viser gemte data"), mens boksen ved indholdet siger konsekvensen ("Gemte produktdata" + dato); genopretning er EatSafe-grøn. Ingen tekniske ord som "cachede data".
 
+**Kamerascanneren (Bjørn, 8. okt. 2026):** fast layout, der ikke flytter sig: luk øverst til venstre, lygte øverst til højre, rammen i midten (tynde hjørner og en rolig linje `.scan-sweep` i `--green`, ingen glød), "Placér stregkoden inden for rammen" under rammen, 2×-zoom kun når brugeren trykker (`toggleZoom`, vises kun hvis kameraet kan zoome; ingen automatisk zoom), og "Vælg billede"/"Indtast stregkode" kun ét sted, under kamerabilledet. Efter 5 s vises "Kan stregkoden ikke scannes? Prøv at justere afstanden." på en fast plads.
+
 **Scanner:** `stopCamera()` nulstiller al scanner-state (også det manuelle EAN-panel via `closeCameraFully()` i `App.jsx`) ved
 ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsvibration/-lyd via `fireWarningAlert()`.
 
