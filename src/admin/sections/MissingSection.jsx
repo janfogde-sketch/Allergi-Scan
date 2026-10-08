@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 
 export default function MissingSection({ missingEans, missingEansLoading, loadMissingEans, deleteMissingEan }) {
-  useEffect(() => { if (missingEans.length === 0) loadMissingEans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (missingEans.length === 0) loadMissingEans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: henter kun én gang ved åbning, og kun hvis listen er tom
 
   const totalScans = missingEans.reduce((s, r) => s + (r.count || 1), 0);
   const topPrefixes = (() => {

@@ -86,7 +86,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
 
   useEffect(() => {
     if (needsDone(adminTicketFilter) && !ticketsIncludeDone) loadTickets({ includeDone: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: henter kun, når fanen kræver færdige tickets; loadTickets genskabes hver gang og må ikke udløse nyt hent
   }, [adminTicketFilter, ticketsIncludeDone]);
 
   return (
