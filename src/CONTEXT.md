@@ -63,6 +63,8 @@ Bjørn finpudser designet) og Indstillinger → Privatliv & data (status og tilb
 **Backup-tabeller:** `*_backup_20260930` i `public` og skemaet `qa_backup` er rester fra datarettelser (ingen kode bruger dem, Free-planen har
 ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188223c`), derefter skal denne note fjernes.
 
+**Varer uden ingrediensliste (8. okt. 2026):** triggeren `trg_products_unknown_without_ingredients` på `products` sætter alle 16 allergen-flag til `unknown` (kvalitet `low`) ved oprettelse/ændring uden ingrediensliste; `yes`/`traces` bevares, producent-verificerede varer røres ikke. Test `supabase/tests/unknown_without_ingredients.sql`.
+
 **`products.allergen_source_method`:** hvordan `allergen_flags` blev beregnet (adskilt fra `allergen_quality`, som er tillidsniveauet): `keyword`,
 `keyword+claude`, `off_tags`, `off_tags+keyword`; `NULL` = ukendt herkomst (den oprindelige import-pipeline, ikke i dette repo). Skrives af `auto-reparse`,
 `allergens` (`save`) og `products`' OFF-fallback; admin-godkendelsesflows i `useAdmin.js` udleder `allergen_quality` af det FAKTISKE `method`-svar.

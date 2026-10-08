@@ -37,13 +37,14 @@ Alle typer nedenfor er **"Data Linked to You"**, bruges **ikke** til Tracking, o
 | Contact Info | Name, Email Address | App Functionality |
 | Health & Fitness | Health (allergier og intolerancer) | App Functionality |
 | Sensitive Info | (ikke relevant; allergier angives som Health) | — |
-| User Content | Photos or Videos (indsendte produktbilleder), Other User Content (feedback, indkøbslister, indsendt ingredienstekst) | App Functionality |
+| User Content | Photos or Videos (indsendte produktbilleder), Customer Support (feedback), Other User Content (indkøbslister, indsendt ingredienstekst) | App Functionality |
 | Identifiers | User ID | App Functionality |
-| Usage Data | Product Interaction (scanninger, søgninger, favoritter) | App Functionality |
+| Usage Data | Product Interaction (scanninger, favoritter) | App Functionality |
+| Search History | Search History (søgeord og valgt produkt, 12 mdr.) | App Functionality |
 | Diagnostics | Crash Data / Other Diagnostic Data (fejllogs) | App Functionality |
 | Demographics | Alder (fødselsår) og køn: vælg "Other Data Types" | App Functionality, Analytics ikke valgt |
 
-Ikke indsamlet: Financial Info, Location, Contacts, Browsing History, Search History (søgevalg gemmes kun for at rangere egne søgeresultater og er knyttet til brugeren; angiv som Usage Data → Product Interaction; hvis Apple-skemaet kræver det, kan "Search History" også sættes), Purchases, Audio, Advertising Data.
+Ikke indsamlet: Financial Info, Location, Contacts, Browsing History, Purchases, Audio, Advertising Data.
 
 Kamera: bruges til stregkodescanning og billede af emballage; billeder forlader enheden kun, når brugeren selv indsender eller aflæser en etiket. Beskrivelse til Info.plist (iOS-versionen): "EatSafe bruger kameraet til at scanne stregkoder og fotografere ingredienslister."
 
@@ -70,7 +71,7 @@ Ikke indsamlet: Location, Financial info, Contacts, Calendar, Messages, Audio, F
 
 ## Andre erklæringer ved indsendelsen
 - **Indholdsvurdering / alder:** se "Aldersrating" nedenfor.
-- **Helbredsapp (Google Play "Health apps" deklaration):** Play Console spørger, om appen har helbredsfunktioner. Svar: appen håndterer helbredsoplysninger (allergier, intolerancer), men er et informationsværktøj til madvarer og giver ikke diagnose, behandling, medicinsk måling eller medicinsk rådgivning; vælg ikke "medicinsk"/"sygdomsstyring" som funktion. Disclaimer "EatSafe er vejledende" vises i appen. Apple: ikke en medicinsk enhed; Apple-spørgsmålet om "Medical or Treatment Information" besvares "Infrequent/Mild" eller "None" (ingen behandlingsråd).
+- **Helbredsapp (Google Play "Health apps" deklaration):** Play Console spørger, om appen har helbredsfunktioner. Svar: appen håndterer helbredsoplysninger (allergier, intolerancer), men er et informationsværktøj til madvarer og giver ikke diagnose, behandling, medicinsk måling eller medicinsk rådgivning; vælg ikke "medicinsk"/"sygdomsstyring" som funktion. Disclaimer "EatSafe er vejledende" vises i appen. Apple: ikke en medicinsk enhed; Apple-spørgsmålet om "Medical or Treatment Information" besvares "Infrequent" (se Aldersrating).
 - **Målgruppe (Google Play Target audience and content):** aldersgruppe **18 og derover**. Appen er ikke rettet mod børn og søges ikke i Families-programmet. Børneprofiler er forælder-administrerede; barnet bruger ikke selv appen. Svar "Nej" til, at appen appellerer til børn.
 - **Reklame-ID (Google):** appen bruger ikke reklame-ID; svar "Nej".
 - **Nyhedsapp / COVID / finans / myndigheder:** Nej til alle.
@@ -81,9 +82,11 @@ Ikke indsamlet: Location, Financial info, Contacts, Calendar, Messages, Audio, F
 
 ## Aldersrating (svar til spørgeskemaerne)
 
-**Apple (nyt spørgeskema, 4+):** Alle indholdsspørgsmål besvares "Ingen": tegnefilmsvold, realistisk vold, seksuelt indhold, nøgenhed, profanitet, horror, alkohol/tobak/stoffer, hasardspil, konkurrencer, medicinsk eller behandlingsinformation (EatSafe giver ikke behandlingsråd). Brugergenereret indhold: nej, ingen offentlig deling eller chat (kun indkøbslister og invitationer til personer, brugeren selv vælger). Ubegrænset webadgang: nej. Køb i appen: nej. Forventet resultat: **4+**. Vilkårene har ingen minimumsalder, så der sættes ikke en højere aldersgrænse.
+Det fulde udfyldningsark (Apple-skemaet, IARC, Data safety og øvrige erklæringer, klik for klik) ligger i projektmappen: `eatsafe/butikserklaeringer-udfyldningsark-2026-10-08.md`.
 
-**Google Play (IARC-skema, kategori "Utility, productivity, communication or other"):** vold: nej. Seksuelt indhold: nej. Sprog: nej. Kontrollerede stoffer: nej. Brugere kan interagere/udveksle indhold: nej i åben forstand (kun inviterede familiemedlemmer deler lister). Deler brugerens placering: nej. Digitale køb: nej. Forventet resultat: **Alle / PEGI 3**.
+**Apple (spørgeskemaet fra 2025): forventet 13+, ikke 4+.** Leksikonets FAQ har nødråd (fx "Brug EpiPen og ring 112"), så "Medical or Treatment Information" er **Infrequent** (13+), og appen viser alkoholholdige varer, så "Alcohol, Tobacco, or Drug Use or References" er **Infrequent** (13+). "Health or Wellness Topics": Ja. "User-Generated Content": Ja (godkendte indsendelser er synlige for alle; ændrer ikke ratingen). Alt andet: None/Nej. Age Categories: Not Applicable. Har vilkårene en minimumsalder over 13, skal "Override to Higher Age Rating" sættes til den.
+
+**Google Play (IARC, "All Other App Types"):** alkohol: Ja, kun "references" (varer med ingredienser). Brugere interagerer/udveksler indhold: Ja (delte indkøbslister, indsendelser). Alt andet: Nej. Forventet lav rating; IARC beregner selv.
 
 ## Hvad der venter på kontiene
 Intet af ovenstående kan udfyldes, før Google Play-konto (kræver CVR/D-U-N-S) og Apple Developer-konto findes. Når de findes: kopiér titel, beskrivelser, søgeord, kategori og svarene herover; tjek tallene først (SQL øverst i `APP_STORE_METADATA.md`); upload billeder og banner fra projektmappen (`eatsafe/butiksbilleder-v3-2026-10-07`); angiv politik-URL `https://www.eatsafe.dk/privacy.html` og sletnings-URL.
