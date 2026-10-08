@@ -191,7 +191,7 @@ export const MemberForm = ({
           if (!isValid) { setAttempted(true); return; }
           if (!consentOk) return;
           try {
-            if (needsMemberConfirm && !consent.given) await consent.give();
+            if (needsMemberConfirm && !consent.current) await consent.give();
           } catch { showToast("Samtykket kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); return; }
           onAdd();
           setAttempted(false);

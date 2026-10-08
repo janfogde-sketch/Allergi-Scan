@@ -102,6 +102,10 @@ export default {
     ],
     [
       "p",
+      "Ændrer vi ordlyden af samtykket på en måde, der har betydning for dig, beder vi dig om at bekræfte det på ny, første gang du gemmer helbredsoplysninger efter ændringen. Dit tidligere samtykke gælder, indtil du har svaret, og du kan i stedet trække det tilbage."
+    ],
+    [
+      "p",
       "Hvis du trækker dit samtykke tilbage, stopper EatSafe med at behandle de helbredsoplysninger, der er omfattet af samtykket, medmindre der findes et andet lovligt grundlag for en konkret fortsat behandling."
     ],
     [

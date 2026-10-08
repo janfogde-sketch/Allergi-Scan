@@ -48,7 +48,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
   const consent = useHealthConsent();
   const [consentChecked, setConsentChecked] = useState(false);
   const hasHealthData = (allergens.length + customAllerg.length + (customInput.trim() ? 1 : 0)) > 0;
-  const consentOk = canSaveHealthData({ hasHealthData, given: consent.given, checked: consentChecked });
+  const consentOk = canSaveHealthData({ hasHealthData, given: consent.current, checked: consentChecked });
   // Samme lukket-som-standard Accordion-mønster for E-numre som MemberForm.
   const [showENumre, setShowENumre] = useState(false);
 
@@ -71,7 +71,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
   const save = async () => {
     setSavingProfile(true);
     try {
-      if (hasHealthData && !consent.given) await consent.give();
+      if (hasHealthData && !consent.current) await consent.give();
       // Flush en evt. ikke-tilføjet tekst i "Skriv selv"-feltet, så den ikke går tabt
       const pendingCustom = customInput.trim();
       const allCustom = pendingCustom ? addUniqueCustom(customAllerg, pendingCustom) : customAllerg;
@@ -136,7 +136,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         </Accordion>
       </div>
 
-      {hasHealthData && !consent.given && (
+      {hasHealthData && !consent.current && (
         <HealthConsentBox checked={consentChecked} onChange={setConsentChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
       )}
       {/* Fast "Gem ændringer"-bjælke lige over bundnavigationen, kun ved ugemte ændringer. Portal til body, fordi .screen.fade-in efterlader en
