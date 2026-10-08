@@ -108,8 +108,6 @@ begin
         execute format('select count(*) from public.%I where %I=$1', r.t, r.col) into n using val;
       exception
         when insufficient_privilege then n := 0;
-        -- kendt fund: families og family_memberships henviser til hinanden i hver deres politik (uendelig løkke, lukker adgang helt). Står som egen to do.
-        when invalid_object_definition then n := 0; raise notice 'KENDT FUND (politik-løkke): %.%', r.t, r.col;
       end;
       execute 'reset role';
       if st='B' and n>0 then res := res || 'LÆSER-ANDENS:' || r.t || '.' || r.col || '(' || n || ') '; end if;
