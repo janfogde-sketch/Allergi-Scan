@@ -76,8 +76,20 @@ allergi app, allergen scanner, madallergi, stregkode scanner, glutenfri, cøliak
 ## Kategori
 App Store og Google Play: **Mad og drikke (Food & Drink)**
 
+## Titel
+Butikstitlen er **EatSafe** (ikke "EatSafe – Spis trygt"). "Trygt"/"sikkert" i titlen kan læses som en sikkerhedsgaranti for en helbredsrelateret app (Apple 1.4.1, Googles krav om ikke at vildlede). Sloganet "Mere tryghed i hverdagen" bruges kun på velkomstsiden og i "Om EatSafe", ikke i butikkerne.
+
 ## Aldersgrænse og målgruppe
-Afventer endelig afklaring (Jan, F6-4).
+Svarene er udfyldt (udkast 8. okt. 2026), men selve valget i butikkerne sker først, når kontiene findes. Detaljer for spørgeskemaerne står i `BUTIKSDEKLARATIONER.md` under "Aldersrating".
+- **App Store:** 4+ (alle spørgsmål besvares "Ingen"/"Nej"; se skemaet).
+- **Google Play (IARC):** forventet "Alle" / PEGI 3.
+- **Målgruppe (Google Play Target audience):** voksne, 18 år og derover. Børn er ikke målgruppen; børneprofiler oprettes og styres af en voksen. Ikke Families-programmet, ikke Kids-kategorien.
+
+## Kort "Nyt i denne version" (højst 500 tegn, første indsendelse)
+Første version af EatSafe: scan en stregkode og se, hvordan varen matcher dine allergier og intolerancer. Opret profiler til familien, få besked om tilbagekaldte varer, tag dit madpas på 17 sprog med dig, og slå op i leksikonet. EatSafe er vejledende; tjek altid emballagen.
+
+## Skærmbilleder: hvad der skal tages
+Seks billeder (se billedteksterne nedenfor) i App Store 6,9" og 6,5" (iPad kun hvis iPad-version udgives) samt Google Play (telefon, mindst 2, højst 8) og bannergrafik 1024x500. Godkendt sæt: `eatsafe/butiksbilleder-v3-2026-10-07` i projektmappen. Skal laves igen, hvis tal, logo eller skærmene ændres. Manifestets `screenshots`/`display_override` er ikke tilføjet (kun relevant for Chromes installationsdialog, ikke for butikkerne).
 
 ## Privatliv (kort)
 - Kamera bruges til at scanne stregkoder og fotografere ingrediensoplysninger.

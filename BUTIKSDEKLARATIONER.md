@@ -69,12 +69,24 @@ Kamera: bruges til stregkodescanning og billede af emballage; billeder forlader 
 Ikke indsamlet: Location, Financial info, Contacts, Calendar, Messages, Audio, Files, Web browsing, Advertising ID.
 
 ## Andre erklæringer ved indsendelsen
-- **Indholdsvurdering / alder:** afventer Jans afklaring (F6-4); ingen vold, ingen køb, ingen reklame, ingen brugerchat. Brugere deler kun indkøbslister og familieinvitationer med personer, de selv inviterer.
-- **Helbredsapp (Google Play "Health apps" deklaration):** appen er et informationsværktøj til madvarer og giver ikke diagnose eller behandling; vælg ikke "medicinsk" funktion. Disclaimer "EatSafe er vejledende" vises i appen.
+- **Indholdsvurdering / alder:** se "Aldersrating" nedenfor.
+- **Helbredsapp (Google Play "Health apps" deklaration):** Play Console spørger, om appen har helbredsfunktioner. Svar: appen håndterer helbredsoplysninger (allergier, intolerancer), men er et informationsværktøj til madvarer og giver ikke diagnose, behandling, medicinsk måling eller medicinsk rådgivning; vælg ikke "medicinsk"/"sygdomsstyring" som funktion. Disclaimer "EatSafe er vejledende" vises i appen. Apple: ikke en medicinsk enhed; Apple-spørgsmålet om "Medical or Treatment Information" besvares "Infrequent/Mild" eller "None" (ingen behandlingsråd).
+- **Målgruppe (Google Play Target audience and content):** aldersgruppe **18 og derover**. Appen er ikke rettet mod børn og søges ikke i Families-programmet. Børneprofiler er forælder-administrerede; barnet bruger ikke selv appen. Svar "Nej" til, at appen appellerer til børn.
+- **Reklame-ID (Google):** appen bruger ikke reklame-ID; svar "Nej".
+- **Nyhedsapp / COVID / finans / myndigheder:** Nej til alle.
 - **Reklame:** Nej. **Betalinger i appen:** Nej (premium kommer først efter lancering og skal så via Apple IAP/Google Billing).
 - **Kontosletning (Google):** URL `https://www.eatsafe.dk/slet-konto`.
 - **Eksportkontrol (Apple):** appen bruger kun standard-kryptering (HTTPS) → "Nej" til proprietær kryptering.
 - **Sign in with Apple (iOS):** åbent valg for Jan og Bjørn; hører under iOS-sporet.
+
+## Aldersrating (svar til spørgeskemaerne)
+
+**Apple (nyt spørgeskema, 4+):** Alle indholdsspørgsmål besvares "Ingen": tegnefilmsvold, realistisk vold, seksuelt indhold, nøgenhed, profanitet, horror, alkohol/tobak/stoffer, hasardspil, konkurrencer, medicinsk eller behandlingsinformation (EatSafe giver ikke behandlingsråd). Brugergenereret indhold: nej, ingen offentlig deling eller chat (kun indkøbslister og invitationer til personer, brugeren selv vælger). Ubegrænset webadgang: nej. Køb i appen: nej. Forventet resultat: **4+**. Vilkårene har ingen minimumsalder, så der sættes ikke en højere aldersgrænse.
+
+**Google Play (IARC-skema, kategori "Utility, productivity, communication or other"):** vold: nej. Seksuelt indhold: nej. Sprog: nej. Kontrollerede stoffer: nej. Brugere kan interagere/udveksle indhold: nej i åben forstand (kun inviterede familiemedlemmer deler lister). Deler brugerens placering: nej. Digitale køb: nej. Forventet resultat: **Alle / PEGI 3**.
+
+## Hvad der venter på kontiene
+Intet af ovenstående kan udfyldes, før Google Play-konto (kræver CVR/D-U-N-S) og Apple Developer-konto findes. Når de findes: kopiér titel, beskrivelser, søgeord, kategori og svarene herover; tjek tallene først (SQL øverst i `APP_STORE_METADATA.md`); upload billeder og banner fra projektmappen (`eatsafe/butiksbilleder-v3-2026-10-07`); angiv politik-URL `https://www.eatsafe.dk/privacy.html` og sletnings-URL.
 
 ## Afhængigheder, der stadig afventer Jan
 - Dataansvarlig (virksomhedsnavn, CVR, adresse) i privatlivspolitikken, når ApS'et har CVR. Politik-URL'en kan ikke indsendes uden.
