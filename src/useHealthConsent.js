@@ -6,6 +6,7 @@ import { SUPABASE_URL, HEALTH_CONSENT_VERSION } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
 import { consentFromRows } from "./healthConsent.js";
+import { clearOfflineCache } from "./useOffline.js";
 
 export function useHealthConsent() {
   const { userId, accessToken } = useAuthContext();
@@ -39,6 +40,8 @@ export function useHealthConsent() {
     await apiCall(`${SUPABASE_URL}/rest/v1/rpc/withdraw_health_consent`, {
       method: "POST", headers: makeHeaders(accessToken), body: "{}",
     });
+    // Helbredsdata er slettet på serveren; resultaterne gemt på telefonen (matchedDanger m.m.) skal følge med (F2-6).
+    clearOfflineCache();
     await load();
   }, [noSession, accessToken, load]);
 
