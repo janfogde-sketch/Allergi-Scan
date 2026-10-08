@@ -97,6 +97,8 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 
 ---
 
+**Stregkode- og navnehygiejne (8. okt. 2026):** triggeren `products_hygiene` (`normalize_product_ean`, `clean_product_name`) gør 11-/12-cifrede koder til 13 cifre (kun hvis resultatet er et gyldigt GTIN), rydder mellemrum og giver versalnavne normal skrift (korte enkeltord som IPA røres ikke). `products`-funktionen prøver også de andre skrivemåder af en kode (`eanVariants`). 4- og 6-cifrede Bilka-numre er butiksnumre, ikke stregkoder. Kendt og urettet: ca. 78 OFF-koder med forkert kontrolciffer. Før-billede: `products_hygiene_backup_20261008`. Test: `supabase/tests/product_hygiene.sql`.
+
 ## 4. Edge Functions (Supabase)
 
 | Funktion | Beskrivelse |
