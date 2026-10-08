@@ -1,30 +1,82 @@
 {
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.openfoodfacts.org https://jegrpcflyguadyxialkm.supabase.co https://api.qrserver.com; font-src 'self'; connect-src 'self' https://jegrpcflyguadyxialkm.supabase.co wss://jegrpcflyguadyxialkm.supabase.co; media-src 'self' blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), geolocation=(self), microphone=(), payment=(), usb=()"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/.well-known/assetlinks.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/invite/:token", "destination": "/invite.html" },
-    { "source": "/list/:code", "destination": "/list.html" },
-    { "source": "/slet-konto", "destination": "/slet-konto.html" },
-    { "source": "/assets/:path*", "destination": "/assets-missing" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/invite/:token",
+      "destination": "/invite.html"
+    },
+    {
+      "source": "/list/:code",
+      "destination": "/list.html"
+    },
+    {
+      "source": "/slet-konto",
+      "destination": "/slet-konto.html"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/assets-missing"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -101,6 +101,7 @@ TERMS/PRIVACY, ADMIN (mobil), RECIPES (på pause).
    uden for WELCOME/LOGIN/ONBOARD til ONBOARD.
 6. En stille feltnavne-mismatch (kolonne/prop brugt ét sted, aldrig matchet andre steder: `age`/`birth_year`, `customAllerg`/
    `.custom`, ikke-eksisterende `Icon name`) giver ingen fejl i build/tests. Grep efter den slags ved "tekst-/UI-inkonsistens".
+8. **Indholdsspærre (CSP, 8. okt. 2026):** `vercel.json` sætter Content-Security-Policy m.fl. på alle sider. Kun egne scripts (`script-src 'self'`): intet indlejret `<script>` i HTML (læg koden i `public/js/`), ingen `eval`. Nye eksterne adresser (billeder, API, fonte) skal tilføjes i spærren, ellers blokeres de; `src/securityHeaders.test.js` vogter den. Service workeren sender kun egne adresser igennem.
 7. Postgres: `REVOKE EXECUTE ... FROM <rolle>` er en no-op, hvis PUBLIC har adgangen. Verificér med
    `has_function_privilege(rolle, funktion, 'EXECUTE')`.
 

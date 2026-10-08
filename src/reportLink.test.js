@@ -48,7 +48,7 @@ describe("signeret rapport-token", () => {
 });
 
 describe("siden og funktionen hænger sammen", () => {
-  const page = readFileSync("public/uventet-nulstilling.html", "utf-8");
+  const page = readFileSync("public/uventet-nulstilling.html", "utf-8") + readFileSync("public/js/uventet-nulstilling.js", "utf-8");
   const fn = readFileSync("supabase/functions/report-unrequested-reset/index.ts", "utf-8");
   it("siden sender først ved et klik på knappen (ikke ved indlæsning) og kalder funktionen", () => {
     expect(page).toContain("/functions/v1/report-unrequested-reset");
