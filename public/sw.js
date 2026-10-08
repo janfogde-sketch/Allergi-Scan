@@ -15,7 +15,10 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 // som "installerbar" (og dermed sender "beforeinstallprompt") — uden denne
 // kunne browseren i praksis aldrig tilbyde installation, uanset hvor korrekt
 // manifestet ellers er sat op. Ren gennemstrømning, ingen caching-strategi.
+// Kun egne adresser sendes igennem: indholdsspærren (vercel.json) lader service workeren kun hente fra
+// eatsafe.dk og Supabase, så billeder fra Open Food Facts m.fl. hentes direkte af siden i stedet.
 self.addEventListener("fetch", (event) => {
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(fetch(event.request));
 });
 
