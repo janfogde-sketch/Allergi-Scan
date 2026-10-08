@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
+import { eanVariants } from "../_shared/recallParser.js";
 
 // Findes kun i Supabase's kørselsmiljø (ikke i Deno-typerne).
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
@@ -223,11 +224,19 @@ Deno.serve(async (req) => {
       const isEan = !looksLikeUuid;
 
       // Trin 1: Tjek egen database
-      const { data: product } = await supabase
+      let { data: product } = await supabase
         .from("products")
         .select("*")
         .eq(field, identifier)
-        .single();
+        .maybeSingle();
+      // Stregkoder kan være gemt med eller uden foranstillede nuller (UPC 12 cifre / EAN 13): prøv de andre skrivemåder.
+      if (!product && isEan && /^\d{6,14}$/.test(identifier)) {
+        const alt = eanVariants(identifier).filter((v) => v !== identifier);
+        if (alt.length) {
+          const { data: rows } = await supabase.from("products").select("*").in("ean", alt).limit(1);
+          product = rows?.[0] ?? null;
+        }
+      }
 
       if (product) {
         // Kilden er products.allergen_flags og products.ingredients_text; de gamle tabeller bruges ikke længere.
