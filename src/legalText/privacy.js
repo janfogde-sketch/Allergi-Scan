@@ -126,6 +126,10 @@ export default {
     ],
     [
       "p",
+      "Du kan dele en indkøbsliste med din familie, med udvalgte personer fra din familie eller med et link til personer uden for familien. Linket er ikke en åben webside: den, der får det, skal have en EatSafe-konto og være logget ind, og ser kun listens navn og dit fornavn, før vedkommende selv vælger at tilslutte sig. Når personen er tilsluttet, kan vedkommende se og redigere hele listen, altså de varer og noter, der står på den. Alle, der får linket, kan tilslutte sig, så del det kun med personer, du stoler på. Linket virker, til du laver et nyt link eller stopper delingen, og du kan til enhver tid fjerne enkelte personer fra listen. Der deles ingen oplysninger om din profil, dine allergier eller din scanningshistorik gennem en delt liste. Skriver du helbredsoplysninger som fritekst på en delt liste, bliver de synlige for dem, du deler med."
+    ],
+    [
+      "p",
       "Når personoplysninger ikke er indsamlet direkte hos den registrerede, kan EatSafe have en informationspligt efter GDPR artikel 14. Informationen skal som udgangspunkt gives inden for rimelig tid og senest inden for én måned, medmindre en relevant undtagelse finder anvendelse."
     ],
     [
