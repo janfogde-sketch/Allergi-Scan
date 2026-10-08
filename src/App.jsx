@@ -507,7 +507,7 @@ export default function EatSafe() {
   // sit abonnement gemt her (ellers viser appen push som "til", men der kommer intet). Spørger aldrig om tilladelse.
   React.useEffect(() => {
     if (accessToken && userId) syncPushToken(accessToken);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: push-abonnementet synkes ved kontoskifte; accessToken og userId sættes samtidig, og token-fornyelse skal ikke gentage det
   }, [userId]);
 
   // ── Router — browser back-knap support ──────────────────────────────────

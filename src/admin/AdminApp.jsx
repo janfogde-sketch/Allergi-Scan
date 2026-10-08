@@ -158,7 +158,7 @@ export default function AdminApp() {
     if (section === "todo") todos.load();
     if (section === "recalls") recalls.load();
     if (section === "notifications") notifications.load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: hent kun ved sektionsskift eller login; indlæsningsfunktionerne genskabes hver gang og må ikke udløse nye hent
   }, [section, accessToken, isAdmin]);
 
   if (!accessToken) {

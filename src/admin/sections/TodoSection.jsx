@@ -187,12 +187,12 @@ export default function TodoSection({ onOpenTicket, todos, admins, loading, load
   // Færdige opgaver hentes først, når Færdige eller Alle åbnes
   useEffect(() => {
     if (viewNeedsDone(view) && !doneLoaded) loadDone();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: loadDone genskabes hver gang; henter kun når visningen kræver færdige
   }, [view, doneLoaded]);
 
   useEffect(() => {
     if (openId) loadComments(openId); else closeComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: kommentarer hentes kun ved skift af åben opgave; loadComments/closeComments genskabes hver gang
   }, [openId]);
 
   // "Tilføj" åbner den udvidede opgavemenu med titlen udfyldt; først "Opret opgave" gemmer.
