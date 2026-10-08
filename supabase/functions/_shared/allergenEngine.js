@@ -1,3 +1,4 @@
+// @ts-check
 // supabase/functions/_shared/allergenEngine.js
 //
 // Allergenmotoren: den rene analyse af en ingrediensliste (ja/spor/nej pr.

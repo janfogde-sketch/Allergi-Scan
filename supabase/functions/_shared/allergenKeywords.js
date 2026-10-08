@@ -1,3 +1,4 @@
+// @ts-check
 // supabase/functions/_shared/allergenKeywords.js
 //
 // ÉN fælles nøgleordsordbog for allergen-detektion, brugt af BÅDE backend

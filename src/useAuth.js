@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useAuth.js
 // Håndterer al auth-logik: tokens, login, signup, OAuth, clearAuth.
@@ -147,7 +147,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [passwordError, setPasswordError] = useState("");
   const [authLoading, setAuthLoading]   = useState(false);
   const [authTab, setAuthTab]           = useState("signup"); // "signup" | "login"
-  const [isOAuth, setIsOAuth]           = useState(false);
+  const [isOAuth, setIsOAuth]           = useState(/** @type {boolean | string} */ (false));
   // Aflæst allerede under første render, FØR nogen effekt kører: landede
   // appen fra et login-/bekræftelseslink (#access_token=...)? Effekten
   // nedenfor, der tager imod linket, fjerner selve hashen fra adressen, så

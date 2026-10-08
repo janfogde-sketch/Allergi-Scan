@@ -1,3 +1,4 @@
+// @ts-check
 // Delt-status for en indkøbsliste. Listenavnet er brugerdefineret og indgår aldrig her: kun type/ejer/adgang afgør status.
 // Serveren (shopping) beriger lister med owner_name (fornavn, for andres lister) og shared_with (fornavne, for egne lister).
 
