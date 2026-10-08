@@ -328,6 +328,9 @@ henter som standard kun åbne/aktive; de færdige hentes først, når Færdige/A
 
 **Link fra opgave til ticket (2. okt. 2026):** en opgave, der stammer fra en ticket (`admin_todos.ticket_id`), har knappen "Åbn ticket" i listen og i opgavens vindue. Den skifter til fanen Tickets og åbner ticketten via `openTicketById(id)` i `useAdmin.js`, som henter ticketten direkte (virker også for løste tickets, som ikke står i den indlæste liste).
 
+
+**Frafald i start (8. okt. 2026):** admin → Brugere & kommunikation → "Frafald i start" viser fordelingen af `users.onboarding_step` for ikke-færdige konti (RPC `admin_onboarding_funnel()`, kun admins, kun tællinger).
+
 ## 11. Auth-mails fra Resend via Send Email Hook (slået til 1. okt. 2026)
 
 Supabase Auth kan sende sine mails på to måder, og begge går gennem Resend:
