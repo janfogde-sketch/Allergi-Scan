@@ -57,3 +57,35 @@ describe("public/sw.js push", () => {
     expect(opts.tag).toBe("inv-1");
   });
 });
+
+describe("public/sw.js offline-side", () => {
+  function loadFetch(fetchImpl, cached) {
+    const listeners = {};
+    const self = { addEventListener: (t, fn) => { listeners[t] = fn; }, location: { origin: "https://www.eatsafe.dk" }, skipWaiting: () => {}, clients: { claim: () => Promise.resolve() } };
+    const context = { self, clients: self.clients, caches: { match: () => Promise.resolve(cached) }, fetch: fetchImpl, Response: { error: () => "fejl" }, URL, Date, console };
+    vm.runInNewContext(readFileSync(resolve(__dirname, "../public/sw.js"), "utf8"), context);
+    return listeners.fetch;
+  }
+  const nav = (url = "https://www.eatsafe.dk/") => ({ request: { mode: "navigate", url }, respondWith: vi.fn() });
+
+  it("viser offline-siden, når en navigation fejler", async () => {
+    const f = loadFetch(() => Promise.reject(new Error("offline")), "OFFLINE");
+    const e = nav();
+    f(e);
+    expect(await e.respondWith.mock.calls[0][0]).toBe("OFFLINE");
+  });
+
+  it("sender en navigation med net uændret igennem", async () => {
+    const f = loadFetch(() => Promise.resolve("SIDE"), "OFFLINE");
+    const e = nav();
+    f(e);
+    expect(await e.respondWith.mock.calls[0][0]).toBe("SIDE");
+  });
+
+  it("rører ikke ved andre forespørgsler", () => {
+    const f = loadFetch(() => Promise.resolve("X"), "OFFLINE");
+    const e = { request: { mode: "cors", url: "https://www.eatsafe.dk/assets/a.js" }, respondWith: vi.fn() };
+    f(e);
+    expect(e.respondWith).not.toHaveBeenCalled();
+  });
+});
