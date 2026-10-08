@@ -1,0 +1,6 @@
+-- Lukker to do'en om at afprøve, at oprydningen af inaktive konti må kalde delete-user med systemnøglen.
+update public.admin_todos set status = 'done' where id = '0070c7da-2fd2-49c2-9c52-55c7e0b9c937';
+insert into public.admin_todo_comments (todo_id, body)
+select t.id,
+  'Afprøvet 8. okt. 2026. Systemnøglen, som oprydningen sender til delete-user, er den samme som natopgaverne auto-reparse og auto-import-off sender til deres funktioner. auto-reparse har samme login-tjek som delete-user (verify_jwt=true) og svarede 200 kl. 03:00 UTC i dag, så adgangsporten lader nøglen igennem. Selve tjekket i delete-user (systemkald må slette, en gættet nøgle afvises) er dækket af testen i src/edgeDeleteUser.test.js, og oprydningen afviser selv kald uden nøglen (401). Login-tjekket på delete-user er IKKE slået fra. Ikke afprøvet: et rigtigt sletningskald mod delete-user (blev afvist af sikkerhedsspærren, og der findes ingen tom testkonto, der skal slettes); første rigtige sletning sker, når en konto passerer 36 måneder + 30 dages varsel, og fejl logges i client_errors (kilde edge:inactive-accounts). Opfølgning (forslag): tjek client_errors for den kilde efter den første rigtige sletning.'
+from public.admin_todos t where t.id = '0070c7da-2fd2-49c2-9c52-55c7e0b9c937';
