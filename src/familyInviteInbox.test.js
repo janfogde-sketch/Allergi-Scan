@@ -52,17 +52,17 @@ const TOKEN = "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718";
 
 describe("parseInviteToken: et indsat link eller en kode (fx når linket blev åbnet i en anden browser)", () => {
   it("læser tokenet fra det fulde link, med og uden afsluttende tegn", () => {
-    expect(parseInviteToken(`https://eatsafe.dk/invite/${TOKEN}`)).toBe(TOKEN);
-    expect(parseInviteToken(`  https://eatsafe.dk/invite/${TOKEN}/  `)).toBe(TOKEN);
+    expect(parseInviteToken(`https://www.eatsafe.dk/invite/${TOKEN}`)).toBe(TOKEN);
+    expect(parseInviteToken(`  https://www.eatsafe.dk/invite/${TOKEN}/  `)).toBe(TOKEN);
     expect(parseInviteToken(`https://www.eatsafe.dk/invite/${TOKEN}?utm=x`)).toBe(TOKEN);
-    expect(parseInviteToken(`Her er linket: https://eatsafe.dk/invite/${TOKEN} tak!`)).toBe(TOKEN);
+    expect(parseInviteToken(`Her er linket: https://www.eatsafe.dk/invite/${TOKEN} tak!`)).toBe(TOKEN);
   });
   it("læser tokenet fra ?invite= og fra en ren kode", () => {
-    expect(parseInviteToken(`https://eatsafe.dk/?invite=${TOKEN}&login=1`)).toBe(TOKEN);
+    expect(parseInviteToken(`https://www.eatsafe.dk/?invite=${TOKEN}&login=1`)).toBe(TOKEN);
     expect(parseInviteToken(TOKEN)).toBe(TOKEN);
   });
   it("afviser alt, der ikke ligner et token", () => {
-    for (const bad of ["", "   ", null, undefined, "hej", "https://eatsafe.dk/", "https://eatsafe.dk/invite/kort", "https://eatsafe.dk/invite/", `x${"y".repeat(200)}`]) {
+    for (const bad of ["", "   ", null, undefined, "hej", "https://www.eatsafe.dk/", "https://www.eatsafe.dk/invite/kort", "https://www.eatsafe.dk/invite/", `x${"y".repeat(200)}`]) {
       expect(parseInviteToken(bad), String(bad)).toBeNull();
     }
   });

@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { INVITE_MAIL_HTML, inviteMailSubject, renderInviteMail } from "../supabase/functions/_shared/inviteMail.ts";
 
-const vars = { inviterName: "Jan", inviteeEmail: "frederikke@gmail.com", inviteUrl: "https://eatsafe.dk/invite/abc123", expiryText: "i morgen kl. 18.29" };
+const vars = { inviterName: "Jan", inviteeEmail: "frederikke@gmail.com", inviteUrl: "https://www.eatsafe.dk/invite/abc123", expiryText: "i morgen kl. 18.29" };
 
 describe("invitationsmail", () => {
   it("er identisk med skabelonfilen", () => {
@@ -19,7 +19,7 @@ describe("invitationsmail", () => {
     expect(html).not.toMatch(/\{\{\{/);
     expect(html).toContain("Jan har inviteret dig til sin familie i EatSafe</h1>");
     expect(html).toContain("<strong class=\"strong\">frederikke@gmail.com</strong>");
-    expect(html).toContain('href="https://eatsafe.dk/invite/abc123"');
+    expect(html).toContain('href="https://www.eatsafe.dk/invite/abc123"');
     expect(html).toContain("i morgen kl. 18.29");
     expect(html).toContain("frederikke@gmail.com");
     expect(html).toContain("kan kun bruges én gang");

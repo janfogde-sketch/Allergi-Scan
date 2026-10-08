@@ -60,7 +60,7 @@ sikre alternativer og indkøbsliste.
 
 | Nøgle | Værdi |
 |---|---|
-| Live URL | https://eatsafe.dk |
+| Live URL | https://www.eatsafe.dk (fast adresse; eatsafe.dk giver 307 hertil. Links, mails og TWA bruger altid www) |
 | GitHub | `janfogde-sketch/Allergi-Scan` |
 | Branches | `main` (produktion) · udviklingsgrene `claude/...` |
 | Hosting | Vercel — auto-deploy på push til `main` (preview-deploys er slået fra) |

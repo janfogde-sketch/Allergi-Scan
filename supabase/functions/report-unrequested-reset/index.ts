@@ -16,7 +16,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyReportToken } from "../_shared/reportLink.ts";
 import { sendHtmlMail, escapeHtml } from "../_shared/mailSend.ts";
 
-const ALLOWED_ORIGINS = ["https://www.eatsafe.dk", "https://eatsafe.dk"];
+const ALLOWED_ORIGINS = ["https://www.eatsafe.dk", "https://www.eatsafe.dk"];
 const KIND = "unrequested_password_reset";
 const PER_USER_WINDOW_MS = 60 * 60 * 1000;
 const GLOBAL_MAIL_CAP_PER_HOUR = 30;

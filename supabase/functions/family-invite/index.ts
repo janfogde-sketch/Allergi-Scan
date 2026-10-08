@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       html: renderInviteMail({
         inviterName,
         inviteeEmail: invite.invitee_email,
-        inviteUrl: `https://eatsafe.dk/invite/${invite.token}`,
+        inviteUrl: `https://www.eatsafe.dk/invite/${invite.token}`,
         expiryText: formatInviteExpiry(new Date(invite.expires_at)),
         existingAccount: hasAccount === true,
       }),
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
         .insert({ invited_by: caller.id, kind: "link" })
         .select("id, token, expires_at").single();
       if (linkError || !link) { console.error("family-invite: link fejlede", linkError?.message); return json({ error: "create_failed" }, 500); }
-      return json({ success: true, invite: { id: link.id, kind: "link", expires_at: link.expires_at, url: `https://eatsafe.dk/invite/${link.token}` } });
+      return json({ success: true, invite: { id: link.id, kind: "link", expires_at: link.expires_at, url: `https://www.eatsafe.dk/invite/${link.token}` } });
     }
 
     // ── Ny invitation ──────────────────────────────────────────────────────
