@@ -70,7 +70,7 @@ function buildSystemPrompt(): string {
 Gyldige kategorier og deres tilladte underkategorier:
 ${lines}
 
-For hvert produkt (id, navn, brand) skal du returnere:
+For hvert produkt (id, navn, brand, evt. [kilde: kategori fra butik eller Open Food Facts, kun et fingerpeg]) skal du returnere:
 - "category": vælg den mest korrekte kategori fra listen ovenfor. Hvis den nuværende kategori tydeligt er forkert (fx en kødvare fejlagtigt kategoriseret som "Drikkevarer"), ret den til den korrekte.
 - "subcategory": vælg PRÆCIS én underkategori fra listen for den valgte kategori.
 
@@ -78,9 +78,9 @@ Returner KUN et JSON-array, ingen forklaring, ingen markdown:
 [{"id":"...","category":"...","subcategory":"..."}]`;
 }
 
-async function classifyBatch(products: { id: string; name: string; brand: string | null }[], apiKey: string) {
+async function classifyBatch(products: { id: string; name: string; brand: string | null; category_original?: string | null }[], apiKey: string) {
   const userContent = products
-    .map(p => `${p.id} | ${p.name}${p.brand ? " (" + p.brand + ")" : ""}`)
+    .map(p => `${p.id} | ${p.name}${p.brand ? " (" + p.brand + ")" : ""}${p.category_original ? " [kilde: " + String(p.category_original).slice(0, 80) + "]" : ""}`)
     .join("\n");
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -132,14 +132,15 @@ Deno.serve(async (req) => {
 
     let products;
     if (product_id) {
-      const { data, error } = await supabase.from("products").select("id, name, brand").eq("id", product_id).limit(1);
+      const { data, error } = await supabase.from("products").select("id, name, brand, category_original").eq("id", product_id).limit(1);
       if (error) throw error;
       products = data;
     } else {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, brand")
+        .select("id, name, brand, category_original")
         .is("subcategory", null)
+        .is("subcategory_classified_at", null)
         .not("name", "is", null)
         .limit(Math.min(Number(limit) || 500, 2000));
       if (error) throw error;
@@ -163,7 +164,11 @@ Deno.serve(async (req) => {
         for (const r of results) {
           const category = VALID_CATEGORIES.includes(r.category) ? r.category : null;
           const subcategory = category && TAXONOMY[category].includes(r.subcategory) ? r.subcategory : null;
-          if (!category || !subcategory) { errors++; continue; }
+          if (!category || !subcategory) {
+            // Stempl forsøget, så et produkt Claude ikke kan placere, ikke prøves om og om igen
+            await supabase.from("products").update({ subcategory_classified_at: new Date().toISOString() }).eq("id", r.id);
+            errors++; continue;
+          }
           const { error: updateError } = await supabase
             .from("products")
             .update({ category, subcategory, subcategory_classified_at: new Date().toISOString() })
@@ -181,6 +186,7 @@ Deno.serve(async (req) => {
       .from("products")
       .select("id", { count: "exact", head: true })
       .is("subcategory", null)
+      .is("subcategory_classified_at", null)
       .not("name", "is", null);
 
     return new Response(JSON.stringify({ classified, errors, remaining: remaining ?? null }), {
