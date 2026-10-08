@@ -73,7 +73,7 @@ const LINK = (label, url) => ({ t: "link", label, url });
 
 const PRODUCT_VARS = { productName: { max: 34, pushFallback: "produktet", fallback: "produktet" } };
 const TICKET_VARS = {
-  ticketExcerpt: { fallback: "Din tilbagemelding i EatSafe" },
+  ticketExcerpt: { fallback: "Din feedback i EatSafe" },
   message: { fallback: "", multiline: true }, // tom besked = afsnittet udelades (se renderBlock)
 };
 
@@ -82,7 +82,7 @@ const TICKET_ENTITY = { type: "ticket", idFrom: "ticketId" };
 const SUBMISSION_ENTITY = { type: "submission", idFrom: "submissionId" };
 const PRODUCT_ACTION = { type: "open_product", label: "Se produktet", params: ["ean"] };
 
-const TICKET_QUOTE = { t: "quote", label: "Din tilbagemelding", text: "{{ticketExcerpt}}" };
+const TICKET_QUOTE = { t: "quote", label: "Din feedback", text: "{{ticketExcerpt}}" };
 
 // adders: fornavne på dem, der har tilføjet ("Jan", "Jan og Bjørn"); countText: "en vare"/"4 varer"; itemList: punktliste med varenavne,
 // KUN i app og mail (noPush), aldrig i push.
@@ -151,7 +151,7 @@ export const DEFINITIONS = {
       PANEL("Begrundelse fra vores team", [P("{{reason}}", { multiline: true })]),
       P("Du er velkommen til at indsende oplysningerne igen, når du har fulgt vejledningen ovenfor. Sørg gerne for, at billederne tydeligt viser produktets stregkode og hele ingredienslisten."),
       P("Tak for din hjælp. Selvom denne indsendelse ikke blev godkendt, sætter vi pris på, at du bidrager til at gøre EatSafe bedre."),
-      P("Hvis du har spørgsmål til vores tilbagemelding, kan du kontakte os via feedbackknappen i appen."),
+      P("Hvis du har spørgsmål til vores svar, kan du kontakte os via feedbackknappen i appen."),
       DISC,
     ],
     action: { type: "scan", label: "Scan og indsend igen", params: [] }, entity: SUBMISSION_ENTITY,
@@ -243,12 +243,12 @@ export const DEFINITIONS = {
 
   "N6:in_progress": {
     type: "N6", variant: "in_progress", category: "feedback", version: 2, ttl: 86400,
-    push: { title: "Vi arbejder på din feedback", body: "Vores team er gået i gang med at undersøge din tilbagemelding." },
-    mail: { subject: "Vi arbejder på din feedback", preheader: "Læs den nye status og teamets tilbagemelding på din feedback." },
+    push: { title: "Vi arbejder på din feedback", body: "Vores team er gået i gang med at undersøge din feedback." },
+    mail: { subject: "Vi arbejder på din feedback", preheader: "Læs den nye status og svaret fra EatSafe på din feedback." },
     vars: TICKET_VARS, required: [],
     blocks: [
       H("Vi arbejder på din feedback"),
-      P("Vores team har set på din tilbagemelding og er gået i gang med at undersøge den."),
+      P("Vores team har set på din feedback og er gået i gang med at undersøge den."),
       TICKET_QUOTE,
       { t: "fact", label: "Status", value: STATUS_LABELS.in_progress },
       P("{{message}}", { multiline: true }),
@@ -258,12 +258,12 @@ export const DEFINITIONS = {
 
   "N6:resolved": {
     type: "N6", variant: "resolved", category: "feedback", version: 2, ttl: 86400,
-    push: { title: "Din feedback er markeret som løst", body: "Vores team har behandlet din tilbagemelding. Prøv gerne funktionen igen." },
-    mail: { subject: "Din feedback er markeret som løst", preheader: "Læs den nye status og teamets tilbagemelding på din feedback." },
+    push: { title: "Din feedback er markeret som løst", body: "Vores team har behandlet din feedback. Prøv gerne funktionen igen." },
+    mail: { subject: "Din feedback er markeret som løst", preheader: "Læs den nye status og svaret fra EatSafe på din feedback." },
     vars: TICKET_VARS, required: [],
     blocks: [
       H("Din feedback er markeret som løst"),
-      P("Vores team har behandlet din tilbagemelding og markeret den som løst."),
+      P("Vores team har behandlet din feedback og markeret den som løst."),
       TICKET_QUOTE,
       { t: "fact", label: "Status", value: STATUS_LABELS.resolved },
       P("{{message}}", { multiline: true }),
@@ -273,12 +273,12 @@ export const DEFINITIONS = {
 
   "N6:reopened": {
     type: "N6", variant: "reopened", category: "feedback", version: 2, ttl: 86400,
-    push: { title: "Din feedback er åbnet igen", body: "Vores team ser nærmere på din tilbagemelding igen." },
-    mail: { subject: "Din feedback er åbnet igen", preheader: "Læs den nye status og teamets tilbagemelding på din feedback." },
+    push: { title: "Din feedback er åbnet igen", body: "Vores team ser nærmere på din feedback igen." },
+    mail: { subject: "Din feedback er åbnet igen", preheader: "Læs den nye status og svaret fra EatSafe på din feedback." },
     vars: TICKET_VARS, required: [],
     blocks: [
       H("Din feedback er åbnet igen"),
-      P("Din tilbagemelding er blevet åbnet igen, så vores team kan se nærmere på den."),
+      P("Din feedback er blevet åbnet igen, så vores team kan se nærmere på den."),
       TICKET_QUOTE,
       { t: "fact", label: "Status", value: STATUS_LABELS.open },
       P("{{message}}", { multiline: true }),
@@ -288,17 +288,17 @@ export const DEFINITIONS = {
 
   "N6:reply": {
     type: "N6", variant: "reply", category: "feedback", version: 1, ttl: 86400,
-    push: { title: "Nyt svar på din feedback", body: "Vores team har skrevet en ny besked til din tilbagemelding." },
+    push: { title: "Nyt svar på din feedback", body: "Vores team har skrevet en ny besked til din feedback." },
     mail: { subject: "Der er et nyt svar på din feedback", preheader: "Vores team har skrevet en ny besked til dig. Læs svaret her." },
     vars: TICKET_VARS,
     // Et svar uden indhold er ikke et svar.
     required: ["message"],
     blocks: [
       H("Vi har svaret på din feedback"),
-      P("Vores team har skrevet en ny besked til din tilbagemelding i EatSafe."),
+      P("Vores team har skrevet en ny besked til din feedback i EatSafe."),
       TICKET_QUOTE,
-      PANEL("Svar fra vores team", [P("{{message}}", { multiline: true })]),
-      P("Hvis du har spørgsmål eller flere oplysninger, kan du sende dem via feedbackknappen i appen. Henvis gerne til din tidligere tilbagemelding."),
+      PANEL("Svar fra EatSafe", [P("{{message}}", { multiline: true })]),
+      P("Hvis du har spørgsmål eller flere oplysninger, kan du sende dem via feedbackknappen i appen. Henvis gerne til din tidligere feedback."),
     ],
     action: TICKET_ACTION, entity: TICKET_ENTITY,
   },

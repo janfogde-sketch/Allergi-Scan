@@ -3,7 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS, DIETS_ENABLED, MADPAS_LANGUAGES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
-import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T } from "./madpasText.js";
+import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_WRITTEN_IN_DANISH_T } from "./madpasText.js";
 import { preloadMadpasText } from "./useMadpas.js";
 
 // Gør oplæsningen klar, så "Læs højt" kan starte direkte fra knaptrykket.
@@ -211,6 +211,7 @@ export default function MadpasScreen({
                       {renderIconTile("warning")}
                       <span style={itemName}>{c}</span>
                     </div>
+                    {lang !== "da" && <div style={exampleLine}>{MADPAS_WRITTEN_IN_DANISH_T[lang] || MADPAS_WRITTEN_IN_DANISH_T.en}</div>}
                     <div style={messageBlock}>
                       <div style={statementLine}>{madpasAllergyStatement(c, lang)}</div>
                       <div style={messageSafety}>{madpasSafetyNote(c, lang)}</div>

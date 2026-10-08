@@ -12,15 +12,15 @@ describe("AllergenSensitivity (spor pr. allergen)", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("standard er 'Advar mig', og valget skifter til 'Kun ved ingrediens' og tilbage", () => {
+  it("standard er 'Advar ved spor', og valget skifter til 'Kun ved ingrediens' og tilbage", () => {
     const onChange = vi.fn();
     const { rerender } = render(<AllergenSensitivity selected={["maelkeallergi"]} levels={{}} onChange={onChange} />);
-    expect(screen.getByText("Advar mig").closest("button").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("Advar ved spor").closest("button").getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByText("Kun ved ingrediens"));
     expect(onChange).toHaveBeenLastCalledWith({ maelkeallergi: "direct_only" });
     rerender(<AllergenSensitivity selected={["maelkeallergi"]} levels={{ maelkeallergi: "direct_only" }} onChange={onChange} />);
     expect(screen.getByText("Kun ved ingrediens").closest("button").getAttribute("aria-pressed")).toBe("true");
-    fireEvent.click(screen.getByText("Advar mig"));
+    fireEvent.click(screen.getByText("Advar ved spor"));
     expect(onChange).toHaveBeenLastCalledWith({});
   });
 
@@ -34,14 +34,14 @@ describe("AllergenSensitivity (spor pr. allergen)", () => {
 
   it("viser cøliaki-vejledningen kun under Cøliaki, ikke under Gluten eller Hvede", () => {
     render(<AllergenSensitivity selected={["gluten", "hvede", "coeliaki"]} levels={{}} onChange={() => {}} />);
-    const guidance = screen.getAllByText(/Har du cøliaki, bør du vælge Advar mig/);
+    const guidance = screen.getAllByText(/Har du cøliaki, bør du vælge Advar ved spor/);
     expect(guidance).toHaveLength(1);
     expect(screen.getByRole("group", { name: /^Cøliaki/ }).parentElement.textContent).toContain("Har du cøliaki");
     expect(screen.getByRole("group", { name: /^Glutenfølsomhed/ }).parentElement.textContent).not.toMatch(/cøliaki/i);
     expect(screen.getByRole("group", { name: /^Hvede/ }).parentElement.textContent).not.toMatch(/cøliaki/i);
   });
 
-  it("Cøliaki er som standard på Advar mig (spor advarer)", () => {
+  it("Cøliaki er som standard på Advar ved spor (spor advarer)", () => {
     render(<AllergenSensitivity selected={["coeliaki"]} levels={{}} onChange={() => {}} />);
     expect(screen.getByRole("group", { name: /^Cøliaki/ }).querySelectorAll("button")[0].getAttribute("aria-pressed")).toBe("true");
   });

@@ -117,7 +117,7 @@ export const CustomAllergenField = ({ customAllerg, setCustomAllerg, customInput
 };
 
 // Følsomhed pr. valgt allergen (allergen_levels, 1. okt. 2026): hvad skal der ske, når pakken siger "Kan indeholde spor af …"?
-// "Advar mig" (standard, sikreste valg) eller "Kun ved ingrediens" (advar kun, hvis allergenet står i ingredienslisten).
+// "Advar ved spor" (standard, sikreste valg) eller "Kun ved ingrediens" (advar kun, hvis allergenet står i ingredienslisten).
 // Gemmes som levels: { [allergenId]: "direct_only" } (tom = advar også ved spor). Hvert valgt allergen har sin egen række,
 // også Gluten og Hvede (to forskellige valg). Cøliaki-vejledning vises KUN under rækken Cøliaki (eget, eksplicit valg): appen antager aldrig
 // en diagnose ud fra Gluten, Hvede eller andre valg, og Gluten/Hvede får kun den generelle sporinfo.
@@ -128,7 +128,7 @@ const TRACE_NOTE = {
   warn: "Du advares både ved ingrediens og ved spor.",
   direct: "Du advares kun, hvis allergenet står i ingredienslisten.",
 };
-const COELIAC_GUIDANCE = "Har du cøliaki, bør du vælge Advar mig: selv små spor kan give symptomer. Er du i tvivl, så spørg din læge.";
+const COELIAC_GUIDANCE = "Har du cøliaki, bør du vælge Advar ved spor: selv små spor kan give symptomer. Er du i tvivl, så spørg din læge.";
 export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = true, showTitle = true, bare = false }) => {
   // Kun allergener, hvor sporvalg giver mening (ikke laktose), og aldrig egne valg
   const ids = traceEligible(selected);
@@ -160,7 +160,7 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
           <div key={row.key} style={{ padding:"8px 0" }}>
             <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>{row.label}</div>
             <div className="trace-seg" role="group" aria-label={`${row.label}: advarsel ved spor`}>
-              {opt(row, false, !direct, "Advar mig")}
+              {opt(row, false, !direct, "Advar ved spor")}
               {opt(row, true, direct, "Kun ved ingrediens")}
             </div>
             <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.45, marginTop:6 }}>{direct ? TRACE_NOTE.direct : TRACE_NOTE.warn}</div>
