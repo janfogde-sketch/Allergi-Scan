@@ -114,7 +114,7 @@ const SHARED_POINTS = [
 ];
 
 // Det, der deles, når to konti er i samme familie. Bruges både før invitationen oprettes og i "Sådan virker familie".
-export function WhatIsShared() {
+function WhatIsShared() {
   return (
     <div>
       <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>I familien kan I dele</div>

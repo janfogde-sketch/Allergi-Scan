@@ -30,7 +30,7 @@ function Parts({ parts, multiline }) {
   );
 }
 
-export function NotificationBlock({ block }) {
+function NotificationBlock({ block }) {
   switch (block?.type) {
     case "heading":
       return <h2 style={S.h}>{block.text}</h2>;

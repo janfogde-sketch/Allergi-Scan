@@ -146,14 +146,13 @@ On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fu
 - Hjælpefunktioner i `useMadpas.js`: `madpasAllergenLabel()`, `madpasDietLabel()`, `madpasAllergenExamples()`, `madpasSafetyNote(name, lang)`,
   `madpasCrossContactNote(names, lang)`, `madpasDietMessage(dietId, lang)`, `madpasSpeak()`. Brug dem (korrekt sprog-fallback) frem for at genopfinde logikken.
   Tekstkonstanter (17 sprog): `ALLERGEN_T`, `ALLERGEN_EXAMPLES`, `MADPAS_ALLERGY_STATEMENT_T`, `MADPAS_SAFETY_NOTE_T`, `MADPAS_COELIAC_T`, `MADPAS_DIET_MESSAGE_T`,
-  `MADPAS_SECTIONS_T`, `MADPAS_EXAMPLES_LABEL_T`, `MADPAS_EXAMPLES_OVERRIDE`, `MADPAS_SPEAK_LABEL_T`/`MADPAS_STOP_LABEL_T`.
+  `MADPAS_SECTIONS_T`, `MADPAS_EXAMPLES_LABEL_T`, `MADPAS_EXAMPLES_OVERRIDE`.
 - Sikkerhedsteksten genereres altid pr. emne ("...does not contain {name} or ingredients made from {name}."), aldrig som kombineret sætning.
 - Krydskontaminering er bevidst OPT-IN (toggle, default FRA, `localStorage` `as_madpas_cross_contact`): én sætning nederst i FOOD ALLERGIES (singular/plural,
   `MADPAS_CROSS_CONTACT_*_T`), fordi EatSafe ikke selv må antage allergiens alvor.
 - Oplæsning: navn + sikkerhedstekst pr. allergen (+ krydskontaminering hvis aktiv); "May be found in" oplæses ikke; intolerancer nævnes samlet. Knappen er stor og
   fuld-bredde, fast i bunden (`env(safe-area-inset-bottom)`), og fremvisningsskærmen viser intet branding.
 - Diæter har blød ordlyd for keto ("limit") og "does not contain" for resten. `.mp-head` har kun top-padding (`.mp-scroll` giver 20 px i siden).
-- **Kendt, uløst sprogfejl:** tyske substantiver i sikkerhedsteksten står med lille forbogstav (`madpasSafetyNote()` kalder `.toLowerCase()`).
 
 ---
 

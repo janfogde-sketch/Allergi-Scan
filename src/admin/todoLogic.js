@@ -55,7 +55,7 @@ export function sortTodos(list) {
 
 const isOpen = (t) => t.status !== "done";
 
-export function matchesView(todo, view, userId) {
+function matchesView(todo, view, userId) {
   switch (view) {
     case "open": return isOpen(todo);
     case "mine": return isOpen(todo) && !!userId && todo.assignee_id === userId;

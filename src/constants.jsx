@@ -9,8 +9,6 @@ export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
 
-
-
 // ─── EATSAFE LOGO KOMPONENT ──────────────────────────────────────────────────
 
 export const E_CATEGORIES = [
@@ -309,7 +307,6 @@ export const E_NUMBERS = {
   "E999": "Quillajaekstrakt — skumdannende middel i drikkevarer",
   "E161g": "Canthaxanthin — orange farve, bruges i lakseopdræt",
 };
-
 
 // "type" bruges til at dele allergener op i to tydeligt adskilte sektioner
 // i onboarding trin 2 (25. sept. 2026, brugerfeedback: "Hvedeallergi,
@@ -886,17 +883,7 @@ export const MADPAS_CROSS_CONTACT_PLURAL_T = {
   el:"Παρακαλώ αποφύγετε την διασταυρούμενη επιμόλυνση με αυτά τα αλλεργιογόνα κατά την προετοιμασία.",
 };
 
-// "Jeg er allergisk over for:" / "Jeg tåler ikke:" — korte overskrifter
-// over selve chip-listen i hver sektion (erstatter den tidligere lange
-// "Hej! Jeg har ... og ønsker gerne din hjælp"-intro på selve kortet).
-export const MADPAS_ALLERGY_HEADLINE_T = {
-  da:"Jeg er allergisk over for:", en:"I am allergic to:", de:"Ich bin allergisch gegen:",
-  fr:"Je suis allergique à :", es:"Soy alérgico a:", it:"Sono allergico a:",
-  nl:"Ik ben allergisch voor:", pt:"Sou alérgico a:", pl:"Jestem uczulony na:",
-  sv:"Jag är allergisk mot:", no:"Jeg er allergisk mot:", ja:"アレルギーがあります：",
-  zh:"我对以下物质过敏：", ar:"أنا أعاني من الحساسية تجاه:", tr:"Şuna karşı alerjim var:",
-  th:"ฉันแพ้:", el:"Είμαι αλλεργικός/ή σε:",
-};
+// "Jeg tåler ikke:" — kort overskrift over chip-listen i intolerance-sektionen.
 export const MADPAS_INTOLERANCE_HEADLINE_T = {
   da:"Jeg tåler ikke:", en:"I am intolerant to:", de:"Ich vertrage nicht:",
   fr:"Je ne tolère pas :", es:"No tolero:", it:"Non tollero:",
@@ -922,34 +909,7 @@ export const MADPAS_EXAMPLES_LABEL_T = {
   tr:"Şunlarda bulunabilir:", th:"อาจพบได้ใน:", el:"Μπορεί να βρεθεί σε:",
 };
 
-// Oplæs/Stop-knappens tekst i selve tjener-visningen (26. sept. 2026,
-// opfølgende polish-runde, krav 8) — hele visningen skal være på det
-// valgte sprog, inklusive knaptekster, ikke kun selve allergi-indholdet.
-export const MADPAS_SPEAK_LABEL_T = {
-  da:"Læs højt", en:"Read aloud", de:"Vorlesen", fr:"Lire à voix haute", es:"Leer en voz alta",
-  it:"Leggi ad alta voce", nl:"Voorlezen", pt:"Ler em voz alta", pl:"Odczytaj na głos",
-  sv:"Läs högt", no:"Les høyt", ja:"読み上げ", zh:"朗读", ar:"اقرأ بصوت عالٍ",
-  tr:"Sesli oku", th:"อ่านออกเสียง", el:"Ανάγνωση φωναχτά",
-};
-export const MADPAS_STOP_LABEL_T = {
-  da:"Stop", en:"Stop", de:"Stopp", fr:"Arrêter", es:"Detener",
-  it:"Ferma", nl:"Stop", pt:"Parar", pl:"Zatrzymaj",
-  sv:"Stoppa", no:"Stopp", ja:"停止", zh:"停止", ar:"إيقاف",
-  tr:"Durdur", th:"หยุด", el:"Διακοπή",
-};
-
 export const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
-
-export const HOME_TIPS = [
-  { icon:"warning", title:"Gluten er overalt", text:"Gluten findes ikke kun i brød — det gemmer sig i saucer, supper og krydderier. Scan altid." },
-  { icon:"info", title:"Læs altid etiketten", text:"Opskrifter ændres uden varsel. Et produkt du har spist trygt før, kan have nye ingredienser." },
-  { icon:"family", title:"Tilføj din familie", text:"Opret profiler for hele familien — så ser du på én gang hvem der kan spise hvad." },
-  { icon:"heart", title:"Hjælp fællesskabet", text:"Scan du et ukendt produkt? Indsend det! Databasen vokser med hjælp fra brugere som dig." },
-  { icon:"warning", title:"Spor af allergener", text:"'Kan indeholde spor af' er ikke uskadeligt. For stærkt allergiske kan selv spormængder være farlige." },
-  { icon:"cart", title:"Planlæg din indkøbsliste", text:"Brug indkøbslisten til at tjekke produkter inden du handler — spar tid i butikken." },
-  { icon:"search", title:"Søg inden du handler", text:"Søg på produkter inden du tager i butikken — så ved du hvad du kan købe trygt." },
-  { icon:"bulb", title:"Tilføj til hjemskærm", text:"Tilføj EatSafe til din telefons hjemskærm for hurtig adgang — det føles som en rigtig app." },
-];
 
 // ─── HJÆLPEFUNKTIONER ────────────────────────────────────────────────────────
 
@@ -1007,22 +967,3 @@ export const ALLERGEN_T = {
   bloeddyr:    { en:{n:"Molluscs",d:"Contains molluscs (squid, oysters, mussels, snails etc.)"},de:{n:"Weichtiere",d:"Enthält Weichtiere (Tintenfisch, Austern, Muscheln, Schnecken)"},fr:{n:"Mollusques",d:"Contient des mollusques (calamar, huîtres, moules, escargots)"},es:{n:"Moluscos",d:"Contiene moluscos (calamar, ostras, mejillones, caracoles)"},it:{n:"Molluschi",d:"Contiene molluschi (calamari, ostriche, cozze, lumache)"},nl:{n:"Weekdieren",d:"Bevat weekdieren (inktvis, oesters, mosselen, slakken)"},pt:{n:"Moluscos",d:"Contém moluscos (lulas, ostras, mexilhões, caracóis)"},pl:{n:"Mięczaki",d:"Zawiera mięczaki (kałamarnica, ostrygi, małże, ślimaki)"},sv:{n:"Blötdjur",d:"Innehåller blötdjur (bläckfisk, ostron, musslor, sniglar)"},no:{n:"Bløtdyr",d:"Inneholder bløtdyr (blekksprut, østers, muslinger, snegler)"},ja:{n:"軟体動物",d:"軟体動物含有（イカ・カキ・ムール貝・カタツムリ等）"},zh:{n:"软体动物",d:"含有软体动物（鱿鱼、牡蛎、贻贝、蜗牛等）"},ar:{n:"الرخويات",d:"يحتوي على الرخويات (الحبار، المحار، بلح البحر)"},tr:{n:"Yumuşakçalar",d:"Yumuşakça içerir (kalamar, istiridye, midye, salyangoz)"},th:{n:"หอย / ปลาหมึก",d:"มีสัตว์จำพวกหอย (ปลาหมึก, หอยนางรม, หอยแมลงภู่)"},el:{n:"Μαλάκια",d:"Περιέχει μαλάκια (καλαμάρι, στρείδια, μύδια, σαλιγκάρια)"} },
 };
 
-export const MADPAS_INTRO = {
-  da:"Jeg har følgende fødevareallergier og intolerancer. Vær venlig at sikre, at min mad ikke indeholder nogen af disse.",
-  en:"I have the following food allergies and intolerances. Please ensure my meal does not contain any of these.",
-  de:"Ich habe folgende Lebensmittelallergien und Unverträglichkeiten. Bitte stellen Sie sicher, dass mein Essen keines davon enthält.",
-  fr:"J'ai les allergies alimentaires et intolérances suivantes. Veuillez vous assurer que mon repas n'en contient aucune.",
-  es:"Tengo las siguientes alergias alimentarias e intolerancias. Por favor, asegúrese de que mi comida no contenga ninguno de estos.",
-  it:"Ho le seguenti allergie alimentari e intolleranze. Si prega di assicurarsi che il mio pasto non contenga nessuno di questi.",
-  nl:"Ik heb de volgende voedselallergieën en intoleranties. Zorg er alstublieft voor dat mijn maaltijd geen van deze bevat.",
-  pt:"Tenho as seguintes alergias alimentares e intolerâncias. Por favor, certifique-se de que a minha refeição não contém nenhum destes.",
-  pl:"Mam następujące alergie pokarmowe i nietolerancje. Proszę upewnić się, że moje jedzenie nie zawiera żadnego z tych składników.",
-  sv:"Jag har följande matallergier och intoleranser. Vänligen se till att min måltid inte innehåller något av dessa.",
-  no:"Jeg har følgende matallergier og intoleranser. Vennligst sørg for at mitt måltid ikke inneholder noen av disse.",
-  ja:"私は以下の食物アレルギーと不耐症があります。私の食事にこれらが含まれないようにしてください。",
-  zh:"我有以下食物过敏和不耐受。请确保我的餐食不含以下任何成分。",
-  ar:"لدي الحساسية الغذائية والتعصبات التالية. يرجى التأكد من أن وجبتي لا تحتوي على أي من هذه العناصر.",
-  tr:"Aşağıdaki gıda alerjilerim ve intoleranslarım var. Lütfen yemeğimin bunlardan hiçbirini içermediğinden emin olun.",
-  th:"ฉันมีการแพ้อาหารและการแพ้ต่อไปนี้ กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีสิ่งเหล่านี้",
-  el:"Έχω τις ακόλουθες αλλεργίες και δυσανεξίες. Παρακαλώ βεβαιωθείτε ότι το γεύμα μου δεν περιέχει κανένα από αυτά.",
-};

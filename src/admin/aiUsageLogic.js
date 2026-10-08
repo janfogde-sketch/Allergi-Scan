@@ -29,7 +29,7 @@ export function totals(rows) {
 }
 
 // Grupperer på en nøgle (dag, måned eller funktion), nyeste først for dag/måned.
-export function groupBy(rows, keyFn) {
+function groupBy(rows, keyFn) {
   const map = new Map();
   for (const r of rows) {
     const k = keyFn(r);

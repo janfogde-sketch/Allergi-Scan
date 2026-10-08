@@ -12,7 +12,7 @@ import { useState, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders } from "./helpers.js";
 
-export function useFoodWaste({ accessToken }) {
+function useFoodWaste({ accessToken }) {
   const [matches, setMatches]   = useState([]);
   const [loading, setLoading]   = useState(false);
   const [checked, setChecked]   = useState(false);
