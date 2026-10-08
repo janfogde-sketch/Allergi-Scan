@@ -20,7 +20,9 @@ export function formatExpiry(iso) {
   return d.toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "short" });
 }
 
-const BTN = { padding:"12px", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6, minHeight:44 };
+// F3-5 (8. okt. 2026): handlingsknapperne bruger de delte knap-klasser (.btn-primary/.btn-outline: tryk-feedback og rigtig
+// deaktiveret tilstand). Kun metodevalget (TAB) har sin egen stil, fordi valgt = lys grøn med grøn kant (Bjørn, 6. okt.).
+const TAB_BASE = { padding:"12px", borderRadius:10, fontFamily:"var(--f)", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6, minHeight:44 };
 
 // Fejlkoder fra edge-funktionen family-invite → tekst til brugeren
 export function inviteErrorText(code) {
@@ -62,12 +64,11 @@ function LinkActions({ url }) {
   return (
     <div style={UI.rowGap8}>
       {navigator.share && (
-        <button type="button" onClick={share} style={{ ...BTN, flex:1, background:"var(--green)", color:"var(--on-green)", border:"none" }}>
+        <button type="button" className="btn btn-primary" onClick={share} style={UI.flex1}>
           <Icon name="share" size={14} color="var(--on-green)" /> Del linket
         </button>
       )}
-      <button type="button" onClick={copy}
-        style={{ ...BTN, flex:1, background: navigator.share ? "var(--surface)" : "var(--green)", color: navigator.share ? "var(--ink)" : "var(--on-green)", border: navigator.share ? "1px solid var(--border2)" : "none" }}>
+      <button type="button" className={`btn ${navigator.share ? "btn-outline" : "btn-primary"}`} onClick={copy} style={UI.flex1}>
         <Icon name={copied ? "check" : "link"} size={14} color={navigator.share ? "var(--ink)" : "var(--on-green)"} /> {copied ? "Kopieret" : "Kopiér link"}
       </button>
     </div>
@@ -172,7 +173,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
   const created = !!(sentTo || linkUrl);
   const emailOk = isValidInviteEmail(email);
   // Metodevalg: den valgte har lys grøn baggrund og grøn kant, den anden er neutral.
-  const TAB = on => ({ ...BTN, flex:1, minHeight:44, background: on ? "var(--green-selected-bg)" : "var(--surface)", color:"var(--ink)", border: on ? "1.5px solid var(--green)" : "1px solid var(--border2)" });
+  const TAB = on => ({ ...TAB_BASE, flex:1, minHeight:44, background: on ? "var(--green-selected-bg)" : "var(--surface)", color:"var(--ink)", border: on ? "1.5px solid var(--green)" : "1px solid var(--border2)" });
   const HINT = { fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginBottom:12 };
 
   return (
@@ -184,10 +185,10 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
 
       {!created && (
         <div style={{ display:"flex", gap:8, margin:"6px 0 12px" }} role="tablist" aria-label="Sådan inviterer du">
-          <button type="button" role="tab" aria-selected={mode === "mail"} style={TAB(mode === "mail")} onClick={() => { setMode("mail"); setError(""); }}>
+          <button type="button" role="tab" className="invite-tab" aria-selected={mode === "mail"} style={TAB(mode === "mail")} onClick={() => { setMode("mail"); setError(""); }}>
             <Icon name="mail" size={14} color={mode === "mail" ? "var(--green)" : "var(--ink)"} /> Send på mail
           </button>
-          <button type="button" role="tab" aria-selected={mode === "link"} style={TAB(mode === "link")} onClick={() => { setMode("link"); setError(""); }}>
+          <button type="button" role="tab" className="invite-tab" aria-selected={mode === "link"} style={TAB(mode === "link")} onClick={() => { setMode("link"); setError(""); }}>
             <Icon name="link" size={14} color={mode === "link" ? "var(--green)" : "var(--ink)"} /> Del et link
           </button>
         </div>
@@ -200,8 +201,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
           <input id="invite-email" type="email" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false}
             placeholder="navn@eksempel.dk" value={email} onChange={e => { setEmail(e.target.value); setError(""); }}
             style={{ width:"100%", boxSizing:"border-box", minHeight:46, padding:"10px 12px", borderRadius:10, border:"1px solid var(--border2)", background:"var(--surface)", color:"var(--ink)", fontFamily:"var(--f)", fontSize:15, marginBottom:12 }} />
-          <button type="submit" disabled={loading || !emailOk}
-            style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading || !emailOk ? .6 : 1, cursor: loading || !emailOk ? "default" : "pointer" }}>
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading || !emailOk}>
             {loading ? "Sender invitation…" : "Send invitation"}
           </button>
           {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{error}</div>}
@@ -213,8 +213,7 @@ export function InvitePanel({ accessToken, onClose, onInviteId, onChanged }) {
           <div style={HINT}>
             Send invitationslinket via fx Messenger, Beskeder eller en anden app. Personen skal selv acceptere invitationen, før I bliver forbundet. Linket gælder én person og udløber efter 24 timer.
           </div>
-          <button type="button" onClick={createLink} disabled={loading}
-            style={{ ...BTN, width:"100%", background:"var(--green)", color:"var(--on-green)", border:"none", opacity: loading ? .6 : 1 }}>
+          <button type="button" className="btn btn-primary btn-full" onClick={createLink} disabled={loading}>
             <Icon name="share" size={14} color="var(--on-green)" /> {loading ? "Opretter link…" : "Opret og del link"}
           </button>
           {error && <div role="alert" style={{ fontSize:12, color:"var(--red)", marginTop:8 }}>{error}</div>}

@@ -759,7 +759,8 @@ body::-webkit-scrollbar{display:none;}
 .welcome-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(8,115,74,.4);}
 .welcome-btn:active{transform:scale(.98);}
 .welcome-btn-ghost{background:var(--surface);color:var(--ink2);border:1.5px solid var(--border2);border-radius:16px;padding:14px 32px;font-family:var(--f);font-size:14px;font-weight:600;text-align:center;cursor:pointer;width:100%;transition:all .18s;}
-.welcome-btn-ghost:hover{background:var(--surface2);}
+@media (hover:hover){.welcome-btn-ghost:hover{background:var(--surface2);}}
+.welcome-btn-ghost:active{transform:scale(.98);background:var(--surface2);}
 /* min-height + flex-centrering, SCOPED til kun velkomstsidens egen brug af
    .welcome-btn/.welcome-btn-ghost (29. sept. 2026, "Polér velkomst-/
    login-siden", punkt 6/7: højde ca. 60-64px / 54-58px) — de samme to
@@ -976,12 +977,13 @@ button.filter-chip{width:auto;}
    give en tydelig ~46×46px touch-target uændret fra før. */
 .list-check{position:relative;width:17px;height:17px;border-radius:5px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .18s;font-size:11px;color:var(--on-green);}
 .list-check::before{content:'';position:absolute;inset:-14.5px;}
+.list-check:active{transform:scale(.9);}
 .list-check.checked{background:var(--green);border-color:var(--green);}
 .list-name{font-size:14px;font-weight:600;flex:1;letter-spacing:-.1px;color:var(--ink);overflow-wrap:anywhere;}
 .list-name.done{text-decoration:line-through;color:var(--muted);}
 /* Opacity .2→.35 — en anelse mørkere/lettere at se, stadig tydeligt
    sekundær/diskret ift. hover-tilstandens .6. */
-.list-del{position:relative;flex-shrink:0;font-size:15px;cursor:pointer;opacity:.35;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s;}.list-del:hover{opacity:.6;}
+.list-del{position:relative;flex-shrink:0;font-size:15px;cursor:pointer;opacity:.35;padding:10px;margin:-6px -10px -6px 0;transition:opacity .15s,transform .1s;}@media (hover:hover){.list-del:hover{opacity:.6;}}.list-del:active{opacity:.8;transform:scale(.9);}
 /* Usynlig tap-area-udvidelse til ~44×44px (25. sept. 2026, brugerfeedback:
    "sørg for minimum ca. 44×44 px tap-area") — samme ::before-mønster som
    .list-check ovenfor. Det synlige ikon (16px + 10px padding = 36×36px)
@@ -1022,14 +1024,14 @@ button.filter-chip{width:auto;}
    baggrund/kant/radius/margin, plus samme tryk-feedback-mønster
    (:active{scale(.99)}) som andre trykbare kort i appen (fx .recipe-card). */
 .hist-row{display:flex;align-items:center;gap:12px;padding:10px 14px;min-height:60px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;transition:opacity .1s,transform .1s;}
-.hist-row:hover{opacity:.85;}
+@media (hover:hover){.hist-row:hover{opacity:.85;}}
 .hist-row:active{transform:scale(.99);}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
-.menu-item:hover{opacity:.75;}
+@media (hover:hover){.menu-item:hover{opacity:.75;}}
 .menu-item:last-child{border-bottom:none;}
 .menu-profile-card{cursor:pointer;transition:transform .15s;font-family:var(--f);text-align:left;width:calc(100% - 20px);appearance:none;}
 .menu-profile-card:active{transform:scale(.99);}
-.menu-profile-card:hover{opacity:.85;}
+@media (hover:hover){.menu-profile-card:hover{opacity:.85;}}
 .hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .hist-dot.safe{background:var(--green-accent);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
 .hist-info{flex:1;min-width:0;}
@@ -1302,6 +1304,8 @@ button.filter-chip{width:auto;}
    trykbare elementer i appen. .btn:disabled{transform:none!important}
    (theme.jsx) sikrer at en deaktiveret knap aldrig "presser" ved et
    forsøgt tryk. */
+/* F3-12 (8. okt. 2026): button.tag og .legal-topbar-back med i listen; hover-fade kun på enheder med mus
+   (@media (hover:hover)), så et tryk på telefonen ikke efterlader rækken halvgennemsigtig. */
 .home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
 .filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
@@ -1310,6 +1314,7 @@ button.filter-chip{width:auto;}
 .admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
 .enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active,
 .mp-close-btn:active,.mp-speak-btn:active,.mp-cc-toggle:active,
+button.tag:active,.legal-topbar-back:active,.invite-tab:active,
 .btn:active{
   transform:scale(.97);
 }
