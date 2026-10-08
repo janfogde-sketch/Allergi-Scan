@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "7. oktober 2026",
+  "updated": "8. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -62,7 +62,7 @@ export default {
     ],
     [
       "p",
-      "**Scanningshistorik og favoritter**\nProdukter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes."
+      "**Scanningshistorik, søgehistorik og favoritter**\nProdukter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes. Når du søger efter et produkt og vælger et i resultatet, gemmer vi dit søgeord og det valgte produkt, så søgningen bliver bedre for dig."
     ],
     [
       "p",
@@ -255,7 +255,7 @@ export default {
     ],
     [
       "p",
-      "Hvis EatSafe anvender Anthropic API som kommerciel tjeneste, oplyser Anthropic aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning."
+      "EatSafe anvender Anthropic API som kommerciel tjeneste til aflæsning af emballagebilleder og vurdering af ingredienstekst; der sendes aldrig konto-, profil- eller helbredsoplysninger til Anthropic. Anthropic oplyser aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning."
     ],
     [
       "h2",
@@ -287,7 +287,7 @@ export default {
     ],
     [
       "p",
-      "**Anthropic**\nKan anvendes til automatisk analyse af produktbilleder og tekst."
+      "**Anthropic**\nAnvendes til automatisk analyse af produktbilleder og ingredienstekst."
     ],
     [
       "p",
@@ -300,6 +300,10 @@ export default {
     [
       "p",
       "**Google og Facebook**\nHvis du vælger at logge ind med din Google- eller Facebook-konto, modtager vi dit navn og din e-mailadresse fra udbyderen."
+    ],
+    [
+      "p",
+      "**EatSafes personale**\nTil support og fejlfinding kan udvalgte personer hos EatSafe se kontooplysninger og de oplysninger, du har registreret i appen, herunder helbredsoplysninger. Adgangen er begrænset til de personer, der har brug for den, og bruges kun til drift, support og sikkerhed."
     ],
     [
       "p",
@@ -348,7 +352,7 @@ export default {
     ],
     [
       "p",
-      "Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger."
+      "Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, søgehistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger."
     ],
     [
       "p",
@@ -358,11 +362,13 @@ export default {
       "ul",
       [
         "scanningshistorik: slettes automatisk 24 måneder efter scanningen",
+        "søgehistorik (dine søgeord og de produkter, du valgte): slettes automatisk 12 måneder efter, den er gemt",
         "beskeder i appen: slettes automatisk efter 12 måneder",
         "tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage",
         "tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning",
         "tællere for dagligt forbrug af tekniske funktioner (beskyttelse mod misbrug): slettes automatisk efter 30 dage og slettes med din konto",
         "e-mailadressen på en person, du har inviteret til din familie: slettes, så snart invitationen er besvaret eller udløbet (invitationen virker højst 24 timer, og oprydningen sker dagligt), og senest når du sletter din konto",
+        "feedback og fejlmeldinger sendt uden at være logget ind: slettes automatisk 12 måneder efter, at du sendte dem (sendt som logget ind slettes de med din konto)",
         "sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder",
         "logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister",
         "sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber."

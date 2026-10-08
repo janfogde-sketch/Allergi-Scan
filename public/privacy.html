@@ -114,7 +114,7 @@
   <div class="container">
     <h1>Privatlivspolitik</h1>
     <!-- LEGAL-BODY-START (genereret af scripts/build-legal-pages.mjs, ret i src/legalText/) -->
-    <div class="updated">Sidst opdateret: 7. oktober 2026</div>
+    <div class="updated">Sidst opdateret: 8. oktober 2026</div>
 
     <div class="draft-notice">
       Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt <a href="mailto:hej@eatsafe.dk">hej@eatsafe.dk</a>, hvis du har spørgsmål, indtil den endelige version er på plads.
@@ -135,7 +135,7 @@
     <p><strong>Kostpræferencer</strong><br>Eksempelvis vegansk, vegetarisk eller andre kosthensyn, du selv vælger.</p>
     <p><strong>E-numre og øvrige fravalg</strong><br>Oplysninger om tilsætningsstoffer eller andre forhold, som du vælger at holde øje med eller undgå.</p>
     <p><strong>Familieoplysninger</strong><br>Navn, profiloplysninger og eventuelle allergi-, intolerance- eller helbredsoplysninger om personer, der indgår i din familie i EatSafe.</p>
-    <p><strong>Scanningshistorik og favoritter</strong><br>Produkter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes.</p>
+    <p><strong>Scanningshistorik, søgehistorik og favoritter</strong><br>Produkter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes. Når du søger efter et produkt og vælger et i resultatet, gemmer vi dit søgeord og det valgte produkt, så søgningen bliver bedre for dig.</p>
     <p><strong>Indkøbslister</strong><br>Produkter og andre oplysninger, som du tilføjer til dine indkøbslister.</p>
     <p><strong>Produktindsendelser</strong><br>Billeder, stregkoder, ingrediensoplysninger og andre produktoplysninger, som du frivilligt sender til EatSafe.</p>
     <p><strong>Feedback og support</strong><br>De oplysninger, du sender til os i forbindelse med feedback, fejlmeldinger, support eller anden kontakt.</p>
@@ -208,7 +208,7 @@
     <p>Når du aktivt anvender en funktion, der analyserer et produktbillede, kan billedet blive sendt til en teknisk leverandør med henblik på analysen.</p>
     <p>EatSafe forsøger at begrænse de oplysninger, der sendes, til det, der er nødvendigt for den relevante funktion.</p>
     <p>Et produktbillede kan imidlertid selv indeholde personoplysninger, hvis sådanne oplysninger er synlige på billedet.</p>
-    <p>Hvis EatSafe anvender Anthropic API som kommerciel tjeneste, oplyser Anthropic aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning.</p>
+    <p>EatSafe anvender Anthropic API som kommerciel tjeneste til aflæsning af emballagebilleder og vurdering af ingredienstekst; der sendes aldrig konto-, profil- eller helbredsoplysninger til Anthropic. Anthropic oplyser aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning.</p>
 
     <h2>9. Leverandører og modtagere</h2>
     <p>EatSafe anvender eksterne leverandører til at drive og levere tjenesten.</p>
@@ -217,10 +217,11 @@
     <p>Supabases aktuelle DPA beskriver Supabase som databehandler og siger, at data, som kunden instruerer Supabase om at behandle i en bestemt geografisk region, lagres og primært behandles i den region, med visse forbehold. DPA’en indeholder desuden EU-standardkontraktbestemmelser for relevante internationale overførsler.</p>
     <p><strong>Vercel</strong><br>Anvendes til hosting og levering af EatSafes webbaserede infrastruktur.</p>
     <p>Vercels aktuelle DPA oplyser, at virksomhedens primære behandlingsfaciliteter er i USA, og at data kan behandles internationalt. DPA’en beskriver samtidig mekanismer for lovlige internationale overførsler.</p>
-    <p><strong>Anthropic</strong><br>Kan anvendes til automatisk analyse af produktbilleder og tekst.</p>
+    <p><strong>Anthropic</strong><br>Anvendes til automatisk analyse af produktbilleder og ingredienstekst.</p>
     <p><strong>Open Food Facts</strong><br>Anvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder kan hentes direkte fra Open Food Facts’ servere, hvorved din IP-adresse og tekniske enhedsoplysninger kan blive synlige for dem.</p>
     <p><strong>Resend</strong><br>Anvendes til at sende e-mails fra EatSafe, fx bekræftelse af e-mail, nulstilling af adgangskode, invitationer til familie og beskeder. Resend modtager din e-mailadresse, dit navn og beskedens indhold.</p>
     <p><strong>Google og Facebook</strong><br>Hvis du vælger at logge ind med din Google- eller Facebook-konto, modtager vi dit navn og din e-mailadresse fra udbyderen.</p>
+    <p><strong>EatSafes personale</strong><br>Til support og fejlfinding kan udvalgte personer hos EatSafe se kontooplysninger og de oplysninger, du har registreret i appen, herunder helbredsoplysninger. Adgangen er begrænset til de personer, der har brug for den, og bruges kun til drift, support og sikkerhed.</p>
     <p><strong>Push-tjenester</strong><br>Push-notifikationer leveres via din browser- eller enhedsleverandørs push-tjeneste (fx Apple, Google eller Mozilla).</p>
 
     <h2>10. Overførsel af oplysninger uden for EU/EØS</h2>
@@ -238,15 +239,17 @@
     <p>EatSafe opbevarer ikke personoplysninger længere end nødvendigt til de formål, de blev indsamlet til.</p>
     <p>Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv. Bruger du ikke din konto i 36 måneder, sender vi dig en mail og sletter kontoen og alle oplysninger på den efter 30 dage, medmindre du logger ind igen inden da.</p>
     <p>Hvis du trækker et samtykke til behandling af helbredsoplysninger tilbage, håndteres de pågældende oplysninger i overensstemmelse med den relevante sletteprocedure.</p>
-    <p>Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger.</p>
+    <p>Når du sletter din konto (Indstillinger → Slet konto, eller ved at skrive til hej@eatsafe.dk; se eatsafe.dk/slet-konto), slettes din profil, dine allergi- og helbredsoplysninger, familieprofiler, indkøbslister, scanningshistorik, søgehistorik, favoritter, beskeder, tilmeldinger til push, feedback og produktindsendelser, herunder de billeder, du har indsendt, samt selve loginkontoen straks. Et produkt, du har indsendt, og som er blevet godkendt og indgår i EatSafes produktdatabase, forbliver som produktoplysninger sammen med det produktbillede, produktet bruger.</p>
     <p>Øvrige opbevaringsfrister:</p>
     <ul>
       <li>scanningshistorik: slettes automatisk 24 måneder efter scanningen</li>
+      <li>søgehistorik (dine søgeord og de produkter, du valgte): slettes automatisk 12 måneder efter, den er gemt</li>
       <li>beskeder i appen: slettes automatisk efter 12 måneder</li>
       <li>tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage</li>
       <li>tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning</li>
       <li>tællere for dagligt forbrug af tekniske funktioner (beskyttelse mod misbrug): slettes automatisk efter 30 dage og slettes med din konto</li>
       <li>e-mailadressen på en person, du har inviteret til din familie: slettes, så snart invitationen er besvaret eller udløbet (invitationen virker højst 24 timer, og oprydningen sker dagligt), og senest når du sletter din konto</li>
+      <li>feedback og fejlmeldinger sendt uden at være logget ind: slettes automatisk 12 måneder efter, at du sendte dem (sendt som logget ind slettes de med din konto)</li>
       <li>sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder</li>
       <li>logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister</li>
       <li>sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber.</li>
