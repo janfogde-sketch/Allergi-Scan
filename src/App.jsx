@@ -664,7 +664,7 @@ export default function EatSafe() {
     scanFromGallery,
     scanPhotoForEan,
     toggleTorch,
-    toggleZoom,
+    toggleZoom, pauseCamera, resumeCamera,
   } = useScanner({
     setScanError,
     setLoading,
@@ -974,6 +974,8 @@ export default function EatSafe() {
             billede, i stedet for at ændre .app-bg selv, så resten af appen
             beholder sin nuværende intensitet. */}
         {(screen === SCREENS.LOGIN || screen === SCREENS.VERIFYEMAIL || screen === SCREENS.RESETPASSWORD) && <div className="app-bg-dim" aria-hidden="true" />}
+        {/* Mens kameraet er åbent, tones madvarebilledet lidt ned, så scanneren er sidens tydelige hovedelement (Bjørn, 8. okt. 2026). */}
+        {screen === SCREENS.HOME && cameraActive && <div className="app-bg-dim scan-bg-dim" aria-hidden="true" />}
         {/* Indkøbsliste-polish (25. sept. 2026, brugerfeedback): "fjern
             ingrediens-/fødevarebaggrunden fra Indkøbslisten — den skal kun
             bruges på den primære Scan-forside". Samme mønster som
@@ -1197,7 +1199,7 @@ export default function EatSafe() {
             torchOn={torchOn}
             scanZoom={scanZoom}
             zoomSupported={zoomSupported}
-            toggleZoom={toggleZoom}
+            toggleZoom={toggleZoom} pauseCamera={pauseCamera} resumeCamera={resumeCamera}
             showPhotoHint={showPhotoHint}
             photoScanLoading={photoScanLoading}
             cameraPermissionDenied={cameraPermissionDenied}

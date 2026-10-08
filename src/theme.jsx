@@ -1149,6 +1149,17 @@ button.filter-chip{width:auto;}
 @media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}}
 /* Kamerascannerens linje (Bjørn, 8. okt. 2026): tynd EatSafe-grøn, svag lyseffekt,
    glider langsomt frem og tilbage uden stop. Flyttes med transform. */
+.mb-backdrop{background:rgba(0,0,0,.32);animation:mb-fade .2s ease;}
+.mb-sheet{outline:none;width:100%;background:var(--sheet);border-radius:20px 20px 0 0;box-shadow:var(--sh2);padding:18px 16px calc(16px + env(safe-area-inset-bottom));animation:mb-up .26s cubic-bezier(.2,.8,.2,1);}
+.mb-field{width:100%;height:52px;background:var(--surface2);border:1.5px solid var(--field-border);border-radius:10px;padding:0 14px;color:var(--ink);font-family:var(--f);font-size:17px;font-weight:600;letter-spacing:1px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.mb-field::placeholder{color:var(--muted);font-weight:400;letter-spacing:0;}
+.mb-field:focus,.mb-field:focus-visible{outline:none;border-color:var(--green);box-shadow:0 0 0 .5px var(--green);}
+.mb-field[aria-invalid="true"]{border-color:var(--red);box-shadow:0 0 0 .5px var(--red);}
+.mb-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:var(--on-green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes mb-up{from{transform:translateY(100%);}to{transform:translateY(0);}}
+@keyframes mb-fade{from{opacity:0;}to{opacity:1;}}
+@media (prefers-reduced-motion: reduce){.mb-sheet,.mb-backdrop{animation:none;}}
+.app-bg-dim.scan-bg-dim{background:rgba(255,255,255,.22);}
 .scan-hint{position:absolute;bottom:8px;left:12px;right:12px;text-align:center;font-size:12px;font-weight:400;line-height:1.3;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.75);opacity:0;transition:opacity .6s ease;}
 .scan-hint.on{opacity:1;}
 .scan-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 14px;}

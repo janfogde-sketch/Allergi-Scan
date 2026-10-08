@@ -77,6 +77,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const lastScannedRef  = useRef(null);
   const scanZoomRef     = useRef(1.0);
   const noScanTimerRef  = useRef(null);
+  const scanPausedRef   = useRef(false); // sand mens manuel indtastning er åben: kameraet står stille, og fund ignoreres
   const galleryInputRef = useRef(null);
   const photoFallbackRef = useRef(null);
   const startingRef      = useRef(false); // låser mod dobbelt-tap mens kameraet starter op
@@ -107,6 +108,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       torchTrackRef.current = null;
     }
     scanZoomRef.current = 1.0;
+    scanPausedRef.current = false;
     setCameraActive(false); setTorchOn(false); setScanReady(false);
     setScanZoom(1.0); setZoomSupported(false); setShowPhotoHint(false); setScanError("");
   }, [setScanError]);
@@ -156,7 +158,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
         const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(rot)));
         const result = reader.decode(bitmap);
         const code = normalizeScannedBarcode(result.getText(), Z.BarcodeFormat[result.getBarcodeFormat()]);
-        if (!code || !rotatedLoopRef.current) return;
+        if (!code || !rotatedLoopRef.current || scanPausedRef.current) return;
         if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
         stopCamera();
         onScanSuccessRef.current?.(code);
@@ -239,7 +241,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
         (rawCode, decoded) => {
           // Kameraet er allerede stoppet (en kode er under behandling):
           // ignorér sene afkodninger, så samme scanning ikke sendes to gange.
-          if (!html5QrRef.current) return;
+          if (!html5QrRef.current || scanPausedRef.current) return;
           // Ugyldig/garblet afkodning ignoreres stille og scanningen
           // fortsætter (28. sept. 2026, FINAL POLISH – SCANNER, krav 12) —
           // et enkelt fejlaflæst frame er normalt og forbigående, så et
@@ -381,6 +383,19 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   }, [torchOn, setScanError]);
 
   // ── toggleZoom (1× ↔ 2×, kun når brugeren trykker) ──────────────────────
+  // Pause/genoptag under manuel indtastning (Bjørn, 8. okt. 2026). Videoen fryses direkte (html5-qrcodes egen pause viser en
+  // "Scanner paused"-tekst over billedet), og afkodningen ignoreres, så intet registreres bag arket.
+  const pauseCamera = useCallback(() => {
+    if (!html5QrRef.current) return;
+    scanPausedRef.current = true;
+    try { document.querySelector("#qr-reader-home video")?.pause(); } catch { /* ignoreres */ }
+  }, []);
+  const resumeCamera = useCallback(() => {
+    if (!scanPausedRef.current) return;
+    scanPausedRef.current = false;
+    try { document.querySelector("#qr-reader-home video")?.play()?.catch?.(() => {}); } catch { /* ignoreres */ }
+  }, []);
+
   const toggleZoom = useCallback(async () => {
     try {
       const videoEl = document.querySelector("#qr-reader-home video");
@@ -418,6 +433,6 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     scanFromGallery,
     scanPhotoForEan,
     toggleTorch,
-    toggleZoom,
+    toggleZoom, pauseCamera, resumeCamera,
   };
 }
