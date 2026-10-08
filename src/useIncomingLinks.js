@@ -7,6 +7,7 @@ import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { storeInviteToken } from "./familyInviteInbox.js";
+import { hasStoredSession } from "./sessionStore.js";
 
 export function useIncomingLinks({
   accessToken, userId, user,
@@ -26,7 +27,7 @@ export function useIncomingLinks({
     url.searchParams.delete("invite");
     url.searchParams.delete("login");
     window.history.replaceState({}, "", url.toString());
-    if (!localStorage.getItem("as_token")) {
+    if (!hasStoredSession()) {
       setAuthTab(params.get("login") === "1" ? "login" : "signup");
       setScreen(SCREENS.LOGIN);
     }
@@ -52,7 +53,7 @@ export function useIncomingLinks({
     window.history.replaceState({}, "", url.toString());
     // Ikke logget ind endnu — opfordr direkte til at oprette en konto,
     // fremfor at brugeren lander på den almindelige velkomstskærm
-    if (!localStorage.getItem("as_token")) {
+    if (!hasStoredSession()) {
       setAuthTab(wantsLogin ? "login" : "signup");
       setScreen(SCREENS.LOGIN);
     }

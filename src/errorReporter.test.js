@@ -2,6 +2,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { reportError, shouldReport, getRecentErrors, _resetForTests } from "./errorReporter.js";
+import { setMemoryToken } from "./sessionStore.js";
 
 describe("shouldReport", () => {
   it("afviser tom tekst og kendt støj", () => {
@@ -19,6 +20,7 @@ describe("shouldReport", () => {
 describe("reportError", () => {
   beforeEach(() => {
     _resetForTests();
+    setMemoryToken(null);
     localStorage.clear();
     sessionStorage.clear();
     globalThis.fetch = vi.fn(async () => ({ ok: true, status: 204 }));
@@ -49,7 +51,7 @@ describe("reportError", () => {
   });
 
   it("bruger login-token og prøver anonymt ved 401", async () => {
-    localStorage.setItem("as_token", "user-token");
+    setMemoryToken("user-token");
     fetch.mockResolvedValueOnce({ ok: false, status: 401 }).mockResolvedValueOnce({ ok: true, status: 204 });
     expect(await reportError(new Error("Udløbet"))).toBe(true);
     expect(fetch.mock.calls[0][1].headers.Authorization).toBe("Bearer user-token");

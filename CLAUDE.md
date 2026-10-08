@@ -233,6 +233,7 @@ ethvert kamera-luk. `cameraPermissionDenied` viser et dedikeret kort. Advarselsv
   konto oprettet (`as_pending_verify`), e-mail bekræftet (`onboarding_completed=false` → onboarding fra gemt `onboarding_step`),
   færdig (`as_onboarded`). Appstart venter på status på `SCREENS.BOOT`. Routing deles af `resolveOnboardingRoute` i `useAuth.js`.
   Velkomstmailen sendes kun når `onboarding_completed` skifter false → true (trigger `on_onboarding_completed`).
+- **Login-nøgler (8. okt. 2026):** den lange nøgle (refresh-token) ligger i en HttpOnly-cookie sat af Vercel-funktionen `api/session.js` (logik i `api/_sessionLogic.js`); den korte (access-token) kun i hukommelsen (`src/sessionStore.js`). Lokalt ligger kun mærket `as_session` og `as_user_id`; læs aldrig `as_token`/`as_refresh` (findes ikke mere, ryddes ved migrering). Ved start henter `useAuth` en ny kort nøgle via cookien.
 - Glemt adgangskode: linket åbner `ResetPasswordScreen` (`#type=recovery`), først derefter kommer brugeren ind. Mailen har et
   signeret "Var det ikke dig?"-link (`report-unrequested-reset`, `src/CONTEXT.md` §11).
 - Onboarding har 5 trin (profil, allergier + samtykke + E-numre, spor, familie [valgfrit], notifikationer [valgfrit]) og ingen skjulte trin

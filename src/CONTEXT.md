@@ -22,7 +22,7 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 - Hooks `src/use*.js` (scanner, søgning, alternativer, madpas, admin, indkøbsliste, auth, onboarding, household, push, notifikationer m.fl.),
   contexts `src/*Context.jsx`.
 - Desktop-admin: `src/admin/` (eget Vite-entry `admin.html`, egen React-rod, egen CSS i `adminTheme.js`; deler localStorage-session
-  (`as_token`/`as_refresh`/`as_user_id`) med appen og genbruger `useAdmin.js`). Faner i `src/admin/sections/`: Dashboard, Brugere, Indsendelser,
+  (session via cookie og mærket `as_session`, se `src/sessionStore.js`) med appen og genbruger `useAdmin.js`). Faner i `src/admin/sections/`: Dashboard, Brugere, Indsendelser,
   Tickets, Manglende, Import, Opskrifter, Produkter, Leksikon, Historik, Familie, Fejl, Tilbagekald, Notifikationer, To do. Global søgning i topbaren.
 - Edge-funktioner `supabase/functions/<navn>/index.ts`, delt kode i `supabase/functions/_shared/`. Migrationer `supabase/migrations/`
   (baseline + nye), mailskabeloner `supabase/templates/{auth,resend}/`, statiske sider `public/` (`install`, `invite`, `privacy`, `terms`,

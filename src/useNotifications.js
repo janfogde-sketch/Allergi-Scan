@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { fetchNotificationList, markNotificationRead, deleteNotification, readNotificationParam, PENDING_KEY } from "./notificationsApi.js";
+import { hasStoredSession } from "./sessionStore.js";
 
 export function useNotifications({ accessToken, userId, user, screen, setScreen, setAuthTab }) {
   const [items, setItems] = useState([]);
@@ -59,7 +60,7 @@ export function useNotifications({ accessToken, userId, user, screen, setScreen,
     const url = new URL(window.location.href);
     url.searchParams.delete("notification");
     window.history.replaceState({}, "", url.toString());
-    if (!localStorage.getItem("as_token")) {
+    if (!hasStoredSession()) {
       setAuthTab?.("login");
       setScreen(SCREENS.LOGIN);
     }

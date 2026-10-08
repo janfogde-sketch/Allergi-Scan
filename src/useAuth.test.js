@@ -13,6 +13,27 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useAuth } from "./useAuth.js";
+import * as sessionStore from "./sessionStore.js";
+
+// Cookie-kaldene til /api/session testes i sessionStore.test.js og sessionApi.test.js; her erstattes de af stubs.
+vi.mock("./sessionStore.js", async (importOriginal) => {
+  const real = await importOriginal();
+  return {
+    ...real,
+    persistRefreshToken: vi.fn(async () => { localStorage.setItem("as_session", "1"); return true; }),
+    restoreSession: vi.fn(async () => ({ status: "none" })),
+    endSession: vi.fn(async () => { real.setMemoryToken(null); localStorage.removeItem("as_session"); }),
+  };
+});
+
+// Starter hooken med en gemt session, som cookien gendanner til den givne korte nøgle.
+async function setupRestored(token, userId, overrides = {}) {
+  localStorage.setItem("as_session", "1");
+  sessionStore.restoreSession.mockResolvedValue({ status: "ok", accessToken: token, userId });
+  const out = setup(overrides);
+  await act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); });
+  return out;
+}
 
 function textResponse(body, ok = true) {
   return { ok, status: ok ? 200 : 400, text: async () => JSON.stringify(body) };
@@ -29,6 +50,10 @@ function setup(overrides = {}) {
 
 beforeEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
+  sessionStore.setMemoryToken(null);
+  sessionStore.restoreSession.mockReset();
+  sessionStore.restoreSession.mockResolvedValue({ status: "none" });
   global.fetch = vi.fn();
 });
 
@@ -86,7 +111,10 @@ describe("useAuth handleLogin — validation guards", () => {
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("correctpass"); });
     await act(async () => { await result.current.handleLogin(); });
     expect(result.current.accessToken).toBe("at");
-    expect(localStorage.getItem("as_token")).toBe("at");
+    expect(sessionStore.getAccessToken()).toBe("at");
+    expect(sessionStore.persistRefreshToken).toHaveBeenCalledWith("rt", true);
+    expect(localStorage.getItem("as_token")).toBeNull();
+    expect(localStorage.getItem("as_refresh")).toBeNull();
     // Routingen bruger nu funktionsformen, så en åbnet push-besked ikke overskrives.
     const updaters = setScreen.mock.calls.map(([x]) => x).filter((x) => typeof x === "function");
     expect(updaters.some((fn) => fn("login") === "home")).toBe(true);
@@ -284,9 +312,8 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
   });
 
   it("gemmer den nye adgangskode med recovery-sessionen og viser færdig-tilstand", async () => {
-    localStorage.setItem("as_token", "tok");
     global.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    const { result } = setup();
+    const { result } = await setupRestored("tok", "u1");
     let ok;
     await act(async () => { ok = await result.current.submitNewPassword("Stærk12345"); });
     expect(ok).toBe(true);
@@ -299,9 +326,8 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
   });
 
   it("viser en fast, venlig tekst, når linket er udløbet (401), uden Supabases rå fejl", async () => {
-    localStorage.setItem("as_token", "tok");
     global.fetch.mockResolvedValue({ ok: false, status: 401, json: async () => ({ msg: "JWT expired" }) });
-    const { result } = setup();
+    const { result } = await setupRestored("tok", "u1");
     await act(async () => { await result.current.submitNewPassword("Stærk12345"); });
     expect(result.current.resetDone).toBe(false);
     expect(result.current.resetError).toMatch(/udløbet/);
@@ -309,9 +335,8 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
   });
 
   it("fortæller, at den nye kode skal være forskellig fra den gamle (same_password)", async () => {
-    localStorage.setItem("as_token", "tok");
     global.fetch.mockResolvedValue({ ok: false, status: 422, json: async () => ({ error_code: "same_password" }) });
-    const { result } = setup();
+    const { result } = await setupRestored("tok", "u1");
     await act(async () => { await result.current.submitNewPassword("Stærk12345"); });
     expect(result.current.resetError).toMatch(/forskellig/);
   });
@@ -319,10 +344,8 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
 
 describe("useAuth — app-start overskriver ikke en besked åbnet fra push", () => {
   it("sender ikke videre til forsiden, hvis beskeden allerede er åbnet", async () => {
-    localStorage.setItem("as_token", "a.eyJzdWIiOiJ1MSJ9.s");
-    localStorage.setItem("as_user_id", "u1");
     global.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => [{ onboarding_completed: true, onboarding_step: 5 }], text: async () => "[]" });
-    const { setScreen } = setup();
+    const { setScreen } = await setupRestored("a.eyJzdWIiOiJ1MSJ9.s", "u1");
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     const withUpdater = setScreen.mock.calls.map(([a]) => a).filter((a) => typeof a === "function");
     expect(withUpdater.length).toBeGreaterThan(0);

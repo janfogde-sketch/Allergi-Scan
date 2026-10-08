@@ -84,6 +84,7 @@ import { recentInviteLinkFollowed } from "./familyInviteInbox.js";
 import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
+import { hasStoredSession } from "./sessionStore.js";
 
 // Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.
 // sept. 2026, "Onboarding-persistens") — se setScreen-wrapperen i
@@ -101,8 +102,7 @@ const AUTH_FLOW_SCREENS = [SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCRE
 // oprettet, ubekræftet konto åbner bekræftelsesskærmen igen.
 function initialScreen() {
   try {
-    const token = localStorage.getItem("as_token") || sessionStorage.getItem("as_token");
-    if (token) return localStorage.getItem(ONBOARDED_KEY) ? SCREENS.HOME : SCREENS.BOOT;
+    if (hasStoredSession()) return localStorage.getItem(ONBOARDED_KEY) ? SCREENS.HOME : SCREENS.BOOT;
     if (localStorage.getItem(PENDING_VERIFY_KEY)) return SCREENS.VERIFYEMAIL;
   } catch { /* privat tilstand */ }
   // Nyligt fulgt invitationslink: ny bruger direkte til oprettelse/login (første besøg genindlæser siden, og ?invite= er så væk).
@@ -323,7 +323,7 @@ export default function EatSafe() {
 
   // ── CUSTOM HOOKS ──────────────────────────────────────────────────────────
   const {
-    accessToken, setAccessToken, refreshToken, setRefreshToken,
+    accessToken, setAccessToken,
     userId, setUserId,
     loginEmail, setLoginEmail, loginPassword, setLoginPassword,
     authError, setAuthError, authInfo, emailTakenError, setEmailTakenError,

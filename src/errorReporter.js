@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { COMMIT_SHA } from "./utils.jsx";
+import { getAccessToken } from "./sessionStore.js";
 
 const MAX_REPORTS_PER_SESSION = 20;
 
@@ -61,7 +62,7 @@ export function shouldReport(message, stack = "") {
 
 function readToken() {
   try {
-    return localStorage.getItem("as_token") || sessionStorage.getItem("as_token") || null;
+    return getAccessToken();
   } catch {
     return null;
   }
