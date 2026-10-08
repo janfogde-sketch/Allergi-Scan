@@ -284,6 +284,14 @@ Deno.serve(async (req) => {
       const { data: submission, error: fetchError } = await supabase.from("submissions").select("*").eq("id", identifier).single();
       if (fetchError || !submission) return new Response(JSON.stringify({ error: "Indsendelse ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+      // Tjekkes FØR status ændres: ellers står forslaget som godkendt, selv om intet blev rettet.
+      if (status === "approved" && submission.type === "edit" && !submission.product_id) {
+        return new Response(
+          JSON.stringify({ error: "Rettelsesforslaget mangler product_id" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       await supabase.from("submissions").update({
         status,
         reviewed_by,
