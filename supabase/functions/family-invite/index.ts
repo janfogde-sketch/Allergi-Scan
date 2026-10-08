@@ -8,15 +8,12 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
 import { renderInviteMail, inviteMailSubject } from "../_shared/inviteMail.ts";
+import { corsFor, getCaller } from "../_shared/http.ts";
 import {
   MAX_INVITE_MAILS_PER_DAY, MAX_INVITES_PER_RECIPIENT_PER_DAY, normalizeInviteEmail, isValidInviteEmail, formatInviteExpiry,
 } from "../_shared/familyInvite.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const corsHeaders = corsFor("POST, OPTIONS");
 const RESEND_COOLDOWN_MS = 30 * 60 * 1000;
 
 const json = (body: unknown, status = 200) =>
@@ -26,12 +23,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Metode ikke tilladt" }, 405);
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return json({ error: "Ikke autoriseret" }, 401);
-  const userClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: { user: caller } } = await userClient.auth.getUser();
+  const caller = await getCaller(req);
   if (!caller) return json({ error: "Ikke autoriseret" }, 401);
 
   const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");

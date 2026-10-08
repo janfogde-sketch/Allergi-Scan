@@ -1,12 +1,9 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { normalizeNutrition } from "../_shared/nutrition.js";
 import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
+import { corsFor, getCaller } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-};
+const corsHeaders = corsFor("GET, POST, PATCH, DELETE, OPTIONS");
 
 const MAX_EXTRA_IMAGES = 6;
 const MAX_IMAGE_BASE64_LENGTH = 8_000_000; // samme loft som ocr-funktionen
@@ -81,17 +78,7 @@ Deno.serve(async (req) => {
   // Verificér at den kaldende bruger faktisk er logget ind — indsendelser,
   // godkendelse/afvisning og admin-listen skal ikke være tilgængelige uden
   // login, og en bruger skal ikke kunne indsende på vegne af en anden.
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return new Response(
-    JSON.stringify({ error: "Ikke autoriseret" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-  const userClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user: caller } } = await userClient.auth.getUser();
+  const caller = await getCaller(req);
   if (!caller) return new Response(
     JSON.stringify({ error: "Ikke autoriseret" }),
     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }

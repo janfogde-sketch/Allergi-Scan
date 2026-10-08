@@ -1,11 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
+import { corsFor } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-};
+const corsHeaders = corsFor("GET, POST, PATCH, DELETE, OPTIONS");
 
 const normalize = (s: string) => s.toLowerCase()
   .replace(/[-_&]/g, " ")

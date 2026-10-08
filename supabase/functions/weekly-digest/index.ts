@@ -20,15 +20,14 @@
 // fejlede formentlig hver mandag med 401, uden at cron.job_run_details
 // afslørede det. Rettet til at hente nøglen fra Vault i stedet.
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   // Kaldes udelukkende af vores eget pg_cron-job (se header-kommentaren

@@ -50,3 +50,7 @@ familiemedlemmer ved invitation).
 Se `.claude/skills/security-check/SKILL.md` for den fulde gennemgangs-
 proces, og `SECURITY_TODO.md` for historikken over konkrete fund og
 rettelser.
+
+**Fælles hjælpere (`_shared/http.ts`):** brug `corsFor("GET, POST, OPTIONS")` til CORS-headere og `getCaller(req)` til
+login-tjekket (null uden gyldigt login) i stedet for at kopiere blokkene. Alle funktioner importerer supabase-js som
+`jsr:@supabase/supabase-js@2.117.2` og starter med `Deno.serve` (aldrig `std serve` eller esm.sh).

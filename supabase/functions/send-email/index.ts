@@ -4,11 +4,9 @@
 
 import { TRANSACTIONAL_TEMPLATES, buildMailVariables, escapeHtml, sendTemplateMail } from "../_shared/mailSend.ts";
 import { WELCOME_MAIL_SUBJECT, renderWelcomeMail } from "../_shared/welcomeMail.ts";
+import { corsFor } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = corsFor();
 
 const FROM = "EatSafe <noreply@eatsafe.dk>";
 

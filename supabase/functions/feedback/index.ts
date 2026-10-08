@@ -14,12 +14,9 @@
 // IP-adressen gemmes ikke — kun en saltet SHA-256-hash i client_hash.
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { validateFeedback, withinLimit } from "./validate.js";
+import { corsFor } from "../_shared/http.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const corsHeaders = corsFor("POST, OPTIONS");
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });

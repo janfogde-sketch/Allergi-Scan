@@ -25,8 +25,7 @@
 //
 // Auth (kategori 2 og 4 i .claude/rules/edge-function-auth.md): kun admin-JWT eller service-role.
 // ─────────────────────────────────────────────────────────────────────────────
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { analyzeIngredients, liftGlutenFromWheat, ALL_ALLERGENS } from "../_shared/allergenEngine.js";
 
 const CORS = {
@@ -44,7 +43,7 @@ const DOWN_RANK: Record<string, number> = { no: 0, unknown: 1, traces: 2, yes: 3
 const DOWN_TABLE = "allergen_reanalysis_down_20261006";
 const DOWN_BACKUP_TABLE = "products_allergen_down_backup_20261006";
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
