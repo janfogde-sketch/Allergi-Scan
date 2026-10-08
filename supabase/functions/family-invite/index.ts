@@ -5,11 +5,11 @@
 //   POST { email }      → opret invitation og send mail
 //   POST { kind: "link" } → opret et delt link (ingen e-mail); afsenderen får URL'en og skal selv godkende, hvem der bruger det
 //   POST { resend_id }  → send mailen igen (pause mellem hver afsendelse)
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
 import { renderInviteMail, inviteMailSubject } from "../_shared/inviteMail.ts";
 import {
-  MAX_INVITE_MAILS_PER_DAY, normalizeInviteEmail, isValidInviteEmail, formatInviteExpiry,
+  MAX_INVITE_MAILS_PER_DAY, MAX_INVITES_PER_RECIPIENT_PER_DAY, normalizeInviteEmail, isValidInviteEmail, formatInviteExpiry,
 } from "../_shared/familyInvite.ts";
 
 const corsHeaders = {
@@ -102,6 +102,10 @@ Deno.serve(async (req) => {
     const { count } = await db.from("family_invites").select("id", { count: "exact", head: true })
       .eq("invited_by", caller.id).gte("created_at", since);
     if ((count ?? 0) >= MAX_INVITE_MAILS_PER_DAY) return json({ error: "rate_limited" }, 429);
+
+    const { count: toRecipient } = await db.from("family_invites").select("id", { count: "exact", head: true })
+      .eq("invitee_email", email).gte("created_at", since);
+    if ((toRecipient ?? 0) >= MAX_INVITES_PER_RECIPIENT_PER_DAY) return json({ error: "rate_limited" }, 429);
 
     const { data: connected } = await db.rpc("invitee_already_connected", { p_inviter: caller.id, p_email: email });
     if (connected === true) return json({ error: "already_connected" }, 409);

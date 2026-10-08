@@ -5,7 +5,7 @@
 // slår dem op på Open Food Facts og importerer dem til products-tabellen.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { analyzeIngredients, liftGlutenFromWheat, stripHtml } from "../_shared/allergenEngine.js";
 
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;

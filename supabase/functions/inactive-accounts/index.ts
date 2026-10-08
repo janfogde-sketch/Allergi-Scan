@@ -4,7 +4,7 @@
 // med delete-user, så alt slettes på samme måde som ved en kontosletning. Kaldes dagligt af pg_cron (cleanup_inactive_accounts()),
 // kun med service-role-nøglen. Body {"dry_run": true} viser kun, hvem der ville blive advaret/slettet, og sender/sletter intet.
 
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { sendHtmlMail } from "../_shared/mailSend.ts";
 import { INACTIVITY_MAIL_SUBJECT, renderInactivityMail } from "../_shared/inactivityMail.ts";
 

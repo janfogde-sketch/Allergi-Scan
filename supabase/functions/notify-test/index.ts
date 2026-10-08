@@ -8,7 +8,7 @@
 // Kald: POST { userId, key, channels: ["push","mail"] }      → send test
 //       POST { action: "preview", key, userId? }              → mailens HTML fra Resend med eksempeldata
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 import { renderNotification, DEFINITIONS } from "../_shared/notificationContent.js";
 import { mockDataFor } from "../_shared/notificationMock.js";
 import { sendWebPush } from "../_shared/webpush.ts";

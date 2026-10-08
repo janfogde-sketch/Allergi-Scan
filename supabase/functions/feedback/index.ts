@@ -12,7 +12,7 @@
 //   * med login:  20 pr. time pr. bruger
 // submitted_by sættes KUN ud fra et gyldigt login-token, aldrig fra body.
 // IP-adressen gemmes ikke — kun en saltet SHA-256-hash i client_hash.
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { validateFeedback, withinLimit } from "./validate.js";
 
 const corsHeaders = {

@@ -1,4 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
 
 // Findes kun i Supabase's kørselsmiljø (ikke i Deno-typerne).

@@ -3,7 +3,7 @@
 // eller et upload der aldrig blev til en indsendelse), og skærmbilleder i feedback-screenshots uden ticket. Kaldes dagligt af pg_cron (cleanup_orphan_images()), kun med service-role-nøglen.
 // Body {"dry_run": true} viser kun listen og sletter intet.
 
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { PRODUCT_IMAGES_BUCKET } from "../_shared/productImages.js";
 
 const json = (body: unknown, status = 200) =>

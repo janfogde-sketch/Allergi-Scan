@@ -4,6 +4,8 @@
 
 /** Misbrugsværn: højst så mange invitationsmails pr. bruger pr. døgn (nye + "send igen"). */
 export const MAX_INVITE_MAILS_PER_DAY = 10;
+// Højst så mange invitationer pr. modtageradresse pr. døgn, uanset afsender (hindrer, at en adresse oversvømmes).
+export const MAX_INVITES_PER_RECIPIENT_PER_DAY = 3;
 
 /** Små bogstaver, uden mellemrum rundt om. */
 export function normalizeInviteEmail(value: unknown): string {

@@ -32,9 +32,9 @@ export default defineConfig({
     include: ["src/**/*.test.{js,jsx}"],
     // Edge-funktionerne importerer supabase-js via jsr:/esm.sh; handlertests (src/testing/edgeHarness.js) bruger en stub.
     alias: [
-      { find: /^jsr:@supabase\/supabase-js@2$/, replacement: resolve(rootDir, 'src/testing/supabaseStub.js') },
+      { find: /^jsr:@supabase\/supabase-js@2[\d.]*$/, replacement: resolve(rootDir, 'src/testing/supabaseStub.js') },
       { find: /^https:\/\/deno\.land\/std@[\d.]+\/http\/server\.ts$/, replacement: resolve(rootDir, 'src/testing/denoServeStub.js') },
-      { find: /^https:\/\/esm\.sh\/@supabase\/supabase-js@2$/, replacement: resolve(rootDir, 'src/testing/supabaseStub.js') },
+      { find: /^https:\/\/esm\.sh\/@supabase\/supabase-js@2[\d.]*$/, replacement: resolve(rootDir, 'src/testing/supabaseStub.js') },
     ],
   },
 })

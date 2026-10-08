@@ -1,4 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { normalizeNutrition } from "../_shared/nutrition.js";
 import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
 
