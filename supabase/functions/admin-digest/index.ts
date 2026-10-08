@@ -92,7 +92,7 @@ serve(async (req) => {
         <h2 style="color:#0F7D4F;">EatSafe — ugentligt overblik</h2>
         <p style="color:#555;">Her er hvad der venter på jer i admin-panelet lige nu:</p>
         <table style="border-collapse:collapse;margin:16px 0;">${rows}</table>
-        <a href="https://eatsafe.dk" style="display:inline-block;background:#0F7D4F;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">Åbn admin-panelet →</a>
+        <a href="https://www.eatsafe.dk" style="display:inline-block;background:#0F7D4F;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">Åbn admin-panelet →</a>
       </div>
     `;
     const subject = `EatSafe: ${[

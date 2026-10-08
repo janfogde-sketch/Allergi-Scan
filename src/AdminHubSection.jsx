@@ -24,7 +24,7 @@ export default function AdminHubSection({ kind, onOpen }) {
   // Installations-QR til beta-testere. Peger på install.html: siden tjekker selv enheden (iPhone får en trin-for-trin guide,
   // alt andet sendes videre til appen med det samme).
   const [showInstallQr, setShowInstallQr] = useState(false);
-  const installUrl = "https://eatsafe.dk/install.html";
+  const installUrl = "https://www.eatsafe.dk/install.html";
   const installQrImg = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(installUrl)}&bgcolor=ffffff&color=0d3320&qzone=2`;
 
   return (

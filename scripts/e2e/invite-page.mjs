@@ -105,7 +105,7 @@ for (const device of DEVICES) {
     for (const re of EXPECT[state].has) record(re.test(text), `${label}: tekst ${re}`, text.slice(0, 160));
     for (const re of EXPECT[state].not) record(!re.test(text), `${label}: ingen tekst ${re}`);
     const hrefs = await page.$$eval("a.btn", (as) => as.map((a) => a.getAttribute("href")));
-    record(hrefs.includes(`https://eatsafe.dk?invite=${TOKEN}`) && hrefs.includes(`https://eatsafe.dk?invite=${TOKEN}&login=1`), `${label}: knapperne sender tokenet med`, hrefs.join(" | "));
+    record(hrefs.includes(`https://www.eatsafe.dk?invite=${TOKEN}`) && hrefs.includes(`https://www.eatsafe.dk?invite=${TOKEN}&login=1`), `${label}: knapperne sender tokenet med`, hrefs.join(" | "));
     // app-browser: advarsel + kopiér-knap, ellers ingen
     const notice = await page.$(".notice");
     record(!!notice === inApp, `${label}: app-browser-advarsel ${inApp ? "vises" : "vises ikke"}`);

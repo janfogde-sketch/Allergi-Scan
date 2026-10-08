@@ -39,19 +39,19 @@ describe("listShare", () => {
 
 describe("listelink", () => {
   it("læser kode fra nyt og gammelt link og rå kode", () => {
-    expect(parseListCode("https://eatsafe.dk/list/abc234")).toBe("ABC234");
-    expect(parseListCode("https://eatsafe.dk/?join-list=XYZ789")).toBe("XYZ789");
+    expect(parseListCode("https://www.eatsafe.dk/list/abc234")).toBe("ABC234");
+    expect(parseListCode("https://www.eatsafe.dk/?join-list=XYZ789")).toBe("XYZ789");
     expect(parseListCode("  k7m2pq ")).toBe("K7M2PQ");
   });
   it("bygger link og forklarende tekst", () => {
-    expect(listLinkUrl("ABC234")).toBe("https://eatsafe.dk/list/ABC234");
+    expect(listLinkUrl("ABC234")).toBe("https://www.eatsafe.dk/list/ABC234");
     expect(listShareText("Weekend")).toContain('"Weekend"');
     expect(listShareText("Weekend")).toContain("Du bestemmer selv");
   });
 
   it("looksLikeListLink accepterer links og koder, afviser tekst", () => {
-    expect(looksLikeListLink("https://eatsafe.dk/list/ABC123")).toBe(true);
-    expect(looksLikeListLink("https://eatsafe.dk/?join-list=abc123")).toBe(true);
+    expect(looksLikeListLink("https://www.eatsafe.dk/list/ABC123")).toBe(true);
+    expect(looksLikeListLink("https://www.eatsafe.dk/?join-list=abc123")).toBe(true);
     expect(looksLikeListLink("abc123")).toBe(true);
     expect(looksLikeListLink("")).toBe(false);
     expect(looksLikeListLink("hej med dig")).toBe(false);

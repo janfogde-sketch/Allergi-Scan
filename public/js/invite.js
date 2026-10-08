@@ -54,7 +54,7 @@ const installGuide = () => isStandalone ? "" : `
   <div class="install">
     <strong>Første gang i EatSafe?</strong>
     <p>EatSafe virker bedst som app på din startskærm, og kun dér kan du få pushbeskeder. Når du har oprettet dig, kan du installere den. ${installTip()}</p>
-    <a href="https://eatsafe.dk/install.html" class="btn btn-ghost">Sådan installerer du EatSafe</a>
+    <a href="https://www.eatsafe.dk/install.html" class="btn btn-ghost">Sådan installerer du EatSafe</a>
   </div>`;
 
 function wireCopy() {
@@ -83,7 +83,7 @@ async function checkToken() {
       ${icon("alert", true)}
       <h1>Ugyldig invitation</h1>
       <p>Denne invitation er ikke gyldig.</p>
-      <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+      <a href="https://www.eatsafe.dk" class="btn">Gå til EatSafe</a>
     `);
     return;
   }
@@ -109,7 +109,7 @@ async function checkToken() {
         ${icon("alert", true)}
         <h1>Ugyldig invitation</h1>
         <p>Denne invitation findes ikke.</p>
-        <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+        <a href="https://www.eatsafe.dk" class="btn">Gå til EatSafe</a>
       `);
       return;
     }
@@ -120,7 +120,7 @@ async function checkToken() {
         ${icon("check")}
         <h1>Allerede accepteret</h1>
         <p>Denne invitation er allerede brugt.</p>
-        <a href="https://eatsafe.dk" class="btn">Åbn EatSafe</a>
+        <a href="https://www.eatsafe.dk" class="btn">Åbn EatSafe</a>
       `);
       return;
     }
@@ -130,7 +130,7 @@ async function checkToken() {
         ${icon("alert", true)}
         <h1>Invitationen er trukket tilbage</h1>
         <p>Bed afsenderen om en ny invitation.</p>
-        <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+        <a href="https://www.eatsafe.dk" class="btn">Gå til EatSafe</a>
       `);
       return;
     }
@@ -140,7 +140,7 @@ async function checkToken() {
         ${icon("clock", true)}
         <h1>Invitationen er udløbet</h1>
         <p>Bed familiemedlemmet om at sende en ny invitation til din e-mailadresse.</p>
-        <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+        <a href="https://www.eatsafe.dk" class="btn">Gå til EatSafe</a>
       `);
       return;
     }
@@ -151,7 +151,7 @@ async function checkToken() {
         ${icon("alert", true)}
         <h1>Linket er allerede brugt</h1>
         <p>Et delt link virker kun til én person. Har du selv brugt det, venter afsenderen på at godkende dig i EatSafe. Ellers kan du bede afsenderen om et nyt link.</p>
-        <a href="https://eatsafe.dk" class="btn">Åbn EatSafe</a>
+        <a href="https://www.eatsafe.dk" class="btn">Åbn EatSafe</a>
       `);
       return;
     }
@@ -164,8 +164,8 @@ async function checkToken() {
       ${invite.invitee_email_hint ? `<p><strong>Tip:</strong> Opret dig eller log ind med den e-mailadresse, invitationen blev sendt til (${esc(invite.invitee_email_hint)}). Bruger du Facebook eller en anden adresse, er det også fint: tryk på knapperne herunder, og log ind i den samme browser, så vises invitationen i appen. Du bestemmer selv, om du vil forbindes.</p>` : ""}
       ${invite.kind === "link" ? `<p><strong>Sådan virker det:</strong> Opret dig eller log ind, og tryk ja i appen. Så får ${invite.inviter_first_name ? esc(invite.inviter_first_name) : "afsenderen"} en anmodning og skal godkende, før I bliver forbundet. Linket virker til én person.</p>` : ""}
       ${inAppNotice()}
-      <a href="https://eatsafe.dk?invite=${encodeURIComponent(token)}" class="btn">Opret konto</a>
-      <a href="https://eatsafe.dk?invite=${encodeURIComponent(token)}&login=1" class="btn btn-ghost">Log ind</a>
+      <a href="https://www.eatsafe.dk?invite=${encodeURIComponent(token)}" class="btn">Opret konto</a>
+      <a href="https://www.eatsafe.dk?invite=${encodeURIComponent(token)}&login=1" class="btn btn-ghost">Log ind</a>
       <p class="expiry">Invitationen udløber ${new Date(invite.expires_at).toLocaleDateString("da-DK")}</p>
       ${installGuide()}
     `);
@@ -175,7 +175,7 @@ async function checkToken() {
       ${icon("alert", true)}
       <h1>Noget gik galt</h1>
       <p>Tjek din internetforbindelse og prøv igen.</p>
-      <a href="https://eatsafe.dk" class="btn">Gå til EatSafe</a>
+      <a href="https://www.eatsafe.dk" class="btn">Gå til EatSafe</a>
     `);
   }
 }

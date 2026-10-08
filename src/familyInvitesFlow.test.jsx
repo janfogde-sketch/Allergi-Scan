@@ -355,7 +355,7 @@ describe("afsender: opret invitation (panel)", () => {
   });
 
   it("delt link: ingen e-mailfelt, og telefonens delingsmenu åbnes med linket", async () => {
-    const url = `https://eatsafe.dk/invite/${TOKEN}`;
+    const url = `https://www.eatsafe.dk/invite/${TOKEN}`;
     const share = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "share", { value: share, configurable: true });
     try {
@@ -372,7 +372,7 @@ describe("afsender: opret invitation (panel)", () => {
   });
 
   it("delt link: opretter et link uden e-mail og viser adressen og forklaringen om godkendelse", async () => {
-    mockNetwork({ "family-invite": { success: true, invite: { id: "l1", kind: "link", expires_at: "2026-10-05T10:00:00Z", url: `https://eatsafe.dk/invite/${TOKEN}` } } });
+    mockNetwork({ "family-invite": { success: true, invite: { id: "l1", kind: "link", expires_at: "2026-10-05T10:00:00Z", url: `https://www.eatsafe.dk/invite/${TOKEN}` } } });
     render(<InvitePanel accessToken="t" onClose={vi.fn()} onInviteId={vi.fn()} onChanged={vi.fn()} />);
     fireEvent.click(screen.getByText("Del et link"));
     fireEvent.click(screen.getByText("Opret og del link"));
