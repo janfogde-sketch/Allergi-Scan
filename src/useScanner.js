@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // useScanner.js
 // Al kamera- og scan-logik: start/stop kamera, gallery-scan, foto-fallback,
-// auto-zoom, tap-to-focus, lommelygte.
+// 2×-zoom på knap, tap-to-focus, lommelygte.
 //
 // Afhænger af: setScanError, setLoading (fra useProduct), onScanSuccess
 // (lookupProduct fra App.jsx via ref for at undgå TDZ-problemer).
@@ -10,7 +10,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
-import { compressImageToBase64, isValidEanChecksum, apiCall, makeHeaders } from "./helpers.js";
+import { compressImageToBase64, isValidEanChecksum, normalizeScannedBarcode, apiCall, makeHeaders } from "./helpers.js";
 import { reportError } from "./errorReporter.js";
 
 // ── Delt to-trins stregkode-afkodning fra et billede ──────────────────────
@@ -60,6 +60,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const [scanReady, setScanReady]             = useState(false);
   const [torchOn, setTorchOn]                 = useState(false);
   const [scanZoom, setScanZoom]               = useState(1.0);
+  const [zoomSupported, setZoomSupported]     = useState(false);
   const [showPhotoHint, setShowPhotoHint]     = useState(false);
   const [photoScanLoading, setPhotoScanLoading] = useState(false);
   // Sandt specifikt når getUserMedia fejlede med NotAllowedError/
@@ -107,7 +108,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     }
     scanZoomRef.current = 1.0;
     setCameraActive(false); setTorchOn(false); setScanReady(false);
-    setScanZoom(1.0); setShowPhotoHint(false); setScanError("");
+    setScanZoom(1.0); setZoomSupported(false); setShowPhotoHint(false); setScanError("");
   }, [setScanError]);
 
   // ── Afkodning i alle retninger ──────────────────────────────────────────────
@@ -153,8 +154,9 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
         rotCtx.drawImage(frame, -w / 2, -h / 2);
         rotCtx.setTransform(1, 0, 0, 1, 0, 0);
         const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(rot)));
-        const code = reader.decode(bitmap).getText();
-        if (!code || !rotatedLoopRef.current || !isValidEanChecksum(code)) return;
+        const result = reader.decode(bitmap);
+        const code = normalizeScannedBarcode(result.getText(), Z.BarcodeFormat[result.getBarcodeFormat()]);
+        if (!code || !rotatedLoopRef.current) return;
         if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
         stopCamera();
         onScanSuccessRef.current?.(code);
@@ -234,14 +236,18 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
 
       await html5QrRef.current.start(
         { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
-        (code) => {
+        (rawCode, decoded) => {
+          // Kameraet er allerede stoppet (en kode er under behandling):
+          // ignorér sene afkodninger, så samme scanning ikke sendes to gange.
+          if (!html5QrRef.current) return;
           // Ugyldig/garblet afkodning ignoreres stille og scanningen
           // fortsætter (28. sept. 2026, FINAL POLISH – SCANNER, krav 12) —
           // et enkelt fejlaflæst frame er normalt og forbigående, så et
           // afbrydende fejlbanner ville være mere distraherende end
           // hjælpsomt her (i modsætning til manuel EAN-indtastning, hvor
           // samme validering VISER en fejltekst, se ScannerScreen.jsx).
-          if (!isValidEanChecksum(code)) return;
+          const code = normalizeScannedBarcode(rawCode, decoded?.result?.format?.formatName);
+          if (!code) return;
           const now = Date.now();
           if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
           lastScannedRef.current = { code, time: now };
@@ -280,25 +286,17 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
             if (adv.length) await track.applyConstraints({ advanced: adv });
           } catch (e) { console.warn("Camera constraints fejlede:", e); }
 
-          // Auto-zoom efter 3s/7s
-          const applyZoom = async (zoomLevel) => {
-            try {
-              const caps = track.getCapabilities?.() || {};
-              if (caps.zoom && caps.zoom.max >= zoomLevel) {
-                await track.applyConstraints({ advanced: [{ zoom: zoomLevel }] });
-                scanZoomRef.current = zoomLevel;
-                setScanZoom(zoomLevel);
-              }
-            } catch {}
-          };
+          // Ingen automatisk zoom (Bjørn, 8. okt. 2026): brugeren slår selv
+          // 2× til og fra med toggleZoom. Knappen vises kun, hvis kameraet
+          // understøtter zoom på mindst 2×.
+          try {
+            const caps = track.getCapabilities?.() || {};
+            setZoomSupported(!!(caps.zoom && caps.zoom.max >= 2));
+          } catch { setZoomSupported(false); }
 
-          setTimeout(() => setShowPhotoHint(true), 5000);
-          noScanTimerRef.current = setTimeout(async () => {
-            if (scanZoomRef.current === 1.0) await applyZoom(1.5);
-            noScanTimerRef.current = setTimeout(async () => {
-              if (scanZoomRef.current === 1.5) await applyZoom(2.0);
-            }, 4000);
-          }, 3000);
+          // Hjælpeteksten efter 5 s; timeren ryddes i stopCamera, så den ikke
+          // dukker op efter en vellykket scanning.
+          noScanTimerRef.current = setTimeout(() => setShowPhotoHint(true), 5000);
 
           // Tap-to-focus
           videoEl.onclick = async (ev) => {
@@ -382,6 +380,21 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     } catch (e) { reportError(e, { source: "camera-torch" }); setScanError("Lygten kunne ikke tændes."); }
   }, [torchOn, setScanError]);
 
+  // ── toggleZoom (1× ↔ 2×, kun når brugeren trykker) ──────────────────────
+  const toggleZoom = useCallback(async () => {
+    try {
+      const videoEl = document.querySelector("#qr-reader-home video");
+      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
+      if (!track) return;
+      const caps = track.getCapabilities?.() || {};
+      if (!caps.zoom || caps.zoom.max < 2) return;
+      const next = scanZoomRef.current >= 2 ? Math.max(1, caps.zoom.min || 1) : 2;
+      await track.applyConstraints({ advanced: [{ zoom: next }] });
+      scanZoomRef.current = next;
+      setScanZoom(next);
+    } catch (e) { reportError(e, { source: "camera-zoom" }); }
+  }, []);
+
   // ── Ryd op ved unmount ─────────────────────────────────────────────────────
   useEffect(() => () => stopCamera(), []);
 
@@ -391,6 +404,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     scanReady,
     torchOn, setTorchOn,
     scanZoom, setScanZoom,
+    zoomSupported,
     showPhotoHint, setShowPhotoHint,
     photoScanLoading,
     cameraPermissionDenied,
@@ -404,5 +418,6 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     scanFromGallery,
     scanPhotoForEan,
     toggleTorch,
+    toggleZoom,
   };
 }

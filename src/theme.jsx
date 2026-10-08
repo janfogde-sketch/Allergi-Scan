@@ -886,7 +886,7 @@ body::-webkit-scrollbar{display:none;}
 .reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
 .reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
 .reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
-.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;box-shadow:0 0 10px var(--green-logo),0 0 3px var(--green-logo);}
+.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;}
 @keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
@@ -1147,6 +1147,17 @@ button.filter-chip{width:auto;}
   95%,100%{stroke-dashoffset:-801;}
 }
 @media (prefers-reduced-motion: reduce){.scan-loading-check{animation:none;stroke-dashoffset:0;}}
+/* Kamerascannerens linje (Bjørn, 8. okt. 2026): tynd EatSafe-grøn, svag lyseffekt,
+   glider langsomt frem og tilbage uden stop. Flyttes med transform. */
+.scan-hint{position:absolute;bottom:8px;left:12px;right:12px;text-align:center;font-size:12px;font-weight:400;line-height:1.3;color:rgba(255,255,255,.82);text-shadow:0 1px 3px rgba(0,0,0,.75);opacity:0;transition:opacity .6s ease;}
+.scan-hint.on{opacity:1;}
+.scan-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 14px;}
+.btn.scan-action{min-height:46px;padding:10px 8px;font-size:14px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:8px;}
+@media (prefers-reduced-motion: reduce){.scan-hint{transition:none;}}
+.scan-sweep{position:absolute;left:10px;right:10px;top:0;bottom:0;animation:scan-sweep 3.2s cubic-bezier(.45,0,.55,1) infinite alternate;will-change:transform;}
+.scan-sweep-line{height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--green) 18%,var(--green) 82%,transparent);box-shadow:0 0 6px var(--green-mid);}
+@keyframes scan-sweep{from{transform:translateY(6%);}to{transform:translateY(94%);}}
+@media (prefers-reduced-motion: reduce){.scan-sweep{animation:none;transform:translateY(50%);}}
 @keyframes laserMove{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
 .scroll-top-btn{
   position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9990;

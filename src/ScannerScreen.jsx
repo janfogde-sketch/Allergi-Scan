@@ -3,7 +3,7 @@ import React, { useState, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { SCREENS, DEMO_CODES, DUMMY_PRODUCT, MOCK_PRODUCTS,
          ALLERGEN_EXAMPLES, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY, uid } from "./constants.jsx";
-import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, isValidEanChecksum, initials, scanTargetCopy } from "./helpers.js";
+import { compareAllergens, extractENumbers, compareENumbers, checkDietCompatibility, getAllergenLabels, verifiedBadge, makeHeaders, apiCall, timeAgo, normalizeScannedBarcode, initials, scanTargetCopy } from "./helpers.js";
 import { Icon, IngredientsList, ProfileBadges, getProductIcon, ProductImage, LazyFallback, CloseButton } from "./SharedComponents.jsx";
 import { DEMO_SLIDES } from "./demoSlides.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -42,7 +42,6 @@ const S = {
   rowBetweenMb10: { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 },
   rowGap8: { display:"flex", gap:8 },
   rowGap6: { display:"flex", gap:6 },
-  camCtrlBtn: { width:34, height:34, borderRadius:"50%", background:"rgba(0,0,0,.45)", backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)", border:"1px solid rgba(255,255,255,.2)", color:"#fff", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", lineHeight:1 },
   colCenter: { display:"flex", flexDirection:"column", alignItems:"center" },
   card: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:12 },
   cardMb10: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:10 },
@@ -271,15 +270,15 @@ function CamCtrlBtn({ icon, label, onClick, active, ariaLabel, ariaPressed }) {
         minWidth:44, minHeight:44, justifyContent:"center", fontFamily:"var(--f)",
       }}>
       <div style={{
-        width:34, height:34, borderRadius:"50%",
-        background: active ? "rgba(251,191,36,.4)" : "rgba(0,0,0,.45)",
+        width:38, height:38, borderRadius:"50%",
+        background: active ? "#fff" : "rgba(0,0,0,.45)",
         backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
-        border: `1px solid ${active ? "rgba(251,191,36,.6)" : "rgba(255,255,255,.2)"}`,
+        border:"1px solid rgba(255,255,255,.2)",
         display:"flex", alignItems:"center", justifyContent:"center",
       }}>
-        <Icon name={icon} size={14} color={active ? "#fbbf24" : "#fff"} />
+        <Icon name={icon} size={17} color={active ? "var(--ink)" : "#fff"} />
       </div>
-      <span style={{ fontSize:9, fontWeight:700, color: active ? "#fbbf24" : "rgba(255,255,255,.92)", textShadow:"0 1px 2px rgba(0,0,0,.7)", whiteSpace:"nowrap" }}>{label}</span>
+      <span style={{ fontSize:10.5, fontWeight:600, color:"#fff", textShadow:"0 1px 2px rgba(0,0,0,.7)", whiteSpace:"nowrap" }}>{label}</span>
     </button>
   );
 }
@@ -321,6 +320,8 @@ export default function ScannerScreen({
   toggleTorch,
   torchOn,
   scanZoom,
+  zoomSupported,
+  toggleZoom,
   showPhotoHint,
   photoScanLoading,
   cameraPermissionDenied,
@@ -347,21 +348,6 @@ export default function ScannerScreen({
   const [manualEanError, setManualEanError] = React.useState("");
   const [manualEanValue, setManualEanValue] = React.useState("");
   const [showScanProfilePicker, setShowScanProfilePicker] = React.useState(false);
-
-  // ── Dynamisk scanner-hjælpetekst (28. sept. 2026, FINAL POLISH – SCANNER,
-  // krav 2) ───────────────────────────────────────────────────────────────
-  // Én kort besked ad gangen, som ændrer sig med tiden siden kameraet blev
-  // klar — IKKE en pixel-baseret lys-/genskin-detektion (findes ikke i
-  // kodebasen og ville være en reel ny funktion at bygge, ikke "polish").
-  // "Kan den ikke scannes?"-faldbacken (krav 3) styres separat af
-  // `showPhotoHint`, som allerede findes i useScanner.js (sat efter 5s uden
-  // et scan) men aldrig blev vist nogen steder i UI'et før denne runde.
-  const [scanHint, setScanHint] = React.useState("Placér hele stregkoden i rammen");
-  React.useEffect(() => {
-    if (!scanReady) { setScanHint("Placér hele stregkoden i rammen"); return; }
-    const t = setTimeout(() => setScanHint("Hold telefonen stille"), 3000);
-    return () => clearTimeout(t);
-  }, [scanReady]);
 
   // ── Kamera-permission-primer, første gang (28. sept. 2026, FINAL POLISH –
   // SCANNER, krav 10) ────────────────────────────────────────────────────
@@ -420,12 +406,13 @@ export default function ScannerScreen({
       setManualEanError("Stregkodenummeret skal have 8 eller 13 cifre.");
       return;
     }
-    if (!isValidEanChecksum(digits)) {
+    const code = normalizeScannedBarcode(digits);
+    if (!code) {
       setManualEanError("Nummeret er ikke et gyldigt EAN. Tjek at alle cifre er tastet rigtigt.");
       return;
     }
     setShowManualEan(false); setManualEanError(""); setManualEanValue("");
-    lookupProduct(digits);
+    lookupProduct(code);
   };
   const manualEanReadyLength = [8, 12, 13, 14].includes(manualEanValue.length);
 
@@ -486,103 +473,83 @@ export default function ScannerScreen({
               {/* Kamera container — altid i DOM men skjult når ikke aktiv */}
               <div style={{ position:"relative", display: cameraActive ? "block" : "none" }}>
                 <div id="qr-reader-home" style={{ width:"100%", background:"#000" }} />
-                {/* Scanner overlay — ramme og laser */}
-                <div style={{
-                  position:"absolute", inset:0, pointerEvents:"none",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                }}>
-                  {/* Klar scanzone */}
+                {/* Scanner overlay (Bjørn, 8. okt. 2026): fast layout, der ikke
+                    flytter sig under scanningen. Luk øverst til venstre, lygte
+                    øverst til højre, rammen i midten med tynde hjørner og en rolig
+                    linje i EatSafe-grøn, instruktion under rammen og 2×-zoom lige
+                    over rammen. "Vælg billede"/"Indtast kode" står under
+                    kamerabilledet, og hjælpeteksten efter 5 s har en fast plads. */}
+                <div style={{ position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden" }}>
                   <div style={{
-                    position:"relative",
-                    width:"92%", height:240,
-                    boxShadow:"0 0 0 9999px rgba(0,0,0,.28)",
-                    borderRadius:8,
+                    position:"absolute", top:72, bottom:72, left:"6%", right:"6%",
+                    boxShadow:"0 0 0 9999px rgba(0,0,0,.32)", borderRadius:12,
                   }}>
-                    {/* Hjørne-markører */}
-                    {[["0","0","tl"],["0","auto","bl"],["auto","0","tr"],["auto","auto","br"]].map(([t,b,key]) => (
+                    {["tl","tr","bl","br"].map(key => (
                       <div key={key} style={{
                         position:"absolute",
                         top: key.startsWith("t") ? 0 : "auto",
                         bottom: key.startsWith("b") ? 0 : "auto",
                         left: key.endsWith("l") ? 0 : "auto",
                         right: key.endsWith("r") ? 0 : "auto",
-                        width:22, height:22,
-                        borderColor:"var(--green-accent)",
-                        borderStyle:"solid",
-                        borderWidth:0,
-                        borderTopWidth: key.startsWith("t") ? 3 : 0,
-                        borderBottomWidth: key.startsWith("b") ? 3 : 0,
-                        borderLeftWidth: key.endsWith("l") ? 3 : 0,
-                        borderRightWidth: key.endsWith("r") ? 3 : 0,
-                        borderRadius: key==="tl"?"4px 0 0 0":key==="tr"?"0 4px 0 0":key==="bl"?"0 0 0 4px":"0 0 4px 0",
+                        width:26, height:26,
+                        borderColor:"var(--green)", borderStyle:"solid", borderWidth:0,
+                        borderTopWidth: key.startsWith("t") ? 2 : 0,
+                        borderBottomWidth: key.startsWith("b") ? 2 : 0,
+                        borderLeftWidth: key.endsWith("l") ? 2 : 0,
+                        borderRightWidth: key.endsWith("r") ? 2 : 0,
+                        borderTopLeftRadius: key==="tl" ? 12 : 0,
+                        borderTopRightRadius: key==="tr" ? 12 : 0,
+                        borderBottomLeftRadius: key==="bl" ? 12 : 0,
+                        borderBottomRightRadius: key==="br" ? 12 : 0,
                       }} />
                     ))}
-                    {/* Laser-linje — vises FØRST når kameraet reelt er i gang med at
-                        afkode (scanReady), ikke bare når cameraActive er sat. cameraActive
-                        bliver sat tidligere i useScanner.js's startCamera, mens html5-qrcode
-                        stadig er ved at åbne kamera-streamen — uden dette gate ville linjen
-                        kunne vises et øjeblik over et endnu ikke-levende kamerabillede. */}
+                    {/* Linjen vises først, når kameraet reelt afkoder (scanReady).
+                        Den flyttes med transform (ikke top), så den ikke belaster
+                        kameraet eller afkodningen. */}
                     {scanReady && (
-                      <div style={{
-                        position:"absolute", left:4, right:4, height:2,
-                        background:"linear-gradient(90deg, transparent, var(--green-accent), rgba(134,239,172,.8), var(--green-accent), transparent)",
-                        boxShadow:"0 0 8px var(--green-accent), 0 0 16px var(--green-accent)",
-                        animation:"laserMove 1.8s ease-in-out infinite",
-                        top:0,
-                      }} />
+                      <div className="scan-sweep">
+                        <div className="scan-sweep-line" />
+                      </div>
                     )}
                   </div>
+                  <div style={{ position:"absolute", bottom:48, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
+                    Placér stregkoden inden for rammen
+                  </div>
+                  {/* Hjælpeteksten har en fast plads under instruktionen og toner
+                      kun ind (opacity), så intet flytter sig. */}
+                  <div aria-live="polite" className={"scan-hint" + (showPhotoHint ? " on" : "")}>
+                    Kan stregkoden ikke scannes? Prøv at justere afstanden.
+                  </div>
                 </div>
 
-                {/* Svævende kontroller oven på kameraet — luk separat til
-                    venstre (uændret, ikon-kun), Billede/Indtast/Lygte til
-                    højre med korte labels (28. sept. 2026, FINAL POLISH –
-                    SCANNER, krav 1: "de nuværende ikoner er dog for
-                    kryptiske alene"). Lygtens label skifter til "Lygte til"
-                    når aktiv (krav 6/14 — statussen må ikke kun fremgå af
-                    farven). */}
-                <div style={{ position:"absolute", top:8, left:10, right:6, display:"flex", alignItems:"flex-start", justifyContent:"space-between", zIndex:2 }}>
-                  <button onClick={handleCloseCamera} aria-label="Luk kamera"
-                    style={{ ...S.camCtrlBtn, marginTop:5 }}>
-                    <Icon name="x" size={15} color="#fff" />
+                <div style={{ position:"absolute", top:10, left:10, right:10, display:"flex", alignItems:"flex-start", justifyContent:"space-between", zIndex:2 }}>
+                  <CamCtrlBtn icon="x" label="Luk" ariaLabel="Luk kamera" onClick={handleCloseCamera} />
+                  <CamCtrlBtn icon="flashlight" label={torchOn ? "Lygte til" : "Lygte"} ariaLabel={torchOn ? "Sluk lygte" : "Tænd lygte"} ariaPressed={torchOn} onClick={toggleTorch} active={torchOn} />
+                </div>
+                {zoomSupported && (
+                  <button onClick={toggleZoom} aria-label={scanZoom >= 2 ? "Zoom 2×, slå fra" : "Zoom 1×, zoom 2 gange ind"} aria-pressed={scanZoom >= 2}
+                    style={{
+                      position:"absolute", top:38, left:"50%", transform:"translateX(-50%)", zIndex:2,
+                      width:44, height:28, padding:0, borderRadius:999,
+                      fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer",
+                      background: scanZoom >= 2 ? "#fff" : "rgba(0,0,0,.45)",
+                      color: scanZoom >= 2 ? "var(--ink)" : "#fff",
+                      border:"1px solid rgba(255,255,255,.3)",
+                    }}>
+                    {scanZoom >= 2 ? "2×" : "1×"}
                   </button>
-                  <div style={{ display:"flex", gap:2 }}>
-                    <CamCtrlBtn icon="image" label="Billede" ariaLabel="Vælg billede fra galleri" onClick={() => galleryInputRef.current?.click()} />
-                    <CamCtrlBtn icon="edit" label="Indtast" ariaLabel="Indtast stregkode manuelt" onClick={() => openManualEan()} />
-                    <CamCtrlBtn icon="flashlight" label={torchOn ? "Lygte til" : "Lygte"} ariaLabel={torchOn ? "Sluk lygte" : "Tænd lygte"} ariaPressed={torchOn} onClick={toggleTorch} active={torchOn} />
-                  </div>
-                </div>
-
-                {/* Svævende hjælpetekst + zoom nederst over kameraet (28.
-                    sept. 2026, FINAL POLISH – SCANNER, krav 2/3/5) — zoom-
-                    indikatoren er REN INFORMATION (ingen tap-til-zoom findes,
-                    kun den eksisterende auto-zoom), derfor holdt lille/let og
-                    adskilt fra selve hjælpeteksten, i stedet for at erstatte
-                    den helt som tidligere. Efter ca. 5s uden et scan
-                    (`showPhotoHint`, sat i useScanner.js) erstattes den
-                    almindelige, tidsstyrede hjælpetekst af en faldback med
-                    direkte klikbare "Billede"/"Indtast EAN"-handlinger, så
-                    brugeren aldrig står fast uden en vej videre. */}
-                <div style={{ position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)", zIndex:2, display:"flex", flexDirection:"column", alignItems:"center", gap:6, maxWidth:"88%" }}>
-                  {scanZoom > 1.0 && (
-                    <div style={{ fontSize:10, fontWeight:600, color:"rgba(134,239,172,.85)", textShadow:"0 1px 2px rgba(0,0,0,.6)" }}>
-                      {scanZoom}× zoom
-                    </div>
-                  )}
-                  <div style={{ background:"rgba(0,0,0,.5)", backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)", borderRadius:14, padding:"7px 14px", fontSize:11.5, fontWeight:600, color:"rgba(255,255,255,.9)", textAlign:"center", lineHeight:1.4 }}>
-                    {showPhotoHint ? (
-                      <>
-                        Kan den ikke scannes?{" "}
-                        <span style={{ textDecoration:"underline", cursor:"pointer", color:"#fff", fontWeight:800 }}
-                          onClick={() => openManualEan()}>Indtast EAN</span>
-                        {" "}eller{" "}
-                        <span style={{ textDecoration:"underline", cursor:"pointer", color:"#fff", fontWeight:800 }}
-                          onClick={() => galleryInputRef.current?.click()}>vælg et billede</span>.
-                      </>
-                    ) : scanHint}
-                  </div>
-                </div>
+                )}
               </div>
+              {cameraActive && (
+                <div className="scan-actions">
+                  <button className="btn btn-outline scan-action" onClick={() => galleryInputRef.current?.click()}>
+                    <Icon name="image" size={18} /> Vælg billede
+                  </button>
+                  <button className="btn btn-outline scan-action" onClick={() => openManualEan()}>
+                    <Icon name="edit" size={18} /> Indtast kode
+                  </button>
+                </div>
+              )}
               <div id="qr-reader-gallery" style={S.none} />
               <input ref={galleryInputRef} type="file" accept="image/*" style={S.none}
                 onChange={e => { if (e.target.files[0]) scanFromGallery(e.target.files[0]); e.target.value=""; }} />
@@ -650,7 +617,7 @@ export default function ScannerScreen({
                       størrelse/placering urørt. */}
                   <div style={{ fontSize:"clamp(11.5px, 2.1cqh, 15px)", fontWeight:500, color:"var(--ink2)", marginTop:"clamp(5px, 1.1cqh, 9px)", lineHeight:1.5, maxWidth:250, marginLeft:"auto", marginRight:"auto", textShadow:"0 1px 2px rgba(255,255,255,.85), 0 2px 12px rgba(255,255,255,.6)" }}>
                     {cameraPermissionDenied
-                      ? "Kameraadgang er slået fra — brug Billede eller Indtast EAN i stedet."
+                      ? "Kameraadgang er slået fra. Vælg et billede eller indtast koden i stedet."
                       : scanTarget.intro}
                   </div>
                 </div>
@@ -727,18 +694,21 @@ export default function ScannerScreen({
                         </div>
                         <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>Kameraadgang er slået fra</div>
                         <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5, marginBottom:16 }}>
-                          Tillad kameraadgang for at scanne stregkoder — eller brug en af mulighederne nedenfor.
+                          Giv adgang til kameraet i telefonens indstillinger (iPhone: Indstillinger › Safari › Kamera; Android: browserens webstedsindstillinger), og tryk Prøv igen. Du kan også bruge mulighederne nedenfor.
                         </div>
                         <div style={{ display:"flex", gap:8 }}>
                           <button onClick={() => galleryInputRef.current?.click()}
                             style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--surface2)", border:"1px solid var(--border2)", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--ink)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                            <Icon name="image" size={13} color="var(--ink)" /> Billede
+                            <Icon name="image" size={13} color="var(--ink)" /> Vælg billede
                           </button>
                           <button onClick={() => openManualEan()}
                             style={{ flex:1, minHeight:44, padding:"10px", borderRadius:10, background:"var(--green)", border:"none", fontFamily:"var(--f)", fontSize:12.5, fontWeight:800, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-                            <Icon name="edit" size={13} color="var(--on-green)" /> Indtast EAN
+                            <Icon name="edit" size={13} color="var(--on-green)" /> Indtast kode
                           </button>
                         </div>
+                        <button type="button" className="link-green" style={{ marginTop:14 }} onClick={() => startCamera()}>
+                          Prøv igen
+                        </button>
                       </div>
                     </div>
                   ) : (

@@ -17,6 +17,8 @@ import {
   verifiedBadge,
   isValidEanChecksum,
   glutenCerealsIn,
+  expandUpcE,
+  normalizeScannedBarcode,
 } from "./helpers.js";
 import { profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
@@ -32,6 +34,30 @@ describe("isValidEanChecksum", () => {
   });
   it("rejects non-numeric input", () => {
     expect(isValidEanChecksum("400638133393a")).toBe(false);
+  });
+});
+
+describe("normalizeScannedBarcode", () => {
+  it("expands UPC-E to UPC-A for every last-digit rule", () => {
+    expect(expandUpcE("01234565")).toBe("012345000065");
+    expect(expandUpcE("04252614")).toBe("042100005264");
+    expect(expandUpcE("01234133")).toBe("012300000413");
+    expect(expandUpcE("01234144")).toBe("012340000014");
+    expect(expandUpcE("21234565")).toBe(null);
+  });
+  it("returns UPC-A for a UPC-E scan, also when EAN-8 checksum fails", () => {
+    expect(normalizeScannedBarcode("04252614", "UPC_E")).toBe("042100005264");
+    expect(normalizeScannedBarcode("04252614")).toBe("042100005264");
+  });
+  it("keeps valid EAN-8, EAN-13 and UPC-A as they are", () => {
+    expect(normalizeScannedBarcode("96385074", "EAN_8")).toBe("96385074");
+    expect(normalizeScannedBarcode("4006381333931", "EAN_13")).toBe("4006381333931");
+    expect(normalizeScannedBarcode("036000291452", "UPC_A")).toBe("036000291452");
+  });
+  it("rejects invalid or unknown codes without throwing", () => {
+    expect(normalizeScannedBarcode("4006381333930")).toBe(null);
+    expect(normalizeScannedBarcode("hello", "QR_CODE")).toBe(null);
+    expect(normalizeScannedBarcode(undefined)).toBe(null);
   });
 });
 

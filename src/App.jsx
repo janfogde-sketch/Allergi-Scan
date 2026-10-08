@@ -652,6 +652,7 @@ export default function EatSafe() {
     scanReady,
     torchOn, setTorchOn,
     scanZoom,
+    zoomSupported,
     showPhotoHint, setShowPhotoHint,
     photoScanLoading,
     cameraPermissionDenied,
@@ -663,6 +664,7 @@ export default function EatSafe() {
     scanFromGallery,
     scanPhotoForEan,
     toggleTorch,
+    toggleZoom,
   } = useScanner({
     setScanError,
     setLoading,
@@ -1194,6 +1196,8 @@ export default function EatSafe() {
             toggleTorch={toggleTorch}
             torchOn={torchOn}
             scanZoom={scanZoom}
+            zoomSupported={zoomSupported}
+            toggleZoom={toggleZoom}
             showPhotoHint={showPhotoHint}
             photoScanLoading={photoScanLoading}
             cameraPermissionDenied={cameraPermissionDenied}

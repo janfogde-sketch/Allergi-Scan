@@ -88,6 +88,30 @@ export function isValidEanChecksum(code) {
   return (10 - (sum % 10)) % 10 === check;
 }
 
+// UPC-E (8 cifre, talsystem 0/1) udvides til UPC-A (12 cifre). UPC-E's
+// kontrolciffer regnes på UPC-A-formen, så EAN-8-checksummen afviser ellers
+// mange gyldige UPC-E-koder. Returnerer null, hvis koden ikke er UPC-E-formet.
+export function expandUpcE(code) {
+  if (!/^[01]\d{7}$/.test(code || "")) return null;
+  const [ns, d1, d2, d3, d4, d5, d6, check] = code.split("");
+  let body;
+  if (d6 <= "2") body = d1 + d2 + d6 + "0000" + d3 + d4 + d5;
+  else if (d6 === "3") body = d1 + d2 + d3 + "00000" + d4 + d5;
+  else if (d6 === "4") body = d1 + d2 + d3 + d4 + "00000" + d5;
+  else body = d1 + d2 + d3 + d4 + d5 + "0000" + d6;
+  return ns + body + check;
+}
+
+// Gyldig stregkode fra kameraet eller indtastning, ellers null. Er formatet
+// kendt som UPC-E (eller passer 8 cifre kun som UPC-E), slås koden op som UPC-A.
+export function normalizeScannedBarcode(code, formatName) {
+  const c = String(code || "").trim();
+  const upcA = expandUpcE(c);
+  if (formatName === "UPC_E") return upcA && isValidEanChecksum(upcA) ? upcA : null;
+  if (isValidEanChecksum(c)) return c;
+  return upcA && isValidEanChecksum(upcA) ? upcA : null;
+}
+
 // Tilføjer en egen (fritekst-)allergi uden dubletter (uanset store/små bogstaver).
 export function addUniqueCustom(list, value) {
   const v = (value || "").trim();
