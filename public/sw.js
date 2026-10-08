@@ -26,7 +26,7 @@ self.addEventListener("fetch", (event) => {
 // url'en (https://www.eatsafe.dk/?notification={id}). Se _shared/webpush.ts og
 // notify-funktionen. Ingen standard-badge (filen fandtes aldrig) og ingen
 // tvungen vibration — enheden bestemmer selv.
-const APP_ORIGINS = ["https://www.eatsafe.dk", "https://eatsafe.dk"];
+const APP_ORIGINS = ["https://www.eatsafe.dk", "https://www.eatsafe.dk"];
 const APP_HOME = "https://www.eatsafe.dk/";
 
 function safeAppUrl(raw) {

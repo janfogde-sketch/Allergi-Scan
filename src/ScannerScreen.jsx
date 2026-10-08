@@ -387,7 +387,7 @@ export default function ScannerScreen({
     if (!autoStartScan) return;
     onAutoStartHandled?.();
     handleScanButtonClick();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: kører kun når autostart-flaget skifter; handleren læser friske værdier ved kaldet
   }, [autoStartScan]);
 
   // Åbner manuel EAN-indtastning frisk hver gang — rydder en evt. tidligere

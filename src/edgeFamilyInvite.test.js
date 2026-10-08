@@ -88,7 +88,7 @@ describe("edge: family-invite", () => {
     const h = await loadHandler("family-invite", { tokens, env, resolver: (c) => (c.kind === "insert" ? { data: { id: "l1", token: "tok", expires_at: "2026-10-09T00:00:00Z" }, error: null } : resolver()(c)) });
     const r = await h.call("POST", "/family-invite", { token: "a", body: { kind: "link" } });
     expect(r.status).toBe(200);
-    expect(r.json.invite).toMatchObject({ kind: "link", url: "https://eatsafe.dk/invite/tok" });
+    expect(r.json.invite).toMatchObject({ kind: "link", url: "https://www.eatsafe.dk/invite/tok" });
     expect(h.writes()[0].op("insert")[0]).toEqual({ invited_by: "user-a", kind: "link" });
     expect(fetchMock).not.toHaveBeenCalled();
   });

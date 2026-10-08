@@ -18,7 +18,7 @@ export default function TicketScreen({ ticketId, onBack }) {
     setState(await fetchTicket(accessToken, ticketId));
   }, [accessToken, ticketId]);
 
-  useEffect(() => { if (ticketId) load(); }, [ticketId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (ticketId) load(); }, [ticketId]); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: load afhænger af accessToken; et token-skifte må ikke genindlæse og blinke den åbne ticket
 
   const t = state.item;
   return (

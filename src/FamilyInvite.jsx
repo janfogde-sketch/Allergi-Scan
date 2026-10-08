@@ -47,7 +47,7 @@ const callInviteFn = async (accessToken, body) => {
   }
 };
 
-export const inviteUrl = token => `https://eatsafe.dk/invite/${token}`;
+export const inviteUrl = token => `https://www.eatsafe.dk/invite/${token}`;
 
 const SHARE_DATA = url => ({ title: "Invitation til EatSafe", text: "Jeg vil gerne invitere dig til min familie i EatSafe.", url });
 

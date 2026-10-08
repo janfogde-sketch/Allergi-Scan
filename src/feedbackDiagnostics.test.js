@@ -9,7 +9,7 @@ const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebK
 
 const base = (type, { screen = SCREENS.HOME, ...extra } = {}) => buildFeedbackContext({
   type,
-  env: { url: "https://eatsafe.dk/?token=hemmelig#access_token=abc", userAgent: IPHONE, platform: "iPhone", language: "da-DK", screenSize: "390x844", viewport: "390x700", online: true, timestamp: "2026-10-02T10:00:00.000Z", standalone: true },
+  env: { url: "https://www.eatsafe.dk/?token=hemmelig#access_token=abc", userAgent: IPHONE, platform: "iPhone", language: "da-DK", screenSize: "390x844", viewport: "390x700", online: true, timestamp: "2026-10-02T10:00:00.000Z", standalone: true },
   app: { buildTime: "2026-10-02T09:00:00Z", commitSha: "abc1234", screenLabel: "Scanner" },
   state: {
     screen, userId: "u1", onboardStep: 4, user: { name: "Mia", email: "mia@example.dk", role: "user", allergenLevels: { maelkeallergi: "direct_only" } },
@@ -56,7 +56,7 @@ describe("dataminimering i buildFeedbackContext", () => {
 
   it("fjerner query og hash fra URL'en", () => {
     expect(c.url).toBe("/#…");
-    expect(safeUrl("https://eatsafe.dk/?a=1")).toBe("/");
+    expect(safeUrl("https://www.eatsafe.dk/?a=1")).toBe("/");
     expect(safeUrl("ikke en url")).toBe("");
   });
 

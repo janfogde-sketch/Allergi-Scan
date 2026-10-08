@@ -14,5 +14,5 @@ if (isStandalone) {
   // Android/Chrome (og alt andet): send videre til selve appen med et
   // markør-parameter — appen fanger browserens "beforeinstallprompt" og
   // viser selv en stor "Installér nu"-knap med det samme (se InstallPrompt.jsx).
-  window.location.replace("https://eatsafe.dk/?src=beta-qr");
+  window.location.replace("https://www.eatsafe.dk/?src=beta-qr");
 }

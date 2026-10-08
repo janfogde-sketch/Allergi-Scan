@@ -104,7 +104,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
         // til navigation mellem appens vigtigste funktioner og ikke til
         // juridiske links") — findes nu KUN under Indstillinger → Privatliv
         // & data (SettingsScreen.jsx), samme eksterne
-        // https://eatsafe.dk/privacy-link. Footerens eget privacy-link
+        // https://www.eatsafe.dk/privacy-link. Footerens eget privacy-link
         // (ProfileScreen.jsx) er urørt, som bedt om.
         { icon:"settings", label:"Indstillinger", screen: SCREENS.SETTINGS },
         // Ingen chevron (det er en handling, ikke en navigation) og ALDRIG

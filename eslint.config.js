@@ -46,7 +46,7 @@ export default defineConfig([
   },
   {
     // Service workers.
-    files: ['public/sw.js', 'src/sw.js'],
+    files: ['public/sw.js'],
     languageOptions: { globals: { ...globals.serviceworker } },
   },
 ])

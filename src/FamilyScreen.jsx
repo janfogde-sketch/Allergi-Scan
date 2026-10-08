@@ -96,7 +96,7 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     loadPendingInvites();
     const interval = setInterval(() => { loadHousehold(); loadPendingInvites(); }, 12000);
     return () => clearInterval(interval);
-  }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: intervallet startes igen ved nyt token; loadHousehold/loadPendingInvites genskabes hver render og må ikke genstarte det
 
   // ── Scanningsrelevante chips (allergier → kostpræferencer → E-numre) ───────
   // Fælles for administrerede profiler OG rigtige husstandskonti (26. sept.

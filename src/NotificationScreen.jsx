@@ -33,7 +33,7 @@ export default function NotificationScreen({ notificationId, markRead, onDelete,
     }
   }, [accessToken, notificationId, markRead]);
 
-  useEffect(() => { if (notificationId) load(); }, [notificationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (notificationId) load(); }, [notificationId]); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: load afhænger af accessToken; et token-skifte må ikke genindlæse og blinke den åbne besked
 
   // "Slet besked": bekræftes først, og sender derefter brugeren tilbage til oversigten.
   const [confirmDelete, setConfirmDelete] = useState(false);

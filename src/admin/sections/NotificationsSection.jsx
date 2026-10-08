@@ -49,7 +49,7 @@ export default function NotificationsSection({ admins, overrides, loading, load,
     const d = defaultPush(selectedKey);
     setDraft({ title: saved?.title ?? d.title, body: saved?.body ?? d.body });
     setResult(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: kører kun når valgt besked eller gemt tekst skifter; defaultPush/saved læses friskt i samme render
   }, [selectedKey, saved?.updated_at]);
 
   useEffect(() => { if (!recipient && admins.length) setRecipient(admins.find((a) => a.id === userId)?.id ?? admins[0].id); }, [admins, userId, recipient]);
@@ -64,7 +64,7 @@ export default function NotificationsSection({ admins, overrides, loading, load,
       .then((d) => { if (!cancelled) setMailPreview({ state: "ok", html: d.html, status: d.status }); })
       .catch((e) => { if (!cancelled) setMailPreview({ state: "error", error: e.message }); });
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: forhåndsvisning hentes kun ved skift af besked, modtager eller skabelon; loadMailPreview genskabes hver gang
   }, [selectedKey, recipient, templateUrl]);
 
   if (!selected) return null;

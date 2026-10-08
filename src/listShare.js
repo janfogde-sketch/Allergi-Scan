@@ -27,7 +27,7 @@ export function listShareStatus(list, userId) {
 }
 
 // ── Link til en indkøbsliste ────────────────────────────────────────────────
-const LIST_LINK_BASE = "https://eatsafe.dk/list/";
+const LIST_LINK_BASE = "https://www.eatsafe.dk/list/";
 export const listLinkUrl = code => `${LIST_LINK_BASE}${code}`;
 
 // Teksten, der følger med linket, så modtageren forstår, hvad de får (messenger-apps viser kun teksten og linkets forhåndsvisning).
