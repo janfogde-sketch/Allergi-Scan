@@ -394,7 +394,8 @@ export function useShoppingList({ accessToken, userId }) {
     pendingAddsRef.current.set(tempId, { promise: realIdPromise, resolve: resolveRealId });
     pendingAddQueueRef.current.push({ listId, tempId });
     updateLists(l => l.map(x => x.id !== listId ? x : { ...x, shopping_list_items: [...(x.shopping_list_items||[]), { id: tempId, name: name.trim(), ean, product_id: productId, image_url: imageUrl, checked: false }] }));
-    setNewItemName("");
+    // Søgeteksten ryddes kun ved en fritekst-vare; et produkt valgt i søgningen lader resultaterne stå (så "tilføjet"-tilstanden ses).
+    if (!isProduct) setNewItemName("");
     try {
       const data = await apiCall(`${SHOPPING_FN}/${listId}/items`, {
         method: "POST",
