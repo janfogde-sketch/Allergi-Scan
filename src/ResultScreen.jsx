@@ -12,7 +12,7 @@ import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
 import { useRecalls } from "./useRecalls.js";
 import RecallNotice from "./RecallNotice.jsx";
-import { getSearchReturnFor, clearSearchReturn } from "./searchReturn.js";
+import { getReturnFor, setProductReturn, clearSearchReturn } from "./searchReturn.js";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
 
 import { makeResultSections } from "./ResultSections.jsx";
@@ -40,7 +40,7 @@ export default function ResultScreen({
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
   const { lists, activeList, activeListId, addToList, shoppingList, toggleItem, setNewItemName } = useShoppingContext();
-  const searchBack = scanResult ? getSearchReturnFor(scanResult.code || scanResult.ean) : null;
+  const searchBack = scanResult ? getReturnFor(scanResult.code || scanResult.ean) : null;
   const [addedToList, setAddedToList] = React.useState(false);
   const [showListPicker, setShowListPicker] = React.useState(false);
   const [unknownOpen, setUnknownOpen] = React.useState(false);
@@ -450,9 +450,14 @@ export default function ResultScreen({
 
       {/* Tilbage til søgningen på indkøbslisten, når produktet blev åbnet derfra */}
       {searchBack && (
-        <button type="button" onClick={() => { setNewItemName?.(searchBack.query); clearSearchReturn(); setScreen(SCREENS.LIST); }}
+        <button type="button" onClick={() => {
+            const r = searchBack; clearSearchReturn();
+            if (r.prevEan) { lookupProduct?.(r.prevEan, { via: "none" }); return; }
+            if (r.query) setNewItemName?.(r.query);
+            setScreen(r.screen || SCREENS.LIST);
+          }}
           style={{ display:"inline-flex", alignItems:"center", gap:4, background:"none", border:"none", padding:"6px 4px 10px 0", margin:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--green)", minHeight:44 }}>
-          <Icon name="chevronLeft" size={16} color="var(--green)" /> Tilbage til søgning
+          <Icon name="chevronLeft" size={16} color="var(--green)" /> {searchBack.label}
         </button>
       )}
 
@@ -519,7 +524,7 @@ export default function ResultScreen({
               </div>
               <div style={UI.colGap8}>
                 {(altExpanded ? safeAlternatives : safeAlternatives.slice(0, ALT_VISIBLE)).map(p => (
-                  <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean, { via: "search" })}
+                  <button type="button" key={p.ean} onClick={() => { setProductReturn({ ean: p.ean, label: "Tilbage til forrige produkt", prevEan: scanResult.code || scanResult.ean }); lookupProduct?.(p.ean, { via: "search" }); }}
                     aria-label={`Åbn ${productDisplayName(p)}`}
                     style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"6px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", minHeight:52 }}>
                     <ProductImage product={p} size={36} height={44} />

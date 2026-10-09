@@ -1,5 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
+import { setProductReturn } from "./searchReturn.js";
+import { SCREENS } from "./constants.jsx";
 import { createPortal } from "react-dom";
 import { buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
 import { Icon, ProductImage, LoadErrorBox, CloseButton } from "./SharedComponents.jsx";
@@ -212,7 +214,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
           // række — vandret padding overrides derfor ikke længere.
           return (
             <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"14px 14px", cursor:"pointer" }}
-              onClick={() => lookupProduct(f.ean || f.code || f.id, { via: "search" })}>
+              onClick={() => { setProductReturn({ ean: f.ean || f.code || f.id, label: "Tilbage til favoritter", screen: SCREENS.FAVORITES }); lookupProduct(f.ean || f.code || f.id, { via: "search" }); }}>
               <ProductImage product={f} size={48} />
               <div className="hist-info" style={{ marginLeft:8 }}>
                 <div className="hist-name">{f.name || "Ukendt produkt"}</div>

@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { analyzeIngredients } from "../supabase/functions/_shared/allergenEngine.js";
-import { setSearchReturn, clearSearchReturn } from "./searchReturn.js";
+import { setSearchReturn, setProductReturn, clearSearchReturn } from "./searchReturn.js";
 import { SCREENS } from "./constants.jsx";
 import { evaluateProductForProfiles, normalizeProductFlags, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import ResultScreen from "./ResultScreen.jsx";
@@ -245,6 +245,16 @@ describe("ens vurdering på tværs og genberegning ved profilændring", () => {
     cleanup();
     setup({ scan, allergens: ["soja"] });
     expect(screen.getAllByText(STATUS_TEXT.danger).length).toBeGreaterThan(0);
+  });
+});
+
+describe("tilbage-knap fra andre steder", () => {
+  it("favoritter og historik fører tilbage til deres skærm, alternativer til forrige produkt", () => {
+    const setScreen = vi.fn();
+    setProductReturn({ ean: "8718053593111", label: "Tilbage til favoritter", screen: SCREENS.FAVORITES });
+    setup({ scan: pepero(), allergens: ["soja"], setScreen });
+    fireEvent.click(screen.getByRole("button", { name: /Tilbage til favoritter/ }));
+    expect(setScreen).toHaveBeenCalledWith(SCREENS.FAVORITES);
   });
 });
 

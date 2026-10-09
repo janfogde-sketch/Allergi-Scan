@@ -378,7 +378,7 @@ export default function ListScreen({
           {visibleItemResults.map(({ product: p }) => (
             <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
               onList={resultOnList(p)}
-              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); setSearchReturn(newItemName, p.ean||p.code||p.id); lookupProduct(p.ean||p.code||p.id, { via: "search" }); setNewItemName(""); }}
+              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); setSearchReturn(newItemName, p.ean||p.code||p.id, SCREENS.LIST); lookupProduct(p.ean||p.code||p.id, { via: "search" }); setNewItemName(""); }}
               onAddToList={() => pickItemProduct(p)}
             />
           ))}
