@@ -454,7 +454,7 @@ export function makeResultSections(c) {
       <div className="card">
         <div style={UI.udflex_aicenter_jcspacebet_mb8}>
           <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
-          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length} registreret{eNums.length === 1 ? "" : "e"}</div>
+          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length === 1 ? "1 registreret" : `${eNums.length} registrerede`}</div>
         </div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
           {eNums.map(e => {
