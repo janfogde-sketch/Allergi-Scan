@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
 import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
@@ -10,6 +10,38 @@ import { useHistoryContext } from "./HistoryContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
 import { STATUS_COLOR, STATUS_ICON, HISTORY_FILTERS } from "./historyStatus.js";
+
+// "for 51 min. siden" (Bjørn, 9. okt. 2026); "Lige nu" står uændret.
+const agoText = ts => { const t = timeAgo(ts); return t === "Lige nu" ? "lige nu" : `for ${t.replace(" min siden", " min. siden")}`; };
+
+// Vandret filterrække: diskret fade i højre side, når der er flere chips, og det aktive filter rulles altid helt ind i billedet.
+function HistoryFilters({ filters, value, onChange }) {
+  const ref = useRef(null);
+  const [moreRight, setMoreRight] = useState(false);
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (el) setMoreRight(el.scrollWidth - el.clientWidth - el.scrollLeft > 4);
+  }, []);
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    el?.querySelector(".filter-chip.active")?.scrollIntoView({ inline:"nearest", block:"nearest", behavior:"smooth" });
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [value, update]);
+  return (
+    <div className="hist-filters-wrap">
+      <div ref={ref} className="hist-filters" role="group" aria-label="Filtrér historik" onScroll={update}>
+        {filters.map(f => (
+          <button type="button" key={f.id} className={`filter-chip${value===f.id?" active":""}`} aria-pressed={value===f.id} onClick={() => onChange(f.id)}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+      {moreRight && <div className="hist-filters-fade" aria-hidden="true" />}
+    </div>
+  );
+}
 
 // SCREENS.HISTORY — udskilt fra ProfileScreen.jsx 30. sept. 2026
 // (arkitektur-audit A8, én skærm = én fil). ProfileScreen ejer stadig det,
@@ -72,12 +104,19 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     // ingen tredje linje overhovedet, se render-koden.
     if (rawStatus === "not_found") return { status:"not_found", text:null, checkedFor };
     if (profiles.length === 0) return { status:null, text:null, checkedFor: null };
-    const flags = h.flags_triggered || {};
+    // Aktuelle valg: vurderingen regnes altid mod brugerens NUVÆRENDE allergivalg (profiles ovenfor), aldrig mod en frossen status.
+    // Aktuelle produktdata: har produktet stadig allergenflag, bruges de (9. okt. 2026, Bjørn). Findes de ikke (produktet er slettet,
+    // eller historikken er ældre end data), bruges flagene fra scanningstidspunktet, og et "ingen match" vises da ikke som grønt:
+    // det markeres som historisk og ikke verificeret. Advarsler (rød/gul) bevares, fordi de er den forsigtige side.
+    const liveFlags = h.products?.allergen_flags;
+    const hasLive = !!liveFlags && typeof liveFlags === "object" && Object.keys(liveFlags).length > 0;
+    const flags = hasLive ? liveFlags : (h.flags_triggered || {});
     const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
     const conflict = profileConflictLabel(results, { maxNames: 2 });
-    if (conflict) return { status:"danger", text: conflict, checkedFor };
-    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results), checkedFor };
-    return { status:"safe", text: profileMatchLabel(profiles), checkedFor };
+    if (conflict) return { status:"danger", text: conflict, checkedFor, multi: profiles.length > 1 };
+    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results), checkedFor, multi: profiles.length > 1 };
+    if (!hasLive) return { status:"historical", text:"Historisk vurdering · ikke verificeret", checkedFor, multi: profiles.length > 1 };
+    return { status:"safe", text: profileMatchLabel(profiles), checkedFor, multi: profiles.length > 1 };
   };
 
   // Genåbner et tidligere scan-resultat for SAMME profiler som ved den
@@ -201,13 +240,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
           eksisterende, men hidtil ubrugte .filter-chip-klasse
           (theme.jsx) i stedet for at style'e nye chips til formålet. */}
       {!historyLoading && history.length >= 10 && (
-        <div className="hist-filters" role="group" aria-label="Filtrér historik">
-          {HISTORY_FILTERS.map(f => (
-            <button type="button" key={f.id} className={`filter-chip${historyFilter===f.id?" active":""}`} aria-pressed={historyFilter===f.id} onClick={() => setHistoryFilter(f.id)}>
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <HistoryFilters filters={HISTORY_FILTERS} value={historyFilter} onChange={setHistoryFilter} />
       )}
 
       {!historyLoading && history.length > 0 && filteredHistory.length === 0 && (
@@ -233,29 +266,23 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
                 charcoal/grå ikonstil som resten af appens Icon-
                 bibliotek, ikke endnu en emoji-variant. */}
             {isNotFound
-              ? <div style={{ width:48, height:48, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              ? <div style={{ width:48, height:56, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                   <Icon name="barcode" size={19} color="var(--muted)" />
                 </div>
-              : <ProductImage product={prod} size={48} />}
+              : <ProductImage product={prod} size={48} height={56} />}
             <div className="hist-info" style={{ marginLeft:2 }}>
               <div className="hist-name">{name}</div>
               <div className="hist-time">
                 {isNotFound
-                  ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp).toLowerCase()}` : `${timeAgo(h.scanned_at||h.timestamp)}`}`
-                  : `${h.__count > 1 ? `Scannet ${h.__count} gange, senest ${timeAgo(h.scanned_at||h.timestamp).toLowerCase()}` : timeAgo(h.scanned_at||h.timestamp)}${d.checkedFor ? ` · Tjekket for: ${d.checkedFor}` : ""}`}
+                  ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange · Senest ${agoText(h.scanned_at||h.timestamp)}` : timeAgo(h.scanned_at||h.timestamp)}`
+                  : `${h.__count > 1 ? `Scannet ${h.__count} gange · Senest ${agoText(h.scanned_at||h.timestamp)}` : timeAgo(h.scanned_at||h.timestamp)}${d.multi && d.checkedFor ? ` · ${d.checkedFor}` : ""}`}
                 {scannedBySuffix}
               </div>
-              {/* Altid ikon + tekst + farve, aldrig farve alene (26. sept.
-                  2026, brugerfeedback) — samme mønster som Indkøbslistens
-                  itemStatus-linje (ListScreen.jsx). Ingen linje her for
-                  "produkt ikke fundet" (d.text er bevidst null, se
-                  historyDetails) — overskriften siger det allerede,
-                  en gentagelse nedenunder var det brugeren bad om at
-                  fjerne. */}
+              {/* Ikon + tekst + farve (aldrig farve alene), på én linje; profilnavnet står i selve statusteksten. */}
               {d.status && d.text && (
-                <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:3, fontSize:11, fontWeight:700, color: STATUS_COLOR[d.status] }}>
+                <div className="hist-status" style={{ color: STATUS_COLOR[d.status] }}>
                   <Icon name={STATUS_ICON[d.status]} size={11} color="currentColor" />
-                  {d.text}
+                  <span>{d.text}</span>
                 </div>
               )}
             </div>
@@ -264,7 +291,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
                 sept. 2026, brugerfeedback). Samme chevron-mønster som
                 fx ProfileMenu.jsx's menupunkter. */}
             {isNotFound && (
-              <button type="button" className="btn btn-outline btn-sm" style={{ flexShrink:0, minHeight:36, padding:"6px 12px", fontSize:12 }}
+              <button type="button" className="btn btn-outline btn-sm" style={{ flexShrink:0, minHeight:32, padding:"4px 10px", fontSize:11.5, fontWeight:600, borderRadius:100 }}
                 onClick={(e) => { e.stopPropagation(); const ean = h.ean_scanned || h.code; if (ean) lookupProduct(ean); }}>
                 Tilføj produkt
               </button>

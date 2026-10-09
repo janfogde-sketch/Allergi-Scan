@@ -150,26 +150,28 @@ export function getProductIcon(product) {
   return "🛒";
 }
 
-export function ProductImage({ product, size = 64 }) {
+export function ProductImage({ product, size = 64, height = size }) {
+  // height ≠ size: ensartet beholder (fx 48 × 56 i Historik) med centreret, uforvrænget billede på neutral baggrund.
+  const boxed = height !== size;
   if (product?.image_url) {
     // Ingen "OFF"-mærke på miniaturer (Bjørn, 9. okt. 2026); kreditering står på produktsiden og samlet i Indstillinger.
     return (
-      <span style={{ position:"relative", display:"inline-flex", flexShrink:0, width:size, height:size }}>
+      <span style={{ position:"relative", display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0, width:size, height, ...(boxed ? { background:"var(--paper2)", borderRadius:8, overflow:"hidden" } : {}) }}>
         <img
           src={product.image_url}
           alt={product.name}
           loading="lazy"
-          style={{ width:size, height:size, objectFit:"contain", borderRadius:8 }}
+          style={{ width:size, height, objectFit:"contain", borderRadius:8 }}
           onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; if (e.target.nextSibling.nextSibling) e.target.nextSibling.nextSibling.style.display="none"; }}
         />
-        <div style={{ width:size, height:size, background:"var(--paper2)", borderRadius:8, display:"none", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
+        <div style={{ width:size, height, background:"var(--paper2)", borderRadius:8, display:"none", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
           {getProductIcon(product)}
         </div>
       </span>
     );
   }
   return (
-    <div style={{ width:size, height:size, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
+    <div style={{ width:size, height, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
       {getProductIcon(product)}
     </div>
   );

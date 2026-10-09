@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
       const { data: scans, error, count } = await supabase
         .from("scan_history")
-        .select("*, products(id, name, brand, image_url), users(name)", { count: "exact" })
+        .select("*, products(id, name, brand, image_url, allergen_flags), users(name)", { count: "exact" })
         .in("user_id", ownerIds)
         .order("scanned_at", { ascending: false })
         .range(offset, offset + limit - 1);
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     if (method === "GET" && identifier) {
       const { data: scan, error } = await supabase
         .from("scan_history")
-        .select("*, products(id, name, brand, image_url)")
+        .select("*, products(id, name, brand, image_url, allergen_flags)")
         .eq("id", identifier)
         .single();
 
