@@ -149,7 +149,7 @@ async function fetchByCategory(category, excludeEan, accessToken, activeIds, bas
     // Tidligere kun verified/auto_verified — men det matchede ét eneste
     // produkt i hele databasen (derfor blev den samme Coca-Cola foreslået
     // til alt). Allergendatakvaliteten er det relevante kriterie her.
-    + `&allergen_quality=in.(high,medium)`
+    + `&allergen_quality=eq.high`
     + `&ingredients_text=not.is.null`
     + `&select=id,ean,name,brand,image_url,allergen_flags,category,subcategory,category_original,verified_status,source,ingredients_text,allergen_source_method,allergen_quality`
     + `&limit=300`

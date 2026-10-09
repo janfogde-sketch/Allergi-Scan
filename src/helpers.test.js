@@ -777,3 +777,25 @@ describe("buildNutritionRows", () => {
     expect(buildNutritionRows({ energy_kj: 400, energy_kcal: 0, fat: 1 })[0].value).toBe("400 kJ");
   });
 });
+
+import { ingredientsLookIncomplete, traceNutNames } from "./helpers.js";
+describe("ufuldstændige ingredienslister", () => {
+  it("blandinger og dellister genkendes", () => {
+    expect(ingredientsLookIncomplete({ name: "Drømmekage", ingredients: "Kageblanding: Sukker, HVEDEMEL. Topping: Ingredienser: Brun farin" })).toBeTruthy();
+    expect(ingredientsLookIncomplete({ name: "Den du ved nok kage", ingredients: "Flormelis, 30 % kokosmel, kakaopulver, SKUMMETMÆLKSPULVER. Kan indeholde spor af æg." })).toBeTruthy();
+    expect(ingredientsLookIncomplete({ name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker, hævemiddel (E500)" })).toBeTruthy();
+  });
+  it("færdig kage med æg og vand er ikke ufuldstændig", () => {
+    expect(ingredientsLookIncomplete({ name: "Chokoladekage", ingredients: "Sukker, HVEDEMEL, ÆG, vand, rapsolie" })).toBeNull();
+    expect(ingredientsLookIncomplete({ name: "Rugbrød", ingredients: "Rugmel, vand, salt" })).toBeNull();
+  });
+  it("blanding får aldrig grøn ved æggeallergi", () => {
+    const profiles = [{ id: "me", name: "Dig", allergens: ["aeg"], custom: [], diets: [], levels: {}, eNumbers: [] }];
+    const r = evaluateProductForProfiles(profiles, { name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker", allergen_flags: { aeg: "no" } });
+    expect(r.level).toBe("unknown");
+  });
+  it("specifikke nødder i sporsætningen", () => {
+    expect(traceNutNames("Sukker. Kan indeholde spor af hvede, mandler, hasselnødder og soja.")).toEqual(["mandler", "hasselnødder"]);
+    expect(traceNutNames("Mandelmel, sukker")).toEqual([]);
+  });
+});
