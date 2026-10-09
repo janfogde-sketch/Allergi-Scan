@@ -168,7 +168,7 @@ Preview kalder den LIVE database og kan ikke teste service worker/PWA-installati
 
 ## 5. Produkt- og designbeslutninger (nutid)
 
-**Designsystem:** `BRAND.md` er den samlede brandguide (logo, farver, skrift, komponenter, tone, hvor kopierne ligger) og gælder app, admin, `public/*.html`, mails og butiksbilleder (Bjørn, 7. okt. 2026: "altid ens alle steder"); `src/brandConsistency.test.js` fanger udfasede farver. Lyst tema (dark mode er droppet, tag det ikke op igen). Primær `--green:#0F7D4F`; `--green-accent:#34D06A` kun
+**Designsystem:** `BRAND.md` er den samlede brandguide (logo, farver, skrift, komponenter, tone, hvor kopierne ligger) og gælder app, admin, `public/*.html`, mails og butiksbilleder (Bjørn, 7. okt. 2026: "altid ens alle steder"); `src/brandConsistency.test.js` fanger udfasede farver. Lyst tema (dark mode er droppet, tag det ikke op igen). **Madvarebilledet** (`.app-bg`) vises kun på Scan-forsiden og velkomst/login/onboarding/bekræft e-mail/Opskrifter; alle andre skærme (inkl. Profil, Rediger profil/præferencer, Indstillinger og Indsend/ret produktdata) har ren hvid baggrund via `app-bg-hide` i `App.jsx` (Bjørn, 10. okt. 2026). Primær `--green:#0F7D4F`; `--green-accent:#34D06A` kun
 til små positive mikro-elementer; `--blue:#3A6EA5`; spacing-skala og tokens i `.claude/rules/design-tokens.md`. **Logo (Bjørn, 7. okt. 2026):** logo A
 (7 streger, flueben med lige meget luft i begge sider, centreret) uden gradient: `#232528` ("Eat"/streger), `--green` `#0F7D4F` ("Safe"/flueben), `#FBFAF7`.
 Mail i mørk tilstand bruger hvid + `#79D5A7`. Master-SVG'er i `src/assets/logo/` og `public/brand/`; PNG'er gengives fra dem (se `public/brand/README.txt`). Brand-slogan "Mere tryghed i hverdagen" kun
