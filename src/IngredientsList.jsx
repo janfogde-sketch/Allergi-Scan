@@ -158,8 +158,8 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
                 color: ruleStyle ? ruleStyle.color : highlighted ? "var(--red)" : knowledgeTerm ? "var(--blue)" : baseColor,
                 background: ruleStyle ? ruleStyle.bg : highlighted ? "var(--red-lt)" : knowledgeTerm ? "var(--blue-lt)" : "transparent",
                 borderRadius: highlighted || knowledgeTerm ? 4 : 0,
-                padding: highlighted || knowledgeTerm ? "1px 4px" : 0,
-                margin: highlighted || knowledgeTerm ? "0 -2px" : 0,
+                padding: highlighted || knowledgeTerm ? "1px 3px" : 0,
+                margin: highlighted || knowledgeTerm ? "0 -3px" : 0,
                 cursor: clickable ? "pointer" : "default",
                 transition: "background .1s",
               }}

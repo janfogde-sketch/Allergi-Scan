@@ -377,7 +377,7 @@ export default function ListScreen({
           {visibleItemResults.map(({ product: p }) => (
             <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
               onList={resultOnList(p)}
-              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setNewItemName(""); }}
+              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id, { via: "search" }); setNewItemName(""); }}
               onAddToList={() => pickItemProduct(p)}
             />
           ))}
@@ -483,7 +483,7 @@ export default function ListScreen({
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
                   ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer" }}
-                      onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
+                      onClick={() => lookupProduct(item.ean, { via: "search" })} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean, { via: "search" })}>{item.name}</div>
                   : <div className="list-name">{item.name}</div>}
                 {/* Diskret EatSafe-status (25. sept. 2026, brugerfeedback) —
                     kun for varer med kendt produktdata (EAN), se itemStatus
@@ -533,7 +533,7 @@ export default function ListScreen({
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
                   ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}
-                      onClick={() => lookupProduct(item.ean)} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean)}>{item.name}</div>
+                      onClick={() => lookupProduct(item.ean, { via: "search" })} onKeyDown={e => e.key === "Enter" && lookupProduct(item.ean, { via: "search" })}>{item.name}</div>
                   : <div className="list-name done">{item.name}</div>}
                 {st && (
                   <div style={{ display:"flex", alignItems:"center", gap:3, marginTop:2, fontSize:10, fontWeight:600, color: STATUS_COLOR[st.status] }}>

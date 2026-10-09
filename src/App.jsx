@@ -660,14 +660,14 @@ export default function EatSafe() {
   // — denne wrapper sender blot alt afhængigt state med som ctx ved hvert kald,
   // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
   // ufuldstændig deps-liste.
-  const lookupProduct = useCallback((ean) => runLookupProduct(ean, {
+  const lookupProduct = useCallback((ean, opts) => runLookupProduct(ean, {
     accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family: scanFamily, activeProfiles,
     productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
     vibrateOnWarning, soundOnWarning,
-  }), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles,
+  }, opts), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles,
        productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
@@ -683,7 +683,7 @@ export default function EatSafe() {
   const openScannerAndScan = useCallback(() => { setAutoStartScan(true); setScreen(SCREENS.HOME); }, [setScreen]);
   React.useEffect(() => { if (!accessToken) setOpenTicketId(null); }, [accessToken]);
   const handleNotificationAction = useCallback((action) => {
-    if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean);
+    if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean, { via: "search" });
     else if (action?.type === "open_family") setScreen(SCREENS.FAMILY);
     else if (action?.type === "open_list") setScreen(SCREENS.LIST);
     else if (action?.type === "open_ticket" && action.params?.ticketId) { setOpenTicketId(action.params.ticketId); setScreen(SCREENS.TICKET); }

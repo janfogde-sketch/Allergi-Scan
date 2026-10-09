@@ -603,7 +603,34 @@ export function buildActiveProfileList({ user, family, allergens, customAllerg, 
   ].filter(p => (activeProfiles || []).includes(p.id));
 }
 
-export function computeProfileResults(profiles, { allergen_flags, ingredients, nutrition, productENumbers }) {
+// Ser ingredienslisten ud til at mangle dele af produktet? (10. okt. 2026) En kageblanding, en topping eller en delliste dækker ikke det
+// færdige produkt (fx ægget tilsættes derhjemme), så "ingen konflikt" er ikke dokumenteret. Hellere "Kan ikke vurderes" end et falsk grønt.
+// Returnerer en kort forklaring eller null. `p` = { name, ingredients, subcategory }.
+const MIX_RE = /kageblanding|\bblanding\b|\bmix\b|bagemix|\btopping\s*:|ingredienser\s*:[\s\S]*ingredienser\s*:/i;
+const BAKED_NAME_RE = /(kage|muffin|brownie|vaffel|pandekage|dej\b|boller|scones|cookie)/i;
+export function ingredientsLookIncomplete(p) {
+  const text = (p?.ingredients || p?.ingredients_text || "").trim();
+  if (!text) return null;
+  if (MIX_RE.test(text) || MIX_RE.test(p?.name || "")) return "Ser ud til at være en blanding eller en delliste";
+  if (BAKED_NAME_RE.test(p?.name || "")) {
+    const own = text.replace(/\b(kan indeholde|may contain)\b[\s\S]*$/i, "");
+    const hasEgg = /\bæg|ægge|ægpulver|\begg/i.test(own);
+    const hasLiquidOrFat = /\bvand\b|smør|margarine|\bmælk\b|fløde|yoghurt|creme fraiche|ostemasse|\bolie\b/i.test(own.replace(/\(\s*mælk\s*\)/gi, ""));
+    if (!hasEgg && !hasLiquidOrFat) return "Ser ud til at være en blanding eller en delliste";
+  }
+  return null;
+}
+
+// Specifikke nødder, der nævnes som spor i deklarationen ("Kan indeholde spor af mandler, hasselnødder"), så sporet kan vises mere præcist end "nødder".
+const NUT_WORDS = [["mandler", /mandel|mandler|almond/i], ["hasselnødder", /hasselnød|hazelnut/i], ["valnødder", /valnød|walnut/i], ["cashewnødder", /cashew/i],
+  ["pekannødder", /pekan|pecan/i], ["paranødder", /paranød|brazil/i], ["pistacienødder", /pistaci/i], ["macadamianødder", /macadamia/i]];
+export function traceNutNames(text) {
+  const m = String(text || "").match(/\b(?:kan indeholde(?: spor af)?|may contain)\b([\s\S]*)$/i);
+  if (!m) return [];
+  return NUT_WORDS.filter(([, re]) => re.test(m[1])).map(([n]) => n);
+}
+
+export function computeProfileResults(profiles, { allergen_flags, ingredients, nutrition, productENumbers, incomplete }) {
   const resultFlags = allergen_flags || {};
   const ingredientsText = ingredients || "";
   return (profiles || []).map(p => {
@@ -630,8 +657,10 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
     // Utilstrækkelige oplysninger (9. okt. 2026): valg, der kræver en ingrediensliste (egne allergier, E-numre, kostpræferencer),
     // kan ikke kontrolleres uden den. Manglende data er aldrig "ingen konflikt".
     const needsIngredients = (p.custom?.length || 0) > 0 || (p.eNumbers?.length || 0) > 0 || (p.diets?.length || 0) > 0;
+    const anySelection = needsIngredients || (p.allergens?.length || 0) > 0;
     const insufficient = [
       ...(needsIngredients && !ingredientsText.trim() ? ["Ingrediensliste mangler"] : []),
+      ...(incomplete && anySelection ? [incomplete] : []),
       ...dietResults.filter(r => r.ok === null).map(r => `${r.label}: kan ikke afgøres`),
     ];
     const reasons = [
@@ -695,6 +724,7 @@ export function evaluateProductForProfiles(profiles, product) {
   const results = computeProfileResults(profiles || [], {
     allergen_flags: normalizeProductFlagsFor(product || {}), ingredients: ingredientsText, nutrition: product?.nutrition,
     productENumbers: product?.productENumbers?.length ? product.productENumbers : extractENumbers(ingredientsText),
+    incomplete: ingredientsLookIncomplete({ name: product?.name, ingredients: ingredientsText }),
   });
   const lower = s => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
   const explicit = r => (/^(Spor af |Muligvis |Indeholder |[^:]+: )/.test(r) ? r : `Indeholder ${lower(r)}`);
@@ -705,7 +735,8 @@ export function evaluateProductForProfiles(profiles, product) {
     ...r.eNumberMatches.map(e => `Indeholder ${e}`),
     ...r.dietFails.map(d => `${d.label}: ${d.reasons?.[0] || "passer ikke"}`),
   ]))];
-  const traceReasons = [...new Set(results.flatMap(r => r.warning.map(id => `Spor af ${lower(ALLERGENS.find(a => a.id === id)?.label || id)}`)))];
+  const nutDetail = traceNutNames(ingredientsText);
+  const traceReasons = [...new Set(results.flatMap(r => r.warning.map(id => `Spor af ${lower(ALLERGENS.find(a => a.id === id)?.label || id)}${id === "noedder" && nutDetail.length ? ` (${nutDetail.join(", ")})` : ""}`)))];
   const missing = [...new Set(results.flatMap(r => [
     ...r.unknown.map(id => `Mangler oplysninger om ${lower(allergenChoiceLabel(ALLERGENS.find(a => a.id === id)) || id)}`),
     ...(r.insufficient || []),
@@ -989,15 +1020,27 @@ export function groupHistoryDuplicates(list) {
   for (const h of list || []) {
     const isNF = (h.result || h.status) === "not_found";
     const key = historyProductKey(h);
-    if (!key) { result.push({ ...h, __count: 1 }); continue; }
+    const via = h.found_via === "search" ? "search" : "scan";
+    if (!key) { result.push({ ...h, __count: 1, __scans: via === "scan" ? 1 : 0, __searches: via === "search" ? 1 : 0 }); continue; }
     const groupKey = isNF ? `nf|${key}|${h.user_id || ""}` : historySignature(h);
     const existing = byKey.get(groupKey);
-    if (existing) { existing.__count++; continue; }
-    const group = { ...h, __count: 1 };
+    if (existing) { existing.__count++; if (via === "search") existing.__searches++; else existing.__scans++; continue; }
+    const group = { ...h, __count: 1, __scans: via === "scan" ? 1 : 0, __searches: via === "search" ? 1 : 0 };
     byKey.set(groupKey, group);
     result.push(group);
   }
   return result;
+}
+
+// Aktivitetstekst for en samlet historikpost (10. okt. 2026): scanninger og søgninger tælles hver for sig, og seneste aktivitet vises.
+// `agoLabel` er den færdige "for 51 min. siden"-tekst, `single` den enkelte posts tidstekst. Posten står som den NYESTE aktivitet, så
+// ikonet (`historyVia`) følger den seneste måde produktet blev fundet på.
+export const historyVia = h => (h?.found_via === "search" ? "search" : "scan");
+export function historyActivityText(h, { single, agoLabel }) {
+  if (!(h.__count > 1)) return single;
+  const times = n => (n === 1 ? "1 gang" : `${n} gange`);
+  const parts = [h.__scans > 0 ? `Scannet ${times(h.__scans)}` : null, h.__searches > 0 ? `Søgt ${times(h.__searches)}` : null].filter(Boolean);
+  return `${parts.join(" · ")} · Senest ${agoLabel}`;
 }
 
 // Næringsrækker til produktsiden. Kun dokumenterede værdier: manglende værdier beregnes eller gættes aldrig, og en post hvor alle

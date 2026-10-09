@@ -112,16 +112,18 @@ async function fetchFromOFF(ean: string) {
     const p = data.product;
 
     const n = p.nutriments || {};
+    // En registreret 0 er en værdi (fx 0 g sukker), ikke "mangler": kun fraværende eller ikke-numeriske værdier bliver null.
+    const num = (v: unknown) => (v === null || v === undefined || v === "" || Number.isNaN(Number(v))) ? null : Number(v);
     const nutrition = {
-      energy_kcal:   n["energy-kcal_100g"] || null,
-      energy_kj:     n["energy-kj_100g"]   || null,
-      fat:           n["fat_100g"]          || null,
-      saturated_fat: n["saturated-fat_100g"]|| null,
-      carbohydrates: n["carbohydrates_100g"]|| null,
-      sugars:        n["sugars_100g"]       || null,
-      fiber:         n["fiber_100g"]        || null,
-      protein:       n["proteins_100g"]     || null,
-      salt:          n["salt_100g"]         || null,
+      energy_kcal:   num(n["energy-kcal_100g"]),
+      energy_kj:     num(n["energy-kj_100g"]),
+      fat:           num(n["fat_100g"]),
+      saturated_fat: num(n["saturated-fat_100g"]),
+      carbohydrates: num(n["carbohydrates_100g"]),
+      sugars:        num(n["sugars_100g"]),
+      fiber:         num(n["fiber_100g"]),
+      protein:       num(n["proteins_100g"]),
+      salt:          num(n["salt_100g"]),
     };
     const hasNutrition = Object.values(nutrition).some(v => v !== null);
 

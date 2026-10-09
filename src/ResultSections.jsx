@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { buildNutritionRows, glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
+import { buildNutritionRows, traceNutNames, glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -416,6 +416,9 @@ export function makeResultSections(c) {
     const presentIds = new Set(otherPresent.map(([k]) => k));
     const otherTraces  = traces.filter(([k])  => !myAllergens.has(k) && !presentIds.has(k) && !dupGluten(k));
     if (!otherPresent.length && !otherTraces.length) return null;
+    const nutNames = traceNutNames(scanResult.ingredients);
+    // Gluten, som EatSafe selv udleder af kornsorter i ingredienslisten, mærkes "udledt", så det skilles fra deklareret indhold.
+    const derivedGluten = cereals.length > 0 && !/gluten/i.test(scanResult.ingredients || "");
     const chip = (k, traceOnly) => {
       const a = ALLERGENS.find(x => x.id === k);
       if (!a) return null;
@@ -424,7 +427,7 @@ export function makeResultSections(c) {
           onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
           aria-label={`${traceOnly ? "Spor af " : "Indeholder "}${glutenLabel(a).toLowerCase()} – læs mere`}
           style={{ background:"var(--surface2)", color:"var(--ink2)", borderColor:"var(--border2)", cursor:"pointer", fontFamily:"var(--f)" }}>
-          <AllergenGlyph a={a} size={13} /> {traceOnly ? `Spor af ${glutenLabel(a).toLowerCase()}` : glutenLabel(a)} <Icon name="chevronRight" size={11} color="var(--muted)" />
+          <AllergenGlyph a={a} size={13} /> {traceOnly ? `Spor af ${glutenLabel(a).toLowerCase()}${a.id === "noedder" && nutNames.length ? ` (${nutNames.join(", ")})` : ""}` : glutenLabel(a)}{derivedGluten && a.id === "gluten" && !traceOnly && <span style={{ fontWeight:500, color:"var(--muted)" }}> · udledt</span>} <Icon name="chevronRight" size={11} color="var(--muted)" />
         </button>
       );
     };
@@ -454,7 +457,7 @@ export function makeResultSections(c) {
       <div className="card">
         <div style={UI.udflex_aicenter_jcspacebet_mb8}>
           <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
-          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length} registreret{eNums.length === 1 ? "" : "e"}</div>
+          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length === 1 ? "1 registreret" : `${eNums.length} registrerede`}</div>
         </div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
           {eNums.map(e => {

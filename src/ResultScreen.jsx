@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, ingredientsLookIncomplete, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -107,6 +107,7 @@ export default function ResultScreen({
     ingredients: scanResult.ingredients,
     nutrition: scanResult.nutrition,
     productENumbers: scanResult.productENumbers,
+    incomplete: ingredientsLookIncomplete({ name: scanResult.name, ingredients: scanResult.ingredients }),
   });
 
   // Alternativer (9. okt. 2026): kun produkter, der efter det fælles statussystem har GRØN status for ALLE aktive profilers valg (inkl. E-numre,
@@ -499,7 +500,7 @@ export default function ResultScreen({
               </div>
               <div style={UI.colGap8}>
                 {(altExpanded ? safeAlternatives : safeAlternatives.slice(0, ALT_VISIBLE)).map(p => (
-                  <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean)}
+                  <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean, { via: "search" })}
                     aria-label={`Åbn ${productDisplayName(p)}`}
                     style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"6px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", minHeight:52 }}>
                     <ProductImage product={p} size={36} height={44} />

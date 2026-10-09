@@ -191,7 +191,12 @@ function fireWarningAlert(vibrateOn, soundOn) {
   }
 }
 
-export async function runLookupProduct(ean, ctx) {
+// opts.via: "scan" (kamera/indtastet kode, standard), "search" (åbnet fra søgning, favoritter, alternativer, beskeder) eller "none"
+// (åbnet fra Historik selv: produktet står der allerede, så der oprettes ingen ny række).
+export async function runLookupProduct(ean, ctx, opts = {}) {
+  const via = opts.via === "search" || opts.via === "none" ? opts.via : "scan";
+  const logHistory = (...a) => (via === "none" ? Promise.resolve() : ctx.saveHistoryEntry(...a, via));
+  const pushLocalHistory = (h, item) => (via === "none" ? h : [{ ...item, found_via: via }, ...h].slice(0, 50));
   const {
     accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family, activeProfiles,
     productCacheRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
@@ -237,8 +242,8 @@ export async function runLookupProduct(ean, ctx) {
     setScanResult(cachedResult); setScreen(SCREENS.RESULT); setLoading(false);
     // Genscanningen gemmes i historikken som en almindelig scanning, så tilbagekaldelses- og
     // ændringsbeskeder også rammer den (useHistory fanger selv fejl, fx offline).
-    setHistory(h => [cachedResult, ...h].slice(0, 50));
-    saveHistoryEntry(ean.trim(), cachedResult.id, cachedResult.status, cachedResult.allergen_flags, activeProfiles);
+    setHistory(h => pushLocalHistory(h, cachedResult));
+    logHistory(ean.trim(), cachedResult.id, cachedResult.status, cachedResult.allergen_flags, activeProfiles);
     if (navigator.vibrate) navigator.vibrate(25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
     // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
@@ -282,7 +287,7 @@ export async function runLookupProduct(ean, ctx) {
     if (!data.found) {
       traceLog(tid, "scan:not-found");
       setNotFoundEan(ean.trim());
-      await saveHistoryEntry(ean.trim(), null, "not_found", {}, activeProfiles);
+      await logHistory(ean.trim(), null, "not_found", {}, activeProfiles);
       await waitForMinLoading();
       if (isStale()) return;
       setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
@@ -328,8 +333,8 @@ export async function runLookupProduct(ean, ctx) {
     traceLog(tid, "scan:result", { ean: ean.trim(), name: result.name, status: result.status, matchedDanger: result.matchedDanger, matchedWarning: result.matchedWarning });
     const finalResult = withCustomAllergenMatch(result, activeCustom);
     setScanResult(finalResult);
-    setHistory(h => [finalResult, ...h].slice(0, 50));
-    await saveHistoryEntry(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles);
+    setHistory(h => pushLocalHistory(h, finalResult));
+    await logHistory(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles);
     // Hent alternativer hvis produktet er farligt eller har spor
     if (finalResult.status === "danger" || finalResult.status === "warn") {
       fireWarningAlert(vibrateOnWarning, soundOnWarning);

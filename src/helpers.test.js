@@ -777,3 +777,42 @@ describe("buildNutritionRows", () => {
     expect(buildNutritionRows({ energy_kj: 400, energy_kcal: 0, fat: 1 })[0].value).toBe("400 kJ");
   });
 });
+
+import { ingredientsLookIncomplete, traceNutNames } from "./helpers.js";
+describe("ufuldstændige ingredienslister", () => {
+  it("blandinger og dellister genkendes", () => {
+    expect(ingredientsLookIncomplete({ name: "Drømmekage", ingredients: "Kageblanding: Sukker, HVEDEMEL. Topping: Ingredienser: Brun farin" })).toBeTruthy();
+    expect(ingredientsLookIncomplete({ name: "Den du ved nok kage", ingredients: "Flormelis, 30 % kokosmel, kakaopulver, SKUMMETMÆLKSPULVER. Kan indeholde spor af æg." })).toBeTruthy();
+    expect(ingredientsLookIncomplete({ name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker, hævemiddel (E500)" })).toBeTruthy();
+  });
+  it("færdig kage med æg og vand er ikke ufuldstændig", () => {
+    expect(ingredientsLookIncomplete({ name: "Chokoladekage", ingredients: "Sukker, HVEDEMEL, ÆG, vand, rapsolie" })).toBeNull();
+    expect(ingredientsLookIncomplete({ name: "Rugbrød", ingredients: "Rugmel, vand, salt" })).toBeNull();
+  });
+  it("blanding får aldrig grøn ved æggeallergi", () => {
+    const profiles = [{ id: "me", name: "Dig", allergens: ["aeg"], custom: [], diets: [], levels: {}, eNumbers: [] }];
+    const r = evaluateProductForProfiles(profiles, { name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker", allergen_flags: { aeg: "no" } });
+    expect(r.level).toBe("unknown");
+  });
+  it("specifikke nødder i sporsætningen", () => {
+    expect(traceNutNames("Sukker. Kan indeholde spor af hvede, mandler, hasselnødder og soja.")).toEqual(["mandler", "hasselnødder"]);
+    expect(traceNutNames("Mandelmel, sukker")).toEqual([]);
+  });
+});
+
+import { historyActivityText, historyVia } from "./helpers.js";
+describe("historik: scanninger og søgninger holdes adskilt", () => {
+  const row = (id, found_via, at) => ({ id, ean_scanned: "5701", user_id: "u", result: "safe", flags_triggered: {}, active_profiles: ["me"], found_via, scanned_at: at });
+  it("samme produkt scannet og søgt giver én post med to tællere", () => {
+    const g = groupHistoryDuplicates([row(3, "search", "c"), row(2, "scan", "b"), row(1, "scan", "a")]);
+    expect(g).toHaveLength(1);
+    expect(g[0].__count).toBe(3); expect(g[0].__scans).toBe(2); expect(g[0].__searches).toBe(1);
+    expect(historyVia(g[0])).toBe("search");
+    expect(historyActivityText(g[0], { single: "x", agoLabel: "5 min. siden" })).toBe("Scannet 2 gange · Søgt 1 gang · Senest 5 min. siden");
+  });
+  it("enkelt post viser kun tiden, og manglende found_via tæller som scanning", () => {
+    const g = groupHistoryDuplicates([{ ...row(1, undefined, "a") }]);
+    expect(g[0].__scans).toBe(1);
+    expect(historyActivityText(g[0], { single: "for 2 timer siden", agoLabel: "x" })).toBe("for 2 timer siden");
+  });
+});

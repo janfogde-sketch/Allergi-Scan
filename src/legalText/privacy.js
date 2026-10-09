@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "8. oktober 2026",
+  "updated": "10. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -62,7 +62,7 @@ export default {
     ],
     [
       "p",
-      "**Scanningshistorik, søgehistorik og favoritter**\nProdukter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes. Når du søger efter et produkt og vælger et i resultatet, gemmer vi dit søgeord og det valgte produkt, så søgningen bliver bedre for dig."
+      "**Scanningshistorik, søgehistorik og favoritter**\nProdukter og stregkoder, du scanner, gemmer som favorit eller på anden måde interagerer med, hvis de relevante funktioner anvendes. Når du søger efter et produkt og vælger et i resultatet, gemmer vi dit søgeord og det valgte produkt, så søgningen bliver bedre for dig. Din historik viser de produkter, du har scannet eller åbnet via søgning, og hvordan de blev fundet; de ord, du skriver i søgefeltet uden at åbne et produkt, vises ikke i historikken."
     ],
     [
       "p",
@@ -369,7 +369,7 @@ export default {
     [
       "ul",
       [
-        "scanningshistorik: slettes automatisk 24 måneder efter scanningen",
+        "scannings- og søgehistorik (produkter, du har scannet eller åbnet via søgning): slettes automatisk 24 måneder efter scanningen eller åbningen",
         "søgehistorik (dine søgeord og de produkter, du valgte): slettes automatisk 12 måneder efter, den er gemt",
         "beskeder i appen: slettes automatisk efter 12 måneder",
         "tekniske hændelser og afsendelseslog for beskeder: slettes automatisk efter 90 dage",
