@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, ingredientsLookIncomplete, STATUS_TEXT } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -45,6 +45,7 @@ export default function ResultScreen({
   const [altExpanded, setAltExpanded] = React.useState(false);
   const [confirmAddOpen, setConfirmAddOpen] = React.useState(false);
   const [reasonsOpen, setReasonsOpen] = React.useState(false);
+  const [greenOpen, setGreenOpen] = React.useState(false);
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
@@ -103,12 +104,13 @@ export default function ResultScreen({
   // computeProfileResults) er delt med ListScreen.jsx's per-vare-status —
   // se helpers.js for hvorfor.
   const resultProfilesRaw = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
+  const incompleteReason = ingredientsLookIncomplete({ name: scanResult.name, ingredients: scanResult.ingredients });
   const profileResults = computeProfileResults(resultProfilesRaw, {
     allergen_flags: scanResult.allergen_flags,
     ingredients: scanResult.ingredients,
     nutrition: scanResult.nutrition,
     productENumbers: scanResult.productENumbers,
-    incomplete: ingredientsLookIncomplete({ name: scanResult.name, ingredients: scanResult.ingredients }),
+    incomplete: incompleteReason,
   });
 
   // Alternativer (9. okt. 2026): kun produkter, der efter det fælles statussystem har GRØN status for ALLE aktive profilers valg (inkl. E-numre,
@@ -271,7 +273,11 @@ export default function ResultScreen({
         if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: allergenChoiceLabel(a), reason: "Spor nævnt på pakken (du har valgt ikke at få advarsel om spor)" };
         return { status: "trace", label: allergenChoiceLabel(a), reason: "Kan indeholde spor" };
       }
+      // Et "nej" på en blanding eller delliste er ikke dokumenteret: grøn kræver en fuldstændig ingrediensliste.
+      if (val === "no" && incompleteReason) return { status: "unknown", label: allergenChoiceLabel(a), reason: `${incompleteReason}, så "ikke fundet" er ikke dokumenteret.` };
       if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: "Ikke fundet" };
+      // Sulfitter: et E-nummer alene er ikke en deklareret allergen, og mængden er ukendt (hverken "ikke fundet" eller "fundet").
+      if (id === "svovl" && sulfiteAssessment(scanResult.ingredients) === "unknown") return { status: "unknown", label: allergenChoiceLabel(a), reason: "Et sulfit-E-nummer er nævnt, men sulfit er ikke deklareret, og mængden er ukendt" };
       return { status: "unknown", label: allergenChoiceLabel(a), reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
     }).filter(Boolean);
     // Egne, fritekst-tilføjede allergier er en ren ordsøgning (matchCustomAllergens). Fundet = ✕. Ikke fundet er IKKE et ✓
@@ -312,7 +318,9 @@ export default function ResultScreen({
     const present = new Set((scanResult.productENumbers || []).map(e => e.toUpperCase()));
     return ids.map(id => present.has(id.toUpperCase())
       ? { status: "cross", label: eNumberChoiceLabel(id), reason: "Fundet i produktet" }
-      : { status: "check", label: eNumberChoiceLabel(id), reason: "Ikke fundet" }
+      : incompleteReason
+        ? { status: "unknown", label: eNumberChoiceLabel(id), reason: `${incompleteReason}, så "ikke fundet" er ikke dokumenteret.` }
+        : { status: "check", label: eNumberChoiceLabel(id), reason: "Ikke fundet" }
     ).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
@@ -431,7 +439,7 @@ export default function ResultScreen({
     liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls,
     scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType,
     setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile,
-    toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen,
+    toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen, greenOpen, setGreenOpen,
   };
   const { handleAddToList, chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition } = makeResultSections(ctx);
 
