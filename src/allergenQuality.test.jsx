@@ -5,6 +5,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { analyzeIngredients } from "../supabase/functions/_shared/allergenEngine.js";
+import { setSearchReturn, clearSearchReturn } from "./searchReturn.js";
+import { SCREENS } from "./constants.jsx";
 import { evaluateProductForProfiles, normalizeProductFlags, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import ResultScreen from "./ResultScreen.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
@@ -100,13 +102,13 @@ describe("ingen falske grønne", () => {
 });
 
 // ── Produktsiden ─────────────────────────────────────────────────────────────────────────────
-function setup({ scan, allergens, shoppingList = [], toggleItem = vi.fn() }) {
+function setup({ scan, allergens, shoppingList = [], toggleItem = vi.fn(), setNewItemName = vi.fn(), setScreen = vi.fn() }) {
   return render(
     <AuthProvider value={{ user: { name: "Jan", diets: [], allergenLevels: {} }, accessToken: "t" }}>
       <ProfileProvider value={{ scanFamily: [], allergens, customAllerg: [], activeProfiles: ["me"] }}>
-        <NavigationProvider value={{ setScreen: vi.fn() }}>
+        <NavigationProvider value={{ setScreen }}>
           <HistoryProvider value={{ isFavorite: () => false, toggleFavorite: vi.fn() }}>
-            <ShoppingProvider value={{ lists: [{ id: "l1", name: "Min liste" }], activeList: { id: "l1", name: "Min liste" }, activeListId: "l1", addToList: vi.fn(), shoppingList, toggleItem }}>
+            <ShoppingProvider value={{ lists: [{ id: "l1", name: "Min liste" }], activeList: { id: "l1", name: "Min liste" }, activeListId: "l1", addToList: vi.fn(), shoppingList, toggleItem, setNewItemName }}>
               <ResultScreen scanResult={scan} activeENumbers={[]} selectedENumbers={[]} setKnowledgeSlug={vi.fn()} setEditStep={vi.fn()}
                 setEditIngText={vi.fn()} setEditNote={vi.fn()} setEditType={vi.fn()} alternatives={[]} altLoading={false} lookupProduct={vi.fn()} />
             </ShoppingProvider>
@@ -243,5 +245,22 @@ describe("ens vurdering på tværs og genberegning ved profilændring", () => {
     cleanup();
     setup({ scan, allergens: ["soja"] });
     expect(screen.getAllByText(STATUS_TEXT.danger).length).toBeGreaterThan(0);
+  });
+});
+
+describe("tilbage til søgning", () => {
+  it("vises kun for et produkt, der blev åbnet fra søgningen, og fører tilbage med søgeordet", () => {
+    const setScreen = vi.fn(), setNewItemName = vi.fn();
+    setSearchReturn("boller", "8718053593111");
+    setup({ scan: pepero(), allergens: ["soja"], setScreen, setNewItemName });
+    fireEvent.click(screen.getByRole("button", { name: /Tilbage til søgning/ }));
+    expect(setNewItemName).toHaveBeenCalledWith("boller");
+    expect(setScreen).toHaveBeenCalledWith(SCREENS.LIST);
+  });
+  it("vises ikke for et produkt fra scanning eller et andet produkt", () => {
+    setSearchReturn("boller", "999");
+    setup({ scan: pepero(), allergens: ["soja"] });
+    expect(screen.queryByRole("button", { name: /Tilbage til søgning/ })).toBeNull();
+    clearSearchReturn();
   });
 });

@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { ALLERGEN_KEYWORDS } from "../supabase/functions/_shared/allergenKeywords.js";
-import { SUBSTRING_KEYWORDS, isNegatedAt } from "../supabase/functions/_shared/allergenEngine.js";
+import { SUBSTRING_KEYWORDS, SHORT_PATTERNS, L, isNegatedAt } from "../supabase/functions/_shared/allergenEngine.js";
 
 export { ALLERGEN_KEYWORDS };
 
@@ -48,8 +48,9 @@ function findAllKeywordIndices(text, kw) {
   // længden, så sammensatte mælkeord blev fremhævet i backend, men ikke i
   // ingredienslisten.
   const wordBoundary = !SUBSTRING_KEYWORDS.has(kw) && kw.length <= 4;
+  // Korte nøgleord har samme sammensætningsregler som backend-motoren (SHORT_PATTERNS): "tøræg", "helæg", "skrabeæg" er æg, "lægemiddel" er det ikke.
   const pattern = wordBoundary
-    ? new RegExp(`(^|[^a-zæøå0-9])(${escaped})([^a-zæøå0-9]|$)`, "gi")
+    ? new RegExp(`(^|[^${L}0-9])(${SHORT_PATTERNS[kw.toLowerCase()] || escaped})(?=[^${L}0-9]|$)`, "gi")
     : new RegExp(`(${escaped})`, "gi");
   const indices = [];
   let m;

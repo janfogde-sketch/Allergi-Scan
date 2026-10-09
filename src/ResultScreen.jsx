@@ -12,6 +12,7 @@ import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
 import { useRecalls } from "./useRecalls.js";
 import RecallNotice from "./RecallNotice.jsx";
+import { getSearchReturnFor, clearSearchReturn } from "./searchReturn.js";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
 
 import { makeResultSections } from "./ResultSections.jsx";
@@ -38,7 +39,8 @@ export default function ResultScreen({
   const { scanFamily: family, allergens, customAllerg, activeProfiles, profileLoadStatus, retryProfileLoad } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { isFavorite, toggleFavorite } = useHistoryContext();
-  const { lists, activeList, activeListId, addToList, shoppingList, toggleItem } = useShoppingContext();
+  const { lists, activeList, activeListId, addToList, shoppingList, toggleItem, setNewItemName } = useShoppingContext();
+  const searchBack = scanResult ? getSearchReturnFor(scanResult.code || scanResult.ean) : null;
   const [addedToList, setAddedToList] = React.useState(false);
   const [showListPicker, setShowListPicker] = React.useState(false);
   const [unknownOpen, setUnknownOpen] = React.useState(false);
@@ -445,6 +447,14 @@ export default function ResultScreen({
 
   return (
     <div className="screen fade-in result-page" style={navH ? { paddingBottom: navH + 20 } : undefined}>
+
+      {/* Tilbage til søgningen på indkøbslisten, når produktet blev åbnet derfra */}
+      {searchBack && (
+        <button type="button" onClick={() => { setNewItemName?.(searchBack.query); clearSearchReturn(); setScreen(SCREENS.LIST); }}
+          style={{ display:"inline-flex", alignItems:"center", gap:4, background:"none", border:"none", padding:"6px 4px 10px 0", margin:0, cursor:"pointer", fontFamily:"var(--f)", fontSize:14, fontWeight:700, color:"var(--green)", minHeight:44 }}>
+          <Icon name="chevronLeft" size={16} color="var(--green)" /> Tilbage til søgning
+        </button>
+      )}
 
       {/* Demo-banner — kun for "Prøv en demo-scanning" på HOME, aldrig et rigtigt scan */}
       {scanResult.isDemo && (

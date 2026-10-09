@@ -37,3 +37,13 @@ describe("analyzeIngredientTokens", () => {
     expect(marked("Mælkepulver, MÆLKEPROTEIN, Hasselnødder", [rule("maelkeallergi", "Mælk"), rule("noedder", "Nødder")])).toEqual(["Mælkepulver", "MÆLKEPROTEIN", "Hasselnødder"]);
   });
 });
+
+describe("sammensatte ægord markeres, men ikke tilfældige ord", () => {
+  const egg = [rule("aeg", "Æg")];
+  it("TØRÆG, helæg og skrabeæg markeres som hele ord", () => {
+    expect(marked("Mel, TØRÆG, salt. Helæg og skrabeæg.", egg)).toEqual(["TØRÆG", "Helæg", "skrabeæg"]);
+  });
+  it("lægemiddel og ægte markeres ikke", () => {
+    expect(marked("lægemiddel, ægte vare", egg)).toEqual([]);
+  });
+});
