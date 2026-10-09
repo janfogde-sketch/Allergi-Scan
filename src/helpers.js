@@ -629,6 +629,18 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
   });
 }
 
+// Søgeresultatets gruppe til filtrene (9. okt. 2026): "danger" = direkte konflikt, "warn" = spor/fravalg,
+// "unknown" = for lidt data til at vurdere (aldrig "uden konflikt"), "clean" = tilstrækkelige data og ingen fund.
+export function classifySearchResult(results, product) {
+  const list = results || [];
+  if (list.some(r => r.status === "danger")) return "danger";
+  if (list.some(r => (r.warning || []).length > 0 || (r.dietFails || []).length > 0 || (r.eNumberMatches || []).length > 0)) return "warn";
+  const hasFlags = !!product?.allergen_flags && typeof product.allergen_flags === "object" && Object.keys(product.allergen_flags).length > 0;
+  const hasIngredients = ((product?.ingredients || product?.ingredients_text || "").trim()).length > 0;
+  if (list.some(r => (r.unknown || []).length > 0) || (!hasFlags && !hasIngredients)) return "unknown";
+  return "clean";
+}
+
 // Statuslinje-tekst for en konflikt i lister (indkøbsliste, historik,
 // favoritter, søgning). Nævner også profiler med en advarsel (fx spor), når
 // en anden profil har en egentlig konflikt — ellers skjulte "Konflikt for

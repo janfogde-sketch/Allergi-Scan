@@ -180,7 +180,7 @@ export function ProductImage({ product, size = 64, height = size }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, onOpen, onAddToList }) {
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, onOpen, onAddToList, onList = false }) {
   // To udregningsveje (25. sept. 2026, brugerfeedback: "hvilken profil
   // konflikten gælder" + "skriv årsagen eksplicit"):
   // - `profiles` (fra ListScreen.jsx, med den fulde aktive profil-liste) →
@@ -242,10 +242,12 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
       // blur bliver forhindret for at fungere korrekt. "+"-knappen nedenfor
       // beholder sin egen beskyttelse, se dens kommentar.
       style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--surface)", border:`1px solid ${status==="danger" ? "var(--red-md)" : status==="warn" ? "var(--amber-md)" : "var(--border)"}`, borderRadius:12, cursor:"pointer" }}>
-      <ProductImage product={p} size={44} />
+      <ProductImage product={p} size={48} height={56} />
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)" }}>{productDisplayName(p)}</div>
-        <div style={{ fontSize:11, color:"var(--muted)" }}>{p.brand}{p.category ? ` · ${p.category}` : ""}</div>
+        {/* Rækkefølge: produktnavn (op til to linjer), mærke/kategori, allergistatus på egen linje, årsager. */}
+        <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", lineHeight:1.3, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", overflowWrap:"anywhere" }}>{productDisplayName(p)}</div>
+        {(p.brand || p.category) && <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.brand}{p.category ? `${p.brand ? " · " : ""}${p.category}` : ""}</div>}
+        <div style={{ fontSize:11, fontWeight:700, color:statusColor, marginTop:3, lineHeight:1.35 }}>{statusText}</div>
         {/* Årsags-chips (25. sept. 2026, brugerfeedback: "kan aldrig
             misforstås som at produktet nødvendigvis indeholder disse
             ingredienser") — reasonChips er allerede formuleret eksplicit
@@ -271,9 +273,8 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
           </div>
         )}
       </div>
-      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0 }}>
-        <div style={{ fontSize:11, fontWeight:700, color:statusColor, textAlign:"right" }}>{statusText}</div>
-        <button type="button" className="btn btn-sm" aria-label={added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0, alignSelf:"center" }}>
+        <button type="button" className="btn btn-sm" aria-label={onList ? `"${productDisplayName(p)}" er allerede på listen` : added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
           // Forhindrer specifikt HER at et tap flytter fokus væk fra et søgefelt
           // ovenover (fx ListScreens "Tilføj vare") — ellers kan søgefeltets
           // onBlur nå at lukke resultatlisten, før klikket på selve knappen når
@@ -282,8 +283,9 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
           onMouseDown={e => e.preventDefault()}
           style={{ width:44, height:44, minHeight:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, lineHeight:1,
             background: added ? "var(--green)" : "var(--surface2)", color: added ? "var(--on-green)" : "var(--ink2)",
-            border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s" }}
-          onClick={handleAddToList}><Icon name="plus" size={18} color={added ? "var(--on-green)" : "var(--ink2)"} /></button>
+            border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s", ...(onList && !added ? { background:"var(--green-selected-bg)", borderColor:"var(--green)" } : {}) }}
+          onClick={handleAddToList}><Icon name={onList && !added ? "check" : "plus"} size={18} color={added ? "var(--on-green)" : onList ? "var(--green)" : "var(--ink2)"} /></button>
+        {onList && <div style={{ fontSize:10, fontWeight:700, color:"var(--green)" }}>På listen</div>}
       </div>
     </div>
   );
