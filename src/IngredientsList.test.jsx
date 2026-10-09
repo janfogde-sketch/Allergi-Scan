@@ -8,23 +8,21 @@ afterEach(cleanup);
 
 describe("IngredientsList: fremhævning efter brugerens valg", () => {
   it("en tom regelliste betyder 'intet er relevant': almindelige allergen-ord fremhæves ikke rødt (2. okt. 2026)", () => {
-    render(<IngredientsList text="Havregryn, vand, mælk" highlightRules={[]} />);
-    for (const word of ["Havregryn", "mælk"]) {
-      const el = screen.getByText(word);
-      expect(el.style.color).not.toBe("var(--red)");
-      expect(el.style.background).not.toContain("red");
-    }
+    const { container } = render(<IngredientsList text="Havregryn, vand, mælk" highlightRules={[]} />);
+    expect(container.querySelectorAll("span").length).toBe(0);
+    expect(container.textContent).toBe("Havregryn, vand, mælk");
   });
   it("uden highlightRules (fx Opskrifter) bruges stadig den generelle fremhævning", () => {
     render(<IngredientsList text="Havregryn, vand" />);
     expect(screen.getByText("Havregryn").style.color).toBe("var(--red)");
   });
-  it('"Kan indeholde spor afæg" (manglende mellemrum) fremhæves som egen del, uden at foregående ingrediens farves', () => {
+  it('"Kan indeholde spor afæg" (manglende mellemrum): kun selve ordet "æg" markeres, ikke den foregående ingrediens', () => {
     const rules = [{ keywords: ["æg"], category: "trace", label: "Æg", reason: "spor" }];
-    render(<IngredientsList text="aromaer, olivenekstrakt. Kan indeholde spor afæg, mælk, soja" highlightRules={rules} />);
-    const egg = screen.getByText("Kan indeholde spor af æg");
-    expect(egg.style.fontWeight).toBe("700");
-    expect(egg.style.color).toBe("var(--amber)");
-    expect(screen.getByText("olivenekstrakt").style.fontWeight).toBe("400");
+    const { container } = render(<IngredientsList text="aromaer, olivenekstrakt. Kan indeholde spor afæg, mælk, soja" highlightRules={rules} />);
+    const spans = [...container.querySelectorAll("span")];
+    expect(spans.map(x => x.textContent)).toEqual(["æg"]);
+    expect(spans[0].style.fontWeight).toBe("700");
+    expect(spans[0].style.color).toBe("var(--amber)");
+    expect(container.textContent).toContain("olivenekstrakt. Kan indeholde spor af æg");
   });
 });

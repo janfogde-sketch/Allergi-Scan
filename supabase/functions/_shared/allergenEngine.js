@@ -248,9 +248,12 @@ export function normalizeIngredientText(text) {
 // og de ender på "nødder" (6. okt. 2026, understrengs-matchning; kokosnød er ikke et EU-allergen).
 const ALLERGEN_MASKS = {
   noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*|kokos-?nød\w*|jord-?nöt\w*|muskot-?nöt\w*|kokos-?nöt\w*|maa-?pähkin\w*|kookos-?pähkin\w*|arachide\w*|cacahu[eè]te\w*|pinda\w*|kokosnoot\w*|noix de (?:coco|muscade)/g,
+  // Solsikke-/rapslecithin er ikke soja (kilden er dokumenteret), også som sammensat ord "solsikkelecithin" (10. okt. 2026).
+  soja: /(?:solsikke|raps|sunflower|rapeseed)\s*-?\s*le[ck]i?th?i?n\w*/g,
 };
 
 // Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
+const SOY_FREE_LECITHIN = /(solsikke|raps|sunflower|rapeseed)\s*-?\s*le[ck]i?th?i?n/;
 const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin", "lécithine", "lécithines", "lesitiini"]);
 
 // Margarine/minarine er ikke i sig selv mælk (7. okt. 2026, E2): plantemargarine er veganske, og
@@ -330,6 +333,8 @@ export function analyzeIngredients(rawText) {
     const suffixed = m[2] && /^[a-z]$/.test(m[2]) ? base + m[2] : null;
     const mapping = (suffixed && ENUMBER_ALLERGENS[suffixed]) || ENUMBER_ALLERGENS[base];
     if (!mapping) continue;
+    // E322 (lecithin) er kun et sojaspor, når kilden er ukendt: står der solsikke- eller rapslecithin, er kilden dokumenteret (10. okt. 2026).
+    if (base === "e322" && SOY_FREE_LECITHIN.test(String(rawText || "").toLowerCase())) continue;
     const current = flags[mapping.allergen];
     // Opgrader kun hvis det forbedrer sikkerheden (no → traces → yes)
     if (mapping.certainty === "yes" && current !== "yes") {
