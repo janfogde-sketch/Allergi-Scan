@@ -42,7 +42,9 @@ describe("sameProductType", () => {
   const base = { name: "Kakaomælk", category: "Drikkevarer", subcategory: "Mælkedrik", category_original: "Drikkevarer > Mælk > Kakao" };
   it("kræver samme type, ikke kun samme hovedkategori", () => {
     expect(sameProductType(base, { name: "Cola", category: "Drikkevarer", subcategory: "Sodavand" })).toBe(false);
-    expect(sameProductType(base, { name: "Letmælk", subcategory: "Mælkedrik" })).toBe(true);
+    // Samme underkategori alene er ikke nok (fx lollipops i "Kiks & kager"): der kræves også et fælles navneord eller en dyb kategori-sti.
+    expect(sameProductType(base, { name: "Letmælk", subcategory: "Mælkedrik" })).toBe(false);
+    expect(sameProductType({ name: "Kiksestænger", subcategory: "Kiks & kager" }, { name: "woogle", subcategory: "Kiks & kager" })).toBe(false);
     expect(sameProductType(base, { name: "Økologisk kakaomælk" })).toBe(true);
   });
 });

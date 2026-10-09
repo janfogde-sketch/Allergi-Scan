@@ -256,9 +256,29 @@ export function normalizeProductFlags(flags, info = {}) {
   }
   // Producentens eget "laktosefri" i navnet (samme tillid som "laktosefri" i selve teksten, se motoren).
   if (!noIngredients && /laktose\s*-?fri|lactose[\s-]?free/i.test(productName) && (out.laktose === "yes" || out.laktose === "traces")) out.laktose = "no";
+  // Sulfitter (10. okt. 2026): et sulfit-tilsætningsstof (E220-E228) alene er ikke en deklareret allergen. Sulfitter er først
+  // mærkningspligtige over 10 mg/kg (10 mg/l) samlet SO2. Står der kun et E-nummer uden ordet sulfit/svovldioxid og uden en angivet
+  // mængde, er grundlaget for "indeholder sulfitter" ikke dokumenteret, og vurderingen bliver "kan ikke vurderes" (unknown) i stedet
+  // for en konflikt. Står ordet i deklarationen (fx "E223 (SULFIT)"), eller er mængden angivet, gælder flaget uændret.
+  if (!verified && out.svovl === "yes") { const sa = sulfiteAssessment(ingredientsText); if (sa) out.svovl = sa; }
   const g = effectiveAllergenFlag(out, "gluten");
   if (g !== out.gluten && g !== undefined) out.gluten = g;
   return out;
+}
+
+const SULFITE_E_RE = /(^|[^a-zæøå0-9])e[\s-]?22[0-8]([^0-9]|$)/i;
+const SULFITE_WORD_RE = /sulfit|sulphit|svovldioxid|sulfur dioxide|sulphur dioxide|schwefel|\bso\s?2\b|so₂/i;
+const SULFITE_AMOUNT_RE = /(\d+[.,]?\d*)\s*mg\s*\/\s*(kg|l)/i;
+// Returnerer "unknown" (E-nummer uden deklareret ord eller mængde), "traces" (angivet mængde på højst 10 mg/kg, under mærkningsgrænsen)
+// eller null (flaget gælder uændret: ordet er deklareret, eller mængden er over grænsen).
+export function sulfiteAssessment(ingredientsText) {
+  const t = ingredientsText || "";
+  const amount = t.match(SULFITE_AMOUNT_RE);
+  if (amount && SULFITE_WORD_RE.test(t) && parseFloat(amount[1].replace(",", ".")) <= 10) return "traces";
+  if (!SULFITE_E_RE.test(t)) return null;            // flaget stammer ikke fra et E-nummer
+  if (SULFITE_WORD_RE.test(t)) return null;          // ordet er deklareret
+  if (amount && parseFloat(amount[1].replace(",", ".")) > 10) return null;
+  return "unknown";
 }
 
 export function normalizeProductFlagsFor(product) {

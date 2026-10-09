@@ -40,6 +40,106 @@ function findMatchingHighlightRule(part, highlightRules) {
   return null;
 }
 
+// ─── PRÆCIS FREMHÆVNING (10. okt. 2026) ──────────────────────────────────────────────────────────────────
+// I brugerspecifik tilstand (highlightRules) analyseres teksten på ord- og udtryksniveau i stedet for kommasegmenter: kun det konkrete
+// ingrediensord ("MANDELpulver", "HVEDEMEL", "sødmælkspulver") eller udtryk ("E322 (SOJA)") markeres, aldrig procenter, kommaer eller
+// nabo-ord. Teksten vises uændret (kun overflødigt mellemrum er slået sammen). Sporsætninger ("Kan indeholde spor af ...") matches kun
+// mod spor-regler, så et ord dér ikke farves som direkte indhold.
+const TOKEN_RE = /E[\s-]?\d{3,4}[a-z]?(?:[ ]?\([^()]*\))?|[A-Za-zÀ-ÖØ-öø-ÿ]+(?:-[A-Za-zÀ-ÖØ-öø-ÿ]+)*/g;
+const TRACE_ZONE_RE = /(kan indeholde|may contain|indeholder spor|spor af)[^]*?(?:\.(?=\s|$)|$)/gi;
+const E_PART_RE = /^E[\s-]?(\d{3,4}[a-z]?)/i;
+
+export function analyzeIngredientTokens(text, rules) {
+  const lower = text.toLowerCase();
+  const zones = [];
+  TRACE_ZONE_RE.lastIndex = 0;
+  let zm;
+  while ((zm = TRACE_ZONE_RE.exec(text))) { zones.push([zm.index, zm.index + zm[0].length]); if (zm[0].length === 0) TRACE_ZONE_RE.lastIndex++; }
+  const inZone = (i) => zones.some(([a, b]) => i >= a && i < b);
+  const rulesFor = (i) => (rules || []).filter(r => (inZone(i) ? r.category === "trace" : r.category !== "trace"));
+  const matches = [];
+
+  // Flerords-nøgleord (fx "ris mel") findes som udtryk i teksten.
+  for (const rule of rules || []) {
+    for (const kw of rule.keywords || []) {
+      if (!/\s/.test(kw)) continue;
+      const k = kw.toLowerCase();
+      let from = 0, idx;
+      while ((idx = lower.indexOf(k, from)) !== -1) {
+        from = idx + k.length;
+        if (rulesFor(idx).includes(rule)) matches.push({ start: idx, end: idx + k.length, rule });
+      }
+    }
+  }
+
+  TOKEN_RE.lastIndex = 0;
+  let m;
+  while ((m = TOKEN_RE.exec(text))) {
+    const tok = m[0], start = m.index, end = start + tok.length;
+    const eMatch = tok.match(E_PART_RE);
+    if (eMatch) {
+      const code = "E" + eMatch[1].toUpperCase();
+      const inner = (tok.match(/\(([^()]*)\)/) || [])[1] || "";
+      const active = rulesFor(start);
+      const rule = active.find(r => r.codes?.some(c => c.toUpperCase() === code))
+        || (inner && active.find(r => r.keywords?.some(kw => !/\s/.test(kw) && keywordMatches(inner.toLowerCase(), kw))));
+      matches.push({ start, end, rule: rule || null, kind: "e", code });
+      continue;
+    }
+    const lw = tok.toLowerCase();
+    const rule = rulesFor(start).find(r => r.keywords?.some(kw => !/\s/.test(kw) && keywordMatches(lw, kw)));
+    if (rule) {
+      let s0 = start;
+      // "vallepulver (MÆLK)": et enkelt ord i en parentes, der forklarer ordet foran, markeres sammen med det.
+      const before = text.slice(0, start);
+      const par = before.match(/([A-Za-zÀ-ÖØ-öø-ÿ]+(?:-[A-Za-zÀ-ÖØ-öø-ÿ]+)*) \($/);
+      if (par && text[end] === ")") { s0 = start - par[0].length; matches.push({ start: s0, end: end + 1, rule }); }
+      else matches.push({ start: s0, end, rule });
+      continue;
+    }
+    // Vitaminer (B12, K2, "vitamin C") er opslagsbare i leksikonet.
+    if (/^[abcdk]\d{1,2}$/i.test(tok) || (/^[abcdk]$/i.test(tok) && /vitamin $/i.test(text.slice(Math.max(0, start - 9), start)))) {
+      matches.push({ start, end, rule: null, kind: "vitamin" });
+    }
+  }
+  // Ingen overlap: det første/længste vinder.
+  matches.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+  const out = [];
+  let cursor = 0;
+  for (const mt of matches) {
+    if (mt.start < cursor) continue;
+    out.push(mt);
+    cursor = mt.end;
+  }
+  return out;
+}
+
+function RuleIngredients({ cleaned, rules, onIngredientTap, onHighlightTap }) {
+  const matches = analyzeIngredientTokens(cleaned, rules);
+  const nodes = [];
+  let cursor = 0;
+  matches.forEach((mt, i) => {
+    if (mt.start > cursor) nodes.push(cleaned.slice(cursor, mt.start));
+    const label = cleaned.slice(mt.start, mt.end);
+    const style = mt.rule ? (HIGHLIGHT_CATEGORY_STYLE[mt.rule.category] || HIGHLIGHT_CATEGORY_STYLE.diet)
+      : mt.kind === "vitamin" ? { color: "var(--blue)", bg: "var(--blue-lt)" } : NEUTRAL_E_STYLE;
+    const handle = mt.rule && onHighlightTap ? () => onHighlightTap(mt.rule)
+      : onIngredientTap ? () => onIngredientTap(label.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim())
+      : undefined;
+    nodes.push(
+      <span key={i} role={handle ? "button" : undefined} tabIndex={handle ? 0 : undefined}
+        onClick={handle} onKeyDown={handle ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handle(); } } : undefined}
+        title={mt.rule ? mt.rule.label : handle ? `Læs mere om ${label}` : undefined}
+        style={{ fontWeight: 700, color: style.color, background: style.bg, borderRadius: 4, padding: "0 2px", margin: "0 -2px", cursor: handle ? "pointer" : "default" }}>
+        {label}
+      </span>
+    );
+    cursor = mt.end;
+  });
+  if (cursor < cleaned.length) nodes.push(cleaned.slice(cursor));
+  return <div style={{ fontSize: 12, lineHeight: "21px", color: "var(--ink2)", overflowWrap: "anywhere" }}>{nodes}</div>;
+}
+
 export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, highlightRules, onHighlightTap }) {
   if (!text) return null;
 
@@ -50,6 +150,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
     .replace(/\s+/g, " ")
     .replace(/\bspor\s+af(?=[a-zæøå])/gi, "spor af ")
     .trim();
+  if (Array.isArray(highlightRules)) return <RuleIngredients cleaned={cleaned} rules={highlightRules} onIngredientTap={onIngredientTap} onHighlightTap={onHighlightTap} />;
   // "..., olivenekstrakt. Kan indeholde spor af æg, mælk" er to sætninger: "Kan indeholde ..." deles ud som egen del (adskilt af et punktum),
   // så en fremhævelse af sporet ikke også farver den foregående ingrediens. \u0001 markerer sætningsstart.
   const SENTENCE_MARK = "\u0001";

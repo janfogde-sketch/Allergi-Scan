@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
-import { makeHeaders, compareAllergens, normalizeProductFlagsFor } from "./helpers.js";
+import { makeHeaders, compareAllergens, normalizeProductFlagsFor, looksNonDanishIngredients } from "./helpers.js";
 
 // Kategori-hierarki: hvis ingen resultater i præcis kategori, prøv overkategori
 const CATEGORY_PARENTS = {
@@ -69,17 +69,20 @@ export function similarityScore(base, candidate) {
 // Samme produkttype/anvendelse: samme underkategori, mindst tre fælles led i butikkens kategori-sti eller et fælles navneord.
 // Samme hovedkategori alene er ikke nok (en drik er ikke et alternativ til en anden slags drik).
 export function sameProductType(base, candidate) {
-  if (base.subcategory && candidate.subcategory && base.subcategory === candidate.subcategory) return true;
+  // Samme underkategori alene er for bredt ("Kiks & kager" rummer også lollipops og slik): der kræves også et fælles navneord eller en
+  // fælles, dybere kategori-sti (mindst tre led).
   const a = categoryPath(base.category_original), b = categoryPath(candidate.category_original);
   let shared = 0;
   while (shared < a.length && shared < b.length && a[shared] === b[shared]) shared++;
   if (shared >= 3) return true;
   const cw = nameTokens(candidate);
-  return nameTokens(base).some(w => cw.includes(w));
+  const sharedName = nameTokens(base).some(w => cw.some(c => c === w || ((c.includes(w) || w.includes(c)) && Math.min(c.length, w.length) >= 4)));
+  return sharedName;
 }
 
 // Kandidaten skal have en reel ingrediensliste, ellers er "ingen konflikter" ikke dokumenteret.
-const hasUsableIngredients = p => typeof p.ingredients_text === "string" && p.ingredients_text.trim().length >= 8;
+// En ikke-dansk liste kan vores danske motor ikke læse (alt bliver "nej"), så den må aldrig give en anbefaling med grøn status.
+const hasUsableIngredients = p => typeof p.ingredients_text === "string" && p.ingredients_text.trim().length >= 8 && !looksNonDanishIngredients(p.ingredients_text);
 
 export function useAlternatives({ accessToken, activeIds, activeLevels }) {
   const [alternatives, setAlternatives]   = useState([]);

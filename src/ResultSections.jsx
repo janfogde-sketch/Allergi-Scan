@@ -14,9 +14,11 @@ import { UI } from "./styleUtils.js";
 
 import { S } from "./resultStyles.js";
 
+const MAX_REASON_CHIPS = 3;
+
 // Resultatsidens sektioner (flyttet ud af ResultScreen.jsx, ren omflytning). Får den beregnede tilstand som ctx.
 export function makeResultSections(c) {
-  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen } = c;
+  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen } = c;
 
   const renderDineValg = () => {
     if (!soloProfile) return null;
@@ -86,9 +88,9 @@ export function makeResultSections(c) {
     if (listItem && !listItem.checked) {
       return (
         <div style={{ marginBottom:10 }}>
-          <button className="btn btn-green btn-sm btn-full btn-calm" onClick={() => { toggleItem(listItem.id); showToast(`"${listItem.name}" markeret som købt`, "success"); }}
+          <button className={`btn btn-sm btn-full ${addBtnClass === "btn-green btn-calm" ? "btn-green btn-calm" : addBtnClass === "btn-dark" ? "btn-dark" : "btn-outline"}`} onClick={() => { toggleItem(listItem.id); showToast(`"${listItem.name}" markeret som købt`, "success"); }}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <Icon name="check" size={15} color="var(--on-green)" /> Markér som købt
+            <Icon name="check" size={15} color={addIconColor} /> Markér som købt
           </button>
           {activeList?.name && <div style={{ fontSize:12, color:"var(--muted)", textAlign:"center", marginTop:6 }}>På listen "{activeList.name}"</div>}
         </div>
@@ -241,9 +243,16 @@ export function makeResultSections(c) {
           </div>
           {topNames && (
             <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:6 }}>
-              {topNames.map((n, i) => (
+              {(reasonsOpen ? topNames : topNames.slice(0, MAX_REASON_CHIPS)).map((n, i) => (
                 <span key={i} style={{ fontSize:12, fontWeight:700, color:"#fff", background:"rgba(255,255,255,.22)", borderRadius:20, padding:"3px 10px" }}>{n}</span>
               ))}
+              {/* Ved mange konflikter vises højst tre mærker; resten ligger bag "+N flere" (alle står stadig i "Dine valg"). */}
+              {topNames.length > MAX_REASON_CHIPS && (
+                <button type="button" onClick={() => setReasonsOpen(o => !o)} aria-expanded={reasonsOpen}
+                  style={{ fontSize:12, fontWeight:700, color:"#fff", background:"transparent", border:"1px solid rgba(255,255,255,.55)", borderRadius:20, padding:"2px 10px", cursor:"pointer", fontFamily:"var(--f)" }}>
+                  {reasonsOpen ? "Vis færre" : `+${topNames.length - MAX_REASON_CHIPS} flere`}
+                </button>
+              )}
             </div>
           )}
           {topExplanation && (
@@ -402,7 +411,8 @@ export function makeResultSections(c) {
     // her som eget tag, hvis ingen aktiv profil har valgt gluten/cøliaki. Havre/byg/rug/spelt vises i parentes, når de står i ingredienslisten.
     const cereals = glutenCerealsIn(scanResult.ingredients);
     const glutenState = flags.gluten === "yes" || cereals.length > 0 ? "yes" : flags.gluten === "traces" ? "traces" : null;
-    const isRealOrGluten = (id) => isRealAllergen(id) || id === "gluten";
+    // Sulfitter (svovl) er et mærkningspligtigt EU-allergen, selv om de i appen er en intolerance, og vises derfor her, når de er deklareret.
+    const isRealOrGluten = (id) => isRealAllergen(id) || id === "gluten" || id === "svovl";
     const present = Object.entries({ ...flags, ...(glutenState ? { gluten: glutenState } : {}) }).filter(([k,v]) => v==="yes"    && isRealOrGluten(k));
     const traces  = Object.entries({ ...flags, ...(glutenState ? { gluten: glutenState } : {}) }).filter(([k,v]) => v==="traces" && isRealOrGluten(k));
     const myAllergens  = new Set([...liveDanger, ...liveWarning]);

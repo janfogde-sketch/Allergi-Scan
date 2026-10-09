@@ -44,6 +44,7 @@ export default function ResultScreen({
   const [unknownOpen, setUnknownOpen] = React.useState(false);
   const [altExpanded, setAltExpanded] = React.useState(false);
   const [confirmAddOpen, setConfirmAddOpen] = React.useState(false);
+  const [reasonsOpen, setReasonsOpen] = React.useState(false);
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
@@ -430,7 +431,7 @@ export default function ResultScreen({
     liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls,
     scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType,
     setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile,
-    toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen,
+    toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen,
   };
   const { handleAddToList, chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition } = makeResultSections(ctx);
 
@@ -525,8 +526,7 @@ export default function ResultScreen({
             <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
               <Icon name="search" size={16} color="var(--muted)" />
               <div style={UI.ufs12_cmuted_lh15}>
-                <div style={{ fontWeight:700, color:"var(--ink2)" }}>Ingen alternativer fundet endnu</div>
-                Scan et lignende produkt for at hjælpe EatSafe.
+                Vi kunne ikke finde relevante alternativer med tilstrækkelige produktoplysninger.
               </div>
             </div>
           )}
