@@ -236,8 +236,8 @@ describe("verifiedBadge", () => {
   });
 
   it("marks Bilka/nemlig imports as store data, not user-submitted", () => {
-    expect(verifiedBadge(null, "bilka").label).toBe("Butiksdata");
-    expect(verifiedBadge("unverified", "nemlig").label).toBe("Butiksdata");
+    expect(verifiedBadge(null, "bilka").label).toBe("Produktdata");
+    expect(verifiedBadge("unverified", "nemlig").label).toBe("Produktdata");
   });
 
   it("falls back to user-submitted for anything else", () => {
