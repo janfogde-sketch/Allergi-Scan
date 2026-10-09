@@ -23,6 +23,18 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Varer gemmer billedadressen fra det øjeblik, de blev lagt på listen. Manglede produktet billedet dengang, eller er det ændret
+  // siden, viste listen et ikon, mens historikken viste billedet. Mangler en vare billedet, hentes det derfor live fra produktet.
+  // deno-lint-ignore no-explicit-any
+  const withProductImages = async (items: any[] | null | undefined) => {
+    const list = items ?? [];
+    const ids = [...new Set(list.filter((i) => !i.image_url && i.product_id).map((i) => i.product_id))];
+    if (!ids.length) return list;
+    const { data: prods } = await supabase.from("products").select("id, image_url").in("id", ids);
+    const img = new Map((prods ?? []).filter((p) => p.image_url).map((p) => [p.id, p.image_url]));
+    return list.map((i) => !i.image_url && img.has(i.product_id) ? { ...i, image_url: img.get(i.product_id) } : i);
+  };
+
   // Verificér at den kaldende bruger faktisk er logget ind — ellers kan
   // enhver læse/oprette/redigere/slette en hvilken som helst brugers
   // indkøbsliste ved blot at kende eller gætte et owner_id/list_id.
@@ -277,6 +289,7 @@ Deno.serve(async (req) => {
         const u = Array.isArray(a.users) ? a.users[0] : a.users;
         sharedWith.set(a.list_id, [...(sharedWith.get(a.list_id) ?? []), firstName(u?.name) ?? "En person"]);
       }
+      for (const l of rows) l.shopping_list_items = await withProductImages(l.shopping_list_items);
       const enriched = rows.map((l) => l.owner_id === userId
         ? { ...l, shared_with: sharedWith.get(l.id) ?? [], via_access: false }
         : { ...l, share_link: null, owner_name: ownerName.get(l.owner_id) ?? null, via_access: sharedListIds.includes(l.id) });
@@ -300,6 +313,8 @@ Deno.serve(async (req) => {
         .single();
 
       if (error || !list) return new Response(JSON.stringify({ error: "Liste ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      list.shopping_list_items = await withProductImages(list.shopping_list_items);
 
       return new Response(
         JSON.stringify({ success: true, list }),
@@ -416,8 +431,10 @@ Deno.serve(async (req) => {
 
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+      const itemsWithImages = await withProductImages(items);
+
       return new Response(
-        JSON.stringify({ success: true, items }),
+        JSON.stringify({ success: true, items: itemsWithImages }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
