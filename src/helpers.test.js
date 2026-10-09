@@ -372,18 +372,18 @@ describe("profileWarnLabel", () => {
 
 describe("profileMatchLabel", () => {
   it("siger 'din profil' når kun brugeren selv er valgt", () => {
-    expect(profileMatchLabel([{ id: "me", name: "Lars Hansen" }])).toBe("Ingen allergimatch for din profil");
+    expect(profileMatchLabel([{ id: "me", name: "Lars Hansen" }])).toBe("Ingen match for din profil");
   });
   it("nævner fornavnet for ét valgt familiemedlem", () => {
-    expect(profileMatchLabel([{ id: "abc", name: "Hanne Jensen" }])).toBe("Ingen allergimatch for Hanne");
+    expect(profileMatchLabel([{ id: "abc", name: "Hanne Jensen" }])).toBe("Ingen match for Hanne");
   });
   it("bruger flertal ved flere profiler", () => {
-    expect(profileMatchLabel([{ id: "me", name: "Lars" }, { id: "abc", name: "Hanne" }])).toBe("Ingen allergimatch for de valgte profiler");
+    expect(profileMatchLabel([{ id: "me", name: "Lars" }, { id: "abc", name: "Hanne" }])).toBe("Ingen match for de valgte profiler");
   });
   it("falder tilbage uden profiler eller navn", () => {
-    expect(profileMatchLabel([])).toBe("Ingen allergimatch for valgte profiler");
-    expect(profileMatchLabel(undefined)).toBe("Ingen allergimatch for valgte profiler");
-    expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Ingen allergimatch for den valgte profil");
+    expect(profileMatchLabel([])).toBe("Ingen match for valgte profiler");
+    expect(profileMatchLabel(undefined)).toBe("Ingen match for valgte profiler");
+    expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Ingen match for den valgte profil");
   });
 });
 

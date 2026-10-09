@@ -663,12 +663,12 @@ export function profileWarnLabel(results) {
 // id/name).
 export function profileMatchLabel(profiles) {
   const list = profiles || [];
-  if (list.length === 0) return "Ingen allergimatch for valgte profiler";
-  if (list.length > 1) return "Ingen allergimatch for de valgte profiler";
+  if (list.length === 0) return "Ingen match for valgte profiler";
+  if (list.length > 1) return "Ingen match for de valgte profiler";
   const only = list[0];
-  if (only.id === "me") return "Ingen allergimatch for din profil";
+  if (only.id === "me") return "Ingen match for din profil";
   const first = (only.name || "").trim().split(" ")[0];
-  return first ? `Ingen allergimatch for ${first}` : "Ingen allergimatch for den valgte profil";
+  return first ? `Ingen match for ${first}` : "Ingen match for den valgte profil";
 }
 
 // Scanner-forsidens dynamiske tekster (4. okt. 2026, Bjørn): forklaringen og
