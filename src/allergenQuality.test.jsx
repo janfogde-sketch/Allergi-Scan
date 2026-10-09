@@ -161,6 +161,14 @@ describe("deklareret og udledt", () => {
     expect(screen.queryByText(/Gluten \(byg\)/)).toBeNull();
     expect(screen.getAllByLabelText(/gluten|byg/i).length).toBe(1);
   });
+  it("gluten ud fra hvede alene er også udledt: 'Gluten (fra hvede) · udledt', ikke deklareret", () => {
+    const text = "HVEDEMEL, sukker, VALLEPULVER (MÆLK), TØRÆG";
+    setup({ scan: { code: "9", name: "Boller", ingredients: text, allergen_flags: analyzeIngredients(text), status: "danger", source: "open_food_facts", allergen_quality: "high" }, allergens: ["aeg"] });
+    const chip = screen.getByLabelText(/Udledt: gluten \(fra hvede\)/i);
+    expect(chip.textContent).toMatch(/udledt/);
+    expect(screen.getByLabelText(/Deklareret: hvede/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/Deklareret: gluten/i)).toBeNull();
+  });
   it("sulfit uden deklareret ord og mængde vises som udledt 'mulige sulfitter', ikke som deklareret", () => {
     const scan = { code: "1", name: "Slik", ingredients: "Sukker, konserveringsmiddel (E223)", allergen_flags: { ...analyzeIngredients("Sukker, konserveringsmiddel (E223)"), svovl: "unknown" }, status: "unknown", source: "bilka", allergen_quality: "high" };
     setup({ scan, allergens: ["soja"] });

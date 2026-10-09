@@ -439,15 +439,15 @@ export function makeResultSections(c) {
     // når "Hvede" allerede står (samme kilde).
     const wheatOnly = cereals.length > 0 && cereals.every(c => c.toLowerCase() === "hvede");
     const dupGluten = (k) => k === "gluten" && wheatOnly && flags.hvede === "yes";
-    const otherPresentAll = present.filter(([k]) => !myAllergens.has(k) && !dupGluten(k));
+    const otherPresentAll = present.filter(([k]) => !myAllergens.has(k));
     const presentIds = new Set(otherPresentAll.map(([k]) => k));
     const otherTraces  = traces.filter(([k])  => !myAllergens.has(k) && !presentIds.has(k) && !dupGluten(k));
     const nutNames = traceNutNames(scanResult.ingredients);
     // Dokumentationsgrundlag (10. okt. 2026): "Deklareret" = står i produktets egne oplysninger. "Udledt" = EatSafe har sluttet det af ingredienserne,
     // fx gluten ud fra byg uden at ordet gluten står der, eller mulige sulfitter ud fra et E-nummer uden deklareret sulfit eller mængde.
-    // Hvede står allerede som eget allergen, når den er deklareret; den gentages ikke i det udledte glutenkorn.
-    const derivedCereals = cereals.filter(c => !(c.toLowerCase() === "hvede" && flags.hvede === "yes"));
-    const derivedGluten = derivedCereals.length > 0 && !/gluten/i.test(scanResult.ingredients || "");
+    // Gluten er udledt, når ordet "gluten" ikke står i produktets egne oplysninger: EatSafe har sluttet det af kornsorten (hvede, byg, rug, havre ...).
+    const derivedGluten = !/gluten/i.test(scanResult.ingredients || "");
+    const glutenSources = cereals.length > 0 ? cereals.map(c => c.toLowerCase()) : (flags.hvede === "yes" ? ["hvede"] : []);
     const sulfiteInferred = sulfiteAssessment(scanResult.ingredients) === "unknown" && flags.svovl === "unknown" && !myAllergens.has("svovl");
     const otherPresent = otherPresentAll.filter(([k]) => !(k === "gluten" && derivedGluten));
     const derivedList = [
@@ -461,7 +461,9 @@ export function makeResultSections(c) {
       const a = ALLERGENS.find(x => x.id === k);
       if (!a) return null;
       // Udledt gluten: selve kornet nævnes, ikke et ord, der ikke står på pakken ("Byg (glutenholdigt korn)").
-      const baseLabel = derived && k === "gluten" ? `${cap(derivedCereals.join(", "))} (${derivedCereals.length > 1 ? "glutenholdige korn" : "glutenholdigt korn"})`
+      const nonWheat = glutenSources.filter(c => c !== "hvede");
+      const baseLabel = derived && k === "gluten"
+        ? (nonWheat.length > 0 ? `${cap(glutenSources.join(", "))} (${glutenSources.length > 1 ? "glutenholdige korn" : "glutenholdigt korn"})` : "Gluten (fra hvede)")
         : derived && k === "svovl" ? `Mulige sulfitter${sulfiteCodes ? ` (${sulfiteCodes})` : ""}`
         : glutenLabel(a);
       const label = traceOnly ? `Spor af ${baseLabel.toLowerCase()}${a.id === "noedder" && nutNames.length ? ` (${nutNames.join(", ")})` : ""}` : baseLabel;
@@ -470,7 +472,7 @@ export function makeResultSections(c) {
           onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
           aria-label={`${derived ? "Udledt: " : traceOnly ? "Spor af " : "Deklareret: "}${baseLabel.toLowerCase()} – læs mere`}
           style={{ background:"var(--surface2)", color:"var(--ink2)", borderColor:"var(--border2)", cursor:"pointer", fontFamily:"var(--f)" }}>
-          <AllergenGlyph a={a} size={13} /> {label} <Icon name="chevronRight" size={11} color="var(--muted)" />
+          <AllergenGlyph a={a} size={13} /> {label}{derived && <span style={{ fontWeight:500, color:"var(--muted)" }}> · udledt</span>} <Icon name="chevronRight" size={11} color="var(--muted)" />
         </button>
       );
     };
