@@ -761,3 +761,19 @@ describe("computeTopStatus: konkrete årsager", () => {
     expect(computeTopStatus({ ...base, hasSufficientData: false }).level).toBe("unknown");
   });
 });
+
+import { buildNutritionRows } from "./helpers.js";
+describe("buildNutritionRows", () => {
+  it("viser kJ og kcal, heraf-rækker og dansk talformat", () => {
+    const rows = buildNutritionRows({ energy_kj: 1560, energy_kcal: 373, fat: 3.5, saturated_fat: 1.2, carbohydrates: 70, sugars: 5, protein: 9, salt: 1.1 });
+    expect(rows[0]).toEqual({ label: "Energi", value: "1.560 kJ / 373 kcal" });
+    expect(rows.find(r => r.label === "Fedt").value).toBe("3,5 g");
+    expect(rows.find(r => r.label === "Heraf mættede fedtsyrer").sub).toBe(true);
+    expect(rows.find(r => r.label === "Heraf sukkerarter").value).toBe("5 g");
+  });
+  it("gætter ikke manglende værdier og skjuler pladsholder-nuller", () => {
+    expect(buildNutritionRows({ energy_kcal: 100, fat: 2 }).map(r => r.label)).toEqual(["Energi", "Fedt"]);
+    expect(buildNutritionRows({ energy_kj: 0, energy_kcal: 0, fat: 0, carbohydrates: 0, protein: 0, salt: 0 })).toEqual([]);
+    expect(buildNutritionRows({ energy_kj: 400, energy_kcal: 0, fat: 1 })[0].value).toBe("400 kJ");
+  });
+});

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
+import { buildNutritionRows, glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -271,7 +271,6 @@ export function makeResultSections(c) {
         <div>
           {heroImg
             ? <div className="product-hero-imgwrap">
-                <img aria-hidden="true" alt="" loading="lazy" src={heroImg} className="product-hero-img-backdrop" />
                 <img loading="lazy" src={heroImg} alt={scanResult.name} className="product-hero-img"
                   onError={e => { const wrap = e.target.closest(".product-hero-imgwrap"); wrap.style.display="none"; wrap.nextSibling.style.display="flex"; }} />
               </div>
@@ -505,22 +504,7 @@ export function makeResultSections(c) {
   const nutritionUnit = LIQUID_CATEGORY_HINTS.some(h => (scanResult.category || "").toLowerCase().includes(h)) ? "100 ml" : "100 g";
 
   const renderNutrition = () => {
-    const n = scanResult.nutrition;
-    if (!n) return null;
-    // Danske tal med komma ("3,5 g"), ikke punktum (F5-10); værdierne er tal eller tekst fra Open Food Facts.
-    const num = (v) => { const x = Number(v); return Number.isFinite(x) ? x.toLocaleString("da-DK", { maximumFractionDigits: 2 }) : String(v); };
-    const rows = [
-      ["Energi",          n.energy_kcal    ? `${num(n.energy_kcal)} kcal`    : null],
-      ["Fedt",            n.fat     != null ? `${num(n.fat)} g`               : null],
-      // "heraf" kun under en overrække der faktisk vises — ellers læses fx
-      // "Fedt 32 g / — heraf sukker 58 g" som at fedtet er sukker.
-      [n.fat != null ? "— heraf mættet" : "Mættet fedt", n.saturated_fat != null ? `${num(n.saturated_fat)} g` : null],
-      ["Kulhydrat",       n.carbohydrates != null ? `${num(n.carbohydrates)} g` : null],
-      [n.carbohydrates != null ? "— heraf sukker" : "Sukkerarter", n.sugars != null ? `${num(n.sugars)} g` : null],
-      ["Kostfibre",       n.fiber   != null ? `${num(n.fiber)} g`             : null],
-      ["Protein",         n.protein != null ? `${num(n.protein)} g`           : null],
-      ["Salt",            n.salt    != null ? `${num(n.salt)} g`              : null],
-    ].filter(([,v]) => v !== null);
+    const rows = buildNutritionRows(scanResult.nutrition);
     // Ingen brugbare næringsdata — skjul HELE sektionen (krav 10/13),
     // ikke en "hjælp os"-prompt som ved manglende ingredienser. Den
     // asymmetri er bevidst: krav 13 nævner "ingen næringsdata → skjul",
@@ -531,9 +515,9 @@ export function makeResultSections(c) {
         <div className="card-lbl" style={cannotAssess ? { marginBottom:4 } : undefined}>Næringsindhold pr. {nutritionUnit}</div>
         {cannotAssess && <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>Næringsdata findes, men siger ikke noget om dine allergier.</div>}
         <div style={UI.udflex_fdcolumn}>
-          {rows.map(([label, value], i) => (
+          {rows.map(({ label, value, sub }, i) => (
             <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:12, minHeight:36, boxSizing:"border-box", padding:"8px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
-              <span style={{ fontSize:13, lineHeight:1.4, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
+              <span style={{ fontSize:13, lineHeight:1.4, color: sub ? "var(--muted)" : "var(--ink2)", paddingLeft: sub ? 12 : 0 }}>{label}</span>
               <span style={{ ...S.h13b, lineHeight:1.4, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" }}>{value}</span>
             </div>
           ))}
