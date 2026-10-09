@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { glutenCerealsIn, verifiedBadge, STORE_SOURCES, productDisplayName, findProductOnList, imageAttribution } from "./helpers.js";
+import { glutenCerealsIn, verifiedBadge, STORE_SOURCES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -275,9 +275,12 @@ export function makeResultSections(c) {
             : null}
           {imageAttribution(scanResult.image_url) && (
             <div style={{ fontSize:11, color:"var(--muted)", textAlign:"right", padding:"0 14px 6px" }}>
+              Billede:{" "}
               {scanResult.code
-                ? <a href={`https://world.openfoodfacts.org/product/${encodeURIComponent(scanResult.code)}`} target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>{imageAttribution(scanResult.image_url)}</a>
-                : imageAttribution(scanResult.image_url)}
+                ? <a href={`https://world.openfoodfacts.org/product/${encodeURIComponent(scanResult.code)}`} target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>Open Food Facts</a>
+                : "Open Food Facts"}
+              {", "}
+              <a href={OFF_IMAGE_LICENSE_URL} target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>CC BY-SA</a>
             </div>
           )}
           <div className="product-hero-img-placeholder"
