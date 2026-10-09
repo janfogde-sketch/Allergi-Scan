@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
 import ReactDOM from "react-dom";
+import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -67,6 +68,7 @@ export default function ListScreen({
   const blurInput = useCallback(() => { if (document.activeElement === inputRef.current) inputRef.current?.blur(); }, []);
   const [resultFilter, setResultFilter] = useState("all"); // all | clean | warn
   const [navH, setNavH] = useState(80);
+  const topH = useMeasuredHeight(() => document.querySelector(".topbar"));
   useEffect(() => {
     if (!itemFocused) return undefined;
     const onDown = (e) => { if (e.target !== inputRef.current && !e.target.closest?.("[data-search-clear]")) blurInput(); };
@@ -263,7 +265,7 @@ export default function ListScreen({
       )}
 
       {/* ── Tilføj vare/søg: søgefelt (og filter) øverst; resultaterne står direkte i siden under feltet ── */}
-      <div style={{ margin:"0 0 8px", padding:"8px 0" }}>
+      <div style={{ position:"sticky", top:topH, zIndex:20, margin:"0 -16px 8px", padding:"8px 16px", background: hasResultPanel ? "var(--surface)" : "transparent", borderBottom: hasResultPanel ? "1px solid var(--border)" : "1px solid transparent" }}>
         <div className="input-row" style={{ marginBottom:0 }}>
           <div style={{ position:"relative", flex:1, minWidth:0 }}>
             <input ref={inputRef} className="field search-field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
