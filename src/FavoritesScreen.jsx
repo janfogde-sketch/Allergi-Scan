@@ -218,7 +218,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
           return (
             <div key={f.ean || f.id || i} className="hist-row" style={{ padding:"14px 14px", cursor:"pointer" }}
               onClick={() => lookupProduct(f.ean || f.code || f.id)}>
-              <ProductImage product={f} size={44} />
+              <ProductImage product={f} size={48} />
               <div className="hist-info" style={{ marginLeft:8 }}>
                 <div className="hist-name">{f.name || "Ukendt produkt"}</div>
                 {metaLine && <div className="hist-time">{metaLine}</div>}

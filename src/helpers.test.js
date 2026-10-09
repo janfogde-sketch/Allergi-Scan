@@ -372,18 +372,18 @@ describe("profileWarnLabel", () => {
 
 describe("profileMatchLabel", () => {
   it("siger 'din profil' når kun brugeren selv er valgt", () => {
-    expect(profileMatchLabel([{ id: "me", name: "Lars Hansen" }])).toBe("Passer til din profil");
+    expect(profileMatchLabel([{ id: "me", name: "Lars Hansen" }])).toBe("Ingen match for din profil");
   });
   it("nævner fornavnet for ét valgt familiemedlem", () => {
-    expect(profileMatchLabel([{ id: "abc", name: "Hanne Jensen" }])).toBe("Passer til Hanne");
+    expect(profileMatchLabel([{ id: "abc", name: "Hanne Jensen" }])).toBe("Ingen match for Hanne");
   });
   it("bruger flertal ved flere profiler", () => {
-    expect(profileMatchLabel([{ id: "me", name: "Lars" }, { id: "abc", name: "Hanne" }])).toBe("Passer til alle valgte profiler");
+    expect(profileMatchLabel([{ id: "me", name: "Lars" }, { id: "abc", name: "Hanne" }])).toBe("Ingen match for de valgte profiler");
   });
   it("falder tilbage uden profiler eller navn", () => {
-    expect(profileMatchLabel([])).toBe("Passer til valgte profiler");
-    expect(profileMatchLabel(undefined)).toBe("Passer til valgte profiler");
-    expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Passer til den valgte profil");
+    expect(profileMatchLabel([])).toBe("Ingen match for valgte profiler");
+    expect(profileMatchLabel(undefined)).toBe("Ingen match for valgte profiler");
+    expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Ingen match for den valgte profil");
   });
 });
 
@@ -648,10 +648,15 @@ describe("pickDailyTip", () => {
 describe("groupHistoryDuplicates", () => {
   const at = min => new Date(Date.UTC(2026, 9, 5, 8, 0) - min * 60000).toISOString();
   const cola = (min, extra = {}) => ({ id: `c${min}`, ean_scanned: "5740", product_id: "p1", user_id: "u1", active_profiles: ["f1"], result: "safe", flags_triggered: { milk: false }, scanned_at: at(min), ...extra });
-  it("samler ens scanninger kort efter hinanden og beholder den nyeste", () => {
+  it("samler ens scanninger og beholder den nyeste", () => {
     const out = groupHistoryDuplicates([cola(0), cola(2), cola(10, { active_profiles: ["f1"] })]);
     expect(out).toHaveLength(1);
     expect(out[0].id).toBe("c0");
+    expect(out[0].__count).toBe(3);
+  });
+  it("samler også ens scanninger med mange timer imellem", () => {
+    const out = groupHistoryDuplicates([cola(0), cola(60 * 21), cola(60 * 30)]);
+    expect(out).toHaveLength(1);
     expect(out[0].__count).toBe(3);
   });
   it("profilrækkefølge og flag-nøglers rækkefølge er ligegyldig", () => {
@@ -659,14 +664,10 @@ describe("groupHistoryDuplicates", () => {
     const b = cola(1, { active_profiles: ["f1", "me"], flags_triggered: { b: false, a: true } });
     expect(groupHistoryDuplicates([a, b])).toHaveLength(1);
   });
-  it("holder poster adskilt ved andre personer, andet resultat, ændrede data eller lang tid", () => {
+  it("holder poster adskilt ved andre personer, andet resultat eller ændrede data", () => {
     expect(groupHistoryDuplicates([cola(0), cola(1, { active_profiles: ["me"] })])).toHaveLength(2);
     expect(groupHistoryDuplicates([cola(0), cola(1, { result: "danger" })])).toHaveLength(2);
     expect(groupHistoryDuplicates([cola(0), cola(1, { flags_triggered: { milk: true } })])).toHaveLength(2);
-    expect(groupHistoryDuplicates([cola(0), cola(31)])).toHaveLength(2);
-  });
-  it("tidsvinduet gælder mellem nabo-scanninger i gruppen", () => {
-    expect(groupHistoryDuplicates([cola(0), cola(25), cola(50)])[0].__count).toBe(3);
   });
   it("matcher på EAN eller produkt-ID, aldrig kun navn", () => {
     const n1 = { id: "n1", name: "Cola", user_id: "u1", result: "safe", scanned_at: at(0) };
@@ -675,14 +676,15 @@ describe("groupHistoryDuplicates", () => {
     const p1 = { ...n1, product_id: "p9" }, p2 = { ...n2, product_id: "p9" };
     expect(groupHistoryDuplicates([p1, p2])).toHaveLength(1);
   });
-  it("en anden scanning imellem bryder rækken", () => {
+  it("en anden scanning imellem hindrer ikke samling; posten står, hvor den nyeste står", () => {
     const other = cola(1, { ean_scanned: "999", id: "o" });
-    expect(groupHistoryDuplicates([cola(0), other, cola(2)])).toHaveLength(3);
+    const out = groupHistoryDuplicates([cola(0), other, cola(2)]);
+    expect(out.map(h => [h.id, h.__count])).toEqual([["c0", 2], ["o", 1]]);
   });
   it("forskellige brugere i familievisningen samles ikke", () => {
     expect(groupHistoryDuplicates([cola(0), cola(1, { user_id: "u2" })])).toHaveLength(2);
   });
-  it("ikke fundne samles pr. stregkode uanset tid, som før", () => {
+  it("ikke fundne samles pr. stregkode uanset tid", () => {
     const nf = (min, ean = "111") => ({ id: `n${min}`, ean_scanned: ean, user_id: "u1", result: "not_found", scanned_at: at(min) });
     const out = groupHistoryDuplicates([nf(0), cola(5), nf(600), nf(700, "222")]);
     expect(out.map(h => [h.id, h.__count])).toEqual([["n0", 2], ["c5", 1], ["n700", 1]]);

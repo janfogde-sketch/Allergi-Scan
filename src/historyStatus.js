@@ -12,7 +12,7 @@ export const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"va
 export const STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info" };
 export const HISTORY_FILTERS = [
   { id:"all",       label:"Alle" },
-  { id:"safe",      label:"Ingen advarsler" },
+  { id:"safe",      label:"Ingen match" },
   { id:"danger",    label:"Allergi-advarsel" },
   { id:"warn",      label:"Øvrige advarsler" },
   { id:"not_found", label:"Ikke fundet" },

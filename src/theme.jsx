@@ -952,6 +952,9 @@ body::-webkit-scrollbar{display:none;}
 button.filter-chip,button.hist-row,button.menu-item,button.row-btn{font-family:var(--f);text-align:left;width:100%;appearance:none;-webkit-appearance:none;color:inherit;}
 button.menu-item{background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;margin:0;}
 button.filter-chip{width:auto;}
+.hist-filters{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 12px;padding:2px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.hist-filters::-webkit-scrollbar{display:none;}
+.hist-filters .filter-chip{flex-shrink:0;white-space:nowrap;min-height:36px;padding:7px 14px;}
 .row-btn{background:none;border:none;padding:0;margin:0;font-family:var(--f);color:inherit;cursor:pointer;width:100%;text-align:left;appearance:none;}
 .row-btn:disabled{cursor:default;}
 .seg-btn{flex:1;text-align:center;padding:10px 8px;min-height:44px;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s;}

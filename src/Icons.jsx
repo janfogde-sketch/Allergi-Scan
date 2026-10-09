@@ -46,6 +46,7 @@ export const Icon = ({ name, size=18, color="currentColor" }) => {
     warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>,
     info: <><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M12 16v-4M12 8h.01"/></>,
     wifiOff: <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M8.5 16.4a5 5 0 017 0M5 12.9a10 10 0 015.2-2.8M19 12.9a10 10 0 00-2.4-1.7M1.6 9.3a15 15 0 014.2-2.7M22.4 9.3A15 15 0 0010.7 5M12 20h.01"/>,
+    more: <path strokeLinecap="round" strokeWidth="3" d="M5 12h.01M12 12h.01M19 12h.01"/>,
     chevronLeft: <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>,
     chevronRight: <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>,
     chevronDown: <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>,

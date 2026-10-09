@@ -657,18 +657,18 @@ export function profileWarnLabel(results) {
 // Statuslinje-tekst når INGEN profil har konflikt eller advarsel (indkøbsliste,
 // historik, favoritter, søgning) — tilpasset antallet af valgte profiler, så
 // en bruger uden familie ikke læser "alle profiler" (brugerrapport 25. sept.
-// 2026; erstatter den faste "Matcher alle profiler"). "Passer til" fremfor
-// "Matcher", som i en allergi-app kan misforstås som et fund af allergenet.
+// 2026; erstatter den faste "Matcher alle profiler"). 9. okt. 2026 (Bjørn): "Ingen match for X"
+// fremfor "Passer til", der lovede mere sikkerhed, end produktdata giver grundlag for (samme ord som produktsidens grønne status).
 // Tager både profillisten og resultater fra computeProfileResults (begge har
 // id/name).
 export function profileMatchLabel(profiles) {
   const list = profiles || [];
-  if (list.length === 0) return "Passer til valgte profiler";
-  if (list.length > 1) return "Passer til alle valgte profiler";
+  if (list.length === 0) return "Ingen match for valgte profiler";
+  if (list.length > 1) return "Ingen match for de valgte profiler";
   const only = list[0];
-  if (only.id === "me") return "Passer til din profil";
+  if (only.id === "me") return "Ingen match for din profil";
   const first = (only.name || "").trim().split(" ")[0];
-  return first ? `Passer til ${first}` : "Passer til den valgte profil";
+  return first ? `Ingen match for ${first}` : "Ingen match for den valgte profil";
 }
 
 // Scanner-forsidens dynamiske tekster (4. okt. 2026, Bjørn): forklaringen og
@@ -906,17 +906,13 @@ export function localDayNumber(date = new Date()) {
   return Math.floor((date.getTime() - date.getTimezoneOffset() * 60000) / 86400000);
 }
 
-// ─── HISTORIK: SAML GENTAGNE SCANNINGER (5. okt. 2026, Bjørn) ───────────────
+// ─── HISTORIK: SAML GENTAGNE SCANNINGER (5. okt. 2026, Bjørn; tidsgrænsen fjernet 9. okt. 2026) ──────────
 // Samler identiske scanninger til én historikpost med et antal (`__count`), så Historik ikke fyldes med
 // ens poster. Kun visningen ændres; databasen beholder hver scanning. `list` er nyest først (som API'et).
-// Fundne produkter samles kun, når de står lige efter hinanden og har SAMME: produkt (EAN, ellers
-// produkt-ID; aldrig kun navnet), bruger, valgte personer (rækkefølge ligegyldig), resultat og allergen-
-// flag (ændrede produktdata giver en ny post), og når der højst er `windowMs` mellem to scanninger i
-// gruppen. "Ikke fundet" samles som før pr. stregkode og bruger uanset tid (ingen data at skelne på).
-// Søgning kan senere lægges ovenpå uden at ændre dette.
-const HISTORY_GROUP_WINDOW_MS = 30 * 60 * 1000;
-
-const historyTime = h => new Date(h.scanned_at || h.timestamp || 0).getTime();
+// Fundne produkter samles, når de har SAMME: produkt (EAN, ellers produkt-ID; aldrig kun navnet), bruger,
+// valgte personer (rækkefølge ligegyldig), resultat og allergen-flag (ændrede produktdata eller et andet
+// resultat giver en ny post). Uanset tid og uanset hvad der er scannet imellem; posten står, hvor den
+// nyeste scanning står. "Ikke fundet" samles pr. stregkode og bruger. Søgning kan senere lægges ovenpå.
 const historyProductKey = h => {
   const ean = (h.ean_scanned || h.code || "").toString().trim();
   if (ean) return `ean:${ean}`;
@@ -936,33 +932,18 @@ const historySignature = h => [
   stableJson(h.flags_triggered || {}),
 ].join("|");
 
-export function groupHistoryDuplicates(list, { windowMs = HISTORY_GROUP_WINDOW_MS } = {}) {
+export function groupHistoryDuplicates(list) {
   const result = [];
-  const notFoundByKey = new Map();
-  let open = null; // senest åbne gruppe af fundne produkter
+  const byKey = new Map();
   for (const h of list || []) {
     const isNF = (h.result || h.status) === "not_found";
     const key = historyProductKey(h);
-    if (isNF && key) {
-      open = null; // en anden scanning imellem bryder rækken af ens fundne produkter
-      const nfKey = `${key}|${h.user_id || ""}`;
-      const existing = notFoundByKey.get(nfKey);
-      if (existing) { existing.__count++; continue; }
-      const group = { ...h, __count: 1 };
-      notFoundByKey.set(nfKey, group);
-      result.push(group);
-      continue;
-    }
-    if (!key) { open = null; result.push({ ...h, __count: 1 }); continue; }
-    const sig = historySignature(h);
-    const t = historyTime(h);
-    if (open && open.sig === sig && open.oldest - t <= windowMs && t <= open.oldest) {
-      open.group.__count++;
-      open.oldest = t;
-      continue;
-    }
+    if (!key) { result.push({ ...h, __count: 1 }); continue; }
+    const groupKey = isNF ? `nf|${key}|${h.user_id || ""}` : historySignature(h);
+    const existing = byKey.get(groupKey);
+    if (existing) { existing.__count++; continue; }
     const group = { ...h, __count: 1 };
-    open = { sig, oldest: t, group };
+    byKey.set(groupKey, group);
     result.push(group);
   }
   return result;
