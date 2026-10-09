@@ -999,3 +999,27 @@ export function groupHistoryDuplicates(list) {
   }
   return result;
 }
+
+// Næringsrækker til produktsiden. Kun dokumenterede værdier: manglende værdier beregnes eller gættes aldrig, og en post hvor alle
+// hovedværdier er 0 (databasens pladsholder for "ukendt" ved ca. 950 produkter) vises ikke som "0 g". Danske tal ("3,5", "1.560").
+export function buildNutritionRows(n) {
+  if (!n || typeof n !== "object") return [];
+  const val = (v) => { if (v == null || v === "") return null; const x = Number(String(v).replace(",", ".")); return Number.isFinite(x) ? x : null; };
+  const fmt = (x) => x.toLocaleString("da-DK", { maximumFractionDigits: 2 });
+  const kj = val(n.energy_kj), kcal = val(n.energy_kcal);
+  const main = [kj, kcal, val(n.fat), val(n.carbohydrates), val(n.protein), val(n.salt)];
+  if (!main.some(x => x != null && x > 0)) return [];
+  const energy = [kj > 0 ? `${fmt(kj)} kJ` : null, kcal > 0 ? `${fmt(kcal)} kcal` : null].filter(Boolean).join(" / ");
+  const g = (v) => { const x = val(v); return x == null ? null : `${fmt(x)} g`; };
+  const fat = g(n.fat), carbs = g(n.carbohydrates);
+  return [
+    { label: "Energi", value: energy || null },
+    { label: "Fedt", value: fat },
+    { label: fat != null ? "Heraf mættede fedtsyrer" : "Mættede fedtsyrer", value: g(n.saturated_fat), sub: fat != null },
+    { label: "Kulhydrat", value: carbs },
+    { label: carbs != null ? "Heraf sukkerarter" : "Sukkerarter", value: g(n.sugars), sub: carbs != null },
+    { label: "Kostfibre", value: g(n.fiber) },
+    { label: "Protein", value: g(n.protein) },
+    { label: "Salt", value: g(n.salt) },
+  ].filter(r => r.value !== null);
+}

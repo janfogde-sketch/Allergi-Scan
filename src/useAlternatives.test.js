@@ -46,3 +46,15 @@ describe("sameProductType", () => {
     expect(sameProductType(base, { name: "Økologisk kakaomælk" })).toBe(true);
   });
 });
+
+describe("rangering af alternativer", () => {
+  const kiks = { name: "Safari kiks", brand: "Nordthy", category: "Snacks & slik", subcategory: "Kiks", ingredients: "Hvedemel, sukker, palmefedt, salt" };
+  it("almindelige kiks slår chokoladeovertrukne kiks", () => {
+    const plain = { name: "Digestive kiks", subcategory: "Kiks", ingredients_text: "Hvedemel, sukker, palmefedt, salt" };
+    const choc = { name: "Digestive kiks med chokolade", subcategory: "Kiks", ingredients_text: "Chokolade, sukker, hvedemel, palmefedt" };
+    expect(similarityScore(kiks, plain)).toBeGreaterThan(similarityScore(kiks, choc));
+  });
+  it("glutenfri/vegansk alene gør ikke produkter ens", () => {
+    expect(similarityScore({ name: "Glutenfri pasta", category: "Kolonial" }, { name: "Glutenfri brød", category: "Kolonial" })).toBeLessThan(3);
+  });
+});

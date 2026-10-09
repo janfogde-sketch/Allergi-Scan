@@ -472,6 +472,16 @@ export default function ResultScreen({
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
       )}
 
+      {/* ── 2. PER-PERSON-OVERBLIK, SMÅBØRN, PRODUKTETS EGNE TAGS ── */}
+      {renderPersonOverview()}
+
+      {/* ── 3. DINE VALG — én samlet, neutral forklaring på konklusionen
+          ovenfor (FORBEDR PRODUKTSIDEN, 28. sept. 2026). Erstatter de
+          tidligere separate "Relevant for dig"- og "Passer til dine
+          kostpræferencer"-sektioner, som gentog samme konklusion to/tre
+          steder på siden. ── */}
+      {renderDineValg()}
+
       {/* ── 1b. SIKRE ALTERNATIVER ── */}
       {!cannotAssess && (scanResult.status === "danger" || scanResult.status === "warn") && (
         <div style={UI.mb10}>
@@ -522,16 +532,6 @@ export default function ResultScreen({
         </div>
       )}
 
-      {/* ── 2. PER-PERSON-OVERBLIK, SMÅBØRN, PRODUKTETS EGNE TAGS ── */}
-      {renderPersonOverview()}
-
-      {/* ── 3. DINE VALG — én samlet, neutral forklaring på konklusionen
-          ovenfor (FORBEDR PRODUKTSIDEN, 28. sept. 2026). Erstatter de
-          tidligere separate "Relevant for dig"- og "Passer til dine
-          kostpræferencer"-sektioner, som gentog samme konklusion to/tre
-          steder på siden. ── */}
-      {renderDineValg()}
-
       {/* ── 4. ANDRE DEKLAREREDE ALLERGENER — ikke relevante for brugeren
           selv, rent informativt. ── */}
       {scanResult.allergen_flags && renderOtherAllergens()}
@@ -548,9 +548,9 @@ export default function ResultScreen({
                 onHighlightTap={onIngredientHighlightTap}
                 onIngredientTap={handleIngredientTap} />
             </div>
-            {ingredientHighlightRules.length > 0 && (
+            {(ingredientHighlightRules.length > 0 || /\bE[\s-]?\d{3,4}[a-z]?\b/i.test(scanResult.ingredients)) && (
               <div style={{ fontSize:10, color:"var(--muted)", padding:"6px 8px", background:"var(--paper2)", borderRadius:6, lineHeight:1.4 }}>
-                Fremhævede ingredienser er relevante for dine valg. Tryk for en kort forklaring.
+                Tryk på markerede ingredienser og E-numre for at læse mere.
               </div>
             )}
             {customAllerg?.length > 0 && (

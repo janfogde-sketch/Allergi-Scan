@@ -23,12 +23,16 @@ const CATEGORY_PARENTS = {
 // fælles ord i navnet; under MIN_SIMILARITY vises de ikke. Hellere ingen
 // forslag end et irrelevant forslag.
 const MIN_SIMILARITY = 3;
+// Betegnelser som "glutenfri"/"vegansk" siger noget om fravalg, ikke om hvad produktet er; de må ikke i sig selv gøre to produkter ens.
+const CLAIM_WORDS = new Set(["glutenfri", "glutenfrit", "vegansk", "veganske", "vegan", "laktosefri", "laktosefrit", "mælkefri", "uden", "økologisk", "økologiske", "plantebaseret", "sukkerfri", "fuldkorn"]);
+// Varianter, der gør et produkt til noget andet end basisproduktet (fx chokoladeovertrukne kiks ved almindelige kiks).
+const VARIANT_WORDS = ["chokolade", "choko", "overtrukket", "overtrukne", "karamel", "fyldt", "fyldte", "creme", "glasur", "yoghurt"];
 const GENERIC_NAME_WORDS = new Set(["med", "uden", "og", "til", "the", "with", "fra", "stk", "pakke", "light", "zero", "classic", "original", "mini", "maxi"]);
 
 function nameTokens(product) {
   const brandWords = new Set((product.brand || "").toLowerCase().split(/[^a-zæøåäöü]+/).filter(Boolean));
   return (product.name || "").toLowerCase().split(/[^a-zæøåäöü]+/)
-    .filter(w => w.length >= 4 && !GENERIC_NAME_WORDS.has(w) && !brandWords.has(w));
+    .filter(w => w.length >= 4 && !GENERIC_NAME_WORDS.has(w) && !CLAIM_WORDS.has(w) && !brandWords.has(w));
 }
 
 function categoryPath(value) {
@@ -51,6 +55,14 @@ export function similarityScore(base, candidate) {
     if (candWords.includes(w)) score += 2;
     else if (candWords.some(c => c.includes(w) || w.includes(c))) score += 1;
   }
+  // Variant, som kun kandidaten har (chokoladeovertrukne kiks ved almindelige kiks), er en anden slags produkt.
+  const hay = p => (p.name || "").toLowerCase();
+  const bh = hay(base), ch = hay(candidate);
+  for (const v of VARIANT_WORDS) if (ch.includes(v) && !bh.includes(v)) score -= 3;
+  // Fælles ingredienser i starten af listen (hovedingredienserne) viser lignende sammensætning og anvendelse.
+  const lead = p => (p.ingredients_text || p.ingredients || "").toLowerCase().split(",").slice(0, 4).map(x => x.replace(/\(.*?\)|[^a-zæøå ]/g, "").trim()).filter(Boolean);
+  const bl = lead(base), cl = lead(candidate);
+  score += Math.min(3, bl.filter(x => cl.includes(x)).length);
   return score;
 }
 
@@ -98,7 +110,7 @@ export function useAlternatives({ accessToken, activeIds, activeLevels }) {
       const ranked = results
         .map(p => ({ p, score: similarityScore(base, p) }))
         .filter(x => x.score >= MIN_SIMILARITY && sameProductType(base, x.p) && hasUsableIngredients(x.p))
-        .sort((x, y) => y.score - x.score);
+        .sort((x, y) => y.score - x.score || (x.p.allergen_quality === "high" ? 0 : 1) - (y.p.allergen_quality === "high" ? 0 : 1));
       setAlternatives(ranked.slice(0, 8).map(x => x.p));
     } catch {
       setAlternatives([]);
