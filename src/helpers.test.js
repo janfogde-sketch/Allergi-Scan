@@ -20,7 +20,7 @@ import {
   expandUpcE,
   normalizeScannedBarcode,
 } from "./helpers.js";
-import { evaluateProductForProfiles, verifiedImageUrl, profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { computeTopStatus, evaluateProductForProfiles, verifiedImageUrl, profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -740,5 +740,24 @@ describe("groupHistoryDuplicates", () => {
     const nf = (min, ean = "111") => ({ id: `n${min}`, ean_scanned: ean, user_id: "u1", result: "not_found", scanned_at: at(min) });
     const out = groupHistoryDuplicates([nf(0), cola(5), nf(600), nf(700, "222")]);
     expect(out.map(h => [h.id, h.__count])).toEqual([["n0", 2], ["c5", 1], ["n700", 1]]);
+  });
+});
+
+describe("computeTopStatus: konkrete årsager", () => {
+  const base = { hasSufficientData: true, allergyMatches: [], intoleranceMatches: [], traceMatches: [], customMatches: [], eNumberMatches: [], dietFails: [] };
+  it("rød med årsager, og sporene vises stadig", () => {
+    const t = computeTopStatus({ ...base, allergyMatches: [{ label: "Æg" }], eNumberMatches: ["E120"], traceMatches: [{ label: "Soja" }] });
+    expect(t.level).toBe("danger");
+    expect(t.headline).toBe("Konflikt med din profil");
+    expect(t.reasons).toEqual(["Indeholder æg", "Indeholder E120", "Spor af soja"]);
+  });
+  it("orange kun med spor", () => {
+    const t = computeTopStatus({ ...base, traceMatches: [{ label: "Æg" }] });
+    expect(t.level).toBe("warn");
+    expect(t.reasons).toEqual(["Spor af æg"]);
+  });
+  it("grøn kun med tilstrækkelige data, ellers grå", () => {
+    expect(computeTopStatus(base).level).toBe("safe");
+    expect(computeTopStatus({ ...base, hasSufficientData: false }).level).toBe("unknown");
   });
 });

@@ -777,19 +777,29 @@ export function categorizeProductFindings({ matchedDanger, matchedWarning, ignor
 // (`hasSufficientData`). Fælles statussystem (STATUS_TEXT): rød = konflikt (allergi, intolerance, egen allergi, E-nummer, kostpræference),
 // orange = spor, grå = kan ikke vurderes, grøn = ingen registrerede konflikter MED tilstrækkelige data. Aldrig "sikkert"/"allergifrit".
 export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, traceMatches, customMatches, eNumberMatches, dietFails }) {
-  // Rød (9. okt. 2026): registreret konflikt med allergi, intolerance, egen allergi, E-nummer eller kostpræference.
+  const lower = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+  const eLabel = (e) => (typeof e === "string" ? e : e.label || String(e));
+  // Konkrete årsager (9. okt. 2026): "Indeholder æg", "Indeholder E120", "Spor af soja". Direkte fund først, sporene vises stadig under en konflikt.
+  const directReasons = [
+    ...(customMatches || []).map(m => `Muligvis "${m.label}"`),
+    ...(allergyMatches || []).map(m => `Indeholder ${lower(m.label)}`),
+    ...(intoleranceMatches || []).map(m => `Indeholder ${lower(m.label)}`),
+    ...(eNumberMatches || []).map(e => `Indeholder ${eLabel(e)}`),
+    ...(dietFails || []).map(d => `${d.label}: ${d.reasons?.[0] ? lower(d.reasons[0]) : "passer ikke"}`),
+  ];
+  const traceReasons = (traceMatches || []).map(m => `Spor af ${lower(m.label)}`);
   const names = [...(customMatches || []), ...(allergyMatches || []), ...(intoleranceMatches || [])].map(m => m.label)
-    .concat((eNumberMatches || []).map(e => (typeof e === "string" ? e : e.label || String(e))), (dietFails || []).map(d => d.label));
-  if (names.length > 0) {
-    return { level: "danger", icon: "warning", headline: STATUS_TEXT.danger, names };
+    .concat((eNumberMatches || []).map(eLabel), (dietFails || []).map(d => d.label));
+  if (directReasons.length > 0) {
+    return { level: "danger", icon: "warning", headline: STATUS_TEXT.danger, names, reasons: [...directReasons, ...traceReasons] };
   }
-  if ((traceMatches || []).length > 0) {
-    return { level: "warn", icon: "warning", headline: STATUS_TEXT.warn, names: traceMatches.map(m => m.label) };
+  if (traceReasons.length > 0) {
+    return { level: "warn", icon: "warning", headline: STATUS_TEXT.warn, names: traceMatches.map(m => m.label), reasons: traceReasons };
   }
   if (!hasSufficientData) {
-    return { level: "unknown", icon: "info", headline: STATUS_TEXT.unknown, names: [] };
+    return { level: "unknown", icon: "info", headline: STATUS_TEXT.unknown, names: [], reasons: [] };
   }
-  return { level: "safe", icon: "check", headline: STATUS_TEXT.safe, names: [] };
+  return { level: "safe", icon: "check", headline: STATUS_TEXT.safe, names: [], reasons: [] };
 }
 
 // ─── PRODUKT → INDKØBSLISTE-MATCH ────────────────────────────────────────────
