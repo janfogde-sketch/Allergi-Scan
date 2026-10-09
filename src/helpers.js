@@ -120,6 +120,8 @@ export function addUniqueCustom(list, value) {
 }
 
 export const STORE_SOURCES = ["bilka", "nemlig"];
+// Butikkens navn i ejefald til forklaringsteksten ("Bilkas varekatalog")
+export const STORE_CATALOG_NAMES = { bilka: "Bilkas", nemlig: "Nemligs" };
 
 export const verifiedBadge = (verified_status, source) => {
   // Producent-data — højeste troværdighed
@@ -130,7 +132,7 @@ export const verifiedBadge = (verified_status, source) => {
     return { label:"Open Food Facts", bg:"rgba(58,110,165,.10)", color:"#3A6EA5", dot:"#3A6EA5" };
   // Importeret fra butikkernes varekataloger — ikke indsendt af en bruger
   if (STORE_SOURCES.includes(source))
-    return { label:"Butiksdata", bg:"rgba(107,122,112,.12)", color:"#5C6A61", dot:"#5C6A61" };
+    return { label:"Produktdata", bg:"rgba(107,122,112,.12)", color:"#5C6A61", dot:"#5C6A61" };
   // Bruger-indsendt
   return { label:"Bruger-indsendt", bg:"rgba(107,122,112,.12)", color:"#5C6A61", dot:"#5C6A61" };
 };
