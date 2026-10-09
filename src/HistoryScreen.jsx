@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
+import { setProductReturn } from "./searchReturn.js";
 import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
 import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -136,6 +137,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const openHistoryEntry = (h) => {
     if ((h.result || h.status) === "not_found") return;
     if (h.active_profiles?.length) setActiveProfiles(h.active_profiles);
+    setProductReturn({ ean: h.ean_scanned || h.code, label: "Tilbage til historik", screen: SCREENS.HISTORY });
     lookupProduct(h.ean_scanned || h.code, { via: "none" });
   };
 

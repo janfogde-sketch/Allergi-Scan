@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { setSearchReturn } from "./searchReturn.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
@@ -377,7 +378,7 @@ export default function ListScreen({
           {visibleItemResults.map(({ product: p }) => (
             <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
               onList={resultOnList(p)}
-              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id, { via: "search" }); setNewItemName(""); }}
+              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); setSearchReturn(newItemName, p.ean||p.code||p.id, SCREENS.LIST); lookupProduct(p.ean||p.code||p.id, { via: "search" }); setNewItemName(""); }}
               onAddToList={() => pickItemProduct(p)}
             />
           ))}

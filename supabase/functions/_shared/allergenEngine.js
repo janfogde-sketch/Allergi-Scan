@@ -59,7 +59,7 @@ export const SUBSTRING_KEYWORDS = new Set([
 ]);
 
 // Bogstavklasse til ordgrænser (æøå og tyske tegn; teksten er altid små bogstaver her).
-const L = "a-zæøåäöüß";
+export const L = "a-zæøåäöüß";
 
 // Nøgleord på 5 tegn eller mere matches som understreng (6. okt. 2026, K1):
 // danske sammensætninger har allergenet både først og sidst ("FuldkornsHVEDE",
@@ -76,7 +76,7 @@ export function isSubstringKeyword(kw) {
 // selve ordet, uden ordgrænser). "æg" som slutled ("SkalÆG", "TØRÆG", "Frilandsæg")
 // og som start ("æggepulver"); korn med kendte forled ("Fuldkornsbyg"); fisk/skaldyr
 // som første led ("Laksefilet", "Rejesalat").
-const SHORT_PATTERNS = {
+export const SHORT_PATTERNS = {
   "æg": `[${L}]*æg|ægge[${L}]*`,
   "rug": `(?:fuldkorns?|hel)?rug`,
   "byg": `(?:fuldkorns?|hel|vinter|vår)?byg`,

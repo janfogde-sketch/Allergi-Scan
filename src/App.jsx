@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { setProductReturn } from "./searchReturn.js";
 import React, { useState, Suspense, useEffect, useCallback, useRef, useMemo } from "react";
 
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
@@ -683,7 +684,7 @@ export default function EatSafe() {
   const openScannerAndScan = useCallback(() => { setAutoStartScan(true); setScreen(SCREENS.HOME); }, [setScreen]);
   React.useEffect(() => { if (!accessToken) setOpenTicketId(null); }, [accessToken]);
   const handleNotificationAction = useCallback((action) => {
-    if (action?.type === "open_product" && action.params?.ean) lookupProduct(action.params.ean, { via: "search" });
+    if (action?.type === "open_product" && action.params?.ean) { setProductReturn({ ean: action.params.ean, label: "Tilbage til beskeder", screen: SCREENS.NOTIFICATIONS }); lookupProduct(action.params.ean, { via: "search" }); }
     else if (action?.type === "open_family") setScreen(SCREENS.FAMILY);
     else if (action?.type === "open_list") setScreen(SCREENS.LIST);
     else if (action?.type === "open_ticket" && action.params?.ticketId) { setOpenTicketId(action.params.ticketId); setScreen(SCREENS.TICKET); }
