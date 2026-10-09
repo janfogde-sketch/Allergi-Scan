@@ -521,6 +521,9 @@ body::-webkit-scrollbar{display:none;}
 .card-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:var(--neutral);margin-bottom:10px;}
 .card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;letter-spacing:-.2px;}
 .field{width:100%;background:var(--surface2);border:1.5px solid var(--field-border);border-radius:10px;padding:12px 14px;color:var(--ink);font-family:var(--f);font-size:16px;outline:none;transition:border-color .15s,background .15s;}
+.field.search-field{-webkit-appearance:none;appearance:none;}
+.field.search-field::-webkit-search-cancel-button,.field.search-field::-webkit-search-decoration{-webkit-appearance:none;display:none;}
+.field.search-field:focus,.field.search-field:focus-visible{box-shadow:none;outline:none;border-color:var(--green);}
 .field:focus{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
 /* Browserens native autofill-baggrund (kraftig gul i Chrome/Safari) er
    overstyret her, så et autofillet felt (fx e-mail på Log ind-fanen) ser ud

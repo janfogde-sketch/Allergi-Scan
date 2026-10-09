@@ -20,7 +20,7 @@ import {
   expandUpcE,
   normalizeScannedBarcode,
 } from "./helpers.js";
-import { profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { classifySearchResult, profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -688,5 +688,22 @@ describe("groupHistoryDuplicates", () => {
     const nf = (min, ean = "111") => ({ id: `n${min}`, ean_scanned: ean, user_id: "u1", result: "not_found", scanned_at: at(min) });
     const out = groupHistoryDuplicates([nf(0), cola(5), nf(600), nf(700, "222")]);
     expect(out.map(h => [h.id, h.__count])).toEqual([["n0", 2], ["c5", 1], ["n700", 1]]);
+  });
+});
+
+describe("classifySearchResult", () => {
+  const full = { allergen_flags: { milk: "no" }, ingredients_text: "Vand" };
+  it("danger, warn, unknown og clean", () => {
+    expect(classifySearchResult([{ status: "danger" }], full)).toBe("danger");
+    expect(classifySearchResult([{ status: "warn", warning: ["nuts"] }], full)).toBe("warn");
+    expect(classifySearchResult([{ status: "warn", dietFails: [{}] }], full)).toBe("warn");
+    expect(classifySearchResult([{ status: "warn", unknown: ["milk"] }], full)).toBe("unknown");
+    expect(classifySearchResult([{ status: "safe" }], full)).toBe("clean");
+  });
+  it("uden flag og ingredienser er aldrig 'clean'", () => {
+    expect(classifySearchResult([{ status: "safe" }], { name: "X" })).toBe("unknown");
+  });
+  it("spor går foran manglende data", () => {
+    expect(classifySearchResult([{ status: "warn", warning: ["nuts"], unknown: ["milk"] }], full)).toBe("warn");
   });
 });
