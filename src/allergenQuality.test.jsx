@@ -139,10 +139,109 @@ describe("produktsiden ved fem konflikter", () => {
   });
   it("sulfitter vises under deklarerede allergener, når de ikke er et valg", () => {
     setup({ scan: pepero(), allergens: ["hvede"] });
-    expect(screen.getByLabelText(/Indeholder sulfitter/i)).toBeTruthy();
+    expect(screen.getByLabelText(/Deklareret: sulfitter/i)).toBeTruthy();
+    expect(screen.getByText("Deklareret på produktet")).toBeTruthy();
   });
   it("tom alternativ-tilstand har den nye tekst", () => {
     setup({ scan: pepero(), allergens: FIVE });
     expect(screen.getByText("Vi kunne ikke finde relevante alternativer med tilstrækkelige produktoplysninger.")).toBeTruthy();
+  });
+});
+
+// ── Dokumentationsgrundlag, "Dine valg" og konsistens ──────────────────────────────────────────
+describe("deklareret og udledt", () => {
+  it("byg udledes (ikke deklareret) og vises som 'Byg (glutenholdigt korn)' under 'Udledt af ingredienser'", () => {
+    setup({ scan: pepero(), allergens: ["soja"] });
+    expect(screen.getByText("Udledt af ingredienser")).toBeTruthy();
+    const chip = screen.getByLabelText(/Udledt: byg/i);
+    expect(chip.textContent).toMatch(/Byg \(glutenholdigt korn\)/);
+    // ikke også under deklareret, og ingen "Gluten (byg)"
+    expect(screen.queryByText(/Gluten \(byg\)/)).toBeNull();
+    expect(screen.getAllByLabelText(/gluten|byg/i).length).toBe(1);
+  });
+  it("sulfit uden deklareret ord og mængde vises som udledt 'mulige sulfitter', ikke som deklareret", () => {
+    const scan = { code: "1", name: "Slik", ingredients: "Sukker, konserveringsmiddel (E223)", allergen_flags: { ...analyzeIngredients("Sukker, konserveringsmiddel (E223)"), svovl: "unknown" }, status: "unknown", source: "bilka", allergen_quality: "high" };
+    setup({ scan, allergens: ["soja"] });
+    expect(screen.getByLabelText(/Udledt: mulige sulfitter \(e223\)/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/Deklareret: sulfitter/i)).toBeNull();
+  });
+  it("viser ingen tom undersektion", () => {
+    const text = "Sukker, kakaosmør, SKUMMETMÆLKSPULVER";
+    setup({ scan: { code: "2", name: "Chokolade", ingredients: text, allergen_flags: analyzeIngredients(text), status: "safe", source: "bilka", allergen_quality: "high" }, allergens: ["soja"] });
+    expect(screen.queryByText("Udledt af ingredienser")).toBeNull();
+    expect(screen.queryByText("Sporoplysninger")).toBeNull();
+  });
+});
+
+describe("Dine valg: rækkefølge og sammenfoldning", () => {
+  it("røde konflikter er altid synlige, flere grønne samles og kan foldes ud", () => {
+    setup({ scan: pepero(), allergens: ["hvede", "aeg", "fisk"] });
+    expect(screen.getByText(/Fundet i produktet/)).toBeTruthy();
+    expect(screen.queryByText("Fisk")).toBeNull();
+    const fold = screen.getByRole("button", { name: /2 øvrige fravalg ikke fundet/ });
+    expect(fold.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(fold);
+    expect(screen.getByText("Fisk")).toBeTruthy();
+    expect(screen.getByText("Æg")).toBeTruthy();
+    expect(screen.getAllByText(/Grøn betyder/).length).toBe(1);
+    fireEvent.click(fold);
+    expect(screen.queryByText("Fisk")).toBeNull();
+  });
+  it("et enkelt grønt valg vises direkte, og sporadvarsler skjules ikke sammen med grønne", () => {
+    const text = "Sukker, kakaosmør. Kan indeholde spor af mandler.";
+    setup({ scan: { code: "3", name: "Chokolade", ingredients: text, allergen_flags: analyzeIngredients(text), status: "warn", source: "bilka", allergen_quality: "high" }, allergens: ["noedder", "fisk"] });
+    expect(screen.getByText(/Kan indeholde spor/, { selector: "span" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /øvrige fravalg/ })).toBeNull();
+    expect(screen.getByText("Fisk")).toBeTruthy();
+  });
+  it("valg der ikke kan vurderes (blanding) bliver aldrig grønne", () => {
+    const text = "HVEDEMEL, brun farin, sukker";
+    setup({ scan: { code: "4", name: "Krydderkage", ingredients: text, allergen_flags: analyzeIngredients(text), status: "safe", source: "bilka", allergen_quality: "high" }, allergens: ["aeg", "fisk"] });
+    expect(screen.queryByRole("button", { name: /øvrige fravalg/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /2 valg kan ikke kontrolleres/ })).toBeTruthy();
+  });
+});
+
+describe("+N flere ved mange konflikter", () => {
+  const ORDER = ["hvede", "maelkeallergi", "noedder", "soja", "jordnoedder", "laktose", "svovl", "gluten"];
+  for (const n of [4, 5, 6, 7]) {
+    it(`${n} konflikter: tre mærker, '+${n - 3} flere', alle kan vises og skjules igen`, () => {
+      setup({ scan: pepero(), allergens: ORDER.slice(0, n) });
+      expect(screen.queryAllByText(/^Indeholder /).length).toBe(3);
+      fireEvent.click(screen.getByRole("button", { name: `+${n - 3} flere` }));
+      const labels = screen.queryAllByText(/^Indeholder /).map(e => e.textContent);
+      expect(labels.length).toBe(n);
+      expect(new Set(labels).size).toBe(n);
+      fireEvent.click(screen.getByRole("button", { name: "Vis færre" }));
+      expect(screen.queryAllByText(/^Indeholder /).length).toBe(3);
+    });
+  }
+  it("tre eller færre konflikter har ingen '+N flere'", () => {
+    setup({ scan: pepero(), allergens: ["hvede", "soja", "noedder"] });
+    expect(screen.queryByRole("button", { name: /flere/ })).toBeNull();
+  });
+});
+
+describe("ens vurdering på tværs og genberegning ved profilændring", () => {
+  const cases = [
+    ["konflikt", pepero(), ["soja"], STATUS_TEXT.danger],
+    ["spor", { code: "5", name: "Chokolade", ingredients: "Sukker. Kan indeholde spor af mandler.", allergen_flags: analyzeIngredients("Sukker. Kan indeholde spor af mandler."), source: "bilka", allergen_quality: "high" }, ["noedder"], STATUS_TEXT.warn],
+    ["blanding", { code: "6", name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker", allergen_flags: analyzeIngredients("HVEDEMEL, brun farin, sukker"), source: "bilka", allergen_quality: "high" }, ["aeg"], STATUS_TEXT.unknown],
+    ["ingen fund", { code: "7", name: "Chokolade", ingredients: "Sukker, kakaosmør", allergen_flags: analyzeIngredients("Sukker, kakaosmør"), source: "bilka", allergen_quality: "high" }, ["soja"], STATUS_TEXT.safe],
+  ];
+  for (const [name, scan, allergens, label] of cases) {
+    it(`${name}: produktsiden og den fælles vurdering er enige`, () => {
+      expect(evaluateProductForProfiles([profile(allergens)], scan).label).toBe(label);
+      setup({ scan, allergens });
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+    });
+  }
+  it("skift af profil genberegner vurderingen", () => {
+    const scan = pepero();
+    const { rerender, container } = setup({ scan, allergens: ["fisk"] });
+    expect(container.textContent).toContain(STATUS_TEXT.safe);
+    cleanup();
+    setup({ scan, allergens: ["soja"] });
+    expect(screen.getAllByText(STATUS_TEXT.danger).length).toBeGreaterThan(0);
   });
 });

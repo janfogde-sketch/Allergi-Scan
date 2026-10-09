@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { buildNutritionRows, traceNutNames, glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
+import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -18,7 +18,7 @@ const MAX_REASON_CHIPS = 3;
 
 // Resultatsidens sektioner (flyttet ud af ResultScreen.jsx, ren omflytning). Får den beregnede tilstand som ctx.
 export function makeResultSections(c) {
-  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen } = c;
+  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen, greenOpen, setGreenOpen } = c;
 
   const renderDineValg = () => {
     if (!soloProfile) return null;
@@ -26,29 +26,36 @@ export function makeResultSections(c) {
     const dietRows = buildDietChoiceRows();
     const eNumberRows = buildENumberChoiceRows();
     if (allergyRows.length === 0 && dietRows.length === 0 && eNumberRows.length === 0) return null;
-    // Valg, der ikke kan kontrolleres, samles i én foldbar linje i stedet for at gentage samme forklaring pr. valg.
+    // Rækkefølge (10. okt. 2026): røde konflikter, orange spor, valg der ikke kan vurderes, til sidst grønne ("ikke fundet"). Røde og orange står
+    // altid synlige; ukontrollerede valg samles i én foldbar linje; flere grønne samles i "N øvrige fravalg ikke fundet".
     const isUnknown = r => r.status === "unknown";
-    const unknownRows = [...allergyRows, ...dietRows, ...eNumberRows].filter(isUnknown);
-    const known = rows => rows.filter(r => !isUnknown(r));
+    const isGreen = r => r.status === "check";
+    const allRows = [...allergyRows, ...dietRows, ...eNumberRows];
+    const unknownRows = allRows.filter(isUnknown);
+    const greenRows = allRows.filter(isGreen);
+    const shown = rows => rows.filter(r => !isUnknown(r) && !isGreen(r));
+    const COLLAPSE_GREEN_FROM = 2;
+    const collapseGreen = greenRows.length >= COLLAPSE_GREEN_FROM;
+    const foldHead = (open, toggle, icon, text) => (
+      <button type="button" onClick={toggle} aria-expanded={open}
+        style={{ display:"flex", alignItems:"center", gap:8, width:"100%", background:"none", border:"none", padding:"2px 0", cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }}>
+        <Icon name={icon} size={14} color={icon === "check" ? "var(--green)" : "var(--muted)"} />
+        <span style={{ flex:1, fontSize:13, fontWeight:700, color:"var(--ink)" }}>{text}</span>
+        <span style={{ display:"flex", transform: open ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
+          <Icon name="chevronDown" size={14} color="var(--muted)" />
+        </span>
+      </button>
+    );
     return (
       <div className="card">
         <div className="card-lbl">Dine valg</div>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          <ChoiceCategory title="Allergier og intolerancer" rows={known(allergyRows)} />
-          <ChoiceCategory title="Kostpræferencer" rows={known(dietRows)} />
-          <ChoiceCategory title="E-numre og øvrige fravalg" rows={known(eNumberRows)} />
+          <ChoiceCategory title="Allergier og intolerancer" rows={shown(allergyRows)} />
+          <ChoiceCategory title="Kostpræferencer" rows={shown(dietRows)} />
+          <ChoiceCategory title="E-numre og øvrige fravalg" rows={shown(eNumberRows)} />
           {unknownRows.length > 0 && (
             <div>
-              <button type="button" onClick={() => setUnknownOpen(o => !o)} aria-expanded={unknownOpen}
-                style={{ display:"flex", alignItems:"center", gap:8, width:"100%", background:"none", border:"none", padding:"2px 0", cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }}>
-                <Icon name="info" size={14} color="var(--muted)" />
-                <span style={{ flex:1, fontSize:13, fontWeight:700, color:"var(--ink)" }}>
-                  {unknownRows.length === 1 ? "1 valg kan ikke kontrolleres" : `${unknownRows.length} valg kan ikke kontrolleres`}
-                </span>
-                <span style={{ display:"flex", transform: unknownOpen ? "rotate(180deg)" : "none", transition:"transform .2s" }}>
-                  <Icon name="chevronDown" size={14} color="var(--muted)" />
-                </span>
-              </button>
+              {foldHead(unknownOpen, () => setUnknownOpen(o => !o), "info", unknownRows.length === 1 ? "1 valg kan ikke kontrolleres" : `${unknownRows.length} valg kan ikke kontrolleres`)}
               {unknownOpen && (
                 <div className="acc-body"><div style={{ paddingTop:6, paddingLeft:22 }}>
                   {unknownRows.map((r, i) => <ChoiceRow key={i} {...r} />)}
@@ -56,9 +63,19 @@ export function makeResultSections(c) {
               )}
             </div>
           )}
-          {[...allergyRows, ...dietRows, ...eNumberRows].some(r => r.status === "check") && (
-            <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.45 }}>
-              Grøn betyder, at stoffet ikke er fundet i de registrerede oplysninger – ikke at produktet er garanteret sikkert.
+          {greenRows.length > 0 && (
+            <div>
+              {collapseGreen
+                ? foldHead(greenOpen, () => setGreenOpen(o => !o), "check", `${greenRows.length} øvrige fravalg ikke fundet`)
+                : null}
+              {(!collapseGreen || greenOpen) && (
+                <div className={collapseGreen ? "acc-body" : undefined}><div style={{ paddingTop: collapseGreen ? 6 : 0, paddingLeft: collapseGreen ? 22 : 0 }}>
+                  {greenRows.map((r, i) => <ChoiceRow key={i} {...r} />)}
+                </div></div>
+              )}
+              <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.45, marginTop:6 }}>
+                Grøn betyder, at stoffet ikke er fundet i de registrerede oplysninger – ikke at produktet er garanteret sikkert.
+              </div>
             </div>
           )}
         </div>
@@ -199,7 +216,7 @@ export function makeResultSections(c) {
     // Konkrete navne under headline, vist som chips/tags (krav 1: "hvis flere
     // ting udløser resultatet, må de gerne vises som korte chips/tags") — kun
     // ved én aktiv profil, hvor topStatus.names allerede er de præcise fund.
-    const topNames = !isMultiProfile && topStatus.reasons?.length > 0 ? topStatus.reasons : null;
+    const topNames = !isMultiProfile && topStatus.reasons?.length > 0 ? [...new Set(topStatus.reasons)] : null;
     // Kort, konkret forklaring direkte i resultatkortet (krav 14: "Forklaring:
     // 'Produktet indeholder mælkeprotein.'") — udledt af det første reelle
     // fund, ikke en generisk sætning. Kun for de to advarselstilstande; grøn/
@@ -422,38 +439,62 @@ export function makeResultSections(c) {
     // når "Hvede" allerede står (samme kilde).
     const wheatOnly = cereals.length > 0 && cereals.every(c => c.toLowerCase() === "hvede");
     const dupGluten = (k) => k === "gluten" && wheatOnly && flags.hvede === "yes";
-    const otherPresent = present.filter(([k]) => !myAllergens.has(k) && !dupGluten(k));
-    const presentIds = new Set(otherPresent.map(([k]) => k));
+    const otherPresentAll = present.filter(([k]) => !myAllergens.has(k) && !dupGluten(k));
+    const presentIds = new Set(otherPresentAll.map(([k]) => k));
     const otherTraces  = traces.filter(([k])  => !myAllergens.has(k) && !presentIds.has(k) && !dupGluten(k));
-    if (!otherPresent.length && !otherTraces.length) return null;
     const nutNames = traceNutNames(scanResult.ingredients);
-    // Gluten, som EatSafe selv udleder af kornsorter i ingredienslisten, mærkes "udledt", så det skilles fra deklareret indhold.
-    const derivedGluten = cereals.length > 0 && !/gluten/i.test(scanResult.ingredients || "");
-    const chip = (k, traceOnly) => {
+    // Dokumentationsgrundlag (10. okt. 2026): "Deklareret" = står i produktets egne oplysninger. "Udledt" = EatSafe har sluttet det af ingredienserne,
+    // fx gluten ud fra byg uden at ordet gluten står der, eller mulige sulfitter ud fra et E-nummer uden deklareret sulfit eller mængde.
+    // Hvede står allerede som eget allergen, når den er deklareret; den gentages ikke i det udledte glutenkorn.
+    const derivedCereals = cereals.filter(c => !(c.toLowerCase() === "hvede" && flags.hvede === "yes"));
+    const derivedGluten = derivedCereals.length > 0 && !/gluten/i.test(scanResult.ingredients || "");
+    const sulfiteInferred = sulfiteAssessment(scanResult.ingredients) === "unknown" && flags.svovl === "unknown" && !myAllergens.has("svovl");
+    const otherPresent = otherPresentAll.filter(([k]) => !(k === "gluten" && derivedGluten));
+    const derivedList = [
+      ...(otherPresentAll.some(([k]) => k === "gluten") && derivedGluten ? ["gluten"] : []),
+      ...(sulfiteInferred ? ["svovl"] : []),
+    ];
+    if (!otherPresent.length && !otherTraces.length && !derivedList.length) return null;
+    const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+    const sulfiteCodes = [...new Set((String(scanResult.ingredients || "").match(/\bE[\s-]?22[0-8]\b/gi) || []).map(c => c.replace(/[\s-]/g, "").toUpperCase()))].join(", ");
+    const chip = (k, traceOnly, derived = false) => {
       const a = ALLERGENS.find(x => x.id === k);
       if (!a) return null;
+      // Udledt gluten: selve kornet nævnes, ikke et ord, der ikke står på pakken ("Byg (glutenholdigt korn)").
+      const baseLabel = derived && k === "gluten" ? `${cap(derivedCereals.join(", "))} (${derivedCereals.length > 1 ? "glutenholdige korn" : "glutenholdigt korn"})`
+        : derived && k === "svovl" ? `Mulige sulfitter${sulfiteCodes ? ` (${sulfiteCodes})` : ""}`
+        : glutenLabel(a);
+      const label = traceOnly ? `Spor af ${baseLabel.toLowerCase()}${a.id === "noedder" && nutNames.length ? ` (${nutNames.join(", ")})` : ""}` : baseLabel;
       return (
-        <button type="button" key={(traceOnly ? "t-" : "p-") + k} className="tag"
+        <button type="button" key={(traceOnly ? "t-" : derived ? "d-" : "p-") + k} className="tag"
           onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
-          aria-label={`${traceOnly ? "Spor af " : "Indeholder "}${glutenLabel(a).toLowerCase()} – læs mere`}
+          aria-label={`${derived ? "Udledt: " : traceOnly ? "Spor af " : "Deklareret: "}${baseLabel.toLowerCase()} – læs mere`}
           style={{ background:"var(--surface2)", color:"var(--ink2)", borderColor:"var(--border2)", cursor:"pointer", fontFamily:"var(--f)" }}>
-          <AllergenGlyph a={a} size={13} /> {traceOnly ? `Spor af ${glutenLabel(a).toLowerCase()}${a.id === "noedder" && nutNames.length ? ` (${nutNames.join(", ")})` : ""}` : glutenLabel(a)}{derivedGluten && a.id === "gluten" && !traceOnly && <span style={{ fontWeight:500, color:"var(--muted)" }}> · udledt</span>} <Icon name="chevronRight" size={11} color="var(--muted)" />
+          <AllergenGlyph a={a} size={13} /> {label} <Icon name="chevronRight" size={11} color="var(--muted)" />
         </button>
       );
     };
+    const subHead = { fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".6px", marginBottom:4 };
     return (
       <div className="card">
-        <div className="card-lbl">Andre deklarerede allergener</div>
+        <div className="card-lbl">Andre allergener i produktet</div>
         <div style={UI.ufs11_cmuted_mb8}>Ikke blandt dine valg</div>
         {otherPresent.length > 0 && (
           <div style={UI.mb6}>
-            <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".6px", marginBottom:4 }}>Deklareret indhold</div>
+            <div style={subHead}>Deklareret på produktet</div>
             <div className="tags">{otherPresent.map(([k]) => chip(k, false))}</div>
+          </div>
+        )}
+        {derivedList.length > 0 && (
+          <div style={UI.mb6}>
+            <div style={subHead}>Udledt af ingredienser</div>
+            <div className="tags">{derivedList.map(k => chip(k, false, true))}</div>
+            <div style={{ fontSize:11, color:"var(--muted)", marginTop:4, lineHeight:1.4 }}>Udledt af EatSafe ud fra ingredienslisten. Det er ikke deklareret som allergen på produktet{sulfiteInferred ? ", og mængden af sulfit er ukendt" : ""}.</div>
           </div>
         )}
         {otherTraces.length > 0 && (
           <div>
-            <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".6px", marginBottom:4 }}>Sporoplysninger</div>
+            <div style={subHead}>Sporoplysninger</div>
             <div className="tags">{otherTraces.map(([k]) => chip(k, true))}</div>
           </div>
         )}

@@ -20,3 +20,6 @@ Opdateret 10. okt. 2026 (kvalitetssikring med Lotte Pepero Kiksestænger som udg
   registrerede værdier (se to do om import).
 - **Produktkategorier:** underkategorien "Kiks & kager" rummer også slik (fx lollipops). Alternativer kræver derfor et fælles navneord eller en dyb
   kategori-sti, ikke blot samme underkategori. Selve produktdata er ikke ændret.
+- **Udledt vs. deklareret:** "udledt" bruges kun om gluten ud fra kornsorter uden ordet gluten og om mulige sulfitter ud fra et E-nummer. Øvrige
+  allergener (mælk, soja m.fl.) kommer fra nøgleordsmotoren og vises som deklareret, også når motoren har læst dem ud fra et ingrediensord
+  (fx mælkepulver). Der findes ingen forskel i data på "står som allergen-fremhævning" og "fundet som ingrediensord".
