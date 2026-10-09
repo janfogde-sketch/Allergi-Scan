@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, evaluateProductForProfiles, verifiedImageUrl, STATUS_TEXT } from "./helpers.js";
 import { UI } from "./styleUtils.js";
 import { Icon } from "./Icons.jsx";
 
@@ -83,6 +83,7 @@ export const LazyFallback = (
 export function safetyStyle(status) {
   if (status === "danger") return { color:"var(--red)",   bg:"var(--red-lt)",   border:"var(--red-md)",   icon:"×" };
   if (status === "warn")   return { color:"var(--amber)", bg:"var(--amber-lt)", border:"var(--amber-md)", icon:"!" };
+  if (status === "unknown") return { color:"var(--neutral)", bg:"var(--surface2)", border:"var(--border)", icon:"?" };
   return                          { color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)", icon:"✓" };
 }
 
@@ -125,55 +126,33 @@ export function SafetyPill({ name, status }) {
   );
 }
 
-// Kategori-ikoner når produktbillede mangler
-
-export function getProductIcon(product) {
-  if (!product) return "🛒";
-  const name = (product.name || "").toLowerCase();
-  const cat = (product.category || "").toLowerCase();
-  const combined = name + " " + cat;
-  if (/mælk|fløde|smør|ost|yoghurt|skyr/.test(combined)) return "🥛";
-  if (/brød|bolle|rugbrød|toast/.test(combined)) return "🍞";
-  if (/chokolade|nutella|kakao/.test(combined)) return "🍫";
-  if (/juice|saft|vand|cola|øl|vin/.test(combined)) return "🥤";
-  if (/kylling|oksekød|svinekød|kød/.test(combined)) return "🥩";
-  if (/laks|fisk|tun|rejer/.test(combined)) return "🐟";
-  if (/pasta|spaghetti|makaroni/.test(combined)) return "🍝";
-  if (/ris|grød|havre/.test(combined)) return "🍚";
-  if (/chips|snack|popcorn/.test(combined)) return "🍿";
-  if (/is|flødeis/.test(combined)) return "🍦";
-  if (/æble|banan|appelsin|frugt/.test(combined)) return "🍎";
-  if (/tomat|gulerod|grøntsag/.test(combined)) return "🥦";
-  if (/olie|margarine/.test(combined)) return "🫒";
-  if (/nødder|mandler|cashew/.test(combined)) return "🥜";
-  if (/morgenmad|cornflakes|müsli/.test(combined)) return "🥣";
-  return "🛒";
+// Produktets "ikon", når et pålideligt billede mangler. Tidligere gættede den et emoji ud fra navn/kategori ("Brød & kiks" gav 🍞, alt med "is" gav 🍦),
+// og det så ud som et forkert produktbillede (9. okt. 2026). Nu altid den samme neutrale pakke-ikon (se ProductImage).
+export function getProductIcon() {
+  return "";
 }
 
 export function ProductImage({ product, size = 64, height = size }) {
-  // height ≠ size: ensartet beholder (fx 48 × 56 i Historik) med centreret, uforvrænget billede på neutral baggrund.
+  // height ≠ size: ensartet beholder (fx 48 × 56) med centreret, uforvrænget billede på neutral baggrund.
   const boxed = height !== size;
-  if (product?.image_url) {
-    // Ingen "OFF"-mærke på miniaturer (Bjørn, 9. okt. 2026); kreditering står på produktsiden og samlet i Indstillinger.
-    return (
-      <span style={{ position:"relative", display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0, width:size, height, ...(boxed ? { background:"var(--paper2)", borderRadius:8, overflow:"hidden" } : {}) }}>
-        <img
-          src={product.image_url}
-          alt={product.name}
-          loading="lazy"
-          style={{ width:size, height, objectFit:"contain", borderRadius:8 }}
-          onError={e => { e.target.style.display="none"; e.target.nextSibling.style.display="flex"; if (e.target.nextSibling.nextSibling) e.target.nextSibling.nextSibling.style.display="none"; }}
-        />
-        <div style={{ width:size, height, background:"var(--paper2)", borderRadius:8, display:"none", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
-          {getProductIcon(product)}
-        </div>
-      </span>
-    );
-  }
-  return (
-    <div style={{ width:size, height, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
-      {getProductIcon(product)}
+  const src = verifiedImageUrl(product);
+  const placeholder = (display = "flex") => (
+    <div aria-hidden="true" style={{ width:size, height, background:"var(--paper2)", borderRadius:8, display, alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+      <Icon name="package" size={Math.round(size*0.42)} color="var(--muted2)" />
     </div>
+  );
+  if (!src) return placeholder();
+  return (
+    <span style={{ position:"relative", display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0, width:size, height, ...(boxed ? { background:"var(--paper2)", borderRadius:8, overflow:"hidden" } : {}) }}>
+      <img
+        src={src}
+        alt={product.name}
+        loading="lazy"
+        style={{ width:size, height, objectFit:"contain", borderRadius:8 }}
+        onError={e => { e.target.style.display="none"; if (e.target.nextSibling) e.target.nextSibling.style.display="flex"; }}
+      />
+      {placeholder("none")}
+    </span>
   );
 }
 
@@ -198,25 +177,22 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   //   med samme eksplicitte "Indeholder/Spor af"-formulering på chipsene i
   //   stedet for et bart allergen-navn, så de aldrig kan misforstås som en
   //   påstand om at produktet "er" det allergen.
-  const explicitReason = (r) => (/^(Spor af |Muligvis |Overvåget |[^:]+: )/.test(r) ? r : `Indeholder ${r}`);
-  let status, statusLabel, reasonChips;
+  let status, statusLabel, reasonChips, missingText = null;
   if (profiles && profiles.length > 0) {
-    const ingredientsText = p.ingredients || p.ingredients_text || "";
-    const results = computeProfileResults(profiles, {
-      allergen_flags: p.allergen_flags, ingredients: ingredientsText, nutrition: p.nutrition,
-      productENumbers: extractENumbers(ingredientsText),
-    });
-    const conflict = profileConflictLabel(results);
-    status = conflict ? "danger" : results.some(r => r.status === "warn") ? "warn" : "safe";
-    statusLabel = conflict || (status === "warn" ? profileWarnLabel(results) : profileMatchLabel(profiles));
-    reasonChips = [...new Set(results.flatMap(r => r.reasons).map(explicitReason))];
+    // Fælles statussystem (helpers.js evaluateProductForProfiles): grøn kun med tilstrækkelige data, konkrete årsager på rød/orange.
+    const ev = evaluateProductForProfiles(profiles, p);
+    status = ev.level;
+    statusLabel = ev.label;
+    reasonChips = ev.reasons;
+    if (status === "unknown" && ev.missing.length > 0) missingText = ev.missing[0] + (ev.missing.length > 1 ? ` (+${ev.missing.length - 1})` : "");
   } else {
     const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds, effectiveLevels);
-    status = cmp.status;
-    statusLabel = status==="safe" ? profileMatchLabel([]) : status==="danger" ? "Allergi-advarsel" : cmp.matchedWarning.length ? "Kan indeholde spor" : "Kan ikke vurderes";
+    const hasData = !!p.allergen_flags && Object.keys(p.allergen_flags).length > 0;
+    status = cmp.status === "danger" ? "danger" : cmp.matchedWarning.length ? "warn" : (cmp.hasUnknown || !hasData) ? "unknown" : "safe";
+    statusLabel = STATUS_TEXT[status];
     reasonChips = [
-      ...cmp.matchedDanger.map(id => `Indeholder ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
-      ...cmp.matchedWarning.map(id => `Spor af ${ALLERGENS.find(a=>a.id===id)?.label || id}`),
+      ...cmp.matchedDanger.map(id => `Indeholder ${(ALLERGENS.find(a=>a.id===id)?.label || id).toLowerCase()}`),
+      ...cmp.matchedWarning.map(id => `Spor af ${(ALLERGENS.find(a=>a.id===id)?.label || id).toLowerCase()}`),
     ];
   }
   const statusColor = safetyStyle(status).color;
@@ -254,6 +230,9 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
             ("Indeholder X"/"Spor af Y"/"Muligvis 'Z'"/diæt-/E-nummer-tekst,
             se computeProfileResults i helpers.js), ikke et bart allergen-
             navn der kunne læses som en påstand om produktets indhold. */}
+        {status === "unknown" && missingText && (
+          <div style={{ fontSize:10.5, color:"var(--muted)", marginTop:2, lineHeight:1.35 }}>{missingText}</div>
+        )}
         {reasonChips.length > 0 && (
           <div style={{ display:"flex", gap:3, marginTop:4, flexWrap:"wrap" }}>
             {reasonChips.map((reason, i) => (

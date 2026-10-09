@@ -49,28 +49,28 @@ describe("ResultScreen: status", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("direkte allergen giver Allergi-advarsel", () => {
+  it("direkte allergen giver Konflikt med din profil", () => {
     setup({ scan: product({ ingredients: "Hvedemel, vand", allergen_flags: { hvede: "yes" } }), profile: { allergens: ["hvede"] } });
-    expect(screen.getByText("Allergi-advarsel")).toBeTruthy();
-    expect(screen.queryByText("Ingen match med dine valg")).toBeNull();
+    expect(screen.getByText("Konflikt med din profil")).toBeTruthy();
+    expect(screen.queryByText("Ingen registrerede konflikter")).toBeNull();
   });
 
-  it("spor giver gul Kan indeholde spor, ikke Allergi-advarsel", () => {
+  it("spor giver gul Kan indeholde spor, ikke Konflikt med din profil", () => {
     setup({ scan: product({ allergen_flags: { hvede: "traces" } }), profile: { allergens: ["hvede"] } });
     expect(screen.getByText("Kan indeholde spor")).toBeTruthy();
-    expect(screen.queryByText("Allergi-advarsel")).toBeNull();
+    expect(screen.queryByText("Konflikt med din profil")).toBeNull();
   });
 
   it("spor ignoreres, når brugeren kun vil advares ved ingrediens: ingen advarsel, men spor skjules ikke", () => {
     setup({ scan: product({ allergen_flags: { hvede: "traces" } }), profile: { allergens: ["hvede"] }, user: { allergenLevels: { hvede: "direct_only" } } });
     expect(screen.queryByText("Kan indeholde spor")).toBeNull();
-    expect(screen.queryByText("Allergi-advarsel")).toBeNull();
+    expect(screen.queryByText("Konflikt med din profil")).toBeNull();
     expect(screen.getAllByText(/Du har valgt ikke at få advarsel om spor/).length).toBeGreaterThan(0);
   });
 
-  it("alt kontrolleret og ingen fund: Ingen match med dine valg (aldrig ordet sikker)", () => {
+  it("alt kontrolleret og ingen fund: Ingen registrerede konflikter (aldrig ordet sikker)", () => {
     const { container } = setup({ scan: product(), profile: { allergens: ["hvede"] } });
-    expect(screen.getByText("Ingen match med dine valg")).toBeTruthy();
+    expect(screen.getByText("Ingen registrerede konflikter")).toBeTruthy();
     expect(container.textContent).not.toMatch(/100% sikker|allergifri|garanteret/i);
   });
 
@@ -79,31 +79,31 @@ describe("ResultScreen: status", () => {
     expect(screen.getByText("Kan ikke vurderes")).toBeTruthy();
     expect(screen.getByText("Ingrediensliste mangler")).toBeTruthy();
     expect(screen.getByText("Indsend ingrediensliste")).toBeTruthy();
-    expect(screen.queryByText("Ingen match med dine valg")).toBeNull();
+    expect(screen.queryByText("Ingen registrerede konflikter")).toBeNull();
   });
 
   it("valgt allergen uden flag (men med ingrediensliste): Kan ikke vurderes og valget samles som ikke kontrolleret", () => {
     setup({ scan: product({ allergen_flags: { hvede: "no" } }), profile: { allergens: ["hvede", "jordnoedder"] } });
     expect(screen.getByText("Kan ikke vurderes")).toBeTruthy();
     expect(screen.getByText("1 valg kan ikke kontrolleres")).toBeTruthy();
-    expect(screen.queryByText("Ingen match med dine valg")).toBeNull();
+    expect(screen.queryByText("Ingen registrerede konflikter")).toBeNull();
   });
 
   it("et fund vinder over manglende data (rød trods ukendte valg)", () => {
     setup({ scan: product({ allergen_flags: { hvede: "yes" } }), profile: { allergens: ["hvede", "jordnoedder"] } });
-    expect(screen.getByText("Allergi-advarsel")).toBeTruthy();
+    expect(screen.getByText("Konflikt med din profil")).toBeTruthy();
   });
 });
 
 describe("ResultScreen: flere personer og familie", () => {
   const child = { id: "k1", name: "Maja", allergens: ["hvede"], custom: [], diets: [], levels: {}, eNumbers: [] };
 
-  it("én persons allergi gør samlet resultat til Passer ikke til alle", () => {
+  it("én persons allergi gør samlet resultat til Konflikt med din profil", () => {
     setup({
       scan: product({ ingredients: "Hvedemel", allergen_flags: { hvede: "yes" } }),
       profile: { allergens: [] }, family: [child], activeProfiles: ["me", "k1"],
     });
-    expect(screen.getByText("Passer ikke til alle")).toBeTruthy();
+    expect(screen.getByText("Konflikt med din profil")).toBeTruthy();
     expect(screen.getByText("Maja")).toBeTruthy();
     expect(screen.getByText("Dig")).toBeTruthy();
   });
@@ -113,7 +113,7 @@ describe("ResultScreen: flere personer og familie", () => {
       scan: product({ ingredients: "Hvedemel", allergen_flags: { hvede: "yes" } }),
       profile: { allergens: [] }, family: [child], activeProfiles: ["me"],
     });
-    expect(screen.queryByText("Allergi-advarsel")).toBeNull();
+    expect(screen.queryByText("Konflikt med din profil")).toBeNull();
     expect(screen.queryByText("Maja")).toBeNull();
   });
 
@@ -123,15 +123,15 @@ describe("ResultScreen: flere personer og familie", () => {
       scan: product({ ingredients: "Hvedemel", allergen_flags: { hvede: "yes" } }),
       profile: { allergens: [] }, family: [account], activeProfiles: ["u9"],
     });
-    expect(screen.getByText("Allergi-advarsel")).toBeTruthy();
+    expect(screen.getByText("Konflikt med din profil")).toBeTruthy();
   });
 
-  it("flere personer og alt uden fund: Passer til alle; manglende data: aldrig Passer til alle", () => {
+  it("flere personer og alt uden fund: Ingen registrerede konflikter; manglende data: aldrig Ingen registrerede konflikter", () => {
     const { unmount } = setup({ scan: product(), profile: { allergens: ["hvede"] }, family: [child], activeProfiles: ["me", "k1"] });
-    expect(screen.getByText("Passer til alle")).toBeTruthy();
+    expect(screen.getByText("Ingen registrerede konflikter")).toBeTruthy();
     unmount();
     setup({ scan: product({ ingredients: "", allergen_flags: {} }), profile: { allergens: ["hvede"] }, family: [child], activeProfiles: ["me", "k1"] });
-    expect(screen.queryByText("Passer til alle")).toBeNull();
+    expect(screen.queryByText("Ingen registrerede konflikter")).toBeNull();
     expect(screen.getByText("Kan ikke vurderes")).toBeTruthy();
   });
 });

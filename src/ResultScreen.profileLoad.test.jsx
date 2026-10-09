@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // @ts-nocheck
 // Hotfix F2-1 (6. okt. 2026): er profilen ikke hentet, må resultatsiden aldrig vise
-// en vurdering (en tom profil gav før et grønt "Ingen match med dine valg").
+// en vurdering (en tom profil gav før et grønt "Ingen registrerede konflikter").
 
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
@@ -34,7 +34,7 @@ describe("ResultScreen uden hentet profil", () => {
     const retry = vi.fn();
     renderWith("error", retry);
     expect(screen.getByText("Din profil kunne ikke hentes")).toBeTruthy();
-    expect(screen.queryByText(/Ingen match med dine valg/)).toBeNull();
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
     fireEvent.click(screen.getByText("Prøv igen"));
     expect(retry).toHaveBeenCalled();
   });
@@ -42,13 +42,13 @@ describe("ResultScreen uden hentet profil", () => {
   it("viser ingen vurdering, mens profilen hentes", () => {
     renderWith("loading");
     expect(screen.getByText("Henter din profil …")).toBeTruthy();
-    expect(screen.queryByText(/Ingen match med dine valg/)).toBeNull();
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 
   it("vurderer som før, når profilen er hentet", () => {
     renderWith("ok");
     expect(screen.queryByText("Din profil kunne ikke hentes")).toBeNull();
     expect(screen.queryByText("Henter din profil …")).toBeNull();
-    expect(screen.getAllByText(/Ingen match med dine valg/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Ingen registrerede konflikter/).length).toBeGreaterThan(0);
   });
 });

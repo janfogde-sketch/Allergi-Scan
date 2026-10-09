@@ -44,6 +44,6 @@ describe("ResultScreen og tilbagekaldelser", () => {
   it("viser intet kort uden tilbagekaldelse", () => {
     renderIt();
     expect(screen.queryByText("Tilbagekaldt af Fødevarestyrelsen")).toBeNull();
-    expect(screen.getAllByText(/Ingen match med dine valg/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Ingen registrerede konflikter/).length).toBeGreaterThan(0);
   });
 });

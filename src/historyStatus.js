@@ -8,12 +8,13 @@
 // sept. 2026, opfølgning) — samme tekst/farve/ikon uanset hvilken skærm der
 // viser statussen. "not_found" er specifikt for Historik (et scan der ikke
 // gav noget produkt at vurdere) og findes ikke i Indkøbslisten/Favoritter.
-export const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", not_found:"var(--muted)", historical:"var(--muted)" };
-export const STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info", historical:"info" };
+export const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", not_found:"var(--muted)", historical:"var(--muted)", unknown:"var(--neutral)" };
+export const STATUS_ICON  = { danger:"warning", warn:"warning", safe:"check", not_found:"info", historical:"info", unknown:"info" };
 export const HISTORY_FILTERS = [
   { id:"all",       label:"Alle" },
-  { id:"safe",      label:"Ingen match" },
-  { id:"danger",    label:"Allergi-advarsel" },
-  { id:"warn",      label:"Øvrige advarsler" },
+  { id:"safe",      label:"Ingen konflikter" },
+  { id:"danger",    label:"Konflikt" },
+  { id:"warn",      label:"Spor" },
+  { id:"unknown",   label:"Kan ikke vurderes" },
   { id:"not_found", label:"Ikke fundet" },
 ];
