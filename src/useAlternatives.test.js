@@ -2,7 +2,7 @@
 // Alternativer skal ligne produktet — ikke bare dele hovedkategori
 // (live-test 30. sept. 2026: Coca-Cola foreslået til en drikkeyoghurt).
 import { describe, it, expect } from "vitest";
-import { similarityScore } from "./useAlternatives.js";
+import { similarityScore, sameProductType } from "./useAlternatives.js";
 
 describe("similarityScore", () => {
   const cola = { name: "Coca Cola Zero", brand: "Coca-Cola", category: "Drikkevarer", category_original: "Drikkevarer > Sodavand > Cola" };
@@ -35,5 +35,14 @@ describe("similarityScore — tærskel", () => {
     const lindt = { name: "Hello Crunchy Nougat", brand: "Lindt", category_original: "Snacks" };
     const pb = { name: "Peanut Butter Crunchy", brand: "Coop", category_original: "Kolonial > Pålæg > Peanutbutter" };
     expect(similarityScore(lindt, pb)).toBeLessThan(3);
+  });
+});
+
+describe("sameProductType", () => {
+  const base = { name: "Kakaomælk", category: "Drikkevarer", subcategory: "Mælkedrik", category_original: "Drikkevarer > Mælk > Kakao" };
+  it("kræver samme type, ikke kun samme hovedkategori", () => {
+    expect(sameProductType(base, { name: "Cola", category: "Drikkevarer", subcategory: "Sodavand" })).toBe(false);
+    expect(sameProductType(base, { name: "Letmælk", subcategory: "Mælkedrik" })).toBe(true);
+    expect(sameProductType(base, { name: "Økologisk kakaomælk" })).toBe(true);
   });
 });

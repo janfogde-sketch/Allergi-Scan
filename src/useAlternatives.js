@@ -54,6 +54,21 @@ export function similarityScore(base, candidate) {
   return score;
 }
 
+// Samme produkttype/anvendelse: samme underkategori, mindst tre fælles led i butikkens kategori-sti eller et fælles navneord.
+// Samme hovedkategori alene er ikke nok (en drik er ikke et alternativ til en anden slags drik).
+export function sameProductType(base, candidate) {
+  if (base.subcategory && candidate.subcategory && base.subcategory === candidate.subcategory) return true;
+  const a = categoryPath(base.category_original), b = categoryPath(candidate.category_original);
+  let shared = 0;
+  while (shared < a.length && shared < b.length && a[shared] === b[shared]) shared++;
+  if (shared >= 3) return true;
+  const cw = nameTokens(candidate);
+  return nameTokens(base).some(w => cw.includes(w));
+}
+
+// Kandidaten skal have en reel ingrediensliste, ellers er "ingen konflikter" ikke dokumenteret.
+const hasUsableIngredients = p => typeof p.ingredients_text === "string" && p.ingredients_text.trim().length >= 8;
+
 export function useAlternatives({ accessToken, activeIds, activeLevels }) {
   const [alternatives, setAlternatives]   = useState([]);
   const [altLoading, setAltLoading]       = useState(false);
@@ -82,9 +97,9 @@ export function useAlternatives({ accessToken, activeIds, activeLevels }) {
 
       const ranked = results
         .map(p => ({ p, score: similarityScore(base, p) }))
-        .filter(x => x.score >= MIN_SIMILARITY)
+        .filter(x => x.score >= MIN_SIMILARITY && sameProductType(base, x.p) && hasUsableIngredients(x.p))
         .sort((x, y) => y.score - x.score);
-      setAlternatives(ranked.slice(0, 5).map(x => x.p));
+      setAlternatives(ranked.slice(0, 8).map(x => x.p));
     } catch {
       setAlternatives([]);
     }

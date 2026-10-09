@@ -3,7 +3,7 @@ import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
-import { Icon, IngredientsList, ProductImage, ListPickerSheet, showToast, StateBox } from "./SharedComponents.jsx";
+import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -16,6 +16,9 @@ import { useMeasuredHeight } from "./useMeasuredHeight.js";
 
 import { makeResultSections } from "./ResultSections.jsx";
 
+
+// Antal alternativer, der vises som standard; resten bag "Se flere alternativer".
+const ALT_VISIBLE = 3;
 
 export default function ResultScreen({
   scanResult,
@@ -39,6 +42,8 @@ export default function ResultScreen({
   const [addedToList, setAddedToList] = React.useState(false);
   const [showListPicker, setShowListPicker] = React.useState(false);
   const [unknownOpen, setUnknownOpen] = React.useState(false);
+  const [altExpanded, setAltExpanded] = React.useState(false);
+  const [confirmAddOpen, setConfirmAddOpen] = React.useState(false);
   // Nulstil "tilføjet"-kvitteringen når man ser et nyt produkt — ResultScreen
   // forbliver monteret på tværs af scanninger, kun scanResult skifter.
   React.useEffect(() => { setAddedToList(false); setShowListPicker(false); setUnknownOpen(false); }, [scanResult?.code]);
@@ -264,7 +269,7 @@ export default function ResultScreen({
         if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: allergenChoiceLabel(a), reason: "Spor nævnt på pakken (du har valgt ikke at få advarsel om spor)" };
         return { status: "trace", label: allergenChoiceLabel(a), reason: "Kan indeholde spor" };
       }
-      if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: "Ikke fundet i de registrerede oplysninger" };
+      if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: "Ikke fundet" };
       return { status: "unknown", label: allergenChoiceLabel(a), reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
     }).filter(Boolean);
     // Egne, fritekst-tilføjede allergier er en ren ordsøgning (matchCustomAllergens). Fundet = ✕. Ikke fundet er IKKE et ✓
@@ -290,7 +295,7 @@ export default function ResultScreen({
       if (r.ok === null || (r.ok === true && r.confidence === "low")) {
         return { status: "unknown", label: r.label, reason: r.reasons?.[0] ? `${r.reasons[0]} — kan ikke afgøres med sikkerhed.` : "Kan ikke afgøres ud fra de tilgængelige produktdata." };
       }
-      return { status: "check", label: r.label, reason: "Ikke fundet i de registrerede oplysninger" };
+      return { status: "check", label: r.label, reason: "Ikke fundet" };
     }).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
@@ -305,7 +310,7 @@ export default function ResultScreen({
     const present = new Set((scanResult.productENumbers || []).map(e => e.toUpperCase()));
     return ids.map(id => present.has(id.toUpperCase())
       ? { status: "cross", label: eNumberChoiceLabel(id), reason: "Fundet i produktet" }
-      : { status: "check", label: eNumberChoiceLabel(id), reason: "Ikke fundet i de registrerede ingredienser" }
+      : { status: "check", label: eNumberChoiceLabel(id), reason: "Ikke fundet" }
     ).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
@@ -317,7 +322,7 @@ export default function ResultScreen({
     const icon = status === "cross" ? "x" : status === "trace" ? "warning" : status === "unknown" ? "info" : "check";
     const color = status === "cross" ? "var(--red)" : status === "trace" ? "var(--amber)" : status === "unknown" ? "var(--neutral)" : "var(--green)";
     return (
-      <div style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"4px 0" }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"3px 0" }}>
         <span style={{ flexShrink:0, marginTop:2, display:"inline-flex" }}><Icon name={icon} size={13} color={color} /></span>
         <div style={{ fontSize:12.5, lineHeight:1.45, minWidth:0 }}>
           <span style={{ fontWeight:700, color:"var(--ink)" }}>{label}</span>
@@ -424,9 +429,9 @@ export default function ResultScreen({
     liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls,
     scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType,
     setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile,
-    toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef,
+    toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen,
   };
-  const { chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition } = makeResultSections(ctx);
+  const { handleAddToList, chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition } = makeResultSections(ctx);
 
   return (
     <div className="screen fade-in result-page" style={navH ? { paddingBottom: navH + 20 } : undefined}>
@@ -454,6 +459,15 @@ export default function ResultScreen({
       {/* Kan ikke vurderes: hjælp med de manglende oplysninger er den vigtigste handling, og indkøbslisten bliver sekundær nederst */}
       {cannotAssess && renderMissingData()}
       {!cannotAssess && renderAddToList()}
+      {confirmAddOpen && (
+        <ConfirmDialog
+          title="Produktet indeholder noget, du har valgt at undgå. Vil du stadig tilføje det?"
+          confirmLabel="Tilføj alligevel"
+          danger={false}
+          onConfirm={() => { setConfirmAddOpen(false); handleAddToList(true); }}
+          onCancel={() => setConfirmAddOpen(false)}
+        />
+      )}
       {showListPicker && (
         <ListPickerSheet lists={lists} onChoose={chooseListForAdd} onCancel={() => setShowListPicker(false)} />
       )}
@@ -471,14 +485,14 @@ export default function ResultScreen({
             <div className="card" style={{ marginBottom:0 }}>
               <div style={{ marginBottom:10 }}>
                 <div className="card-lbl" style={{ marginBottom:2 }}>Prøv disse i stedet</div>
-                <div style={UI.muted11mt1}>Ingen registrerede konflikter for din profil · samme kategori. Tjek altid emballagen.</div>
+                <div style={UI.muted11mt1}>Ingen registrerede konflikter for din profil · lignende produkt. Tjek altid emballagen.</div>
               </div>
               <div style={UI.colGap8}>
-                {safeAlternatives.map(p => (
+                {(altExpanded ? safeAlternatives : safeAlternatives.slice(0, ALT_VISIBLE)).map(p => (
                   <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean)}
                     aria-label={`Åbn ${productDisplayName(p)}`}
-                    style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", minHeight:56 }}>
-                    <ProductImage product={p} size={40} height={48} />
+                    style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"6px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", minHeight:52 }}>
+                    <ProductImage product={p} size={36} height={44} />
                     <div style={UI.flexMin}>
                       <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", lineHeight:1.3, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", overflowWrap:"anywhere" }}>{p.name}</div>
                       {p.brand && <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.brand}</div>}
@@ -488,6 +502,12 @@ export default function ResultScreen({
                   </button>
                 ))}
               </div>
+              {safeAlternatives.length > ALT_VISIBLE && (
+                <button type="button" onClick={() => setAltExpanded(o => !o)} aria-expanded={altExpanded}
+                  style={{ display:"block", margin:"8px auto 0", background:"none", border:"none", padding:"6px 8px", cursor:"pointer", fontFamily:"var(--f)", fontSize:12.5, fontWeight:700, color:"var(--muted)" }}>
+                  {altExpanded ? "Vis færre" : "Se flere alternativer"}
+                </button>
+              )}
             </div>
           )}
           {!altLoading && safeAlternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (

@@ -16,7 +16,7 @@ import { S } from "./resultStyles.js";
 
 // Resultatsidens sektioner (flyttet ud af ResultScreen.jsx, ren omflytning). Får den beregnede tilstand som ctx.
 export function makeResultSections(c) {
-  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef } = c;
+  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen } = c;
 
   const renderDineValg = () => {
     if (!soloProfile) return null;
@@ -31,10 +31,10 @@ export function makeResultSections(c) {
     return (
       <div className="card">
         <div className="card-lbl">Dine valg</div>
-        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <ChoiceCategory title="Allergier & intolerancer" rows={known(allergyRows)} />
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          <ChoiceCategory title="Allergier og intolerancer" rows={known(allergyRows)} />
           <ChoiceCategory title="Kostpræferencer" rows={known(dietRows)} />
-          <ChoiceCategory title="E-numre & øvrige fravalg" rows={known(eNumberRows)} />
+          <ChoiceCategory title="E-numre og øvrige fravalg" rows={known(eNumberRows)} />
           {unknownRows.length > 0 && (
             <div>
               <button type="button" onClick={() => setUnknownOpen(o => !o)} aria-expanded={unknownOpen}
@@ -56,7 +56,7 @@ export function makeResultSections(c) {
           )}
           {[...allergyRows, ...dietRows, ...eNumberRows].some(r => r.status === "check") && (
             <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.45 }}>
-              Grøn markering betyder kun, at stoffet ikke er fundet i de registrerede oplysninger, og er ikke en generel garanti for produktet.
+              Grøn betyder, at stoffet ikke er fundet i de registrerede oplysninger – ikke at produktet er garanteret sikkert.
             </div>
           )}
         </div>
@@ -74,6 +74,13 @@ export function makeResultSections(c) {
   // Produktets række på den AKTIVE liste (samme EAN/produkt-id), udledt direkte af listen,
   // så knappen opdateres med det samme, når varen tilføjes, købes eller fjernes andetsteds.
   const listItem = findProductOnList(shoppingList, { code: scanResult.code, id: scanResult.id, name: scanResult.name });
+
+  // Knappens tone følger statussen: grøn kun ved grøn status; spor og "kan ikke vurderes" er neutrale; konflikt er neutral mørk
+  // og kræver en kort bekræftelse. Fundet i profilen (rød) afgøres af samme status som bannerets.
+  const addLevel = recalls.length > 0 ? "danger" : cannotAssess ? "unknown" : isMultiProfile ? overallStatus : topStatus.level;
+  const needsConflictConfirm = addLevel === "danger";
+  const addBtnClass = addLevel === "safe" ? "btn-green btn-calm" : addLevel === "danger" ? "btn-dark" : "btn-outline";
+  const addIconColor = addLevel === "safe" || addLevel === "danger" ? "var(--on-green)" : "var(--ink2)";
 
   const renderAddToList = (secondary = false) => {
     if (listItem && !listItem.checked) {
@@ -103,12 +110,12 @@ export function makeResultSections(c) {
       );
     }
     return (
-      <button className={`btn ${secondary || addedToList ? "btn-outline" : "btn-green btn-calm"} btn-sm btn-full`} onClick={handleAddToList} aria-live="polite"
+      <button className={`btn ${secondary || addedToList ? "btn-outline" : addBtnClass} btn-sm btn-full`} onClick={() => handleAddToList()} aria-live="polite"
         style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
           ...(addedToList ? { background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--green)" } : {}) }}>
         {addedToList
           ? <><Icon name="check" size={15} color="var(--green)" /> Tilføjet til indkøbsliste</>
-          : <><Icon name="cart" size={15} color={secondary ? "var(--green)" : "var(--on-green)"} /> Tilføj til indkøbsliste</>}
+          : <><Icon name="cart" size={15} color={secondary ? "var(--ink2)" : addIconColor} /> Tilføj til indkøbsliste</>}
       </button>
     );
   };
@@ -145,7 +152,8 @@ export function makeResultSections(c) {
     </div>
   );
 
-  const handleAddToList = () => {
+  const handleAddToList = (confirmed = false) => {
+    if (needsConflictConfirm && confirmed !== true) { setConfirmAddOpen(true); return; }
     if (lists.length > 1) { setShowListPicker(true); return; }
     addToList({ name: productDisplayName({ name: scanResult.name, brand: scanResult.brand }), ean: scanResult.code, id: scanResult.id, image_url: scanResult.image_url }, activeListId)
       .then(ok => { if (ok) setAddedToList(true); });
@@ -161,8 +169,9 @@ export function makeResultSections(c) {
     // Kun et billede, der med rimelig sikkerhed tilhører produktet (EAN-match), ellers neutral placeholder.
     const heroImg = verifiedImageUrl(scanResult);
     const rawName = (scanResult.name || "").trim();
-    const heroBrandInTitle = !!scanResult.brand && !!rawName && !/\s/.test(rawName) && !rawName.toLowerCase().includes(scanResult.brand.toLowerCase());
-    const heroTitle = heroBrandInTitle ? productDisplayName({ name: rawName, brand: scanResult.brand }) : (rawName || "Produkt uden navn");
+    // Navn og producent vises som i listerne (producenten foran, aldrig dobbelt); kun registrerede data, intet gættes.
+    const heroTitle = productDisplayName({ name: rawName, brand: scanResult.brand }) || "Produkt uden navn";
+    const heroBrandInTitle = heroTitle !== rawName;
     const fav = isFavorite(scanResult.code);
     const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
     // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
@@ -533,5 +542,5 @@ export function makeResultSections(c) {
     );
   };
 
-  return { chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition };
+  return { handleAddToList, chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition };
 }

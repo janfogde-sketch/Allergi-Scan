@@ -21,7 +21,7 @@ const product = (over = {}) => ({
   status: "safe", headline: "", source: "off", ...over,
 });
 
-function setup({ scan, profile = {}, user = {}, family = [], activeProfiles = ["me"] } = {}) {
+function setup({ scan, profile = {}, user = {}, family = [], activeProfiles = ["me"], alternatives = [], addToList = vi.fn() } = {}) {
   const setScreen = vi.fn();
   const profileValue = {
     scanFamily: family, allergens: [], customAllerg: [], activeProfiles, ...profile,
@@ -31,9 +31,9 @@ function setup({ scan, profile = {}, user = {}, family = [], activeProfiles = ["
       <ProfileProvider value={profileValue}>
         <NavigationProvider value={{ setScreen }}>
           <HistoryProvider value={{ isFavorite: () => false, toggleFavorite: vi.fn() }}>
-            <ShoppingProvider value={{ lists: [], activeList: null, activeListId: null, addToList: vi.fn(), shoppingList: [], toggleItem: vi.fn() }}>
+            <ShoppingProvider value={{ lists: [], activeList: null, activeListId: null, addToList, shoppingList: [], toggleItem: vi.fn() }}>
               <ResultScreen scanResult={scan} activeENumbers={[]} selectedENumbers={[]} setKnowledgeSlug={vi.fn()} setEditStep={vi.fn()}
-                setEditIngText={vi.fn()} setEditNote={vi.fn()} setEditType={vi.fn()} alternatives={[]} altLoading={false} lookupProduct={vi.fn()} />
+                setEditIngText={vi.fn()} setEditNote={vi.fn()} setEditType={vi.fn()} alternatives={alternatives} altLoading={false} lookupProduct={vi.fn()} />
             </ShoppingProvider>
           </HistoryProvider>
         </NavigationProvider>
@@ -42,6 +42,40 @@ function setup({ scan, profile = {}, user = {}, family = [], activeProfiles = ["
   );
   return { ...render(ui), setScreen };
 }
+
+describe("ResultScreen: alternativer og tilføj til liste", () => {
+  const alt = n => ({ ean: `57000000000${n}`, name: `Alternativ ${n}`, brand: "Mærke", ingredients_text: "Vand, sukker, salt", allergen_flags: { hvede: "no" }, allergen_quality: "high" });
+  const conflict = () => product({ ingredients: "Hvedemel, vand", allergen_flags: { hvede: "yes" }, status: "danger" });
+
+  it("viser højst tre alternativer og kan folde ud og ind", () => {
+    setup({ scan: conflict(), profile: { allergens: ["hvede"] }, alternatives: [1, 2, 3, 4, 5].map(alt) });
+    expect(screen.queryByText("Alternativ 4")).toBeNull();
+    fireEvent.click(screen.getByText("Se flere alternativer"));
+    expect(screen.getByText("Alternativ 5")).toBeTruthy();
+    fireEvent.click(screen.getByText("Vis færre"));
+    expect(screen.queryByText("Alternativ 4")).toBeNull();
+  });
+
+  it("konflikt: kræver bekræftelse før tilføjelse, Annuller tilføjer intet", () => {
+    const addToList = vi.fn(() => Promise.resolve(true));
+    setup({ scan: conflict(), profile: { allergens: ["hvede"] }, addToList });
+    fireEvent.click(screen.getByText("Tilføj til indkøbsliste"));
+    expect(addToList).not.toHaveBeenCalled();
+    expect(screen.getByText(/Produktet indeholder noget, du har valgt at undgå/)).toBeTruthy();
+    fireEvent.click(screen.getByText("Annuller"));
+    expect(addToList).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Tilføj til indkøbsliste"));
+    fireEvent.click(screen.getByText("Tilføj alligevel"));
+    expect(addToList).toHaveBeenCalledTimes(1);
+  });
+
+  it("ingen konflikt: tilføjes direkte uden bekræftelse", () => {
+    const addToList = vi.fn(() => Promise.resolve(true));
+    setup({ scan: product(), profile: { allergens: ["hvede"] }, addToList });
+    fireEvent.click(screen.getByText("Tilføj til indkøbsliste"));
+    expect(addToList).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("ResultScreen: status", () => {
   it("viser ingenting uden scanResult", () => {
@@ -71,7 +105,7 @@ describe("ResultScreen: status", () => {
   it("alt kontrolleret og ingen fund: Ingen registrerede konflikter (aldrig ordet sikker)", () => {
     const { container } = setup({ scan: product(), profile: { allergens: ["hvede"] } });
     expect(screen.getByText("Ingen registrerede konflikter")).toBeTruthy();
-    expect(container.textContent).not.toMatch(/100% sikker|allergifri|garanteret/i);
+    expect(container.textContent.replace(/ikke at produktet er garanteret sikkert/gi, "")).not.toMatch(/100% sikker|allergifri|garanteret/i);
   });
 
   it("ingen ingrediensliste og ingen flag: Kan ikke vurderes, aldrig grønt", () => {

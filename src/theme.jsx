@@ -581,6 +581,8 @@ body::-webkit-scrollbar{display:none;}
 .btn-outline:hover{border-color:var(--ink2);background:var(--surface);}
 .btn-danger{background:transparent;color:var(--red);border:1.5px solid rgba(255,82,82,.3);}
 .btn-danger:hover{background:var(--red-lt);}
+.btn-dark{background:var(--ink2);color:var(--on-green);}
+.btn-dark:hover{background:var(--ink);}
 .btn.btn-calm,.btn.btn-calm:hover{box-shadow:0 1px 4px rgba(15,125,79,.18);min-height:40px;}
 .btn-sm{padding:8px 14px;font-size:12.5px;border-radius:8px;}
 .btn-ghost{background:var(--surface2);color:var(--ink2);border:1px solid var(--border);}
