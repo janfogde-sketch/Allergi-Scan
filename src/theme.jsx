@@ -952,7 +952,11 @@ body::-webkit-scrollbar{display:none;}
 button.filter-chip,button.hist-row,button.menu-item,button.row-btn{font-family:var(--f);text-align:left;width:100%;appearance:none;-webkit-appearance:none;color:inherit;}
 button.menu-item{background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;margin:0;}
 button.filter-chip{width:auto;}
-.hist-filters{display:flex;gap:8px;overflow-x:auto;margin:0 -16px 12px;padding:2px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.hist-filters-wrap{position:relative;margin:0 -16px 10px;}
+.hist-filters{display:flex;gap:6px;overflow-x:auto;padding:2px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+.hist-filters-fade{position:absolute;top:0;right:0;bottom:0;width:28px;pointer-events:none;background:linear-gradient(to right,rgba(255,255,255,0),var(--paper));}
+.hist-status{display:flex;align-items:center;gap:4px;margin-top:2px;font-size:11px;font-weight:700;min-width:0;}
+.hist-status span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .hist-filters::-webkit-scrollbar{display:none;}
 .hist-filters .filter-chip{flex-shrink:0;white-space:nowrap;min-height:36px;padding:7px 14px;}
 .row-btn{background:none;border:none;padding:0;margin:0;font-family:var(--f);color:inherit;cursor:pointer;width:100%;text-align:left;appearance:none;}
@@ -1028,7 +1032,7 @@ button.filter-chip{width:auto;}
    til samme bordered-card-behandling som .list-item — samme padding/
    baggrund/kant/radius/margin, plus samme tryk-feedback-mønster
    (:active{scale(.99)}) som andre trykbare kort i appen (fx .recipe-card). */
-.hist-row{display:flex;align-items:center;gap:12px;padding:10px 14px;min-height:60px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);transition:opacity .1s,transform .1s;}
+.hist-row{display:flex;align-items:center;gap:12px;padding:8px 14px;min-height:60px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:11px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);transition:opacity .1s,transform .1s;}
 @media (hover:hover){.hist-row:hover{opacity:.85;}}
 .hist-row:active{transform:scale(.99);}
 .menu-item{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s;}
@@ -1041,7 +1045,7 @@ button.filter-chip{width:auto;}
 .hist-dot.safe{background:var(--green-accent);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
 .hist-info{flex:1;min-width:0;}
 .hist-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px;color:var(--ink);}
-.hist-time{font-size:11px;color:var(--muted);margin-top:1px;font-weight:400;}
+.hist-time{font-size:11px;color:var(--muted);margin-top:1px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ── UTILS ── */
 .loader{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;box-shadow:var(--sh);}
