@@ -574,6 +574,7 @@ body::-webkit-scrollbar{display:none;}
 .btn-outline:hover{border-color:var(--ink2);background:var(--surface);}
 .btn-danger{background:transparent;color:var(--red);border:1.5px solid rgba(255,82,82,.3);}
 .btn-danger:hover{background:var(--red-lt);}
+.btn.btn-calm,.btn.btn-calm:hover{box-shadow:0 1px 4px rgba(15,125,79,.18);min-height:40px;}
 .btn-sm{padding:8px 14px;font-size:12.5px;border-radius:8px;}
 .btn-ghost{background:var(--surface2);color:var(--ink2);border:1px solid var(--border);}
 .btn-ghost:hover{background:var(--surface2);color:var(--ink);}
@@ -1118,10 +1119,10 @@ button.filter-chip{width:auto;}
 /* En smal/kvadratisk vare (fx en flaske) på "contain" ville ellers efterlade
    fladt grå tomrum i siderne — en sløret, opskaleret kopi af samme billede
    som baggrund udfylder boksen elegant uanset billedets facon. */
-.product-hero-imgwrap{position:relative;width:100%;height:180px;overflow:hidden;background:var(--surface2);}
+.product-hero-imgwrap{position:relative;width:100%;height:clamp(140px,38vw,152px);overflow:hidden;background:var(--surface2);}
 .product-hero-img-backdrop{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:cover;filter:blur(22px) saturate(1.3);opacity:.55;transform:scale(1.05);}
 .product-hero-img{position:relative;width:100%;height:100%;object-fit:contain;display:block;}
-.product-hero-img-placeholder{width:100%;height:180px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:72px;}
+.product-hero-img-placeholder{width:100%;height:clamp(140px,38vw,152px);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:72px;}
 .product-hero-body{padding:14px 16px;}
 .product-hero-name{font-size:19px;font-weight:700;color:var(--ink);letter-spacing:-.4px;line-height:1.2;margin-bottom:3px;}
 .product-hero-brand{font-size:13px;color:var(--muted);font-weight:400;margin-bottom:10px;}

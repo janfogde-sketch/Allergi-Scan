@@ -74,7 +74,7 @@ export function makeResultSections(c) {
     if (listItem && !listItem.checked) {
       return (
         <div style={{ marginBottom:10 }}>
-          <button className="btn btn-green btn-sm btn-full" onClick={() => { toggleItem(listItem.id); showToast(`"${listItem.name}" markeret som købt`, "success"); }}
+          <button className="btn btn-green btn-sm btn-full btn-calm" onClick={() => { toggleItem(listItem.id); showToast(`"${listItem.name}" markeret som købt`, "success"); }}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
             <Icon name="check" size={15} color="var(--on-green)" /> Markér som købt
           </button>
@@ -98,7 +98,7 @@ export function makeResultSections(c) {
       );
     }
     return (
-      <button className={`btn ${secondary || addedToList ? "btn-outline" : "btn-green"} btn-sm btn-full`} onClick={handleAddToList} aria-live="polite"
+      <button className={`btn ${secondary || addedToList ? "btn-outline" : "btn-green btn-calm"} btn-sm btn-full`} onClick={handleAddToList} aria-live="polite"
         style={{ marginBottom:10, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
           ...(addedToList ? { background:"var(--green-lt)", borderColor:"var(--green-mid)", color:"var(--green)" } : {}) }}>
         {addedToList
@@ -248,7 +248,7 @@ export function makeResultSections(c) {
           )}
           {!isMultiProfile && topStatus.level === "safe" && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
-              Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige præferencer.
+              Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige præferencer i de tilgængelige produktoplysninger.
             </div>
           )}
           {cannotAssess && (
@@ -274,7 +274,7 @@ export function makeResultSections(c) {
               </div>
             : null}
           {imageAttribution(scanResult.image_url) && (
-            <div style={{ fontSize:11, color:"var(--muted)", textAlign:"right", padding:"0 14px 6px" }}>
+            <div style={{ fontSize:11, lineHeight:1.4, color:"var(--muted)", textAlign:"right", padding:"8px 14px 6px" }}>
               Billede:{" "}
               {scanResult.code
                 ? <a href={`https://world.openfoodfacts.org/product/${encodeURIComponent(scanResult.code)}`} target="_blank" rel="noopener noreferrer" style={{ color:"var(--muted)", textDecoration:"underline" }}>Open Food Facts</a>
@@ -450,9 +450,9 @@ export function makeResultSections(c) {
       <div className="card">
         <div style={UI.udflex_aicenter_jcspacebet_mb8}>
           <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
-          <div style={UI.muted10}>{eNums.length} fundet</div>
+          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length} fundet</div>
         </div>
-        <div style={UI.wrapGap5}>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
           {eNums.map(e => {
             const info = E_NUMBERS[e];
             const name = info ? info.split("—")[0].trim() : null;
@@ -465,7 +465,7 @@ export function makeResultSections(c) {
                   setScreen(SCREENS.KNOWLEDGE);
                 }}
                 style={{
-                  display:"inline-flex", alignItems:"center", gap:4,
+                  display:"inline-flex", alignItems:"center", gap:4, maxWidth:"100%", boxSizing:"border-box", lineHeight:1.35,
                   fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:8,
                   cursor:"pointer", transition:"all .1s",
                   background: isWatched ? "var(--amber-lt)" : "var(--paper2)",
@@ -473,14 +473,14 @@ export function makeResultSections(c) {
                   border: `1px solid ${isWatched ? "var(--amber-md)" : "var(--border2)"}`,
                 }}>
                 <span style={UI.uffmonospac}>{e}</span>
-                {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name.slice(0,20)}{name.length>20?"…":""}</span>}
+                {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name}</span>}
                 {isWatched && <Icon name="warning" size={10} color="var(--amber)" />}
                 <Icon name="chevronRight" size={10} color="var(--muted)" />
               </span>
             );
           })}
         </div>
-        <div style={UI.ufs10_cmuted_mt8}>
+        <div style={{ fontSize:11, lineHeight:1.4, color:"var(--muted)", marginTop:10 }}>
           Tryk på et E-nummer for at læse mere i leksikonet
         </div>
       </div>
@@ -526,9 +526,9 @@ export function makeResultSections(c) {
         {cannotAssess && <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:8, lineHeight:1.4 }}>Næringsdata findes, men siger ikke noget om dine allergier.</div>}
         <div style={UI.udflex_fdcolumn}>
           {rows.map(([label, value], i) => (
-            <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
-              <span style={{ fontSize:13, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
-              <span style={S.h13b}>{value}</span>
+            <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:12, minHeight:36, boxSizing:"border-box", padding:"8px 0", borderBottom: i < rows.length-1 ? "1px solid var(--border)" : "none" }}>
+              <span style={{ fontSize:13, lineHeight:1.4, color: label.startsWith("—") ? "var(--muted)" : "var(--ink2)", paddingLeft: label.startsWith("—") ? 12 : 0 }}>{label}</span>
+              <span style={{ ...S.h13b, lineHeight:1.4, textAlign:"right", whiteSpace:"nowrap", fontVariantNumeric:"tabular-nums" }}>{value}</span>
             </div>
           ))}
         </div>
