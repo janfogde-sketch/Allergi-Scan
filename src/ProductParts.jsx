@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileWarnLabel, profileMatchLabel, imageAttribution } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, computeProfileResults, extractENumbers, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
 import { UI } from "./styleUtils.js";
 import { Icon } from "./Icons.jsx";
 
@@ -152,8 +152,7 @@ export function getProductIcon(product) {
 
 export function ProductImage({ product, size = 64 }) {
   if (product?.image_url) {
-    // Kildeangivelse (CC BY-SA): lille "OFF"-mærke nederst til højre på Open Food Facts-billeder.
-    const credited = !!imageAttribution(product.image_url);
+    // Ingen "OFF"-mærke på miniaturer (Bjørn, 9. okt. 2026); kreditering står på produktsiden og samlet i Indstillinger.
     return (
       <span style={{ position:"relative", display:"inline-flex", flexShrink:0, width:size, height:size }}>
         <img
@@ -166,12 +165,6 @@ export function ProductImage({ product, size = 64 }) {
         <div style={{ width:size, height:size, background:"var(--paper2)", borderRadius:8, display:"none", alignItems:"center", justifyContent:"center", fontSize:size*0.5 }}>
           {getProductIcon(product)}
         </div>
-        {credited && (
-          <span title={imageAttribution(product.image_url)} aria-label={imageAttribution(product.image_url)}
-            style={{ position:"absolute", right:2, bottom:2, fontSize:8, lineHeight:1, fontWeight:700, color:"var(--muted)", background:"var(--paper)", border:"1px solid var(--border)", borderRadius:4, padding:"1px 3px" }}>
-            OFF
-          </span>
-        )}
       </span>
     );
   }

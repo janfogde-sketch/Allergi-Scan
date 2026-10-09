@@ -465,7 +465,7 @@ export default function ListScreen({
             <div key={item.id} className="list-item">
               <div className="list-check" role="checkbox" aria-checked="false" aria-label={`Markér "${item.name}" som købt`} tabIndex={0}
                 onClick={() => handleToggleItem(item.id, false)} onKeyDown={e => e.key === "Enter" && handleToggleItem(item.id, false)} />
-              {item.ean && <ProductImage product={item} size={36} />}
+              {item.ean && <ProductImage product={item} size={48} />}
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
                   ? <div className="list-name" role="link" tabIndex={0} style={{ cursor:"pointer" }}
@@ -515,7 +515,7 @@ export default function ListScreen({
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
                 onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}><Icon name="check" size={12} color="#fff" /></div>
-              {item.ean && <ProductImage product={item} size={36} />}
+              {item.ean && <ProductImage product={item} size={48} />}
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean
                   ? <div className="list-name done" role="link" tabIndex={0} style={{ cursor:"pointer" }}

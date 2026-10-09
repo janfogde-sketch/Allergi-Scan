@@ -34,6 +34,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const [historyFilter, setHistoryFilter] = useState("all");
   // "Ryd": fjerner kun brugerens egen scanningshistorik (favoritter, produkter, profiler og lister røres ikke). Skjult, når der intet er at rydde.
   const [confirmClear, setConfirmClear] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const hasOwnHistory = history.some(h => !h.user_id || h.user_id === userId);
   const doClear = async () => {
     setConfirmClear(false);
@@ -118,10 +119,23 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       <div style={{ position:"relative" }}>
         <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
         {hasOwnHistory && (
-          <button type="button" onClick={() => setConfirmClear(true)}
-            style={{ position:"absolute", right:-8, top:"50%", transform:"translateY(-50%)", minWidth:44, minHeight:44, padding:"0 8px", background:"none", border:"none", cursor:"pointer", fontFamily:"var(--f)", fontSize:13, fontWeight:700, color:"var(--ink2)" }}>
-            Ryd
-          </button>
+          <div style={{ position:"absolute", right:-8, top:"50%", transform:"translateY(-50%)" }}>
+            <button type="button" aria-label="Flere valg" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}
+              style={{ minWidth:44, minHeight:44, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <Icon name="more" size={20} color="var(--ink2)" />
+            </button>
+            {menuOpen && (
+              <>
+                <div onClick={() => setMenuOpen(false)} style={{ position:"fixed", inset:0, zIndex:40 }} />
+                <div role="menu" style={{ position:"absolute", right:8, top:"100%", zIndex:41, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", minWidth:160, overflow:"hidden" }}>
+                  <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setConfirmClear(true); }}
+                    style={{ width:"100%", minHeight:44, padding:"0 14px", background:"none", border:"none", cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", fontSize:13, fontWeight:600, color:"var(--ink)" }}>
+                    Ryd historik
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
       <div className="screen-sub">
@@ -187,7 +201,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
           eksisterende, men hidtil ubrugte .filter-chip-klasse
           (theme.jsx) i stedet for at style'e nye chips til formålet. */}
       {!historyLoading && history.length >= 10 && (
-        <div style={{ ...UI.wrapGap7, marginBottom:12 }}>
+        <div className="hist-filters" role="group" aria-label="Filtrér historik">
           {HISTORY_FILTERS.map(f => (
             <button type="button" key={f.id} className={`filter-chip${historyFilter===f.id?" active":""}`} aria-pressed={historyFilter===f.id} onClick={() => setHistoryFilter(f.id)}>
               {f.label}
@@ -219,10 +233,10 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
                 charcoal/grå ikonstil som resten af appens Icon-
                 bibliotek, ikke endnu en emoji-variant. */}
             {isNotFound
-              ? <div style={{ width:40, height:40, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              ? <div style={{ width:48, height:48, background:"var(--paper2)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                   <Icon name="barcode" size={19} color="var(--muted)" />
                 </div>
-              : <ProductImage product={prod} size={40} />}
+              : <ProductImage product={prod} size={48} />}
             <div className="hist-info" style={{ marginLeft:2 }}>
               <div className="hist-name">{name}</div>
               <div className="hist-time">
@@ -249,6 +263,12 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
                 "produkt ikke fundet" har intet resultat at vise (26.
                 sept. 2026, brugerfeedback). Samme chevron-mønster som
                 fx ProfileMenu.jsx's menupunkter. */}
+            {isNotFound && (
+              <button type="button" className="btn btn-outline btn-sm" style={{ flexShrink:0, minHeight:36, padding:"6px 12px", fontSize:12 }}
+                onClick={(e) => { e.stopPropagation(); const ean = h.ean_scanned || h.code; if (ean) lookupProduct(ean); }}>
+                Tilføj produkt
+              </button>
+            )}
             {!isNotFound && (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0 }}>
                 <path strokeLinecap="round" d="M9 5l7 7-7 7"/>
