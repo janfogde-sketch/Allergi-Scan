@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, STATUS_TEXT } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -103,6 +103,10 @@ export default function ResultScreen({
     nutrition: scanResult.nutrition,
     productENumbers: scanResult.productENumbers,
   });
+
+  // Alternativer (9. okt. 2026): kun produkter, der efter det fælles statussystem har GRØN status for ALLE aktive profilers valg (inkl. E-numre,
+  // egne allergier og kostpræferencer, med tilstrækkelige data). Spor, konflikt og mangelfulde data udelades. Det er ikke en garanti.
+  const safeAlternatives = (alternatives || []).filter(p => evaluateProductForProfiles(resultProfilesRaw, p).level === "safe");
 
   const isMultiProfile = profileResults.length > 1;
   const overallStatus = !isMultiProfile ? scanResult.status
@@ -254,13 +258,13 @@ export default function ResultScreen({
       const a = ALLERGENS.find(x => x.id === id);
       if (!a) return null;
       const val = effectiveAllergenFlag(flags, id);
-      if (val === "yes") return { status: "cross", label: allergenChoiceLabel(a), reason: "Fundet i produktet." };
+      if (val === "yes") return { status: "cross", label: allergenChoiceLabel(a), reason: "Fundet i produktet" };
       if (val === "traces") {
         // Brugeren reagerer kun på direkte indhold: spor er ikke en advarsel, men skjules ikke
-        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: allergenChoiceLabel(a), reason: "Pakken nævner spor. Du har valgt ikke at få advarsel om spor." };
-        return { status: "trace", label: allergenChoiceLabel(a), reason: "Kan indeholde spor i produktet." };
+        if (ignoresTraces(soloProfile.levels, id)) return { status: "check", label: allergenChoiceLabel(a), reason: "Spor nævnt på pakken (du har valgt ikke at få advarsel om spor)" };
+        return { status: "trace", label: allergenChoiceLabel(a), reason: "Kan indeholde spor" };
       }
-      if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: null };
+      if (val === "no") return { status: "check", label: allergenChoiceLabel(a), reason: "Ikke fundet i de registrerede oplysninger" };
       return { status: "unknown", label: allergenChoiceLabel(a), reason: "Kan ikke afgøres ud fra de tilgængelige produktdata." };
     }).filter(Boolean);
     // Egne, fritekst-tilføjede allergier er en ren ordsøgning (matchCustomAllergens). Fundet = ✕. Ikke fundet er IKKE et ✓
@@ -268,7 +272,7 @@ export default function ResultScreen({
     const customRows = (soloProfile.custom || []).map(term => {
       const found = liveCustom.some(m => m.toLowerCase() === term.toLowerCase());
       return found
-        ? { status: "cross", label: term, reason: "Fundet i ingredienslisten (fritekst)." }
+        ? { status: "cross", label: term, reason: "Fundet i ingredienslisten (fritekst)" }
         : { status: "unknown", label: term, reason: "Ordet står ikke i ingredienslisten. Andre navne og spor fanges ikke, så tjek selv pakken." };
     });
     return [...rows, ...customRows].sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
@@ -286,7 +290,7 @@ export default function ResultScreen({
       if (r.ok === null || (r.ok === true && r.confidence === "low")) {
         return { status: "unknown", label: r.label, reason: r.reasons?.[0] ? `${r.reasons[0]} — kan ikke afgøres med sikkerhed.` : "Kan ikke afgøres ud fra de tilgængelige produktdata." };
       }
-      return { status: "check", label: r.label, reason: null };
+      return { status: "check", label: r.label, reason: "Ikke fundet i de registrerede oplysninger" };
     }).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
@@ -300,35 +304,36 @@ export default function ResultScreen({
     }
     const present = new Set((scanResult.productENumbers || []).map(e => e.toUpperCase()));
     return ids.map(id => present.has(id.toUpperCase())
-      ? { status: "cross", label: eNumberChoiceLabel(id), reason: "Fundet i produktet." }
-      : { status: "check", label: eNumberChoiceLabel(id), reason: null }
+      ? { status: "cross", label: eNumberChoiceLabel(id), reason: "Fundet i produktet" }
+      : { status: "check", label: eNumberChoiceLabel(id), reason: "Ikke fundet i de registrerede ingredienser" }
     ).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
   // Standardforklaringer på "kan ikke afgøres" gentages ikke pr. valg: den samlede linje i "Dine valg" siger det én gang.
   const GENERIC_UNKNOWN_REASONS = ["Kan ikke afgøres ud fra de tilgængelige produktdata.", "Ingrediensliste mangler — kan ikke afgøres."];
-  const ChoiceRow = ({ status, label, reason, crossColor = "var(--red)" }) => {
+  const ChoiceRow = ({ status, label, reason }) => {
     if (status === "unknown" && GENERIC_UNKNOWN_REASONS.includes(reason)) reason = null;
+    // Ens ikoner og farver (9. okt. 2026): rød = fundet, orange = spor, grøn = ikke fundet i de registrerede oplysninger, grå = kan ikke afgøres.
     const icon = status === "cross" ? "x" : status === "trace" ? "warning" : status === "unknown" ? "info" : "check";
-    const color = status === "cross" ? crossColor : status === "trace" ? "var(--amber)" : status === "unknown" ? "var(--muted)" : "var(--green)";
+    const color = status === "cross" ? "var(--red)" : status === "trace" ? "var(--amber)" : status === "unknown" ? "var(--neutral)" : "var(--green)";
     return (
-      <div style={{ display:"flex", alignItems:"flex-start", gap:6, padding:"4px 0" }}>
-        <Icon name={icon} size={13} color={color} />
-        <div style={{ fontSize:12.5, lineHeight:1.4 }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"4px 0" }}>
+        <span style={{ flexShrink:0, marginTop:2, display:"inline-flex" }}><Icon name={icon} size={13} color={color} /></span>
+        <div style={{ fontSize:12.5, lineHeight:1.45, minWidth:0 }}>
           <span style={{ fontWeight:700, color:"var(--ink)" }}>{label}</span>
-          {reason && <div style={{ color:"var(--muted)", fontSize:11.5, marginTop:1 }}>{reason}</div>}
+          {reason && <span style={{ color: status === "check" ? "var(--muted)" : color, fontWeight: status === "check" ? 400 : 600 }}> – {reason}</span>}
         </div>
       </div>
     );
   };
 
-  const ChoiceCategory = ({ title, rows, crossColor }) => {
+  const ChoiceCategory = ({ title, rows }) => {
     if (rows.length === 0) return null;
     return (
       <div>
         <div style={UI.ufs9_cmuted_fw700_ttuppercas_ls4px_mb4}>{title}</div>
         <div style={{ display:"flex", flexDirection:"column" }}>
-          {rows.map((r, i) => <ChoiceRow key={i} {...r} crossColor={crossColor} />)}
+          {rows.map((r, i) => <ChoiceRow key={i} {...r} />)}
         </div>
       </div>
     );
@@ -424,7 +429,7 @@ export default function ResultScreen({
   const { chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition } = makeResultSections(ctx);
 
   return (
-    <div className="screen fade-in" style={navH ? { paddingBottom: navH + 20 } : undefined}>
+    <div className="screen fade-in result-page" style={navH ? { paddingBottom: navH + 20 } : undefined}>
 
       {/* Demo-banner — kun for "Prøv en demo-scanning" på HOME, aldrig et rigtigt scan */}
       {scanResult.isDemo && (
@@ -462,31 +467,30 @@ export default function ResultScreen({
               <div style={UI.muted13}>Finder alternativer…</div>
             </div>
           )}
-          {!altLoading && alternatives.length > 0 && (
-            <div style={{ background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:14, padding:"14px 16px" }}>
-              <div style={UI.udflex_aicenter_g8_mb12}>
-                <Icon name="check" size={18} color="var(--green)" />
-                <div>
-                  <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
-                  <div style={UI.muted11mt1}>Ingen registrerede konflikter · samme kategori</div>
-                </div>
+          {!altLoading && safeAlternatives.length > 0 && (
+            <div className="card" style={{ marginBottom:0 }}>
+              <div style={{ marginBottom:10 }}>
+                <div className="card-lbl" style={{ marginBottom:2 }}>Prøv disse i stedet</div>
+                <div style={UI.muted11mt1}>Ingen registrerede konflikter for din profil · samme kategori. Tjek altid emballagen.</div>
               </div>
               <div style={UI.colGap8}>
-                {alternatives.map(p => (
-                  <div key={p.ean} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}
-                    onClick={() => lookupProduct?.(p.ean)}>
-                    <ProductImage product={p} size={40} />
+                {safeAlternatives.map(p => (
+                  <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean)}
+                    aria-label={`Åbn ${productDisplayName(p)}`}
+                    style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", minHeight:56 }}>
+                    <ProductImage product={p} size={40} height={48} />
                     <div style={UI.flexMin}>
-                      <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{p.name}</div>
-                      <div style={UI.muted11mt1}>{p.brand}</div>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--ink)", lineHeight:1.3, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", overflowWrap:"anywhere" }}>{p.name}</div>
+                      {p.brand && <div style={{ fontSize:11, color:"var(--muted)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.brand}</div>}
+                      <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, fontWeight:700, color:"var(--green)", marginTop:2 }}><Icon name="check" size={11} color="var(--green)" /> {STATUS_TEXT.safe}</div>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}><Icon name="check" size={11} color="var(--green)" /> Ingen konflikter</div>
-                  </div>
+                    <Icon name="chevronRight" size={14} color="var(--muted)" />
+                  </button>
                 ))}
               </div>
             </div>
           )}
-          {!altLoading && alternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (
+          {!altLoading && safeAlternatives.length === 0 && (scanResult.status === "danger" || scanResult.status === "warn") && (
             <div style={UI.udflex_aicenter_g10_p12px14px_bgsurface_bd1pxsolid_br12}>
               <Icon name="search" size={16} color="var(--muted)" />
               <div style={UI.ufs12_cmuted_lh15}>

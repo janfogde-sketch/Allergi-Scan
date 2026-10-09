@@ -282,6 +282,10 @@ body::-webkit-scrollbar{display:none;}
   -webkit-mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
   mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
+/* Dækkende header (9. okt. 2026, Bjørn): på alle skærme undtagen forsiden (kamera/baggrundsfoto) står indholdet ikke og skinner igennem ved scroll. */
+.app-solid-header .topbar::before{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;-webkit-mask-image:none;mask-image:none;box-shadow:0 1px 0 var(--border);}
+/* Produktsiden (9. okt. 2026): flade kort med diskret kant, produktbilledet er det primære element. */
+.result-page .card,.result-page .product-hero{box-shadow:none;}
 .topbar-logo{display:flex;align-items:center;gap:8px;}
 /* Header-tekstlogo (27. sept. 2026, "Opdater EatSafe-headeren"-brief) —
    erstatter det fulde EatSafeLogo-billedeaktiv (symbol+ordmærke) KUN i

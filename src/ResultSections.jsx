@@ -32,9 +32,9 @@ export function makeResultSections(c) {
       <div className="card">
         <div className="card-lbl">Dine valg</div>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <ChoiceCategory title="Allergier & intolerancer" rows={known(allergyRows)} crossColor="var(--red)" />
-          <ChoiceCategory title="Kostpræferencer" rows={known(dietRows)} crossColor="var(--amber)" />
-          <ChoiceCategory title="E-numre & øvrige fravalg" rows={known(eNumberRows)} crossColor="var(--amber)" />
+          <ChoiceCategory title="Allergier & intolerancer" rows={known(allergyRows)} />
+          <ChoiceCategory title="Kostpræferencer" rows={known(dietRows)} />
+          <ChoiceCategory title="E-numre & øvrige fravalg" rows={known(eNumberRows)} />
           {unknownRows.length > 0 && (
             <div>
               <button type="button" onClick={() => setUnknownOpen(o => !o)} aria-expanded={unknownOpen}
@@ -52,6 +52,11 @@ export function makeResultSections(c) {
                   {unknownRows.map((r, i) => <ChoiceRow key={i} {...r} />)}
                 </div></div>
               )}
+            </div>
+          )}
+          {[...allergyRows, ...dietRows, ...eNumberRows].some(r => r.status === "check") && (
+            <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.45 }}>
+              Grøn markering betyder kun, at stoffet ikke er fundet i de registrerede oplysninger, og er ikke en generel garanti for produktet.
             </div>
           )}
         </div>
@@ -155,6 +160,9 @@ export function makeResultSections(c) {
     const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
     // Kun et billede, der med rimelig sikkerhed tilhører produktet (EAN-match), ellers neutral placeholder.
     const heroImg = verifiedImageUrl(scanResult);
+    const rawName = (scanResult.name || "").trim();
+    const heroBrandInTitle = !!scanResult.brand && !!rawName && !/\s/.test(rawName) && !rawName.toLowerCase().includes(scanResult.brand.toLowerCase());
+    const heroTitle = heroBrandInTitle ? productDisplayName({ name: rawName, brand: scanResult.brand }) : (rawName || "Produkt uden navn");
     const fav = isFavorite(scanResult.code);
     const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
     // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
@@ -180,29 +188,13 @@ export function makeResultSections(c) {
     // Konkrete navne under headline, vist som chips/tags (krav 1: "hvis flere
     // ting udløser resultatet, må de gerne vises som korte chips/tags") — kun
     // ved én aktiv profil, hvor topStatus.names allerede er de præcise fund.
-    const topNames = !isMultiProfile && topStatus.names?.length > 0 ? topStatus.names : null;
+    const topNames = !isMultiProfile && topStatus.reasons?.length > 0 ? topStatus.reasons : null;
     // Kort, konkret forklaring direkte i resultatkortet (krav 14: "Forklaring:
     // 'Produktet indeholder mælkeprotein.'") — udledt af det første reelle
     // fund, ikke en generisk sætning. Kun for de to advarselstilstande; grøn/
     // grå har allerede deres egen forklarende sætning nedenfor.
-    const topExplanation = isMultiProfile ? null : (() => {
-      if (topStatus.level === "danger") {
-        const first = [...findings.customMatches, ...findings.allergyMatches, ...findings.intoleranceMatches][0];
-        if (!first) return null;
-        return first.severity === "traces" ? `Produktet kan indeholde spor af ${first.label}.` : `Produktet indeholder ${first.label}.`;
-      }
-      if (topStatus.level === "warn") {
-        if (findings.traceMatches[0]) return `Produktet kan indeholde spor af ${findings.traceMatches.map(m => m.label).join(", ")}.`;
-        const firstDiet = findings.dietFails[0];
-        if (firstDiet?.reasons?.[0]) {
-          const r = firstDiet.reasons[0];
-          return `Produktet ${r.charAt(0).toLowerCase()}${r.slice(1)}.`;
-        }
-        const firstE = findings.eNumberMatches[0];
-        if (firstE) return `Produktet indeholder E-nummeret ${firstE}.`;
-      }
-      return null;
-    })();
+    // Årsagerne står som chips ("Indeholder æg", "Spor af soja"), så ingen ekstra forklaringssætning gentager dem.
+    const topExplanation = null;
     const sourceInfoText = scanResult.source === "producer" || scanResult.verified_status === "verified"
       ? "Produktdata kommer direkte fra producenten eller en verificeret kilde."
       : scanResult.source === "off" || scanResult.source === "open_food_facts"
@@ -297,8 +289,9 @@ export function makeResultSections(c) {
         </div>
 
         <div className="product-hero-body">
-          <div className="product-hero-name">{scanResult.name || "Produkt uden navn"}</div>
-          {scanResult.brand && <div className="product-hero-brand">{scanResult.brand}</div>}
+          {/* Dokumenteret navn: et enkeltords-navn ("Kiks") uden producent er upræcist, så mærket sættes foran; ellers navn og producent hver for sig. */}
+          <div className="product-hero-name">{heroTitle}</div>
+          {scanResult.brand && !heroBrandInTitle && <div className="product-hero-brand">{scanResult.brand}</div>}
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
             {/* Datakilde — samme genbrugelige verifiedBadge()-komponent for
@@ -407,39 +400,40 @@ export function makeResultSections(c) {
     const myAllergens  = new Set([...liveDanger, ...liveWarning]);
     if (myAllergens.has("coeliaki")) myAllergens.add("gluten");
     const glutenLabel = (a) => (a.id === "gluten" && cereals.length > 0 ? `Gluten (${cereals.join(", ")})` : a.label);
-    const otherPresent = present.filter(([k]) => !myAllergens.has(k));
-    const otherTraces  = traces.filter(([k])  => !myAllergens.has(k));
+    // Samme oplysning vises kun én gang: et allergen, der både er deklareret og står som spor, vises som indhold; og "Gluten (hvede)" udelades,
+    // når "Hvede" allerede står (samme kilde).
+    const wheatOnly = cereals.length > 0 && cereals.every(c => c.toLowerCase() === "hvede");
+    const dupGluten = (k) => k === "gluten" && wheatOnly && flags.hvede === "yes";
+    const otherPresent = present.filter(([k]) => !myAllergens.has(k) && !dupGluten(k));
+    const presentIds = new Set(otherPresent.map(([k]) => k));
+    const otherTraces  = traces.filter(([k])  => !myAllergens.has(k) && !presentIds.has(k) && !dupGluten(k));
     if (!otherPresent.length && !otherTraces.length) return null;
+    const chip = (k, traceOnly) => {
+      const a = ALLERGENS.find(x => x.id === k);
+      if (!a) return null;
+      return (
+        <button type="button" key={(traceOnly ? "t-" : "p-") + k} className="tag"
+          onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
+          aria-label={`${traceOnly ? "Spor af " : "Indeholder "}${glutenLabel(a).toLowerCase()} – læs mere`}
+          style={{ background:"var(--surface2)", color:"var(--ink2)", borderColor:"var(--border2)", cursor:"pointer", fontFamily:"var(--f)" }}>
+          <AllergenGlyph a={a} size={13} /> {traceOnly ? `Spor af ${glutenLabel(a).toLowerCase()}` : glutenLabel(a)} <Icon name="chevronRight" size={11} color="var(--muted)" />
+        </button>
+      );
+    };
     return (
       <div className="card">
         <div className="card-lbl">Andre deklarerede allergener</div>
-        <div style={UI.ufs11_cmuted_mb8}>Ikke blandt dine valgte allergier</div>
+        <div style={UI.ufs11_cmuted_mb8}>Ikke blandt dine valg</div>
         {otherPresent.length > 0 && (
-          <div className="tags" style={UI.mb6}>
-            {otherPresent.map(([k]) => {
-              const a = ALLERGENS.find(x=>x.id===k);
-              return a ? (
-                <div key={k} className="tag"
-                  onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
-                  style={{ background:"var(--surface2)", color:"var(--ink)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <Icon name="chevronRight" size={11} color="var(--muted)" />
-                </div>
-              ) : null;
-            })}
+          <div style={UI.mb6}>
+            <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".6px", marginBottom:4 }}>Deklareret indhold</div>
+            <div className="tags">{otherPresent.map(([k]) => chip(k, false))}</div>
           </div>
         )}
         {otherTraces.length > 0 && (
-          <div className="tags">
-            {otherTraces.map(([k]) => {
-              const a = ALLERGENS.find(x=>x.id===k);
-              return a ? (
-                <div key={k} className="tag"
-                  onClick={() => { setScreen(SCREENS.KNOWLEDGE); setKnowledgeSlug(k); }}
-                  style={{ background:"var(--surface)", color:"var(--muted)", borderColor:"var(--border2)", cursor:"pointer" }}>
-                  spor: <AllergenGlyph a={a} size={13} /> {glutenLabel(a)} <Icon name="chevronRight" size={11} color="var(--muted)" />
-                </div>
-              ) : null;
-            })}
+          <div>
+            <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".6px", marginBottom:4 }}>Sporoplysninger</div>
+            <div className="tags">{otherTraces.map(([k]) => chip(k, true))}</div>
           </div>
         )}
       </div>
@@ -452,7 +446,7 @@ export function makeResultSections(c) {
       <div className="card">
         <div style={UI.udflex_aicenter_jcspacebet_mb8}>
           <div className="card-lbl" style={{ marginBottom:0 }}>E-numre i produktet</div>
-          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length} fundet</div>
+          <div style={{ fontSize:11, color:"var(--muted)" }}>{eNums.length} registreret{eNums.length === 1 ? "" : "e"}</div>
         </div>
         <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
           {eNums.map(e => {
@@ -460,7 +454,8 @@ export function makeResultSections(c) {
             const name = info ? info.split("—")[0].trim() : null;
             const isWatched = activeENumbers?.includes(e);
             return (
-              <span key={e}
+              <button type="button" key={e}
+                aria-label={`${e}${name ? ", " + name : ""}${isWatched ? ", konflikt med din profil" : ""} – læs mere`}
                 onClick={() => {
                   const slug = "e-" + e.toLowerCase().replace(/^e/, "");
                   setKnowledgeSlug(slug);
@@ -469,16 +464,16 @@ export function makeResultSections(c) {
                 style={{
                   display:"inline-flex", alignItems:"center", gap:4, maxWidth:"100%", boxSizing:"border-box", lineHeight:1.35,
                   fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:8,
-                  cursor:"pointer", transition:"all .1s",
-                  background: isWatched ? "var(--amber-lt)" : "var(--paper2)",
-                  color: isWatched ? "var(--amber)" : "var(--ink2)",
-                  border: `1px solid ${isWatched ? "var(--amber-md)" : "var(--border2)"}`,
+                  cursor:"pointer", transition:"all .1s", fontFamily:"var(--f)", textAlign:"left",
+                  background: isWatched ? "var(--red-lt)" : "var(--paper2)",
+                  color: isWatched ? "var(--red)" : "var(--ink2)",
+                  border: `1px solid ${isWatched ? "var(--red-md)" : "var(--border2)"}`,
                 }}>
                 <span style={UI.uffmonospac}>{e}</span>
-                {name && <span style={{ fontWeight:400, color: isWatched ? "var(--amber)" : "var(--muted)" }}>— {name}</span>}
-                {isWatched && <Icon name="warning" size={10} color="var(--amber)" />}
+                {name && <span style={{ fontWeight:400, color: isWatched ? "var(--red)" : "var(--muted)" }}>— {name}</span>}
+                {isWatched && <Icon name="warning" size={10} color="var(--red)" />}
                 <Icon name="chevronRight" size={10} color="var(--muted)" />
-              </span>
+              </button>
             );
           })}
         </div>

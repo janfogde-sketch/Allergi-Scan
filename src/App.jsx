@@ -746,7 +746,7 @@ export default function EatSafe() {
     <AppProviders values={contextValues}>
     <>
       <style>{appCss}</style>
-      <div className="app" role="application" aria-label="EatSafe">
+      <div className={`app${screen === SCREENS.HOME ? "" : " app-solid-header"}`} role="application" aria-label="EatSafe">
         {/* App-bred baggrund — ét fast billede bag alt andet indhold, se
             .app-bg i theme.jsx for hvorfor det er en ægte position:fixed-boks
             og ikke background-attachment:fixed. 25. sept. 2026: Scan-forsidens
@@ -788,7 +788,7 @@ export default function EatSafe() {
             samme (1. okt. 2026, samme rolige udtryk som Favoritter), også en åbnet
             besked og "Se din feedback" (Jans feedback: brødteksten lå direkte oven
             på baggrundsbilledet og var svær at læse). */}
-        {(screen === SCREENS.NOTFOUND || screen === SCREENS.ADMIN || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
+        {(screen === SCREENS.NOTFOUND || screen === SCREENS.ADMIN || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || screen === SCREENS.RESULT || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>

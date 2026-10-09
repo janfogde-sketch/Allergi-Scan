@@ -18,9 +18,14 @@ import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 // forklaring i stedet for det almindelige leksikon-opslag.
 const HIGHLIGHT_CATEGORY_STYLE = {
   allergy: { color: "var(--red)", bg: "var(--red-lt)" },
-  enumber: { color: "var(--amber)", bg: "var(--amber-lt)" },
-  diet: { color: "var(--amber)", bg: "var(--amber-lt)" },
+  // Fælles statussystem (9. okt. 2026): konflikt med valgt E-nummer eller kostpræference er rød; kun spor er orange.
+  enumber: { color: "var(--red)", bg: "var(--red-lt)" },
+  diet: { color: "var(--red)", bg: "var(--red-lt)" },
+  trace: { color: "var(--amber)", bg: "var(--amber-lt)" },
 };
+// Almindelige E-numre (ikke en konflikt for brugeren) er neutrale og klikbare, så de ikke ligner personlige konflikter.
+const NEUTRAL_E_STYLE = { color: "var(--ink2)", bg: "var(--surface2)" };
+const E_CODE_RE = /\bE[\s-]?\d{3,4}[a-z]?\b/i;
 
 function findMatchingHighlightRule(part, highlightRules) {
   if (!highlightRules?.length) return null;
@@ -138,7 +143,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
         // Rens ingrediens-tekst for opslag (fjern parenteser og ekstra tegn)
         const cleanPart = part.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim();
         const knowledgeTerm = !highlighted && isKnowledgeTerm(part);
-        const ruleStyle = rule ? (HIGHLIGHT_CATEGORY_STYLE[rule.category] || HIGHLIGHT_CATEGORY_STYLE.diet) : null;
+        const ruleStyle = rule ? (HIGHLIGHT_CATEGORY_STYLE[rule.category] || HIGHLIGHT_CATEGORY_STYLE.diet) : (useRules && knowledgeTerm && E_CODE_RE.test(part) ? NEUTRAL_E_STYLE : null);
         const handleClick = rule && onHighlightTap ? () => onHighlightTap(rule)
           : onIngredientTap ? () => onIngredientTap(cleanPart)
           : undefined;
