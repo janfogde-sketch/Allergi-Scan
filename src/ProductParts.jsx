@@ -159,7 +159,7 @@ export function ProductImage({ product, size = 64, height = size }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, onOpen, onAddToList, onList = false }) {
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, onOpen, onAddToList, onList }) {
   // To udregningsveje (25. sept. 2026, brugerfeedback: "hvilken profil
   // konflikten gælder" + "skriv årsagen eksplicit"):
   // - `profiles` (fra ListScreen.jsx, med den fulde aktive profil-liste) →
@@ -200,11 +200,11 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   const tagLabels = { vegan:"🌱 Vegansk", vegetarian:"🥦 Vegetarisk" };
   // Grøn "+"-knap når produktet er lagt på (mindst) en liste — nulstilles
   // naturligt næste gang der søges, da komponentet så får et nyt produkt/key.
-  const [added, setAdded] = React.useState(false);
+  // Tilføjet-tilstanden udledes af selve indkøbslisten (onList), så den altid er korrekt, også når varen fjernes eller købes andetsteds.
+  const done = !!onList;
   const handleAddToList = async (e) => {
     e.stopPropagation();
-    const ok = await onAddToList();
-    if (ok !== false) setAdded(true);
+    await onAddToList();
   };
   return (
     <div onClick={onOpen}
@@ -253,18 +253,14 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
         )}
       </div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, flexShrink:0, alignSelf:"center" }}>
-        <button type="button" className="btn btn-sm" aria-label={onList ? `"${productDisplayName(p)}" er allerede på listen` : added ? `"${productDisplayName(p)}" er tilføjet` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
-          // Forhindrer specifikt HER at et tap flytter fokus væk fra et søgefelt
-          // ovenover (fx ListScreens "Tilføj vare") — ellers kan søgefeltets
-          // onBlur nå at lukke resultatlisten, før klikket på selve knappen når
-          // at blive registreret. Harmløst på skærme uden den slags blur-drevet
-          // skjul (SearchScreen) — der er intet at forhindre.
+        <button type="button" className="btn btn-sm" aria-label={done ? `"${productDisplayName(p)}" er på indkøbslisten` : `Tilføj "${productDisplayName(p)}" til indkøbsliste`}
+          // Forhindrer, at et tap flytter fokus og lukker noget andet før klikket registreres.
           onMouseDown={e => e.preventDefault()}
           style={{ width:44, height:44, minHeight:44, padding:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, lineHeight:1,
-            background: added ? "var(--green)" : "var(--surface2)", color: added ? "var(--on-green)" : "var(--ink2)",
-            border: `1px solid ${added ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s", ...(onList && !added ? { background:"var(--green-selected-bg)", borderColor:"var(--green)" } : {}) }}
-          onClick={handleAddToList}><Icon name={onList && !added ? "check" : "plus"} size={18} color={added ? "var(--on-green)" : onList ? "var(--green)" : "var(--ink2)"} /></button>
-        {onList && <div style={{ fontSize:10, fontWeight:700, color:"var(--green)" }}>På listen</div>}
+            background: done ? "var(--green-selected-bg)" : "var(--surface2)", color: done ? "var(--green)" : "var(--ink2)",
+            border: `1px solid ${done ? "var(--green)" : "var(--border)"}`, borderRadius:10, transition:"all .15s" }}
+          onClick={handleAddToList}><Icon name={done ? "check" : "plus"} size={18} color={done ? "var(--green)" : "var(--ink2)"} /></button>
+        {done && <div style={{ fontSize:10, fontWeight:700, color:"var(--green)" }}>På listen</div>}
       </div>
     </div>
   );

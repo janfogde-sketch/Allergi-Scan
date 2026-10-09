@@ -180,7 +180,7 @@ body::-webkit-scrollbar{display:none;}
      tomme kanter på rigtige telefoner. Fungerer stadig som et "telefon-
      mockup"-loft på en reel desktop-browser (bredere vinduer). */
   max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
-  width:100%;position:relative;overflow-x:hidden;
+  width:100%;position:relative;overflow-x:hidden;overflow-x:clip; /* clip (ikke hidden) gør .app til INGEN scroll-beholder, så position:sticky virker (topbaren, søgefeltet); hidden er fallback til ældre browsere */
   background:#FFFFFF;
 }
 /* App-bred baggrund: ét fast billede bag alt andet indhold. 25. sept. 2026:

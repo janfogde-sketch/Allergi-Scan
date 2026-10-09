@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
 import ReactDOM from "react-dom";
+import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -60,13 +61,17 @@ export default function ListScreen({
   // ── Søg blandt produkter mens der tilføjes en vare ──────────────────────────
   const [itemResults, setItemResults]   = useState([]);
   const [itemSearching, setItemSearching] = useState(false);
+  const [itemSearchedQuery, setItemSearchedQuery] = useState(""); // senest gennemførte søgning (til "ingen produkter matcher")
   const [itemFocused, setItemFocused]   = useState(false);
   // Tastatur (9. okt. 2026, Bjørn): resultaterne står i selve siden og består uden fokus. Tastaturet lukkes ved scroll i resultaterne,
   // tryk uden for feltet, "Søg/Færdig", valg af produkt og filterskift, og åbner aldrig igen uden at brugeren trykker i feltet.
   const inputRef = useRef(null);
   const blurInput = useCallback(() => { if (document.activeElement === inputRef.current) inputRef.current?.blur(); }, []);
-  const [resultFilter, setResultFilter] = useState("all"); // all | clean | warn
+  const [resultFilter, setResultFilter] = useState("all"); // all | clean | trace | conflict | unknown
+  const resultsRef = useRef(null);
+  const [confirmAdd, setConfirmAdd] = useState(null); // produkt med rød konflikt, der afventer et bevidst valg
   const [navH, setNavH] = useState(80);
+  const topH = useMeasuredHeight(() => document.querySelector(".topbar"));
   useEffect(() => {
     if (!itemFocused) return undefined;
     const onDown = (e) => { if (e.target !== inputRef.current && !e.target.closest?.("[data-search-clear]")) blurInput(); };
@@ -103,6 +108,7 @@ export default function ListScreen({
       setItemHasMore(hit.hasMore);
       setItemTotal(hit.total);
       setItemSearching(false);
+      setItemSearchedQuery(q);
       return;
     }
     const controller = new AbortController();
@@ -119,6 +125,7 @@ export default function ListScreen({
           setItemResults(results);
           setItemHasMore(!!data.hasMore);
           setItemTotal(total);
+          setItemSearchedQuery(q);
           if (cache.size >= 30) cache.delete(cache.keys().next().value);
           cache.set(key, { at: Date.now(), results, offset, hasMore: !!data.hasMore, total });
         }
@@ -150,13 +157,18 @@ export default function ListScreen({
     finally { setItemLoadingMore(false); }
   };
 
-  const pickItemProduct = async (p) => {
-    blurInput();
-    if (findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id })) { showToast("Står allerede på listen", "info"); return false; }
+  const addProductNow = async (p) => {
     logSearchSelection(newItemName, p, accessToken);
     const ok = await addToList({ name: productDisplayName(p), ean: p.ean || p.code, id: p.id, image_url: p.image_url });
     if (ok !== false) showToast(`"${productDisplayName(p)}" tilføjet`, "success");
     return ok;
+  };
+  const pickItemProduct = async (p) => {
+    blurInput();
+    if (findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id })) { showToast("Står allerede på listen", "info"); return false; }
+    // Rød konflikt: kort advarsel først, men brugeren kan stadig vælge at tilføje produktet. Orange spor tilføjes uden ekstra bekræftelse.
+    if (evaluateProductForProfiles(activeProfileList, p).level === "danger") { setConfirmAdd(p); return false; }
+    return addProductNow(p);
   };
   // Almindelig vare uden produktvalg: aldrig to ens fritekst-varer på listen.
   const plainName = newItemName.trim();
@@ -210,13 +222,25 @@ export default function ListScreen({
   // ── Søgeresultater: rækkefølgen er søgerelevans (fra serveren); status ændrer ALDRIG rækkefølgen eller skjuler et præcist match.
   // Grupper til filtrene: "Uden konflikt" = grøn (tilstrækkelige data, ingen konflikt), "Med advarsel" = orange + rød; grå kun under "Alle".
   const itemResultsWithSafety = itemResults.map(p => ({ product: p, level: evaluateProductForProfiles(activeProfileList, p).level }));
-  const hasCleanResults = itemResultsWithSafety.some(r => r.level === "safe");
-  const hasWarnResults = itemResultsWithSafety.some(r => r.level === "warn" || r.level === "danger");
-  const showResultFilter = itemResultsWithSafety.length >= 4 && hasCleanResults && hasWarnResults;
-  const activeFilter = showResultFilter ? resultFilter : "all";
-  const visibleItemResults = itemResultsWithSafety.filter(r => activeFilter === "all" || (activeFilter === "clean" ? r.level === "safe" : (r.level === "warn" || r.level === "danger")));
+  const levelCounts = { safe:0, warn:0, danger:0, unknown:0 };
+  itemResultsWithSafety.forEach(r => { levelCounts[r.level] = (levelCounts[r.level] || 0) + 1; });
+  // Filtre (9. okt. 2026): Alle / Uden konflikt (grøn: fuld data, ingen konflikt eller spor) / Spor (orange) / Konflikt (rød) / Kan ikke vurderes (grå).
+  // Et filter vises kun, når der er produkter i det; selve rækken kun, når mindst to slags findes (ensartet adfærd på tværs af søgninger).
+  const FILTER_DEFS = [
+    { id:"all", label:"Alle", count: itemResultsWithSafety.length, match: () => true },
+    { id:"clean", label:"Uden konflikt", count: levelCounts.safe, match: l => l === "safe" },
+    { id:"trace", label:"Spor", count: levelCounts.warn, match: l => l === "warn" },
+    { id:"conflict", label:"Konflikt", count: levelCounts.danger, match: l => l === "danger" },
+    { id:"unknown", label:"Kan ikke vurderes", count: levelCounts.unknown, match: l => l === "unknown" },
+  ];
+  const availableFilters = FILTER_DEFS.filter(f => f.id === "all" || f.count > 0);
+  const showResultFilter = itemResultsWithSafety.length >= 2 && availableFilters.length >= 3;
+  const activeFilter = showResultFilter && availableFilters.some(f => f.id === resultFilter) ? resultFilter : "all";
+  const activeFilterDef = FILTER_DEFS.find(f => f.id === activeFilter);
+  const visibleItemResults = itemResultsWithSafety.filter(r => activeFilterDef.match(r.level));
   const resultOnList = (p) => !!findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id });
-  const hasResultPanel = !!newItemName.trim() && (itemSearching || itemResults.length > 0);
+  const noMatches = !!newItemName.trim() && !itemSearching && itemResults.length === 0 && itemSearchedQuery === newItemName.trim();
+  const hasResultPanel = !!newItemName.trim() && (itemSearching || itemResults.length > 0 || noMatches);
   useEffect(() => {
     const el = document.querySelector(".bottom-nav");
     if (el) setNavH(Math.round(el.getBoundingClientRect().height));
@@ -263,7 +287,7 @@ export default function ListScreen({
       )}
 
       {/* ── Tilføj vare/søg: søgefelt (og filter) øverst; resultaterne står direkte i siden under feltet ── */}
-      <div style={{ margin:"0 0 8px", padding:"8px 0" }}>
+      <div style={{ position:"sticky", top:topH, zIndex:20, margin:"0 -16px 8px", padding:"8px 16px", background: hasResultPanel ? "var(--surface)" : "transparent", borderBottom: hasResultPanel ? "1px solid var(--border)" : "1px solid transparent" }}>
         <div className="input-row" style={{ marginBottom:0 }}>
           <div style={{ position:"relative", flex:1, minWidth:0 }}>
             <input ref={inputRef} className="field search-field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
@@ -292,21 +316,21 @@ export default function ListScreen({
           )}
         </div>
         {hasResultPanel && showResultFilter && (
-          <div role="group" aria-label="Filtrér søgeresultater" style={{ display:"flex", marginTop:8, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, padding:2, gap:2 }}>
-            {[["all","Alle"],["clean","Uden konflikt"],["warn","Med advarsel"]].map(([id, label]) => (
-              <button type="button" key={id} aria-pressed={activeFilter===id} onClick={() => { blurInput(); setResultFilter(id); }}
-                style={{ flex:1, minHeight:34, padding:"0 6px", border:"none", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700,
-                  background: activeFilter===id ? "var(--green-selected-bg)" : "transparent", color: activeFilter===id ? "var(--green)" : "var(--muted)",
-                  boxShadow: activeFilter===id ? "inset 0 0 0 1.5px var(--green)" : "none" }}>
-                {label}
-              </button>
-            ))}
+          <div className="hist-filters-wrap" style={{ margin:"6px -16px 0" }}>
+            <div className="hist-filters" role="group" aria-label="Filtrér søgeresultater">
+              {availableFilters.map(f => (
+                <button type="button" key={f.id} className={`filter-chip${activeFilter===f.id?" active":""}`} aria-pressed={activeFilter===f.id}
+                  onClick={() => { blurInput(); setResultFilter(f.id); requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ block:"start" })); }}>
+                  {f.label}<span style={{ fontWeight:600, opacity:.75, marginLeft:5 }}>{f.count}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
       {hasResultPanel && (
-        <div style={{ marginBottom:12, paddingBottom:64 }}>
+        <div ref={resultsRef} style={{ marginBottom:12, paddingBottom:72, scrollMarginTop:topH + 96 }}>
           <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:10, fontWeight:800, color:"var(--neutral)", textTransform:"uppercase", letterSpacing:".6px", margin:"4px 2px 8px" }}>
             <Icon name="search" size={11} color="var(--neutral)" /> Søgeresultater
           </div>
@@ -337,10 +361,17 @@ export default function ListScreen({
           {itemSearching && itemResults.length === 0 && (
             <div style={{ padding:"10px 4px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
           )}
+          {noMatches && (
+            <div style={{ padding:"22px 8px", textAlign:"center" }}>
+              <div style={{ fontSize:13, fontWeight:700, color:"var(--ink2)" }}>Ingen produkter matcher "{newItemName.trim()}"</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:4, lineHeight:1.45 }}>Tjek stavningen, eller tilføj den som en almindelig vare.</div>
+            </div>
+          )}
           {itemResults.length > 0 && visibleItemResults.length === 0 && (
-            <div style={{ padding:"14px 4px", fontSize:12, color:"var(--muted)", textAlign:"center" }}>
-              {activeFilter === "clean" ? "Ingen af de indlæste produkter er uden konflikt med fuldt datagrundlag." : "Ingen af de indlæste produkter har en advarsel."}
-              {itemHasMore ? " Vis flere produkter for at søge videre." : ""}
+            <div style={{ padding:"18px 8px", textAlign:"center" }}>
+              <div style={{ fontSize:13, fontWeight:700, color:"var(--ink2)" }}>Ingen produkter i dette filter</div>
+              <div style={{ fontSize:12, color:"var(--muted)", marginTop:4, lineHeight:1.45 }}>Søgningen har {itemResults.length.toLocaleString("da-DK")} indlæste produkter.{itemHasMore ? " Vis flere produkter for at søge videre." : ""}</div>
+              <button type="button" className="btn btn-outline btn-sm" style={{ marginTop:10 }} onClick={() => setResultFilter("all")}>Vis alle</button>
             </div>
           )}
           {visibleItemResults.map(({ product: p }) => (
@@ -355,7 +386,7 @@ export default function ListScreen({
               <div style={{ fontSize:11, color:"var(--muted)", marginBottom: itemHasMore ? 8 : 0 }}>
                 {activeFilter === "all"
                   ? `Viser ${itemResults.length.toLocaleString("da-DK")}${itemTotal > itemResults.length ? ` af ${itemTotal.toLocaleString("da-DK")}` : ""} produkter`
-                  : `${visibleItemResults.length.toLocaleString("da-DK")} ${visibleItemResults.length === 1 ? "produkt" : "produkter"} i dette filter blandt de ${itemResults.length.toLocaleString("da-DK")} indlæste`}
+                  : `Viser ${visibleItemResults.length.toLocaleString("da-DK")} ${visibleItemResults.length === 1 ? "produkt" : "produkter"} i dette filter (af ${itemResults.length.toLocaleString("da-DK")} indlæste)`}
               </div>
               {itemHasMore && (
                 <button className="btn btn-outline btn-full btn-sm" disabled={itemLoadingMore} onClick={loadMoreItemResults}>
@@ -368,9 +399,9 @@ export default function ListScreen({
             // Sekundær, men altid tilgængelig: fast lige over bundnavigationen (portal: .screen har en transform, som ville fange position:fixed).
             <div style={{ position:"fixed", left:0, right:0, bottom:navH + 8, zIndex:40, display:"flex", justifyContent:"center", pointerEvents:"none" }}>
               <button type="button" onClick={addPlain}
-                style={{ pointerEvents:"auto", display:"flex", alignItems:"center", gap:6, width:"calc(100% - 32px)", maxWidth:448, minHeight:44, padding:"10px 12px", fontSize:12.5, fontWeight:700, fontFamily:"var(--f)", textAlign:"left", color: plainExists ? "var(--muted)" : "var(--green)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh2)", cursor:"pointer" }}>
+                style={{ pointerEvents:"auto", display:"flex", alignItems:"center", gap:6, width:"calc(100% - 32px)", maxWidth:448, minHeight:36, padding:"6px 12px", fontSize:12, fontWeight:600, fontFamily:"var(--f)", textAlign:"left", color: plainExists ? "var(--muted)" : "var(--green)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", cursor:"pointer" }}>
                 <Icon name={plainExists ? "check" : "plus"} size={13} color={plainExists ? "var(--muted)" : "var(--green)"} />
-                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? `"${plainName}" står allerede på listen` : `Tilføj "${plainName}" uden produktvalg`}</span>
+                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? `"${plainName}" står allerede på listen` : `Tilføj "${plainName}" som almindelig vare`}</span>
               </button>
             </div>,
             document.body
@@ -527,6 +558,16 @@ export default function ListScreen({
           brugerfeedback) — se ConfirmDialog i SharedComponents.jsx og
           kommentarerne ved "Slet liste"-knappen/"Ryd købte"-knappen
           ovenfor for hvorfor native confirm() er erstattet her. */}
+      {confirmAdd && (
+        <ConfirmDialog
+          title="Konflikt med din profil"
+          message={`${productDisplayName(confirmAdd)}: ${evaluateProductForProfiles(activeProfileList, confirmAdd).reasons.join(", ") || "registreret konflikt"}. Vil du alligevel tilføje produktet til listen?`}
+          confirmLabel="Tilføj alligevel"
+          danger={false}
+          onConfirm={() => { const p = confirmAdd; setConfirmAdd(null); addProductNow(p); }}
+          onCancel={() => setConfirmAdd(null)}
+        />
+      )}
       {listPendingDelete && (
         <ConfirmDialog
           title={`Slet listen "${listPendingDelete.name}"?`}
