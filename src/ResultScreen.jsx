@@ -500,7 +500,7 @@ export default function ResultScreen({
               </div>
               <div style={UI.colGap8}>
                 {(altExpanded ? safeAlternatives : safeAlternatives.slice(0, ALT_VISIBLE)).map(p => (
-                  <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean)}
+                  <button type="button" key={p.ean} onClick={() => lookupProduct?.(p.ean, { via: "search" })}
                     aria-label={`Åbn ${productDisplayName(p)}`}
                     style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"6px 10px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)", minHeight:52 }}>
                     <ProductImage product={p} size={36} height={44} />

@@ -1020,15 +1020,27 @@ export function groupHistoryDuplicates(list) {
   for (const h of list || []) {
     const isNF = (h.result || h.status) === "not_found";
     const key = historyProductKey(h);
-    if (!key) { result.push({ ...h, __count: 1 }); continue; }
+    const via = h.found_via === "search" ? "search" : "scan";
+    if (!key) { result.push({ ...h, __count: 1, __scans: via === "scan" ? 1 : 0, __searches: via === "search" ? 1 : 0 }); continue; }
     const groupKey = isNF ? `nf|${key}|${h.user_id || ""}` : historySignature(h);
     const existing = byKey.get(groupKey);
-    if (existing) { existing.__count++; continue; }
-    const group = { ...h, __count: 1 };
+    if (existing) { existing.__count++; if (via === "search") existing.__searches++; else existing.__scans++; continue; }
+    const group = { ...h, __count: 1, __scans: via === "scan" ? 1 : 0, __searches: via === "search" ? 1 : 0 };
     byKey.set(groupKey, group);
     result.push(group);
   }
   return result;
+}
+
+// Aktivitetstekst for en samlet historikpost (10. okt. 2026): scanninger og søgninger tælles hver for sig, og seneste aktivitet vises.
+// `agoLabel` er den færdige "for 51 min. siden"-tekst, `single` den enkelte posts tidstekst. Posten står som den NYESTE aktivitet, så
+// ikonet (`historyVia`) følger den seneste måde produktet blev fundet på.
+export const historyVia = h => (h?.found_via === "search" ? "search" : "scan");
+export function historyActivityText(h, { single, agoLabel }) {
+  if (!(h.__count > 1)) return single;
+  const times = n => (n === 1 ? "1 gang" : `${n} gange`);
+  const parts = [h.__scans > 0 ? `Scannet ${times(h.__scans)}` : null, h.__searches > 0 ? `Søgt ${times(h.__searches)}` : null].filter(Boolean);
+  return `${parts.join(" · ")} · Senest ${agoLabel}`;
 }
 
 // Næringsrækker til produktsiden. Kun dokumenterede værdier: manglende værdier beregnes eller gættes aldrig, og en post hvor alle

@@ -114,7 +114,7 @@ describe("runLookupProduct — cache-hit følger de profiler, der er valgt nu (F
   it("gemmer genscanningen i historikken med den nye status", async () => {
     const ctx = makeCtx({ productCacheRef: { current: { "123": cached } }, activeIds: ["aeg"] });
     await runLookupProduct("123", ctx);
-    expect(ctx.saveHistoryEntry).toHaveBeenCalledWith("123", "p1", "danger", cached.allergen_flags, ["me"]);
+    expect(ctx.saveHistoryEntry).toHaveBeenCalledWith("123", "p1", "danger", cached.allergen_flags, ["me"], "scan");
     expect(ctx.setHistory).toHaveBeenCalled();
   });
 
@@ -167,7 +167,7 @@ describe("runLookupProduct — network found path", () => {
     const result = ctx.setScanResult.mock.calls.at(-1)[0];
     expect(result.status).toBe("danger");
     expect(result.matchedDanger).toContain("laktose");
-    expect(ctx.saveHistoryEntry).toHaveBeenCalledWith("123456", "p1", "danger", { laktose: "yes" }, ["me"]);
+    expect(ctx.saveHistoryEntry).toHaveBeenCalledWith("123456", "p1", "danger", { laktose: "yes" }, ["me"], "scan");
   }, 10000);
 });
 
@@ -222,4 +222,15 @@ describe("runLookupProduct — overlapping-scan race guard", () => {
 
     expect(ctx.setScreen.mock.calls.length).toBe(callsBeforeSlowResolves);
   }, 10000);
+});
+
+describe("runLookupProduct — hvordan produktet blev fundet", () => {
+  it("via 'none' (åbnet fra Historik) opretter ingen ny historikrække", async () => {
+    const saveHistoryEntry = vi.fn();
+    const cached = { code: "123", id: "p1", status: "safe", allergen_flags: {} };
+    const ctx = { productCacheRef: { current: { "123": cached } }, scanTokenRef: { current: 0 }, saveHistoryEntry, activeIds: [], activeLevels: {}, activeCustom: [], activeENumbers: [], family: [], activeProfiles: ["me"],
+      loadAlternatives: vi.fn(), clearAlternatives: vi.fn(), setScanResult: vi.fn(), setScreen: vi.fn(), setLoading: vi.fn(), setScanError: vi.fn(), setShowIng: vi.fn(), setHistory: vi.fn() };
+    await runLookupProduct("123", ctx, { via: "none" });
+    expect(saveHistoryEntry).not.toHaveBeenCalled();
+  });
 });

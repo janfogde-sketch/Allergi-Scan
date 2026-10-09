@@ -49,7 +49,7 @@ export function useHistory({ accessToken, userId }) {
     } catch { return false; }
   }, [userId, accessToken, historyScope, loadHistory]);
 
-  const saveHistoryEntry = useCallback(async (ean, productId, result, flags, activeProfiles) => {
+  const saveHistoryEntry = useCallback(async (ean, productId, result, flags, activeProfiles, foundVia = "scan") => {
     try {
       await apiCall(`${SUPABASE_URL}/functions/v1/history`, {
         method: "POST",
@@ -61,6 +61,7 @@ export function useHistory({ accessToken, userId }) {
           result,
           flags_triggered: flags,
           active_profiles: activeProfiles,
+          found_via: foundVia,
         }),
       });
     } catch { /* silent */ }

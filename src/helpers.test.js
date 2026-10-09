@@ -799,3 +799,20 @@ describe("ufuldstændige ingredienslister", () => {
     expect(traceNutNames("Mandelmel, sukker")).toEqual([]);
   });
 });
+
+import { historyActivityText, historyVia } from "./helpers.js";
+describe("historik: scanninger og søgninger holdes adskilt", () => {
+  const row = (id, found_via, at) => ({ id, ean_scanned: "5701", user_id: "u", result: "safe", flags_triggered: {}, active_profiles: ["me"], found_via, scanned_at: at });
+  it("samme produkt scannet og søgt giver én post med to tællere", () => {
+    const g = groupHistoryDuplicates([row(3, "search", "c"), row(2, "scan", "b"), row(1, "scan", "a")]);
+    expect(g).toHaveLength(1);
+    expect(g[0].__count).toBe(3); expect(g[0].__scans).toBe(2); expect(g[0].__searches).toBe(1);
+    expect(historyVia(g[0])).toBe("search");
+    expect(historyActivityText(g[0], { single: "x", agoLabel: "5 min. siden" })).toBe("Scannet 2 gange · Søgt 1 gang · Senest 5 min. siden");
+  });
+  it("enkelt post viser kun tiden, og manglende found_via tæller som scanning", () => {
+    const g = groupHistoryDuplicates([{ ...row(1, undefined, "a") }]);
+    expect(g[0].__scans).toBe(1);
+    expect(historyActivityText(g[0], { single: "for 2 timer siden", agoLabel: "x" })).toBe("for 2 timer siden");
+  });
+});

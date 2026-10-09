@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
     if (method === "POST") {
       const {
         user_id, ean_scanned, product_id,
-        active_profiles, result, flags_triggered
+        active_profiles, result, flags_triggered, found_via
       } = await req.json();
 
       if (!user_id || !ean_scanned || !result) return new Response(
@@ -118,6 +118,7 @@ Deno.serve(async (req) => {
           active_profiles: active_profiles ?? null,
           result,
           flags_triggered: flags_triggered ?? null,
+          found_via: found_via === "search" ? "search" : "scan",
         })
         .select()
         .single();

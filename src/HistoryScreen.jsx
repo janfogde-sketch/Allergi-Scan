@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
-import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
 import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -136,7 +136,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const openHistoryEntry = (h) => {
     if ((h.result || h.status) === "not_found") return;
     if (h.active_profiles?.length) setActiveProfiles(h.active_profiles);
-    lookupProduct(h.ean_scanned || h.code);
+    lookupProduct(h.ean_scanned || h.code, { via: "none" });
   };
 
   // Gentagne scanninger samles til én post med et antal (groupHistoryDuplicates i helpers.js, 5. okt. 2026):
@@ -180,7 +180,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
         )}
       </div>
       <div className="screen-sub">
-        {historyScope === "family" ? "Alle scanninger i din familie." : "Alle dine tidligere scanninger."}
+        {historyScope === "family" ? "Seneste scanninger og søgninger i din familie." : "Dine seneste scanninger og søgninger."}
       </div>
       {household.length > 0 && (
         <div style={{ display:"flex", gap:8, marginBottom:10 }}>
@@ -224,7 +224,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
               denne fil). Stavefejl "Skan" → "Scan" rettet, samme
               rettelse som HelpModal.jsx/demoSlides.jsx. */}
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="clock" size={23} color="var(--muted)" /></span>
-          <div className="empty-txt">Ingen scanninger endnu</div>
+          <div className="empty-txt">Ingen scanninger eller søgninger endnu</div>
           <div className="empty-sub">Dine scannede produkter vises her.</div>
           {/* Ekstra horisontal padding (14→20px), samme højde/farve/
               kompakthed — knappen føles mere balanceret uden at blive
@@ -246,7 +246,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       )}
 
       {!historyLoading && history.length > 0 && filteredHistory.length === 0 && (
-        <div style={{ textAlign:"center", padding:"32px 0", fontSize:12.5, color:"var(--muted)" }}>Ingen scanninger matcher dette filter</div>
+        <div style={{ textAlign:"center", padding:"32px 0", fontSize:12.5, color:"var(--muted)" }}>Ingen poster matcher dette filter</div>
       )}
 
       {!historyLoading && filteredHistory.length > 0 && groupedHistory.map((h,i) => {
@@ -275,9 +275,13 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
             <div className="hist-info" style={{ marginLeft:2 }}>
               <div className="hist-name">{name}</div>
               <div className="hist-time">
+                {/* Lille ikon viser, hvordan produktet senest blev fundet: stregkodeikon = scannet, søgeikon = fundet via søgning. */}
+                <span title={historyVia(h) === "search" ? "Fundet via søgning" : "Scannet"} style={{ display:"inline-flex", verticalAlign:"-2px", marginRight:4 }}>
+                  <Icon name={historyVia(h) === "search" ? "search" : "barcode"} size={12} color="var(--muted)" />
+                </span>
                 {isNotFound
-                  ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${h.__count > 1 ? `Scannet ${h.__count} gange · Senest ${agoText(h.scanned_at||h.timestamp)}` : timeAgo(h.scanned_at||h.timestamp)}`
-                  : `${h.__count > 1 ? `Scannet ${h.__count} gange · Senest ${agoText(h.scanned_at||h.timestamp)}` : timeAgo(h.scanned_at||h.timestamp)}${d.multi && d.checkedFor ? ` · ${d.checkedFor}` : ""}`}
+                  ? `Stregkode ${h.ean_scanned || h.code || "?"} · ${historyActivityText(h, { single: timeAgo(h.scanned_at||h.timestamp), agoLabel: agoText(h.scanned_at||h.timestamp) })}`
+                  : `${historyActivityText(h, { single: timeAgo(h.scanned_at||h.timestamp), agoLabel: agoText(h.scanned_at||h.timestamp) })}${d.multi && d.checkedFor ? ` · ${d.checkedFor}` : ""}`}
                 {scannedBySuffix}
               </div>
               {/* Ikon + tekst + farve (aldrig farve alene), på én linje; profilnavnet står i selve statusteksten. */}
@@ -294,7 +298,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
                 fx ProfileMenu.jsx's menupunkter. */}
             {isNotFound && (
               <button type="button" className="btn btn-outline btn-sm" style={{ flexShrink:0, minHeight:32, padding:"4px 10px", fontSize:11.5, fontWeight:600, borderRadius:100 }}
-                onClick={(e) => { e.stopPropagation(); const ean = h.ean_scanned || h.code; if (ean) lookupProduct(ean); }}>
+                onClick={(e) => { e.stopPropagation(); const ean = h.ean_scanned || h.code; if (ean) lookupProduct(ean, { via: "none" }); }}>
                 Tilføj produkt
               </button>
             )}
@@ -307,7 +311,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
         );
       })}
       {confirmClear && (
-        <ConfirmDialog title="Ryd historik?" message="Alle tidligere scanninger fjernes fra din historik. Handlingen kan ikke fortrydes."
+        <ConfirmDialog title="Ryd historik?" message="Alle tidligere scanninger og søgninger fjernes fra din historik. Handlingen kan ikke fortrydes."
           confirmLabel="Ryd historik" onConfirm={doClear} onCancel={() => setConfirmClear(false)} />
       )}
     </div>
