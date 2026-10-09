@@ -1,7 +1,8 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { normalizeProductFlagsFor, classifySearchResult, findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, extractENumbers, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
+import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
+import ReactDOM from "react-dom";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -60,55 +61,30 @@ export default function ListScreen({
   const [itemResults, setItemResults]   = useState([]);
   const [itemSearching, setItemSearching] = useState(false);
   const [itemFocused, setItemFocused]   = useState(false);
-  // Tastatur og panel (9. okt. 2026, Bjørn): panelet er IKKE længere knyttet til fokus, så resultaterne består, når tastaturet lukkes.
-  // Tastaturet lukkes ved tryk uden for feltet, ved scroll i resultaterne, ved "Søg/Færdig" og når et produkt vælges.
+  // Tastatur (9. okt. 2026, Bjørn): resultaterne står i selve siden og består uden fokus. Tastaturet lukkes ved scroll i resultaterne,
+  // tryk uden for feltet, "Søg/Færdig", valg af produkt og filterskift, og åbner aldrig igen uden at brugeren trykker i feltet.
   const inputRef = useRef(null);
-  const wrapRef = useRef(null);
   const blurInput = useCallback(() => { if (document.activeElement === inputRef.current) inputRef.current?.blur(); }, []);
   const [resultFilter, setResultFilter] = useState("all"); // all | clean | warn
-  const [panelMax, setPanelMax] = useState(480);
-  const panelRef = useRef(null);
-  useEffect(() => { if (panelRef.current) panelRef.current.scrollTop = 0; }, [resultFilter]);
+  const [navH, setNavH] = useState(80);
   useEffect(() => {
     if (!itemFocused) return undefined;
     const onDown = (e) => { if (e.target !== inputRef.current && !e.target.closest?.("[data-search-clear]")) blurInput(); };
+    const onMove = (e) => { if (e.target !== inputRef.current) blurInput(); };
     document.addEventListener("pointerdown", onDown, true);
-    return () => document.removeEventListener("pointerdown", onDown, true);
+    document.addEventListener("touchmove", onMove, { passive: true });
+    document.addEventListener("wheel", onMove, { passive: true });
+    return () => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("touchmove", onMove); document.removeEventListener("wheel", onMove); };
   }, [itemFocused, blurInput]);
-  // Panelets højde følger den synlige del af skærmen, så tastaturet aldrig dækker resultaterne.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const calc = () => {
-      const el = wrapRef.current;
-      const bottom = el ? el.getBoundingClientRect().bottom : 0;
-      const viewH = vv ? vv.height + vv.offsetTop : window.innerHeight;
-      // Nedre grænse: den synlige skærm, eller bundnavigationens overkant (den må ikke dække "Tilføj … uden produktvalg").
-      const nav = document.querySelector(".bottom-nav");
-      // Med tastaturet åbent ligger navigationen bag tastaturet, så kun den synlige skærm tæller.
-      const limit = itemFocused ? viewH : Math.min(viewH, nav ? nav.getBoundingClientRect().top : viewH);
-      setPanelMax(Math.max(160, Math.min(520, Math.round(limit - bottom - 12))));
-    };
-    calc();
-    vv?.addEventListener("resize", calc); vv?.addEventListener("scroll", calc);
-    window.addEventListener("resize", calc); window.addEventListener("scroll", calc, true);
-    return () => { vv?.removeEventListener("resize", calc); vv?.removeEventListener("scroll", calc); window.removeEventListener("resize", calc); window.removeEventListener("scroll", calc, true); };
-  }, [itemFocused, itemResults.length, itemSearching]);
-  // Sideinddeling — samme offset/hasMore/total-API som SearchScreens "Indlæs
-  // flere", så listen ikke længere er hårdt afskåret ved den første side.
+  // Sideinddeling — samme offset/hasMore/total-API som SearchScreens "Indlæs flere", så listen ikke er hårdt afskåret ved den første side.
   const [itemHasMore, setItemHasMore]         = useState(false);
   const [itemTotal, setItemTotal]             = useState(0);
   const [itemLoadingMore, setItemLoadingMore] = useState(false);
-  // Antal rå resultater hentet fra serveren (før filtrering af ukomplette
-  // produkter), så "Indlæs flere" bruger det rigtige offset.
+  // Antal rå resultater hentet fra serveren (før filtrering af ukomplette produkter), så "Vis flere" bruger det rigtige offset.
   const itemOffsetRef = useRef(0);
-  // Produkter uden navn eller ingrediensliste vises ikke i søgningen.
-  const completeOnly = (list) => (list || []).filter(p => (p.name || "").trim() && (p.ingredients_text || p.ingredients || "").trim());
-  // Skjulte konflikt-produkter foldes ud manuelt af brugeren (se
-  // hiddenConflictResults nedenfor) — nulstillet ved en ny søgetekst, så
-  // et tidligere udfoldet resultat ikke fejlagtigt "følger med" over i en
-  // ny søgning.
-  const [showHiddenConflicts, setShowHiddenConflicts] = useState(false);
-  useEffect(() => { setShowHiddenConflicts(false); setResultFilter("all"); }, [newItemName]);
+  // Produkter med for få oplysninger vises fortsat (under "Alle", med grå "Kan ikke vurderes"); kun produkter uden navn udelades.
+  const completeOnly = (list) => (list || []).filter(p => (p.name || "").trim());
+  useEffect(() => { setResultFilter("all"); }, [newItemName]);
   // Cache pr. søgetekst (første side), så et tilbageskridt eller en gentaget
   // søgning vises med det samme uden nyt kald. Udløber efter 5 min, fordi
   // populariteten og brugerens egne valg påvirker rangeringen, og ryddes,
@@ -217,58 +193,34 @@ export default function ListScreen({
 
   const activeProfileList = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
   const itemStatus = (item) => {
-    // Manuelt oprettede varer (fritekst, intet EAN/databaseprodukt) kan ikke
-    // allergitjekkes — vis det tydeligt fremfor slet ingen status, så det
-    // ikke fejlagtigt ser ud som om varen bare mangler at blive vurderet
-    // (25. sept. 2026, brugerfeedback). Diskret grå, ikke rød/orange — det
-    // er en oplysning, ikke en advarsel.
+    // Manuelt oprettede varer (fritekst, intet EAN/databaseprodukt) kan ikke vurderes og får aldrig grøn status.
     if (!item.ean) return { status:"manual", text:"Manuel vare – ikke allergitjekket" };
     if (activeProfileList.length === 0) return null;
     const product = productDetails[item.ean];
     if (product === undefined || !product) return null; // stadig henter, eller ikke fundet — vis intet frem for et gæt
-    const ingredientsText = product.ingredients || product.ingredients_text || "";
-    const results = computeProfileResults(activeProfileList, {
-      allergen_flags: normalizeProductFlagsFor(product), ingredients: ingredientsText, nutrition: product.nutrition,
-      productENumbers: extractENumbers(ingredientsText),
-    });
-    const conflict = profileConflictLabel(results);
-    if (conflict) return { status:"danger", text: conflict };
-    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results) };
-    // Ordlyden følger antallet af valgte profiler (1. okt. 2026, brugerrapport:
-    // "Matcher alle profiler" gav ikke mening for én person uden familie).
-    return { status:"safe", text: profileMatchLabel(activeProfileList) };
+    // Fælles statussystem (helpers.js): grøn kun med tilstrækkelige data, ellers orange/rød/grå.
+    const ev = evaluateProductForProfiles(activeProfileList, product);
+    const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
+    return { status: ev.level, text: detail ? `${ev.label} · ${detail}` : ev.label };
   };
-  // Delt farve-/ikon-opslag for statuslinjen (Mangler- og Købt-sektionerne
-  // nedenfor) — én kilde, så de to sektioner ikke kan drifte fra hinanden.
-  const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", manual:"var(--muted)" };
-  const STATUS_ICON = { danger:"warning", warn:"warning", safe:"check", manual:"info" };
+  // Delt farve-/ikon-opslag for statuslinjen (Mangler- og Købt-sektionerne nedenfor).
+  const STATUS_COLOR = { danger:"var(--red)", warn:"var(--amber)", safe:"var(--green)", unknown:"var(--neutral)", manual:"var(--muted)" };
+  const STATUS_ICON = { danger:"warning", warn:"warning", safe:"check", unknown:"info", manual:"info" };
 
-  // ── Sikker søgning: skjul produkter med allergikonflikt som standard, og
-  // vis den anden slags (spor/usikkert) med en tydelig advarsel i stedet for
-  // helt at gemme dem (25. sept. 2026, opfølgning) — konfliktprodukter er
-  // ikke længere utilgængelige, kun skjult bag en klikbar "Vis N produkter
-  // med konflikt"-række (se showHiddenConflicts nedenfor), så brugeren selv
-  // kan vælge at se dem. Bruger samme per-profil-beregning som resten af
-  // appen (buildActiveProfileList/computeProfileResults, helpers.js) i
-  // stedet for den tidligere flade compareAllergens(activeIds), så "farlig"
-  // her betyder præcis det samme som "Allergi-advarsel for X" nedenfor.
-  const itemResultsWithSafety = itemResults.map(p => {
-    const ingredientsText = p.ingredients || p.ingredients_text || "";
-    const results = computeProfileResults(activeProfileList, {
-      allergen_flags: normalizeProductFlagsFor(p), ingredients: ingredientsText, nutrition: p.nutrition,
-      productENumbers: extractENumbers(ingredientsText),
-    });
-    return { product: p, danger: results.some(r => r.status === "danger"), cls: classifySearchResult(results, p) };
-  });
-  // Filtrene vises kun, når de har reel værdi: både produkter uden fund og produkter med advarsel/konflikt er blandt de viste.
-  const hasCleanResults = itemResultsWithSafety.some(r => r.cls === "clean");
-  const hasWarnResults = itemResultsWithSafety.some(r => r.cls === "warn" || r.cls === "danger");
+  // ── Søgeresultater: rækkefølgen er søgerelevans (fra serveren); status ændrer ALDRIG rækkefølgen eller skjuler et præcist match.
+  // Grupper til filtrene: "Uden konflikt" = grøn (tilstrækkelige data, ingen konflikt), "Med advarsel" = orange + rød; grå kun under "Alle".
+  const itemResultsWithSafety = itemResults.map(p => ({ product: p, level: evaluateProductForProfiles(activeProfileList, p).level }));
+  const hasCleanResults = itemResultsWithSafety.some(r => r.level === "safe");
+  const hasWarnResults = itemResultsWithSafety.some(r => r.level === "warn" || r.level === "danger");
   const showResultFilter = itemResultsWithSafety.length >= 4 && hasCleanResults && hasWarnResults;
   const activeFilter = showResultFilter ? resultFilter : "all";
-  const visibleItemResults = itemResultsWithSafety.filter(r => activeFilter === "all" ? !r.danger : activeFilter === "clean" ? r.cls === "clean" : (r.cls === "warn" || r.cls === "danger"));
-  const hiddenConflictResults = activeFilter === "all" ? itemResultsWithSafety.filter(r => r.danger).map(r => r.product) : [];
+  const visibleItemResults = itemResultsWithSafety.filter(r => activeFilter === "all" || (activeFilter === "clean" ? r.level === "safe" : (r.level === "warn" || r.level === "danger")));
   const resultOnList = (p) => !!findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id });
   const hasResultPanel = !!newItemName.trim() && (itemSearching || itemResults.length > 0);
+  useEffect(() => {
+    const el = document.querySelector(".bottom-nav");
+    if (el) setNavH(Math.round(el.getBoundingClientRect().height));
+  }, [hasResultPanel, itemFocused]);
 
   const activeFamily = family.filter(m => activeProfiles.includes(m.id));
   const meActive = activeProfiles.includes("me");
@@ -310,8 +262,8 @@ export default function ListScreen({
         </button>
       )}
 
-      {/* ── Tilføj vare (øverst, så søgeresultater aldrig kan havne bag andet indhold) ── */}
-      <div ref={wrapRef} style={{ marginBottom:8, position:"relative", zIndex:5 }}>
+      {/* ── Tilføj vare/søg: søgefelt (og filter) øverst; resultaterne står direkte i siden under feltet ── */}
+      <div style={{ margin:"0 0 8px", padding:"8px 0" }}>
         <div className="input-row" style={{ marginBottom:0 }}>
           <div style={{ position:"relative", flex:1, minWidth:0 }}>
             <input ref={inputRef} className="field search-field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
@@ -339,118 +291,95 @@ export default function ListScreen({
             </button>
           )}
         </div>
-        {hasResultPanel && (
-          // Scrollbart panel direkte under søgefeltet; højden følger den synlige skærm (tastaturet), og et scroll lukker tastaturet.
-          <div ref={panelRef} onScroll={blurInput} style={{ position:"absolute", left:0, right:0, top:"100%", marginTop:8, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh2)", zIndex:10, maxHeight:panelMax, overflowY:"auto", overscrollBehavior:"contain", overflowAnchor:"none", WebkitOverflowScrolling:"touch" }}>
-            {itemResults.length > 0 && (
-              // Kompakt, klistret overskrift (titel + filter) med SOLID baggrund, så rækkerne ikke skinner igennem og tastaturet ikke æder pladsen.
-              <div style={{ position:"sticky", top:0, padding:"8px 10px", background:"var(--green-selected-bg)", borderBottom:"1px solid var(--border)", boxShadow:"0 4px 8px -6px rgba(21,32,26,.18)", zIndex:1 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:9, fontWeight:800, color:"var(--green)", textTransform:"uppercase", letterSpacing:".4px", marginBottom: showResultFilter ? 6 : 0 }}>
-                  <Icon name="shield" size={11} color="var(--green)" /> Søgeresultater til {scopeTitle}
-                </div>
-                {showResultFilter && (
-                  <div role="group" aria-label="Filtrér søgeresultater" style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:10, padding:2, gap:2 }}>
-                    {[["all","Alle"],["clean","Uden konflikt"],["warn","Med advarsel"]].map(([id, label]) => (
-                      <button type="button" key={id} aria-pressed={activeFilter===id} onClick={() => setResultFilter(id)}
-                        style={{ flex:1, minHeight:30, padding:"0 6px", border:"none", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700,
-                          background: activeFilter===id ? "var(--green-selected-bg)" : "transparent", color: activeFilter===id ? "var(--green)" : "var(--muted)",
-                          boxShadow: activeFilter===id ? "inset 0 0 0 1.5px var(--green)" : "none" }}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {itemResults.length > 0 && family.length > 0 && (
-              <div style={{ padding:"10px 12px 0" }}>
-                <div style={{ fontSize:9.5, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>Tjekkes for:</div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                  <span onMouseDown={e => { e.preventDefault(); toggleAllProfiles(); }}
-                    style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: isAllActive ? "var(--green)" : "var(--surface)", color: isAllActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${isAllActive ? "var(--green)" : "var(--border2)"}` }}>
-                    Alle
-                  </span>
-                  <span onMouseDown={e => { e.preventDefault(); toggleOneProfile("me"); }}
-                    style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: !isAllActive && meActive ? "var(--green)" : "var(--surface)", color: !isAllActive && meActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${!isAllActive && meActive ? "var(--green)" : "var(--border2)"}` }}>
-                    Mig
-                  </span>
-                  {family.map(m => {
-                    const on = !isAllActive && activeProfiles.includes(m.id);
-                    return (
-                      <span key={m.id} onMouseDown={e => { e.preventDefault(); toggleOneProfile(m.id); }}
-                        style={{ padding:"2px 8px", borderRadius:20, fontSize:10, fontWeight:700, cursor:"pointer", background: on ? "var(--green)" : "var(--surface)", color: on ? "var(--on-green)" : "var(--muted)", border:`1px solid ${on ? "var(--green)" : "var(--border2)"}` }}>
-                        {m.name.split(" ")[0]}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {itemSearching && itemResults.length === 0 && (
-              <div style={{ padding:"10px 12px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
-            )}
-            {itemResults.length > 0 && visibleItemResults.length === 0 && hiddenConflictResults.length === 0 && (
-              <div style={{ padding:"14px 12px", fontSize:12, color:"var(--muted)", textAlign:"center" }}>
-                {activeFilter === "clean" ? "Ingen af de viste produkter er uden konflikt med fuldt datagrundlag." : "Ingen af de viste produkter har en advarsel."}
-              </div>
-            )}
-            {visibleItemResults.length > 0 && (
-              <div style={{ padding:"12px 12px 4px" }}>
-                {visibleItemResults.map(({ product: p }) => (
-                  <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
-                    onList={resultOnList(p)}
-                    onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setNewItemName(""); }}
-                    onAddToList={() => pickItemProduct(p)}
-                  />
-                ))}
-              </div>
-            )}
-            {/* Konfliktprodukter er skjult som standard, men aldrig utilgængelige: en klikbar række folder dem ud. Åbning lukker tastaturet. */}
-            {hiddenConflictResults.length > 0 && (
-              <>
-                <button type="button" aria-expanded={showHiddenConflicts} onClick={() => { blurInput(); setShowHiddenConflicts(v => !v); }}
-                  style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%", gap:6, minHeight:44, padding:"10px 12px", fontSize:11, fontWeight:700, color:"var(--red)", background:"var(--red-lt)", border:"none", borderTop:"1px solid var(--border)", cursor:"pointer", fontFamily:"var(--f)", textAlign:"left" }}>
-                  <span style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <Icon name="warning" size={12} color="var(--red)" />
-                    {showHiddenConflicts ? "Skjul" : "Vis"} {hiddenConflictResults.length} produkt{hiddenConflictResults.length!==1?"er":""} med konflikt
-                  </span>
-                  <Icon name={showHiddenConflicts ? "chevronUp" : "chevronDown"} size={14} color="var(--red)" />
-                </button>
-                {showHiddenConflicts && (
-                  <div style={{ padding:"10px 12px 2px" }}>
-                    {hiddenConflictResults.map(p => (
-                      <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
-                        onList={resultOnList(p)}
-                        onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setNewItemName(""); }}
-                        onAddToList={() => pickItemProduct(p)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            {itemResults.length > 0 && (
-              <div style={{ padding:"4px 12px 10px", textAlign:"center" }}>
-                {itemTotal > 0 && <div style={{ fontSize:11, color:"var(--muted)", marginBottom: itemHasMore ? 6 : 0 }}>Viser {Math.min(itemOffsetRef.current, itemTotal).toLocaleString("da-DK")} af {itemTotal.toLocaleString("da-DK")} produkter</div>}
-                {itemHasMore && (
-                  <button className="btn btn-outline btn-full btn-sm" disabled={itemLoadingMore} onClick={loadMoreItemResults}>
-                    {itemLoadingMore ? "Henter flere…" : "Vis flere produkter"}
-                  </button>
-                )}
-              </div>
-            )}
-            {!itemSearching && plainName && (
-              // Sekundær, men altid tilgængelig: klistret nederst i panelet, så den ikke skal findes bag mange resultater.
-              <button type="button" onClick={addPlain}
-                style={{ position:"sticky", bottom:0, display:"flex", alignItems:"center", gap:6, width:"100%", minHeight:44, padding:"10px 12px", fontSize:12.5, fontWeight:700, fontFamily:"var(--f)", textAlign:"left", color: plainExists ? "var(--muted)" : "var(--green)", background:"var(--surface)", border:"none", borderTop:"1px solid var(--border)", cursor:"pointer" }}>
-                <Icon name={plainExists ? "check" : "plus"} size={13} color={plainExists ? "var(--muted)" : "var(--green)"} />
-                {plainExists ? `"${plainName}" står allerede på listen` : `Tilføj "${plainName}" uden produktvalg`}
+        {hasResultPanel && showResultFilter && (
+          <div role="group" aria-label="Filtrér søgeresultater" style={{ display:"flex", marginTop:8, background:"var(--surface2)", border:"1px solid var(--border2)", borderRadius:10, padding:2, gap:2 }}>
+            {[["all","Alle"],["clean","Uden konflikt"],["warn","Med advarsel"]].map(([id, label]) => (
+              <button type="button" key={id} aria-pressed={activeFilter===id} onClick={() => { blurInput(); setResultFilter(id); }}
+                style={{ flex:1, minHeight:34, padding:"0 6px", border:"none", borderRadius:8, cursor:"pointer", fontFamily:"var(--f)", fontSize:11.5, fontWeight:700,
+                  background: activeFilter===id ? "var(--green-selected-bg)" : "transparent", color: activeFilter===id ? "var(--green)" : "var(--muted)",
+                  boxShadow: activeFilter===id ? "inset 0 0 0 1.5px var(--green)" : "none" }}>
+                {label}
               </button>
-            )}
+            ))}
           </div>
         )}
       </div>
 
+      {hasResultPanel && (
+        <div style={{ marginBottom:12, paddingBottom:64 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:10, fontWeight:800, color:"var(--neutral)", textTransform:"uppercase", letterSpacing:".6px", margin:"4px 2px 8px" }}>
+            <Icon name="search" size={11} color="var(--neutral)" /> Søgeresultater
+          </div>
+          {itemResults.length > 0 && family.length > 0 && (
+            <div style={{ margin:"0 2px 10px" }}>
+              <div style={{ fontSize:10, fontWeight:700, color:"var(--muted)", marginBottom:4 }}>Tjekkes for:</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                <span onMouseDown={e => { e.preventDefault(); toggleAllProfiles(); }}
+                  style={{ padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background: isAllActive ? "var(--green)" : "var(--surface)", color: isAllActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${isAllActive ? "var(--green)" : "var(--border2)"}` }}>
+                  Alle
+                </span>
+                <span onMouseDown={e => { e.preventDefault(); toggleOneProfile("me"); }}
+                  style={{ padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background: !isAllActive && meActive ? "var(--green)" : "var(--surface)", color: !isAllActive && meActive ? "var(--on-green)" : "var(--muted)", border:`1px solid ${!isAllActive && meActive ? "var(--green)" : "var(--border2)"}` }}>
+                  Mig
+                </span>
+                {family.map(m => {
+                  const on = !isAllActive && activeProfiles.includes(m.id);
+                  return (
+                    <span key={m.id} onMouseDown={e => { e.preventDefault(); toggleOneProfile(m.id); }}
+                      style={{ padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, cursor:"pointer", background: on ? "var(--green)" : "var(--surface)", color: on ? "var(--on-green)" : "var(--muted)", border:`1px solid ${on ? "var(--green)" : "var(--border2)"}` }}>
+                      {m.name.split(" ")[0]}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {itemSearching && itemResults.length === 0 && (
+            <div style={{ padding:"10px 4px", fontSize:12, color:"var(--muted)" }}>Søger…</div>
+          )}
+          {itemResults.length > 0 && visibleItemResults.length === 0 && (
+            <div style={{ padding:"14px 4px", fontSize:12, color:"var(--muted)", textAlign:"center" }}>
+              {activeFilter === "clean" ? "Ingen af de indlæste produkter er uden konflikt med fuldt datagrundlag." : "Ingen af de indlæste produkter har en advarsel."}
+              {itemHasMore ? " Vis flere produkter for at søge videre." : ""}
+            </div>
+          )}
+          {visibleItemResults.map(({ product: p }) => (
+            <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
+              onList={resultOnList(p)}
+              onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); lookupProduct(p.ean||p.code||p.id); setNewItemName(""); }}
+              onAddToList={() => pickItemProduct(p)}
+            />
+          ))}
+          {itemResults.length > 0 && (
+            <div style={{ padding:"2px 2px 6px", textAlign:"center" }}>
+              <div style={{ fontSize:11, color:"var(--muted)", marginBottom: itemHasMore ? 8 : 0 }}>
+                {activeFilter === "all"
+                  ? `Viser ${itemResults.length.toLocaleString("da-DK")}${itemTotal > itemResults.length ? ` af ${itemTotal.toLocaleString("da-DK")}` : ""} produkter`
+                  : `${visibleItemResults.length.toLocaleString("da-DK")} ${visibleItemResults.length === 1 ? "produkt" : "produkter"} i dette filter blandt de ${itemResults.length.toLocaleString("da-DK")} indlæste`}
+              </div>
+              {itemHasMore && (
+                <button className="btn btn-outline btn-full btn-sm" disabled={itemLoadingMore} onClick={loadMoreItemResults}>
+                  {itemLoadingMore ? "Henter flere…" : "Vis flere produkter"}
+                </button>
+              )}
+            </div>
+          )}
+          {!itemSearching && plainName && ReactDOM.createPortal(
+            // Sekundær, men altid tilgængelig: fast lige over bundnavigationen (portal: .screen har en transform, som ville fange position:fixed).
+            <div style={{ position:"fixed", left:0, right:0, bottom:navH + 8, zIndex:40, display:"flex", justifyContent:"center", pointerEvents:"none" }}>
+              <button type="button" onClick={addPlain}
+                style={{ pointerEvents:"auto", display:"flex", alignItems:"center", gap:6, width:"calc(100% - 32px)", maxWidth:448, minHeight:44, padding:"10px 12px", fontSize:12.5, fontWeight:700, fontFamily:"var(--f)", textAlign:"left", color: plainExists ? "var(--muted)" : "var(--green)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh2)", cursor:"pointer" }}>
+                <Icon name={plainExists ? "check" : "plus"} size={13} color={plainExists ? "var(--muted)" : "var(--green)"} />
+                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? `"${plainName}" står allerede på listen` : `Tilføj "${plainName}" uden produktvalg`}</span>
+              </button>
+            </div>,
+            document.body
+          )}
+        </div>
+      )}
+
+      {!hasResultPanel && (
+      <>
       {/* ── Aktiv liste ──
           Én sektion: label, brugerdefineret listenavn (ellipsis, aldrig afhængig af navnet) og en sekundær delt-status. Tryk åbner
           listevælgeren (bottom-sheet) til at skifte, oprette, tilslutte og slette lister, så administration ikke fylder på siden. */}
@@ -589,6 +518,9 @@ export default function ListScreen({
             </div>
           );})}
         </>
+      )}
+
+      </>
       )}
 
       {/* Bekræft-dialoger for destruktive handlinger (25. sept. 2026,

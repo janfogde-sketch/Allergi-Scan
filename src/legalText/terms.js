@@ -94,7 +94,7 @@ export default {
     ],
     [
       "p",
-      "Et resultat som eksempelvis “Ingen match med dine valg” betyder, at EatSafe ikke har fundet et match mellem de tilgængelige produktdata og de relevante valg, du har registreret i EatSafe."
+      "Et resultat som eksempelvis “Ingen registrerede konflikter” betyder, at EatSafe ikke har fundet et match mellem de tilgængelige produktdata og de relevante valg, du har registreret i EatSafe."
     ],
     [
       "p",

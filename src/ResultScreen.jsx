@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -113,8 +113,8 @@ export default function ResultScreen({
   // konsekvent på tværs af hele denne skærm (FINAL PRODUCT RESULT PAGE,
   // krav 1: brug aldrig "sikkert"/"100% sikkert"/"allergifrit"/"garanteret").
   const overallHeadline = !isMultiProfile ? scanResult.headline
-    : overallStatus === "safe" ? "Passer til alle"
-    : overallStatus === "danger" ? "Passer ikke til alle"
+    : overallStatus === "safe" ? STATUS_TEXT.safe
+    : overallStatus === "danger" ? STATUS_TEXT.danger
     : profileWarnLabel(profileResults);
 
   // ── FINAL PRODUCT RESULT PAGE — dynamisk, kategoriseret statuslogik (28.
@@ -165,7 +165,7 @@ export default function ResultScreen({
   // ingrediensliste overhovedet at kontrollere noget som helst imod.
   const hasAnyAllergenData = scanResult.allergen_flags && Object.values(scanResult.allergen_flags).some(v => v === "yes" || v === "no" || v === "traces");
   const hasIngredientsText = !!(scanResult.ingredients && scanResult.ingredients.trim());
-  const hasSufficientData = !profileResults.some(p => (p.unknown || []).length > 0) && (hasAnyAllergenData || hasIngredientsText);
+  const hasSufficientData = !profileResults.some(p => (p.unknown || []).length > 0 || (p.insufficient || []).length > 0) && (hasAnyAllergenData || hasIngredientsText);
   const topStatus = computeTopStatus({ hasSufficientData, ...findings });
   // "Kan ikke vurderes": ingen fund, men for lidt data til at kontrollere alle valg (også ved flere profiler, hvor "ukendt" ellers giver et gult "kan ikke bekræftes").
   const cannotAssess = topStatus.level === "unknown";
@@ -468,7 +468,7 @@ export default function ResultScreen({
                 <Icon name="check" size={18} color="var(--green)" />
                 <div>
                   <div style={{ fontSize:13, fontWeight:800, color:"var(--green)" }}>Prøv disse i stedet</div>
-                  <div style={UI.muted11mt1}>Ingen advarsler for din profil · samme kategori</div>
+                  <div style={UI.muted11mt1}>Ingen registrerede konflikter · samme kategori</div>
                 </div>
               </div>
               <div style={UI.colGap8}>
@@ -480,7 +480,7 @@ export default function ResultScreen({
                       <div style={UI.ufs13_fw700_cink_ovhidden_toellipsis_wsnowrap}>{p.name}</div>
                       <div style={UI.muted11mt1}>{p.brand}</div>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}><Icon name="check" size={11} color="var(--green)" /> Sikkert</div>
+                    <div style={{ display:"flex", alignItems:"center", gap:3, fontSize:11, fontWeight:700, color:"var(--green)", flexShrink:0 }}><Icon name="check" size={11} color="var(--green)" /> Ingen konflikter</div>
                   </div>
                 ))}
               </div>

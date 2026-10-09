@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL } from "./helpers.js";
+import { glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -153,6 +153,8 @@ export function makeResultSections(c) {
 
   const renderProductHero = () => {
     const vb = verifiedBadge(scanResult.verified_status, scanResult.source);
+    // Kun et billede, der med rimelig sikkerhed tilhører produktet (EAN-match), ellers neutral placeholder.
+    const heroImg = verifiedImageUrl(scanResult);
     const fav = isFavorite(scanResult.code);
     const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
     // Verdikt smeltet ind i selve produktkortet — en farvet ramme om hele kortet plus
@@ -248,7 +250,7 @@ export function makeResultSections(c) {
           )}
           {!isMultiProfile && topStatus.level === "safe" && (
             <div style={{ fontSize:11.5, color:"rgba(255,255,255,.9)", marginTop:4, lineHeight:1.4, fontWeight:500 }}>
-              Vi fandt ingen match med dine valgte allergier, intolerancer eller øvrige præferencer i de tilgængelige produktoplysninger.
+              Vi fandt ingen registrerede konflikter med din profil i de tilgængelige produktoplysninger.
             </div>
           )}
           {cannotAssess && (
@@ -266,14 +268,14 @@ export function makeResultSections(c) {
           </div>
         )}
         <div>
-          {scanResult.image_url
+          {heroImg
             ? <div className="product-hero-imgwrap">
-                <img aria-hidden="true" alt="" loading="lazy" src={scanResult.image_url} className="product-hero-img-backdrop" />
-                <img loading="lazy" src={scanResult.image_url} alt={scanResult.name} className="product-hero-img"
+                <img aria-hidden="true" alt="" loading="lazy" src={heroImg} className="product-hero-img-backdrop" />
+                <img loading="lazy" src={heroImg} alt={scanResult.name} className="product-hero-img"
                   onError={e => { const wrap = e.target.closest(".product-hero-imgwrap"); wrap.style.display="none"; wrap.nextSibling.style.display="flex"; }} />
               </div>
             : null}
-          {imageAttribution(scanResult.image_url) && (
+          {imageAttribution(heroImg) && (
             <div style={{ fontSize:11, lineHeight:1.4, color:"var(--muted)", textAlign:"right", padding:"8px 14px 6px" }}>
               Billede:{" "}
               {scanResult.code
@@ -284,7 +286,7 @@ export function makeResultSections(c) {
             </div>
           )}
           <div className="product-hero-img-placeholder"
-            style={{ display: scanResult.image_url ? "none" : "flex", flexDirection:"row", gap:10, height:"auto", background:"var(--paper2)", borderRadius:12, padding:"12px 16px", margin:"0 0 10px" }}>
+            style={{ display: heroImg ? "none" : "flex", flexDirection:"row", gap:10, height:"auto", background:"var(--paper2)", borderRadius:12, padding:"12px 16px", margin:"0 0 10px" }}>
             <svg width="28" height="28" viewBox="0 0 48 48" fill="none" stroke="var(--border2)" strokeWidth="2">
               <rect x="4" y="10" width="40" height="30" rx="3"/>
               <circle cx="16" cy="20" r="4"/>
@@ -346,7 +348,7 @@ export function makeResultSections(c) {
             <SafetyRow key={p.id}
               name={p.id==="me" ? "Dig" : p.name}
               status={p.status}
-              statusText={cannotAssess && (p.unknown || []).length > 0 ? ((p.unknown.length === 1) ? "1 valg kan ikke kontrolleres" : `${p.unknown.length} valg kan ikke kontrolleres`) : [...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Passer til profilen"}
+              statusText={cannotAssess && (p.unknown || []).length > 0 ? ((p.unknown.length === 1) ? "1 valg kan ikke kontrolleres" : `${p.unknown.length} valg kan ikke kontrolleres`) : [...p.reasons, ...(p.ignoredTraces || []).map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id} (du har valgt ikke at få advarsel)`)].join(" · ") || "Ingen registrerede konflikter"}
               onClick={(p.danger.length > 0 || p.warning.length > 0) ? () => {
                 const first = [...p.danger, ...p.warning][0];
                 setKnowledgeSlug(first); setScreen(SCREENS.KNOWLEDGE);

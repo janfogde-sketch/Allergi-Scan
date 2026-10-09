@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
-import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
 import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -111,12 +111,14 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     const liveFlags = h.products?.allergen_flags;
     const hasLive = !!liveFlags && typeof liveFlags === "object" && Object.keys(liveFlags).length > 0;
     const flags = hasLive ? liveFlags : (h.flags_triggered || {});
-    const results = computeProfileResults(profiles, { allergen_flags: flags, ingredients:"", nutrition:null, productENumbers:[] });
-    const conflict = profileConflictLabel(results, { maxNames: 2 });
-    if (conflict) return { status:"danger", text: conflict, checkedFor, multi: profiles.length > 1 };
-    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results), checkedFor, multi: profiles.length > 1 };
-    if (!hasLive) return { status:"historical", text:"Historisk vurdering · ikke verificeret", checkedFor, multi: profiles.length > 1 };
-    return { status:"safe", text: profileMatchLabel(profiles), checkedFor, multi: profiles.length > 1 };
+    // Fælles statussystem (helpers.js): rød/orange/grå/grøn. Ingredienser kommer fra produktet (history sender ingredients_text), så E-numre og egne
+    // allergier kan kontrolleres; uden dem er resultatet "Kan ikke vurderes", aldrig grønt.
+    const ev = evaluateProductForProfiles(profiles, { allergen_flags: flags, ingredients_text: h.products?.ingredients_text || "" });
+    const multi = profiles.length > 1;
+    const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
+    const text = detail ? `${ev.label} · ${detail}` : ev.label;
+    if (ev.level === "safe" && !hasLive) return { status:"historical", text:"Historisk vurdering · ikke verificeret", checkedFor, multi };
+    return { status: ev.level, text, checkedFor, multi };
   };
 
   // Genåbner et tidligere scan-resultat for SAMME profiler som ved den

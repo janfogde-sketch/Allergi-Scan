@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { buildActiveProfileList, computeProfileResults, profileConflictLabel, profileWarnLabel, profileMatchLabel, extractENumbers, normalizeProductFlagsFor } from "./helpers.js";
+import { buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
 import { Icon, ProductImage, LoadErrorBox, CloseButton } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -134,15 +134,10 @@ export default function FavoritesScreen({ household, lookupProduct }) {
   const activeProfileList = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
   const favoriteStatus = (f) => {
     if (activeProfileList.length === 0 || !f.allergen_flags) return null;
-    const ingredientsText = f.ingredients || f.ingredients_text || "";
-    const results = computeProfileResults(activeProfileList, {
-      allergen_flags: normalizeProductFlagsFor(f), ingredients: ingredientsText, nutrition: f.nutrition,
-      productENumbers: f.productENumbers?.length ? f.productENumbers : extractENumbers(ingredientsText),
-    });
-    const conflict = profileConflictLabel(results, { maxNames: 2 });
-    if (conflict) return { status:"danger", text: conflict };
-    if (results.some(r => r.status === "warn")) return { status:"warn", text: profileWarnLabel(results) };
-    return { status:"safe", text: profileMatchLabel(activeProfileList) };
+    // Fælles statussystem (helpers.js): grøn kun med tilstrækkelige data.
+    const ev = evaluateProductForProfiles(activeProfileList, f);
+    const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
+    return { status: ev.level, text: detail ? `${ev.label} · ${detail}` : ev.label };
   };
 
   // Tidligere en IIFE i JSX'en — beregnet her i stedet (arkitektur-regel 3).

@@ -20,7 +20,7 @@ import {
   expandUpcE,
   normalizeScannedBarcode,
 } from "./helpers.js";
-import { classifySearchResult, profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
+import { evaluateProductForProfiles, verifiedImageUrl, profileConflictLabel, profileWarnLabel, profileMatchLabel, scanTargetCopy, pickDailyTip, localDayNumber, groupHistoryDuplicates, householdToProfiles, isLinkedProfileId, syncLinkedActiveProfiles, buildActiveProfileList, computeProfileResults, LINKED_PROFILE_PREFIX } from "./helpers.js";
 
 describe("isValidEanChecksum", () => {
   it("accepts a real EAN-13 with a correct check digit", () => {
@@ -340,50 +340,102 @@ describe("passwordErrorText", () => {
 });
 
 describe("profileConflictLabel", () => {
-  const r = (name, status) => ({ name, status });
+  const r = (name, status, id = name) => ({ id, name, status });
   it("returns null when nobody has a conflict", () => {
-    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "safe")])).toBeNull();
+    expect(profileConflictLabel([r("Jan Fogde", "warn", "me"), r("Mia", "safe")])).toBeNull();
   });
-  it("also names profiles with a warning when another profile has a conflict", () => {
-    expect(profileConflictLabel([r("Jan Fogde", "warn"), r("Mia", "danger")])).toBe("Allergi-advarsel for Mia · advarsel for Jan");
+  it("siger 'Konflikt med din profil', når kun brugeren selv har konflikt", () => {
+    expect(profileConflictLabel([r("Jan Fogde", "danger", "me")])).toBe("Konflikt med din profil");
+    expect(profileConflictLabel([r("Jan Fogde", "danger", "me"), r("Mia", "safe")])).toBe("Konflikt med din profil");
   });
-  it("uses the summary text above maxNames", () => {
-    expect(profileConflictLabel([r("A", "danger"), r("B", "danger"), r("C", "danger")], { maxNames: 2 })).toBe("Passer ikke til valgte profiler");
+  it("navngiver andre profiler med konflikt", () => {
+    expect(profileConflictLabel([r("Jan Fogde", "warn", "me"), r("Mia Hansen", "danger")])).toBe("Konflikt for Mia");
+    expect(profileConflictLabel([r("Jan", "danger", "me"), r("Mia", "danger")])).toBe("Konflikt for dig, Mia");
+  });
+  it("falder tilbage til den generelle tekst over maxNames", () => {
+    expect(profileConflictLabel([r("A", "danger"), r("B", "danger"), r("C", "danger")], { maxNames: 2 })).toBe("Konflikt med din profil");
   });
 });
 
 describe("profileWarnLabel", () => {
-  const r = (extra) => ({ name: "A", status: "warn", warning: [], unknown: [], dietFails: [], eNumberMatches: [], ...extra });
+  const r = (extra) => ({ name: "A", status: "warn", warning: [], unknown: [], insufficient: [], ...extra });
   it("returnerer null uden advarsler", () => {
     expect(profileWarnLabel([{ name: "A", status: "safe" }])).toBeNull();
   });
   it("siger 'Kan indeholde spor' ved spor, også når en anden profil mangler data", () => {
     expect(profileWarnLabel([r({ unknown: ["sesam"] }), r({ warning: ["noedder"] })])).toBe("Kan indeholde spor");
   });
-  it("siger 'Passer ikke til dine valg' ved E-numre", () => {
-    expect(profileWarnLabel([r({ eNumberMatches: ["E211"] })])).toBe("Passer ikke til dine valg");
-  });
   it("siger 'Kan ikke vurderes' ved manglende data og aldrig 'sikkert'", () => {
     const label = profileWarnLabel([r({ unknown: ["sesam"] })]);
     expect(label).toBe("Kan ikke vurderes");
     expect(label).not.toMatch(/sikker/i);
+    expect(profileWarnLabel([r({ insufficient: ["Ingrediensliste mangler"] })])).toBe("Kan ikke vurderes");
   });
 });
 
 describe("profileMatchLabel", () => {
-  it("siger 'din profil' når kun brugeren selv er valgt", () => {
-    expect(profileMatchLabel([{ id: "me", name: "Lars Hansen" }])).toBe("Ingen match for din profil");
+  it("er altid den samme grønne tekst", () => {
+    expect(profileMatchLabel([{ id: "me", name: "Lars" }])).toBe("Ingen registrerede konflikter");
+    expect(profileMatchLabel([])).toBe("Ingen registrerede konflikter");
   });
-  it("nævner fornavnet for ét valgt familiemedlem", () => {
-    expect(profileMatchLabel([{ id: "abc", name: "Hanne Jensen" }])).toBe("Ingen match for Hanne");
+});
+
+describe("evaluateProductForProfiles (fælles statussystem)", () => {
+  const prof = (extra = {}) => ({ id: "me", name: "Mia", allergens: ["aeg"], custom: [], diets: [], eNumbers: [], levels: {}, ...extra });
+  const flags = (o = {}) => ({ aeg: "no", ...o });
+  it("rød ved direkte indhold med konkret årsag", () => {
+    const ev = evaluateProductForProfiles([prof()], { allergen_flags: flags({ aeg: "yes" }), ingredients_text: "Æg, mel" });
+    expect(ev.level).toBe("danger");
+    expect(ev.label).toBe("Konflikt med din profil");
+    expect(ev.reasons).toContain("Indeholder æg");
   });
-  it("bruger flertal ved flere profiler", () => {
-    expect(profileMatchLabel([{ id: "me", name: "Lars" }, { id: "abc", name: "Hanne" }])).toBe("Ingen match for de valgte profiler");
+  it("orange ved spor med konkret årsag", () => {
+    const ev = evaluateProductForProfiles([prof()], { allergen_flags: flags({ aeg: "traces" }), ingredients_text: "Mel" });
+    expect(ev.level).toBe("warn");
+    expect(ev.label).toBe("Kan indeholde spor");
+    expect(ev.reasons).toEqual(["Spor af æg"]);
   });
-  it("falder tilbage uden profiler eller navn", () => {
-    expect(profileMatchLabel([])).toBe("Ingen match for valgte profiler");
-    expect(profileMatchLabel(undefined)).toBe("Ingen match for valgte profiler");
-    expect(profileMatchLabel([{ id: "x", name: "" }])).toBe("Ingen match for den valgte profil");
+  it("direkte konflikt vinder over spor, men sporene vises stadig", () => {
+    const ev = evaluateProductForProfiles([prof({ allergens: ["aeg", "noedder"] })], { allergen_flags: flags({ aeg: "yes", noedder: "traces" }), ingredients_text: "Æg" });
+    expect(ev.level).toBe("danger");
+    expect(ev.reasons).toEqual(expect.arrayContaining(["Indeholder æg", "Spor af nødder"]));
+  });
+  it("overvåget E-nummer er en konflikt (rød)", () => {
+    const ev = evaluateProductForProfiles([prof({ allergens: [], eNumbers: ["E120"] })], { ingredients_text: "Farve (E120), sukker" });
+    expect(ev.level).toBe("danger");
+    expect(ev.reasons).toContain("Indeholder E120");
+  });
+  it("grøn kun med tilstrækkelige data", () => {
+    expect(evaluateProductForProfiles([prof()], { allergen_flags: flags(), ingredients_text: "Mel" }).level).toBe("safe");
+  });
+  it("aldrig grøn uden data: grå 'Kan ikke vurderes'", () => {
+    const ev = evaluateProductForProfiles([prof()], { name: "X" });
+    expect(ev.level).toBe("unknown");
+    expect(ev.label).toBe("Kan ikke vurderes");
+    expect(ev.missing.length).toBeGreaterThan(0);
+  });
+  it("E-nummer-valg uden ingrediensliste kan ikke vurderes, selv om allergenflag findes", () => {
+    const ev = evaluateProductForProfiles([prof({ eNumbers: ["E120"] })], { allergen_flags: flags() });
+    expect(ev.level).toBe("unknown");
+    expect(ev.missing).toContain("Ingrediensliste mangler");
+  });
+  it("tom profil uden valg har intet at kontrollere", () => {
+    expect(evaluateProductForProfiles([prof({ allergens: [] })], { name: "X" }).level).toBe("safe");
+  });
+});
+
+describe("verifiedImageUrl", () => {
+  const off = "https://images.openfoodfacts.org/images/products/571/101/803/7944/front_da.4.400.jpg";
+  it("viser OFF-billede kun ved EAN-match", () => {
+    expect(verifiedImageUrl({ ean: "5711018037944", image_url: off })).toBe(off);
+    expect(verifiedImageUrl({ ean: "5711018037951", image_url: off })).toBeNull();
+  });
+  it("kan ikke verificere produkter uden rigtig stregkode", () => {
+    expect(verifiedImageUrl({ ean: "NEMLIG-5063887", image_url: off })).toBeNull();
+  });
+  it("lader billeder fra andre kilder passere og håndterer tomme", () => {
+    expect(verifiedImageUrl({ ean: "NEMLIG-1", image_url: "https://example.com/a.jpg" })).toBe("https://example.com/a.jpg");
+    expect(verifiedImageUrl({ ean: "1", image_url: "" })).toBeNull();
   });
 });
 
@@ -688,22 +740,5 @@ describe("groupHistoryDuplicates", () => {
     const nf = (min, ean = "111") => ({ id: `n${min}`, ean_scanned: ean, user_id: "u1", result: "not_found", scanned_at: at(min) });
     const out = groupHistoryDuplicates([nf(0), cola(5), nf(600), nf(700, "222")]);
     expect(out.map(h => [h.id, h.__count])).toEqual([["n0", 2], ["c5", 1], ["n700", 1]]);
-  });
-});
-
-describe("classifySearchResult", () => {
-  const full = { allergen_flags: { milk: "no" }, ingredients_text: "Vand" };
-  it("danger, warn, unknown og clean", () => {
-    expect(classifySearchResult([{ status: "danger" }], full)).toBe("danger");
-    expect(classifySearchResult([{ status: "warn", warning: ["nuts"] }], full)).toBe("warn");
-    expect(classifySearchResult([{ status: "warn", dietFails: [{}] }], full)).toBe("warn");
-    expect(classifySearchResult([{ status: "warn", unknown: ["milk"] }], full)).toBe("unknown");
-    expect(classifySearchResult([{ status: "safe" }], full)).toBe("clean");
-  });
-  it("uden flag og ingredienser er aldrig 'clean'", () => {
-    expect(classifySearchResult([{ status: "safe" }], { name: "X" })).toBe("unknown");
-  });
-  it("spor går foran manglende data", () => {
-    expect(classifySearchResult([{ status: "warn", warning: ["nuts"], unknown: ["milk"] }], full)).toBe("warn");
   });
 });

@@ -40,6 +40,19 @@ export const OFF_IMAGE_LICENSE_URL = "https://creativecommons.org/licenses/by-sa
 
 // Kildeangivelse til Open Food Facts-billeder (CC BY-SA). Kilden aflæses af
 // billedets adresse, så ingen kolonne er nødvendig. Andre kilder giver null.
+// Pålideligt produktbillede (9. okt. 2026, Bjørn): et Open Food Facts-billede vises kun, når stregkoden i billedadressen er produktets EAN.
+// Produkter uden en rigtig stregkode (fx "NEMLIG-123") kan ikke verificeres og får en neutral placeholder; billeder fra andre kilder
+// (producent, indsendt af bruger) vises som før. Intet slettes i databasen.
+export function verifiedImageUrl(product) {
+  const url = product?.image_url;
+  if (typeof url !== "string" || !url.trim()) return null;
+  const m = url.match(/^https:\/\/images\.openfoodfacts\.org\/images\/products\/((?:\d+\/){1,5})/i);
+  if (!m) return /^https:\/\/images\.openfoodfacts\.org\//i.test(url) ? null : url;
+  const urlCode = m[1].replace(/\//g, "").replace(/^0+/, "");
+  const ean = String(product.ean || product.code || "").replace(/^0+/, "");
+  return /^\d{8,14}$/.test(ean) && ean === urlCode ? url : null;
+}
+
 export function imageAttribution(url) {
   if (typeof url !== "string") return null;
   return /^https:\/\/images\.openfoodfacts\.org\//i.test(url) ? "Billede: Open Food Facts, CC BY-SA" : null;
@@ -614,73 +627,98 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
       ? compareENumbers(productENumbers, p.eNumbers).matched
       : [];
 
+    // Utilstrækkelige oplysninger (9. okt. 2026): valg, der kræver en ingrediensliste (egne allergier, E-numre, kostpræferencer),
+    // kan ikke kontrolleres uden den. Manglende data er aldrig "ingen konflikt".
+    const needsIngredients = (p.custom?.length || 0) > 0 || (p.eNumbers?.length || 0) > 0 || (p.diets?.length || 0) > 0;
+    const insufficient = [
+      ...(needsIngredients && !ingredientsText.trim() ? ["Ingrediensliste mangler"] : []),
+      ...dietResults.filter(r => r.ok === null).map(r => `${r.label}: kan ikke afgøres`),
+    ];
     const reasons = [
       ...danger.map(id => ALLERGENS.find(a => a.id === id)?.label || id),
       ...customMatches.map(t => `Muligvis "${t}"`),
       ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
       ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
-      ...eNumberMatches.map(e => `Overvåget E-nummer ${e}`),
+      ...eNumberMatches.map(e => `Indeholder ${e}`),
       ...unknown.map(id => `${allergenChoiceLabel(ALLERGENS.find(a => a.id === id)) || id}: kan ikke afgøres`),
     ];
-    const status = (danger.length > 0 || customMatches.length > 0) ? "danger"
-      : (warning.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0 || unknown.length > 0) ? "warn"
+    // Rød: registreret konflikt med allergi, intolerance, egen allergi, E-nummer eller kostpræference (9. okt. 2026).
+    // Orange/"warn": spor, eller for lidt data til at vurdere (profileWarnLabel skelner).
+    const status = (danger.length > 0 || customMatches.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0) ? "danger"
+      : (warning.length > 0 || unknown.length > 0 || insufficient.length > 0) ? "warn"
       : "safe";
-    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, customMatches, dietFails, eNumberMatches };
+    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, insufficient, customMatches, dietFails, eNumberMatches };
   });
 }
 
-// Søgeresultatets gruppe til filtrene (9. okt. 2026): "danger" = direkte konflikt, "warn" = spor/fravalg,
-// "unknown" = for lidt data til at vurdere (aldrig "uden konflikt"), "clean" = tilstrækkelige data og ingen fund.
-export function classifySearchResult(results, product) {
-  const list = results || [];
-  if (list.some(r => r.status === "danger")) return "danger";
-  if (list.some(r => (r.warning || []).length > 0 || (r.dietFails || []).length > 0 || (r.eNumberMatches || []).length > 0)) return "warn";
-  const hasFlags = !!product?.allergen_flags && typeof product.allergen_flags === "object" && Object.keys(product.allergen_flags).length > 0;
-  const hasIngredients = ((product?.ingredients || product?.ingredients_text || "").trim()).length > 0;
-  if (list.some(r => (r.unknown || []).length > 0) || (!hasFlags && !hasIngredients)) return "unknown";
-  return "clean";
-}
+// ─── FÆLLES STATUSSYSTEM (9. okt. 2026, Bjørn) ──────────────────────────────────────────────────────
+// Samme fire tilstande og ord overalt (scanner, produktside, historik, favoritter, indkøbsliste, søgning):
+//   grøn "Ingen registrerede konflikter" (kun med tilstrækkelige data til ALLE valg i profilen),
+//   orange "Kan indeholde spor", rød "Konflikt med din profil" (allergi, intolerance, E-nummer, kostpræference),
+//   grå "Kan ikke vurderes". Manglende oplysninger er aldrig "ingen konflikt".
+export const STATUS_TEXT = {
+  safe: "Ingen registrerede konflikter",
+  warn: "Kan indeholde spor",
+  danger: "Konflikt med din profil",
+  unknown: "Kan ikke vurderes",
+};
 
-// Statuslinje-tekst for en konflikt i lister (indkøbsliste, historik,
-// favoritter, søgning). Nævner også profiler med en advarsel (fx spor), når
-// en anden profil har en egentlig konflikt — ellers skjulte "Konflikt for
-// Mia" at produktet også kunne indeholde spor af noget, brugeren selv skal
-// undgå (live-test 30. sept. 2026). Returnerer null, når ingen har konflikt.
-export function profileConflictLabel(results, { maxNames = Infinity, manyText = "Passer ikke til valgte profiler" } = {}) {
+// Statuslinje-tekst for en konflikt. Konflikt for andre end brugeren selv navngives ("Konflikt for Oskar"); ellers "Konflikt med din profil".
+export function profileConflictLabel(results, { maxNames = Infinity } = {}) {
   const first = r => (r.name || "").split(" ")[0];
-  const danger = results.filter(r => r.status === "danger").map(first);
+  const danger = (results || []).filter(r => r.status === "danger");
   if (danger.length === 0) return null;
-  const warn = results.filter(r => r.status === "warn").map(first);
-  const main = danger.length <= maxNames ? `Allergi-advarsel for ${danger.join(", ")}` : manyText;
-  return warn.length ? `${main} · advarsel for ${warn.join(", ")}` : main;
+  const others = danger.filter(r => r.id !== "me" && !(results.length === 1));
+  if (others.length === 0) return STATUS_TEXT.danger;
+  const names = danger.map(r => (r.id === "me" ? "dig" : first(r)));
+  return names.length <= maxNames ? `Konflikt for ${names.join(", ")}` : STATUS_TEXT.danger;
 }
 
-// Statuslinje-tekst, når ingen har en allergi-advarsel, men mindst én profil har en
-// advarsel (F5-7, 6. okt. 2026): samme ord som resultatsidens computeTopStatus, så et
-// produkt med spor også hedder "Kan indeholde spor" i listerne og aldrig "sikkert".
+// Orange (spor) eller grå (for lidt data), når ingen har en konflikt. null, hvis ingen profil har en advarsel.
 export function profileWarnLabel(results) {
   const warn = (results || []).filter(r => r.status === "warn");
   if (warn.length === 0) return null;
-  if (warn.some(r => (r.warning || []).length > 0)) return "Kan indeholde spor";
-  if (warn.some(r => (r.dietFails || []).length > 0 || (r.eNumberMatches || []).length > 0)) return "Passer ikke til dine valg";
-  return "Kan ikke vurderes";
+  if (warn.some(r => (r.warning || []).length > 0)) return STATUS_TEXT.warn;
+  return STATUS_TEXT.unknown;
 }
 
-// Statuslinje-tekst når INGEN profil har konflikt eller advarsel (indkøbsliste,
-// historik, favoritter, søgning) — tilpasset antallet af valgte profiler, så
-// en bruger uden familie ikke læser "alle profiler" (brugerrapport 25. sept.
-// 2026; erstatter den faste "Matcher alle profiler"). 9. okt. 2026 (Bjørn): "Ingen match for X"
-// fremfor "Passer til", der lovede mere sikkerhed, end produktdata giver grundlag for (samme ord som produktsidens grønne status).
-// Tager både profillisten og resultater fra computeProfileResults (begge har
-// id/name).
-export function profileMatchLabel(profiles) {
-  const list = profiles || [];
-  if (list.length === 0) return "Ingen match for valgte profiler";
-  if (list.length > 1) return "Ingen match for de valgte profiler";
-  const only = list[0];
-  if (only.id === "me") return "Ingen match for din profil";
-  const first = (only.name || "").trim().split(" ")[0];
-  return first ? `Ingen match for ${first}` : "Ingen match for den valgte profil";
+// Grøn tekst. Må kun bruges, når datagrundlaget er tilstrækkeligt (se evaluateProductForProfiles).
+export function profileMatchLabel() {
+  return STATUS_TEXT.safe;
+}
+
+// Samlet vurdering af ét produkt mod de valgte profiler: { level: danger|warn|unknown|safe, label, reasons, missing }.
+// Rækkefølge: direkte konflikt vinder visuelt, så spor, så for lidt data; grøn kun uden fund OG med tilstrækkelige data.
+// `reasons` er konkrete og eksplicitte ("Indeholder æg", "Spor af æg", "Indeholder E120"); `missing` nævner, hvad der mangler.
+export function evaluateProductForProfiles(profiles, product) {
+  const ingredientsText = product?.ingredients || product?.ingredients_text || "";
+  const results = computeProfileResults(profiles || [], {
+    allergen_flags: normalizeProductFlagsFor(product || {}), ingredients: ingredientsText, nutrition: product?.nutrition,
+    productENumbers: product?.productENumbers?.length ? product.productENumbers : extractENumbers(ingredientsText),
+  });
+  const lower = s => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+  const explicit = r => (/^(Spor af |Muligvis |Indeholder |[^:]+: )/.test(r) ? r : `Indeholder ${lower(r)}`);
+  const conflict = profileConflictLabel(results, { maxNames: 2 });
+  const dangerReasons = [...new Set(results.filter(r => r.status === "danger").flatMap(r => [
+    ...r.danger.map(id => `Indeholder ${lower(ALLERGENS.find(a => a.id === id)?.label || id)}`),
+    ...r.customMatches.map(t => `Muligvis "${t}"`),
+    ...r.eNumberMatches.map(e => `Indeholder ${e}`),
+    ...r.dietFails.map(d => `${d.label}: ${d.reasons?.[0] || "passer ikke"}`),
+  ]))];
+  const traceReasons = [...new Set(results.flatMap(r => r.warning.map(id => `Spor af ${lower(ALLERGENS.find(a => a.id === id)?.label || id)}`)))];
+  const missing = [...new Set(results.flatMap(r => [
+    ...r.unknown.map(id => `Mangler oplysninger om ${lower(allergenChoiceLabel(ALLERGENS.find(a => a.id === id)) || id)}`),
+    ...(r.insufficient || []),
+  ]))];
+  const hasAnyData = !!product && ((product.allergen_flags && Object.keys(product.allergen_flags).length > 0) || ingredientsText.trim().length > 0);
+  const nothingToCheck = (profiles || []).every(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) + (p.diets?.length || 0) === 0);
+  let level = "safe";
+  if (conflict) level = "danger";
+  else if (traceReasons.length > 0) level = "warn";
+  else if (missing.length > 0 || (!hasAnyData && !nothingToCheck)) level = "unknown";
+  const label = level === "danger" ? conflict : STATUS_TEXT[level];
+  const reasons = level === "danger" ? [...dangerReasons, ...traceReasons] : level === "warn" ? traceReasons : [];
+  return { level, label, reasons, missing, results };
 }
 
 // Scanner-forsidens dynamiske tekster (4. okt. 2026, Bjørn): forklaringen og
@@ -735,32 +773,23 @@ export function categorizeProductFindings({ matchedDanger, matchedWarning, ignor
   };
 }
 
-// Beregner ÉN, tydelig topstatus ud fra de kategoriserede fund + om EatSafe
-// reelt har nok data til at have foretaget kontrollen (`hasSufficientData`).
-// FORBEDR PRODUKTSIDEN (28. sept. 2026) — kun TO farvede advarselstilstande
-// nu, ikke fire: RØD er forbeholdt egentlige allergi-/intoleranceadvarsler
-// (sundhedsrelevante, ikke et bevidst valg brugeren har taget), mens
-// kostpræferencer og fravalgte E-numre samles under én neutral GUL/ORANGE
-// "passer ikke til dine valg" — en kostpræference som vegansk skal ikke
-// have samme alvorlige behandling som en allergiadvarsel. "safe" bruges KUN
-// når der er nok data OG intet fund — aldrig som gæt. Returnerer aldrig ord
-// som "sikkert"/"100% sikkert"/"allergifrit"/"garanteret".
+// Beregner ÉN, tydelig topstatus ud fra de kategoriserede fund + om EatSafe reelt har nok data til at have foretaget kontrollen
+// (`hasSufficientData`). Fælles statussystem (STATUS_TEXT): rød = konflikt (allergi, intolerance, egen allergi, E-nummer, kostpræference),
+// orange = spor, grå = kan ikke vurderes, grøn = ingen registrerede konflikter MED tilstrækkelige data. Aldrig "sikkert"/"allergifrit".
 export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, traceMatches, customMatches, eNumberMatches, dietFails }) {
-  const healthNames = [...(customMatches || []), ...(allergyMatches || []), ...(intoleranceMatches || [])].map(m => m.label);
-  if (healthNames.length > 0) {
-    return { level: "danger", icon: "warning", headline: "Allergi-advarsel", names: healthNames };
+  // Rød (9. okt. 2026): registreret konflikt med allergi, intolerance, egen allergi, E-nummer eller kostpræference.
+  const names = [...(customMatches || []), ...(allergyMatches || []), ...(intoleranceMatches || [])].map(m => m.label)
+    .concat((eNumberMatches || []).map(e => (typeof e === "string" ? e : e.label || String(e))), (dietFails || []).map(d => d.label));
+  if (names.length > 0) {
+    return { level: "danger", icon: "warning", headline: STATUS_TEXT.danger, names };
   }
   if ((traceMatches || []).length > 0) {
-    return { level: "warn", icon: "warning", headline: "Kan indeholde spor", names: traceMatches.map(m => m.label) };
-  }
-  const preferenceNames = [...(eNumberMatches || []), ...(dietFails || []).map(d => d.label)];
-  if (preferenceNames.length > 0) {
-    return { level: "warn", icon: "warning", headline: "Passer ikke til dine valg", names: preferenceNames };
+    return { level: "warn", icon: "warning", headline: STATUS_TEXT.warn, names: traceMatches.map(m => m.label) };
   }
   if (!hasSufficientData) {
-    return { level: "unknown", icon: "info", headline: "Kan ikke vurderes", names: [] };
+    return { level: "unknown", icon: "info", headline: STATUS_TEXT.unknown, names: [] };
   }
-  return { level: "safe", icon: "check", headline: "Ingen match med dine valg", names: [] };
+  return { level: "safe", icon: "check", headline: STATUS_TEXT.safe, names: [] };
 }
 
 // ─── PRODUKT → INDKØBSLISTE-MATCH ────────────────────────────────────────────

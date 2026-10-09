@@ -6,7 +6,7 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens, normalizeProductFlags } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens, normalizeProductFlags, STATUS_TEXT } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 
 // Lægger et fritekst-match af brugerens EGNE, selv-tilføjede allergier
@@ -67,11 +67,11 @@ function scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers,
   // sikkerhedsgennemgang: samme UI blev vist for "bekræftet sikkert" og
   // "vi ved det faktisk ikke").
   const isUnsafeUnknown = rawStatus === "safe" && hasUnknown;
-  const status = isUnsafeUnknown ? "warn" : rawStatus;
-
   // Udtræk E-numre fra ingredienstekst
   const productENumbers = extractENumbers(ingredientsText);
   const { matched: matchedENumbers } = compareENumbers(productENumbers, activeENumbers);
+  // Overvågede E-numre er en konflikt med profilen (rød), ikke blot en advarsel (9. okt. 2026).
+  const status = (rawStatus !== "danger" && matchedENumbers.length > 0) ? "danger" : isUnsafeUnknown ? "warn" : rawStatus;
 
   const flagList = [
     ...matchedDanger.map(id => ({ type:"bad", text:`Indeholder ${ALLERGENS.find(a=>a.id===id)?.label||id}` })),
@@ -81,10 +81,10 @@ function scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers,
     ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
     ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
   ];
-  const headlines = { safe:"Ingen match med dine valg", danger:"Allergi-advarsel", warn: isUnsafeUnknown ? "Kan ikke vurderes" : "Kan indeholde spor" };
+  const headlines = { safe:STATUS_TEXT.safe, danger:STATUS_TEXT.danger, warn: (isUnsafeUnknown && matchedWarning.length === 0) ? STATUS_TEXT.unknown : STATUS_TEXT.warn };
   const summaries = {
     safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
-    danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
+    danger:`Produktet indeholder ${[...matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id), ...matchedENumbers].join(", ")}.`,
     warn: isUnsafeUnknown
       ? "Vi mangler data for ét eller flere af dine allergener i dette produkt — tjek selv emballagen før du spiser det."
       : `Produktet kan indeholde spor af ${matchedWarning.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,
