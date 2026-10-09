@@ -622,6 +622,7 @@ export function ingredientsLookIncomplete(p) {
 }
 
 // Specifikke nødder, der nævnes som spor i deklarationen ("Kan indeholde spor af mandler, hasselnødder"), så sporet kan vises mere præcist end "nødder".
+/** @type {[string, RegExp][]} */
 const NUT_WORDS = [["mandler", /mandel|mandler|almond/i], ["hasselnødder", /hasselnød|hazelnut/i], ["valnødder", /valnød|walnut/i], ["cashewnødder", /cashew/i],
   ["pekannødder", /pekan|pecan/i], ["paranødder", /paranød|brazil/i], ["pistacienødder", /pistaci/i], ["macadamianødder", /macadamia/i]];
 export function traceNutNames(text) {
