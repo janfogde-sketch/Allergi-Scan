@@ -160,7 +160,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       <div style={{ position:"relative" }}>
         <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Historik</div>
         {hasOwnHistory && (
-          <div style={{ position:"absolute", right:-8, top:"50%", transform:"translateY(-50%)" }}>
+          <div style={{ position:"absolute", right:-8, top:"50%", transform:"translateY(-50%)", zIndex:50 }}>
             <button type="button" aria-label="Flere valg" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}
               style={{ minWidth:44, minHeight:44, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
               <Icon name="more" size={20} color="var(--ink2)" />
