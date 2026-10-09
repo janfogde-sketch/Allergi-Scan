@@ -1,4 +1,5 @@
 // @ts-nocheck
+import React from "react";
 import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 
 // ─── KONSTANTER ──────────────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
   const baseColor = useRules ? "var(--ink2)" : "var(--muted)";
 
   return (
-    <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 2px", lineHeight:1.6 }}>
+    <div style={{ fontSize:12, lineHeight:"21px", overflowWrap:"anywhere" }}>
       {parts.map((part, i) => {
         const rule = useRules ? findMatchingHighlightRule(part, highlightRules) : null;
         const highlighted = useRules ? !!rule : isHighlighted(part);
@@ -148,7 +149,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
           : onIngredientTap ? () => onIngredientTap(cleanPart)
           : undefined;
         return (
-          <span key={i} style={{ display:"inline-flex", alignItems:"baseline" }}>
+          <React.Fragment key={i}>
             <span
               onClick={handleClick}
               style={{
@@ -157,7 +158,8 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
                 color: ruleStyle ? ruleStyle.color : highlighted ? "var(--red)" : knowledgeTerm ? "var(--blue)" : baseColor,
                 background: ruleStyle ? ruleStyle.bg : highlighted ? "var(--red-lt)" : knowledgeTerm ? "var(--blue-lt)" : "transparent",
                 borderRadius: highlighted || knowledgeTerm ? 4 : 0,
-                padding: highlighted || knowledgeTerm ? "1px 4px" : "1px 2px",
+                padding: highlighted || knowledgeTerm ? "1px 4px" : 0,
+                margin: highlighted || knowledgeTerm ? "0 -2px" : 0,
                 cursor: clickable ? "pointer" : "default",
                 transition: "background .1s",
               }}
@@ -166,9 +168,9 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
               {part}
             </span>
             {i < parts.length - 1 && (
-              <span style={{ color:"var(--border2)", fontSize:12, marginRight:2 }}>{sentenceStart[i + 1] ? "." : ","}</span>
+              <span style={{ color:"var(--muted)", fontSize:12 }}>{sentenceStart[i + 1] ? ". " : ", "}</span>
             )}
-          </span>
+          </React.Fragment>
         );
       })}
     </div>
