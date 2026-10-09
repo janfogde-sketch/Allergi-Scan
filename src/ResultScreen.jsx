@@ -12,6 +12,7 @@ import { useShoppingContext } from "./ShoppingContext.jsx";
 import { UI } from "./styleUtils.js";
 import { useRecalls } from "./useRecalls.js";
 import RecallNotice from "./RecallNotice.jsx";
+import { useMeasuredHeight } from "./useMeasuredHeight.js";
 
 import { makeResultSections } from "./ResultSections.jsx";
 
@@ -49,10 +50,12 @@ export default function ResultScreen({
   }, [scanResult?.code]);
   // F1-1: tilbagekaldt af Fødevarestyrelsen (opslag på EAN); gør status rød uanset allergier.
   const recalls = useRecalls(scanResult?.isDemo && import.meta.env.MODE !== "artifact-preview" ? null : scanResult?.code, accessToken);
+  // Bundnavigationen er ca. 113 px på iPhones med hjemmeindikator, men .screen har kun 110 px: mål den, så sidste kort aldrig skjules.
+  const navH = useMeasuredHeight(() => document.querySelector(".bottom-nav"));
   if (!scanResult) return null;
 
   // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
-  // vurdere imod, og en tom profil ville give et grønt "Ingen advarsler fundet". Vis i
+  // vurdere imod, og en tom profil ville give et grønt "Ingen match med dine valg". Vis i
   // stedet, at profilen mangler, og vurdér først, når den er hentet (siden regner selv om).
   if (profileLoadStatus === "loading" || profileLoadStatus === "error") {
     const failed = profileLoadStatus === "error";
@@ -421,7 +424,7 @@ export default function ResultScreen({
   const { chooseListForAdd, openContribution, renderDineValg, renderAddToList, renderMissingData, renderProductHero, renderPersonOverview, renderOtherAllergens, renderENumbers, renderNutrition } = makeResultSections(ctx);
 
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in" style={navH ? { paddingBottom: navH + 20 } : undefined}>
 
       {/* Demo-banner — kun for "Prøv en demo-scanning" på HOME, aldrig et rigtigt scan */}
       {scanResult.isDemo && (
@@ -515,7 +518,7 @@ export default function ResultScreen({
         <div className="card-lbl">Ingrediensliste</div>
         {scanResult.ingredients ? (
           <div>
-            <div style={{ padding:"10px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
+            <div style={{ padding:"12px", background:"var(--paper2)", borderRadius:8, marginBottom:8 }}>
               <IngredientsList text={scanResult.ingredients}
                 highlightRules={ingredientHighlightRules}
                 onHighlightTap={onIngredientHighlightTap}
@@ -556,9 +559,9 @@ export default function ResultScreen({
       {/* ── 7. ÉN SAMLET SIKKERHEDSDISCLAIMER (krav 11) — den eneste faste
           disclaimer på siden. Placeret her, umiddelbart før "Ret forkerte
           data", som krævet. ── */}
-      <div style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"10px 12px", marginBottom:10, background:"var(--paper2)", borderRadius:10 }}>
-        <Icon name="info" size={13} color="var(--muted)" />
-        <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.5 }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"12px 14px", marginBottom:10, background:"var(--paper2)", borderRadius:10 }}>
+        <span style={{ flexShrink:0, marginTop:1, display:"inline-flex" }}><Icon name="info" size={13} color="var(--muted)" /></span>
+        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>
           EatSafe er vejledende. Kontrollér altid produktets aktuelle ingrediens- og allergenoplysninger.
         </div>
       </div>

@@ -81,7 +81,7 @@ function scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers,
     ...(matchedDanger.length===0 && matchedWarning.length===0 && !hasUnknown ? [{ type:"good", text:"Ingen af dine allergener fundet" }] : []),
     ...(matchedENumbers.length > 0 ? [{ type:"maybe", text:`Indeholder overvågede E-numre: ${matchedENumbers.join(", ")}` }] : []),
   ];
-  const headlines = { safe:"Ingen advarsler fundet", danger:"Allergi-advarsel", warn: isUnsafeUnknown ? "Kan ikke vurderes" : "Kan indeholde spor" };
+  const headlines = { safe:"Ingen match med dine valg", danger:"Allergi-advarsel", warn: isUnsafeUnknown ? "Kan ikke vurderes" : "Kan indeholde spor" };
   const summaries = {
     safe:"Ingen af dine registrerede allergener er fundet i dette produkt.",
     danger:`Produktet indeholder ${matchedDanger.map(id=>ALLERGENS.find(a=>a.id===id)?.label||id).join(", ")}.`,

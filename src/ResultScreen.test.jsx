@@ -52,7 +52,7 @@ describe("ResultScreen: status", () => {
   it("direkte allergen giver Allergi-advarsel", () => {
     setup({ scan: product({ ingredients: "Hvedemel, vand", allergen_flags: { hvede: "yes" } }), profile: { allergens: ["hvede"] } });
     expect(screen.getByText("Allergi-advarsel")).toBeTruthy();
-    expect(screen.queryByText("Ingen advarsler fundet")).toBeNull();
+    expect(screen.queryByText("Ingen match med dine valg")).toBeNull();
   });
 
   it("spor giver gul Kan indeholde spor, ikke Allergi-advarsel", () => {
@@ -68,9 +68,9 @@ describe("ResultScreen: status", () => {
     expect(screen.getAllByText(/Du har valgt ikke at få advarsel om spor/).length).toBeGreaterThan(0);
   });
 
-  it("alt kontrolleret og ingen fund: Ingen advarsler fundet (aldrig ordet sikker)", () => {
+  it("alt kontrolleret og ingen fund: Ingen match med dine valg (aldrig ordet sikker)", () => {
     const { container } = setup({ scan: product(), profile: { allergens: ["hvede"] } });
-    expect(screen.getByText("Ingen advarsler fundet")).toBeTruthy();
+    expect(screen.getByText("Ingen match med dine valg")).toBeTruthy();
     expect(container.textContent).not.toMatch(/100% sikker|allergifri|garanteret/i);
   });
 
@@ -79,14 +79,14 @@ describe("ResultScreen: status", () => {
     expect(screen.getByText("Kan ikke vurderes")).toBeTruthy();
     expect(screen.getByText("Ingrediensliste mangler")).toBeTruthy();
     expect(screen.getByText("Indsend ingrediensliste")).toBeTruthy();
-    expect(screen.queryByText("Ingen advarsler fundet")).toBeNull();
+    expect(screen.queryByText("Ingen match med dine valg")).toBeNull();
   });
 
   it("valgt allergen uden flag (men med ingrediensliste): Kan ikke vurderes og valget samles som ikke kontrolleret", () => {
     setup({ scan: product({ allergen_flags: { hvede: "no" } }), profile: { allergens: ["hvede", "jordnoedder"] } });
     expect(screen.getByText("Kan ikke vurderes")).toBeTruthy();
     expect(screen.getByText("1 valg kan ikke kontrolleres")).toBeTruthy();
-    expect(screen.queryByText("Ingen advarsler fundet")).toBeNull();
+    expect(screen.queryByText("Ingen match med dine valg")).toBeNull();
   });
 
   it("et fund vinder over manglende data (rød trods ukendte valg)", () => {
