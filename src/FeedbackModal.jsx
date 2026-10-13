@@ -33,7 +33,6 @@ export default function FeedbackModal({
   scanResult,
   madpasWaiterView,
   madpasLang,
-  selectedRecipe,
   editMode,
   showManualEan,
   profilePopup,
@@ -82,9 +81,9 @@ export default function FeedbackModal({
     },
     app: {
       buildTime: BUILD_TIME, commitSha: COMMIT_SHA,
-      screenLabel: buildScreenLabel({ screen, authTab, onboardStep, scanResult, madpasWaiterView, madpasLang, selectedRecipe, editMode, showManualEan, profilePopup }),
+      screenLabel: buildScreenLabel({ screen, authTab, onboardStep, scanResult, madpasWaiterView, madpasLang, editMode, showManualEan, profilePopup }),
     },
-    state: { screen, scanResult, madpasLang, selectedRecipe, onboardStep, userId, user },
+    state: { screen, scanResult, madpasLang, onboardStep, userId, user },
     traces: getTraceLog(),
     recentErrors: getRecentErrors(),
   });

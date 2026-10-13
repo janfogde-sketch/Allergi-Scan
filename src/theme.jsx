@@ -1241,21 +1241,8 @@ button.filter-chip{width:auto;}
 .mp-cc-toggle-knob{width:22px;height:22px;border-radius:50%;background:var(--ink);position:absolute;top:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
 
 /* ── OPSKRIFTER ── */
-.recipe-grid{display:flex;flex-direction:column;gap:12px;}
-.recipe-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s;position:relative;}
-.recipe-card:active{transform:scale(.99);}
-.recipe-card:hover{border-color:var(--border2);}
-.recipe-card-img{width:100%;height:150px;object-fit:cover;display:block;background:var(--surface2);}
-.recipe-card-img-placeholder{width:100%;height:120px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:52px;}
-.recipe-card-body{padding:12px 14px 14px;}
-.recipe-card-title{font-size:16px;font-weight:700;color:var(--ink);line-height:1.25;margin-bottom:4px;letter-spacing:-.2px;}
-.recipe-card-desc{font-size:12px;color:var(--ink2);line-height:1.5;margin-bottom:10px;}
-.recipe-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.recipe-pill{display:inline-flex;align-items:center;gap:4px;height:24px;box-sizing:border-box;padding:0 10px;font-size:11px;font-weight:600;line-height:1;border-radius:100px;border:1px solid var(--border);background:var(--surface2);color:var(--ink2);white-space:nowrap;}
-.recipe-safe-bar{display:flex;gap:6px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);margin-top:10px;}
 /* Opskrifter (30. sept. 2026): sidste kort skal kunne scrolles helt fri af
    bundnavigationen, også med home-indicator (safe-area) på iPhone. */
-.recipes-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
 /* Indkøbslistens listevælger (30. sept. 2026): sekundære handlinger, der
    tydeligt er klikbare (hvid flade, synlig kant, mørk tekst) — ikke den
    grå .btn-ghost, som kunne ligne en deaktiveret knap. */
@@ -1267,31 +1254,6 @@ button.filter-chip{width:auto;}
 .knowledge-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
 .kb-card{transition:transform .15s;}
 .kb-card:active{transform:scale(.99);}
-.recipe-submit-btn{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;height:32px;padding:0 12px 0 10px;border-radius:100px;border:1px solid var(--border2);background:var(--surface);color:var(--green);font-family:var(--f);font-size:13px;font-weight:700;cursor:pointer;}
-.recipe-submit-btn:active{transform:scale(.97);}
-.recipe-safe-toggle{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);color:var(--ink);font-family:var(--f);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;}
-.recipe-safe-toggle:active{transform:scale(.97);}
-.recipe-safe-toggle-box{width:16px;height:16px;box-sizing:border-box;border-radius:5px;border:1.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--on-green);}
-.recipe-safe-toggle.on{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);font-weight:700;}
-.recipe-safe-toggle.on .recipe-safe-toggle-box{border-color:var(--green);background:var(--green);}
-.recipe-profile-badge{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;border:1px solid;}
-.recipe-fav-btn{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;}
-.recipe-filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
-.recipe-filter-row::-webkit-scrollbar{display:none;}
-.recipe-filter-chip{flex-shrink:0;padding:8px 14px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;white-space:nowrap;}
-.recipe-filter-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
-.recipe-search-wrap{position:relative;margin-bottom:12px;}
-.recipe-search-input{width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--border2);border-radius:12px;background:var(--surface);font-family:var(--f);font-size:14px;color:var(--ink);outline:none;box-sizing:border-box;transition:border-color .15s;}
-.recipe-search-input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt);}
-.recipe-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;}
-.recipe-detail-hero{position:relative;margin:-1px -16px 0;}
-.recipe-detail-img{width:100%;height:240px;object-fit:cover;display:block;}
-.recipe-detail-img-placeholder{width:100%;height:200px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:80px;}
-.recipe-detail-back{position:absolute;top:14px;left:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);}
-.recipe-detail-fav{position:absolute;top:14px;right:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.recipe-detail-title{font-size:24px;font-weight:700;color:var(--ink);letter-spacing:-.5px;line-height:1.2;margin-bottom:8px;}
-.recipe-meta-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
-.recipe-meta-pill{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:100px;font-size:11px;font-weight:700;color:var(--muted);}
 .ingredient-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
 .ingredient-row:last-child{border-bottom:none;}
 .ingredient-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px;}
@@ -1302,7 +1264,6 @@ button.filter-chip{width:auto;}
 .servings-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;font-family:var(--f);}
 .servings-btn:hover{border-color:var(--green);color:var(--green);}
 .servings-num{font-size:15px;font-weight:700;color:var(--ink);min-width:22px;text-align:center;}
-.recipe-skeleton{background:var(--surface);border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;}
 .skeleton-img{width:100%;height:140px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;}
 .skeleton-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;margin-bottom:8px;}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
@@ -1325,7 +1286,7 @@ button.filter-chip{width:auto;}
    (@media (hover:hover)), så et tryk på telefonen ikke efterlader rækken halvgennemsigtig. */
 .home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
 .mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
-.filter-chip:active,.ap-chip:active,.recipe-filter-chip:active,.tab:active,
+.filter-chip:active,.ap-chip:active,.tab:active,
 .demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
 .scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
 .admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,

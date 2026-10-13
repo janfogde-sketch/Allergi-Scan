@@ -23,7 +23,7 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
   contexts `src/*Context.jsx`.
 - Desktop-admin: `src/admin/` (eget Vite-entry `admin.html`, egen React-rod, egen CSS i `adminTheme.js`; deler localStorage-session
   (session via cookie og mærket `as_session`, se `src/sessionStore.js`) med appen og genbruger `useAdmin.js`). Faner i `src/admin/sections/`: Dashboard, Brugere, Indsendelser,
-  Tickets, Manglende, Import, Opskrifter, Produkter, Leksikon, Historik, Familie, Fejl, Tilbagekald, Notifikationer, To do. Global søgning i topbaren.
+  Tickets, Manglende, Import, Produkter, Leksikon, Historik, Familie, Fejl, Tilbagekald, Notifikationer, To do. Global søgning i topbaren.
 - Edge-funktioner `supabase/functions/<navn>/index.ts`, delt kode i `supabase/functions/_shared/`. Migrationer `supabase/migrations/`
   (baseline + nye), mailskabeloner `supabase/templates/{auth,resend}/`, statiske sider `public/` (`install`, `invite`, `privacy`, `terms`,
   `uventet-nulstilling`).
@@ -176,7 +176,7 @@ On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fu
 
 | Punkt | Note |
 |---|---|
-| Madspild-tilbud ("i køleskabet") | `food-waste`-funktionen virker (Salling API, `SALLING_API_TOKEN`), men UI-knappen er fjernet fra `ResultScreen.jsx`. Genoptag ved at koble `useFoodWaste` (`src/useFoodWaste.js`) på en skærm igen (se git-historik omkring 17. sept. 2026 for den gamle UI) |
+| Madspild-tilbud ("i køleskabet") | `food-waste`-funktionen virker (Salling API, `SALLING_API_TOKEN`), men UI-knappen er fjernet fra `ResultScreen.jsx`. Genoptag ved at koble (hook slettet 13. okt. 2026, hent fra git) `useFoodWaste` (`src/useFoodWaste.js`) på en skærm igen (se git-historik omkring 17. sept. 2026 for den gamle UI) |
 | Leksikon 1000+ entries | Planlagt; i dag ca. 770 |
 | Desktop-admin | Alle faner er bygget (se §2). Mobil-adminens Debug-fane (`getTraceLog()`) er bevidst ikke porteret. Detaljer om hver fane og de tilhørende RLS-migrationer (`admin_can_write_user_allergens`, `admin_can_read_family_invites`, `admin_can_manage_family_data`) står i `.claude/HISTORY.md` |
 

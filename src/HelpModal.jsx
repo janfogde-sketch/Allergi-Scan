@@ -13,12 +13,6 @@ const HELP_CONTENT = {
     { icon:"zap", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
     { icon:"list", title:"Historik", desc:"Dine scanninger gemmes automatisk. Find dem under Historik i bundmenuen." },
   ]},
-  "recipes": { title:"Opskrifter", titleIcon:"recipes", tips:[
-    { icon:"search", title:"Søg og filtrer", desc:"Søg på navn eller vælg kategori. Slå 'Kun sikre' til for at skjule opskrifter med dine allergener." },
-    { icon:"heart", title:"Favoritter", desc:"Tryk på hjertet for at gemme en opskrift til Favoritter-fanen." },
-    { icon:"profile", title:"Portionsjustering", desc:"Åbn en opskrift og tryk + / − for at skalere ingredienser automatisk." },
-    { icon:"cart", title:"Indkøbsliste", desc:"Tryk 'Tilføj til indkøbsliste' for at sende ingredienser direkte til din liste." },
-  ]},
   "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
     { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
     { icon:"link", title:"Del listen", desc:"Tryk på Del ved siden af listenavnet på dine egne lister. Vælg: kun dig, hele familien eller bestemte personer. Du kan også sende et link til en, der ikke er i familien. Lister, andre har delt med dig, forlader du under listenavnet → Rediger." },
