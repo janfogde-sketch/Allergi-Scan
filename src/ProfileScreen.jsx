@@ -1,9 +1,8 @@
 // @ts-nocheck
 import React, { useEffect } from "react";
-import { ALLERGENS, SCREENS, DIETS, DIETS_ENABLED } from "./constants.jsx";
-import { allergenChoiceLabel, initials, visibleDiets } from "./helpers.js";
+import { ALLERGENS, SCREENS } from "./constants.jsx";
+import { allergenChoiceLabel, initials } from "./helpers.js";
 import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
-import { useGlutenFreeSync } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -160,14 +159,6 @@ export default function ProfileScreen({
   // Husstanden (rigtige konti) hentes nu i App.jsx (useHousehold, 1. okt. 2026), så den også kan
   // vælges som profil ved scanning m.m. — her læses den kun fra ProfileContext.
 
-  // "Rediger præferencer" (28. sept. 2026, Profil-restrukturering) — samme
-  // delte gluten↔glutenfri-sync-hook som onboarding/MemberForm bruger (se
-  // AllergenPicker.jsx). Bliver her (ikke i EditPreferencesScreen), fordi
-  // den altid har kørt, mens profil-skærmene er åbne.
-  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useGlutenFreeSync(
-    allergens, user.diets || [], (arr) => setUser(u => ({ ...u, diets: arr }))
-  );
-
   // Historik hentes ved allerførste mount (Profil/Favoritter læser også
   // `history`, fx GamificationCard/"Senest scannet", uden selv at besøge
   // Historik-fanen) — uden dette viser de 0 scanninger indtil et separat
@@ -183,7 +174,6 @@ export default function ProfileScreen({
     return (
       <EditPreferencesScreen
         customInput={customInput} setCustomInput={setCustomInput}
-        glutenFreeAutoApplied={glutenFreeAutoApplied} setGlutenFreeAutoApplied={setGlutenFreeAutoApplied}
       />
     );
   }
@@ -217,18 +207,18 @@ export default function ProfileScreen({
           <div style={UI.rowBetweenMb10}>
             <div>
               <div style={UI.boldInk13}>Mine præferencer</div>
-              <div style={UI.muted11mt2}>{DIETS_ENABLED ? "Allergier · Intolerancer · Diæter · E-numre" : "Allergier · Intolerancer · E-numre"}</div>
+              <div style={UI.muted11mt2}>"Allergier · Intolerancer · E-numre"</div>
             </div>
             <button onClick={() => setScreen(SCREENS.EDITPREFERENCES)}
               style={{ background:"var(--green-lt)", border:"none", borderRadius:8, padding:"4px 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--green)", cursor:"pointer" }}>
               Rediger
             </button>
           </div>
-          {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) + visibleDiets(user?.diets).length === 0
+          {allergens.length + customAllerg.length + (selectedENumbers?.length || 0) === 0
             ? <div style={{ textAlign:"center", padding:"16px 0" }}><div style={{ marginBottom:8, display:"flex", justifyContent:"center" }}><Icon name="info" size={30} color="var(--muted)" /></div><div style={{ fontSize:13, color:"var(--muted)", marginBottom:10 }}>Ingen præferencer registreret endnu</div><button className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Tilføj allergener</button></div>
             : (
               <div>
-                {/* Gruppér: allergener, intoleranser, diæter */}
+                {/* Gruppér: allergener, intoleranser */}
                 {allergens.filter(id => ALLERGENS.some(a => a.id === id)).length > 0 && (
                   <div style={UI.mb8}>
                     <div style={UI.sectionLbl4Ink}>Allergier</div>
@@ -239,12 +229,6 @@ export default function ProfileScreen({
                   <div style={UI.mb8}>
                     <div style={UI.sectionLbl4Ink}>Intolerancer</div>
                     <div className="tags">{customAllerg.map((c,i) => <div key={i} className="tag" style={{ display:"flex", alignItems:"center", gap:4, background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" }}><Icon name="edit" size={10} color="var(--amber)" /> {c}</div>)}</div>
-                  </div>
-                )}
-                {(visibleDiets(user?.diets).length > 0) && (
-                  <div style={UI.mb8}>
-                    <div style={UI.sectionLbl4Ink}>Diæter</div>
-                    <div className="tags">{visibleDiets(user.diets).map(d => { const diet = DIETS.find(x=>x.id===d); return diet ? <div key={d} className="tag" style={UI.ubggreenlt_cgreen_bdcgreenmid}>{diet.emoji || "🥗"} {diet.label}</div> : null; })}</div>
                   </div>
                 )}
                 {selectedENumbers && selectedENumbers.length > 0 && (

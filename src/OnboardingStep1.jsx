@@ -32,7 +32,7 @@ export function makeRenderStep1(c) {
               27. sept. 2026, "FINAL 10/10 POLISH": teksten omformuleret —
               "bruges til din personlige allergiprofil" antydede fejlagtigt
               at ALLE felter her (navn/telefon/alder/køn) er nødvendige for
-              selve allergi-logikken, hvilket kun allergier/diæter reelt er
+              selve allergi-logikken, hvilket kun allergier reelt er
               (indsamlet på senere trin) — disse felter er kontooplysninger. */}
           <div style={{ ...UI.ufs13_cmuted2_lh15, color:"var(--ink2)" }}>Alder og køn bruges til at tilpasse tjenesten og forstå, hvem den bruges af.</div>
         </div>

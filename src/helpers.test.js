@@ -8,10 +8,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
-import { DIETS_ENABLED, ALLERGENS, PRODUCT_ALLERGENS } from "./constants.jsx";
+import { ALLERGENS, PRODUCT_ALLERGENS } from "./constants.jsx";
 import {
   compareAllergens,
-  checkDietCompatibility,
   extractENumbers,
   compareENumbers,
   verifiedBadge,
@@ -106,87 +105,6 @@ describe("compareAllergens", () => {
 
   it("has low confidence when there is no allergen data at all", () => {
     const result = compareAllergens({}, ["gluten"]);
-    expect(result.confidence).toBe("low");
-  });
-});
-
-describe("checkDietCompatibility", () => {
-  it("vegan: fails on direct milk-protein allergen flag", () => {
-    const result = checkDietCompatibility("vegan", { maelkeallergi: "yes" }, "", null);
-    expect(result.ok).toBe(false);
-    expect(result.reasons.join(" ")).toMatch(/mælkeprotein/i);
-  });
-
-  it("vegan: fails on an animal-derived ingredient not covered by allergen flags", () => {
-    const result = checkDietCompatibility("vegan", {}, "sukker, honning, salt", null);
-    expect(result.ok).toBe(false);
-    expect(result.reasons.join(" ")).toMatch(/honning/i);
-  });
-
-  it("vegan: passes on a plant-only ingredient list", () => {
-    const result = checkDietCompatibility("vegan", {}, "hvedemel, vand, salt, gær", null);
-    expect(result.ok).toBe(true);
-    expect(result.reasons).toEqual([]);
-  });
-
-  it("gluten-free: fails when the gluten flag is set", () => {
-    const result = checkDietCompatibility("gluten-free", { gluten: "yes" }, "", null);
-    expect(result.ok).toBe(false);
-  });
-
-  it("gluten-free: passes when neither gluten nor hvede flags are set", () => {
-    const result = checkDietCompatibility("gluten-free", { gluten: "no" }, "", null);
-    expect(result.ok).toBe(true);
-    expect(result.confidence).toBe("high");
-  });
-
-  it("gluten-free: falls back to ingredient text when the gluten/hvede flags are missing (bekymring fra sikkerhedsgennemgang)", () => {
-    const result = checkDietCompatibility("gluten-free", {}, "Hvedemel, vand, salt, gær", null);
-    expect(result.ok).toBe(false);
-  });
-
-  it("gluten-free: does NOT false-positive on a product explicitly labelled gluten-free (allergen-logik-gennemgang, 16. sept. 2026)", () => {
-    // "gluten" er et langt nøgleord (>4 tegn, ren understreng) uden ordgrænse-
-    // beskyttelse — uden negations-tjek matchede det tidligere "glutenfri"
-    // selv, og fortalte en cøliaki-bruger at et EKSPLICIT glutenfrit produkt
-    // "indeholder gluten". Det stik modsatte af hvad emballagen rent faktisk sagde.
-    const result = checkDietCompatibility("gluten-free", {}, "Produktet er 100% glutenfrit. Ingredienser: majsstivelse, vand, salt", null);
-    expect(result.ok).toBe(true);
-  });
-
-  it("gluten-free: does NOT claim high confidence when the flags are unknown and there's no ingredient text to fall back on", () => {
-    const result = checkDietCompatibility("gluten-free", { gluten: "unknown" }, "", null);
-    expect(result.ok).toBe(true);
-    expect(result.confidence).not.toBe("high");
-  });
-
-  it("keto: uses nutrition data when available instead of guessing from text", () => {
-    const result = checkDietCompatibility("keto", {}, "", { carbohydrates: 25 });
-    expect(result.ok).toBe(false);
-    expect(result.confidence).toBe("medium");
-  });
-
-  it("keto: returns null (unknown) rather than a guess when no data exists at all", () => {
-    const result = checkDietCompatibility("keto", {}, "", null);
-    expect(result.ok).toBe(null);
-  });
-
-  it("keto: does NOT false-positive on 'rismel' just because it contains 'mel'", () => {
-    // Regression guard: "mel" is a short (<=4 char) keyword and must only match
-    // as a whole word, not as a substring of an unrelated word like "rismel".
-    const result = checkDietCompatibility("keto", {}, "rismel, vand, salt", null);
-    expect(result.reasons.some(r => r.includes("mel"))).toBe(false);
-  });
-
-  it("keto: DOES flag plain 'mel' as a keto-breaker when it appears as its own word", () => {
-    const result = checkDietCompatibility("keto", {}, "mel, vand, salt", null);
-    expect(result.ok).toBe(false);
-    expect(result.reasons.join(" ")).toMatch(/mel/);
-  });
-
-  it("returns null/low-confidence for an unrecognized diet id", () => {
-    const result = checkDietCompatibility("not-a-real-diet", {}, "", null);
-    expect(result.ok).toBe(null);
     expect(result.confidence).toBe("low");
   });
 });
@@ -440,11 +358,11 @@ describe("verifiedImageUrl", () => {
 });
 
 describe("husstandskonti som skrivebeskyttede profiler", () => {
-  const jan = { id: "u-jan", name: "Jan Fogde", email: "jan@x.dk", allergens: ["maelkeallergi"], custom: ["kiwi"], diets: ["vegetarian"], eNumbers: ["E150"], canRemove: false };
+  const jan = { id: "u-jan", name: "Jan Fogde", email: "jan@x.dk", allergens: ["maelkeallergi"], custom: ["kiwi"], eNumbers: ["E150"], canRemove: false };
   it("mapper en konto til en profil med præfikset id, læse-flag og alle felter", () => {
     const [p] = householdToProfiles([jan]);
     expect(p.id).toBe(`${LINKED_PROFILE_PREFIX}u-jan`);
-    expect(p).toMatchObject({ name: "Jan Fogde", allergens: ["maelkeallergi"], custom: ["kiwi"], diets: DIETS_ENABLED ? ["vegetarian"] : [], eNumbers: ["E150"], linked: true, readOnly: true });
+    expect(p).toMatchObject({ name: "Jan Fogde", allergens: ["maelkeallergi"], custom: ["kiwi"], eNumbers: ["E150"], linked: true, readOnly: true });
     expect(typeof p.color).toBe("string");
   });
   it("falder tilbage til e-mailens lokale del, når kontoen ingen navn har", () => {
@@ -480,20 +398,6 @@ describe("husstandskonti som skrivebeskyttede profiler", () => {
       const a = ["me", "acct:a"];
       expect(syncLinkedActiveProfiles(a, ["acct:a"], ["acct:a"])).toBe(a);
     });
-  });
-});
-
-describe("kostpræferencer på pause (DIETS_ENABLED)", () => {
-  it("er slået fra, og profilernes diæter er tomme, selvom de er gemt", async () => {
-    const { visibleDiets } = await import("./helpers.js");
-    expect(DIETS_ENABLED).toBe(false);
-    expect(visibleDiets(["vegan", "gluten-free"])).toEqual([]);
-    expect(visibleDiets(undefined)).toEqual([]);
-    const list = buildActiveProfileList({
-      user: { name: "Jan", diets: ["vegan"] }, family: [{ id: "f1", name: "Oskar", diets: ["keto"] }],
-      allergens: [], customAllerg: [], selectedENumbers: [], activeProfiles: ["me", "f1"],
-    });
-    expect(list.map(p => p.diets)).toEqual([[], []]);
   });
 });
 

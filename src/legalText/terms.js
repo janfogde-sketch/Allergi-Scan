@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "6. oktober 2026",
+  "updated": "13. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes brugsvilkår og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -14,7 +14,7 @@ export default {
     ],
     [
       "p",
-      "EatSafe hjælper dig med at sammenholde oplysninger om fødevarer med de allergier, intolerancer, kostpræferencer, E-numre og andre valg, du har registreret i appen."
+      "EatSafe hjælper dig med at sammenholde oplysninger om fødevarer med de allergier, intolerancer, E-numre og andre valg, du har registreret i appen."
     ],
     [
       "p",
@@ -49,7 +49,7 @@ export default {
       [
         "scanne eller søge efter fødevarer",
         "sammenholde produktdata med dine registrerede allergier og intolerancer",
-        "kontrollere kostpræferencer og valgte E-numre",
+        "kontrollere valgte E-numre",
         "vise ingredienser, allergener og næringsoplysninger",
         "gemme historik, favoritter og indkøbslister",
         "understøtte profiler for familiemedlemmer eller andre personer i din familie",

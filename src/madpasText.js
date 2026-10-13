@@ -2,7 +2,7 @@
 // Madpas-tekster (oversættelser og sætningsbyggere). Ligger i en egen fil, så de
 // store tabeller ikke ligger i startpakken: kun Madpas-skærmen og oplæsningen
 // indlæser dem (to do a5dc1790, Hurtigere opstart).
-import { ALLERGENS, DIETS, MADPAS_LANGUAGES } from "./constants.jsx";
+import { ALLERGENS, MADPAS_LANGUAGES } from "./constants.jsx";
 
 export const ALLERGEN_EXAMPLES = {
   gluten: {
@@ -78,19 +78,6 @@ export const ALLERGEN_EXAMPLES = {
   },
 };
 
-// Kostpræference-navne pr. sprog — til Madpas (26. sept. 2026, Madpas-
-// redesign: "Når brugeren vælger et andet sprog, skal hele madpasset
-// oversættes, inklusive navnene på ... diæter". DIETS.label ovenfor er kun
-// dansk; dansk selv læses direkte derfra (samme mønster som ALLERGEN_T,
-// der heller ikke har en separat "da"-nøgle), resten af sprogene her.
-export const DIET_T = {
-  vegan:        { en:"Vegan", de:"Vegan", fr:"Végane", es:"Vegano", it:"Vegano", nl:"Veganistisch", pt:"Vegano", pl:"Wegański", sv:"Vegansk", no:"Vegansk", ja:"ヴィーガン", zh:"纯素", ar:"نباتي صرف", tr:"Vegan", th:"วีแกน", el:"Βίγκαν" },
-  vegetarian:   { en:"Vegetarian", de:"Vegetarisch", fr:"Végétarien", es:"Vegetariano", it:"Vegetariano", nl:"Vegetarisch", pt:"Vegetariano", pl:"Wegetariański", sv:"Vegetarisk", no:"Vegetarisk", ja:"ベジタリアン", zh:"素食", ar:"نباتي", tr:"Vejetaryen", th:"มังสวิรัติ", el:"Χορτοφάγος" },
-  pescetarian:  { en:"Pescatarian", de:"Pescetarisch", fr:"Pescétarien", es:"Pescetariano", it:"Pescetariano", nl:"Pescotarisch", pt:"Pescetariano", pl:"Pescetariański", sv:"Pescetarian", no:"Pescetarianer", ja:"ペスカタリアン", zh:"鱼素者", ar:"نباتي يأكل السمك", tr:"Pesketaryen", th:"กินมังสวิรัติแบบทานปลาได้", el:"Πεσκεταριανός" },
-  "gluten-free":{ en:"Gluten-free", de:"Glutenfrei", fr:"Sans gluten", es:"Sin gluten", it:"Senza glutine", nl:"Glutenvrij", pt:"Sem glúten", pl:"Bezglutenowy", sv:"Glutenfri", no:"Glutenfri", ja:"グルテンフリー", zh:"无麸质", ar:"خالٍ من الغلوتين", tr:"Glutensiz", th:"ปราศจากกลูเตน", el:"Χωρίς γλουτένη" },
-  keto:         { en:"Keto", de:"Keto", fr:"Kéto", es:"Keto", it:"Cheto", nl:"Keto", pt:"Keto", pl:"Keto", sv:"Keto", no:"Keto", ja:"ケト", zh:"生酮", ar:"كيتو", tr:"Keto", th:"คีโต", el:"Κέτο" },
-};
-
 // Sektionsoverskrifter til Madpas' strukturerede tjener-visning (26. sept.
 // 2026) — grupperer efter type (allergi/intolerance/kost) i stedet for én
 // generisk "kan ikke spise"-liste, se CLAUDE.md. E-numre er bevidst IKKE
@@ -100,115 +87,6 @@ export const DIET_T = {
 export const MADPAS_SECTIONS_T = {
   allergies:    { da:"Fødevareallergier", en:"Food allergies", de:"Lebensmittelallergien", fr:"Allergies alimentaires", es:"Alergias alimentarias", it:"Allergie alimentari", nl:"Voedselallergieën", pt:"Alergias alimentares", pl:"Alergie pokarmowe", sv:"Matallergier", no:"Matallergier", ja:"食物アレルギー", zh:"食物过敏", ar:"حساسية الطعام", tr:"Gıda alerjileri", th:"การแพ้อาหาร", el:"Τροφικές αλλεργίες" },
   intolerances: { da:"Intolerancer",       en:"Intolerances", de:"Unverträglichkeiten", fr:"Intolérances", es:"Intolerancias", it:"Intolleranze", nl:"Intoleranties", pt:"Intolerâncias", pl:"Nietolerancje", sv:"Intoleranser", no:"Intoleranser", ja:"不耐症", zh:"不耐受", ar:"عدم التحمل", tr:"İntoleranslar", th:"การแพ้/ไม่ทนอาหาร", el:"Δυσανεξίες" },
-  // "Dietary requirements" i stedet for blot "Diet" (27. sept. 2026,
-  // Madpas-finpolish, krav 3) — mere præcist for personalet, som ellers
-  // kan læse "Diet" som en slankekur i stedet for et fødevarehensyn.
-  diet:         { da:"Kosthensyn", en:"Dietary requirements", de:"Ernährungsanforderungen", fr:"Exigences alimentaires", es:"Requisitos dietéticos", it:"Requisiti dietetici", nl:"Dieetvereisten", pt:"Requisitos alimentares", pl:"Wymagania żywieniowe", sv:"Kostkrav", no:"Kostkrav", ja:"食事の要件", zh:"饮食要求", ar:"المتطلبات الغذائية", tr:"Beslenme gereksinimleri", th:"ข้อกำหนดด้านอาหาร", el:"Διατροφικές απαιτήσεις" },
-};
-
-// Kort, tydelig besked til personalet PR. DIÆT (27. sept. 2026, Madpas-
-// finpolish, krav 1-2) — diæter må ikke kun vises som badges, de skal have
-// samme type "kan/kan ikke spise"-besked som allergier. Naturligt
-// oversat (ikke ord-for-ord), IKKE en sikkerheds-sætning i samme forstand
-// som allergener (fx keto er en præference, ikke en risiko), så ordlyden
-// er bevidst blødere for keto ("limit"/"begræns") end for de øvrige
-// ("does not contain"/"indeholder ikke").
-export const MADPAS_DIET_MESSAGE_T = {
-  vegan: {
-    da:"Jeg spiser vegansk. Sørg venligst for, at min mad ikke indeholder kød, fisk, mejeriprodukter, æg eller andre animalske ingredienser.",
-    en:"I follow a vegan diet. Please make sure my food does not contain meat, fish, dairy, eggs or other animal-derived ingredients.",
-    de:"Ich ernähre mich vegan. Bitte stellen Sie sicher, dass mein Essen kein Fleisch, keinen Fisch, keine Milchprodukte, keine Eier oder andere tierische Zutaten enthält.",
-    fr:"Je suis végane. Veuillez vous assurer que mon repas ne contient ni viande, ni poisson, ni produits laitiers, ni œufs, ni aucun autre ingrédient d'origine animale.",
-    es:"Sigo una dieta vegana. Por favor, asegúrese de que mi comida no contenga carne, pescado, lácteos, huevos ni ningún otro ingrediente de origen animal.",
-    it:"Seguo una dieta vegana. Assicuratevi che il mio pasto non contenga carne, pesce, latticini, uova o altri ingredienti di origine animale.",
-    nl:"Ik eet veganistisch. Zorg ervoor dat mijn maaltijd geen vlees, vis, zuivel, eieren of andere dierlijke ingrediënten bevat.",
-    pt:"Sigo uma dieta vegana. Por favor, certifique-se de que a minha refeição não contém carne, peixe, laticínios, ovos ou outros ingredientes de origem animal.",
-    pl:"Stosuję dietę wegańską. Proszę dopilnować, aby moje jedzenie nie zawierało mięsa, ryb, nabiału, jaj ani innych składników pochodzenia zwierzęcego.",
-    sv:"Jag äter veganskt. Se till att min måltid inte innehåller kött, fisk, mejeriprodukter, ägg eller andra animaliska ingredienser.",
-    no:"Jeg spiser vegansk. Sørg for at maten min ikke inneholder kjøtt, fisk, meieriprodukter, egg eller andre animalske ingredienser.",
-    ja:"私はヴィーガンです。肉、魚、乳製品、卵、その他の動物由来の原材料が含まれていない料理をお願いします。",
-    zh:"我遵循纯素饮食。请确保我的食物不含肉类、鱼类、乳制品、鸡蛋或其他动物源成分。",
-    ar:"أتبع نظاماً نباتياً صرفاً. يرجى التأكد من أن طعامي لا يحتوي على اللحوم أو الأسماك أو منتجات الألبان أو البيض أو أي مكونات أخرى مشتقة من الحيوانات.",
-    tr:"Vegan besleniyorum. Lütfen yemeğimde et, balık, süt ürünleri, yumurta veya başka hayvansal kaynaklı malzemeler bulunmadığından emin olun.",
-    th:"ฉันกินอาหารวีแกน กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีเนื้อสัตว์ ปลา ผลิตภัณฑ์นม ไข่ หรือส่วนผสมอื่นที่มาจากสัตว์",
-    el:"Ακολουθώ vegan διατροφή. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει κρέας, ψάρι, γαλακτοκομικά, αυγά ή άλλα συστατικά ζωικής προέλευσης.",
-  },
-  vegetarian: {
-    da:"Jeg spiser vegetarisk. Sørg venligst for, at min mad ikke indeholder kød eller fisk.",
-    en:"I follow a vegetarian diet. Please make sure my food does not contain meat or fish.",
-    de:"Ich ernähre mich vegetarisch. Bitte stellen Sie sicher, dass mein Essen kein Fleisch und keinen Fisch enthält.",
-    fr:"Je suis végétarien(ne). Veuillez vous assurer que mon repas ne contient ni viande ni poisson.",
-    es:"Sigo una dieta vegetariana. Por favor, asegúrese de que mi comida no contenga carne ni pescado.",
-    it:"Seguo una dieta vegetariana. Assicuratevi che il mio pasto non contenga carne né pesce.",
-    nl:"Ik eet vegetarisch. Zorg ervoor dat mijn maaltijd geen vlees of vis bevat.",
-    pt:"Sigo uma dieta vegetariana. Por favor, certifique-se de que a minha refeição não contém carne nem peixe.",
-    pl:"Stosuję dietę wegetariańską. Proszę dopilnować, aby moje jedzenie nie zawierało mięsa ani ryb.",
-    sv:"Jag äter vegetariskt. Se till att min måltid inte innehåller kött eller fisk.",
-    no:"Jeg spiser vegetarisk. Sørg for at maten min ikke inneholder kjøtt eller fisk.",
-    ja:"私はベジタリアンです。肉や魚が含まれていない料理をお願いします。",
-    zh:"我遵循素食饮食。请确保我的食物不含肉类或鱼类。",
-    ar:"أتبع نظاماً نباتياً. يرجى التأكد من أن طعامي لا يحتوي على اللحوم أو الأسماك.",
-    tr:"Vejetaryen besleniyorum. Lütfen yemeğimde et veya balık bulunmadığından emin olun.",
-    th:"ฉันกินมังสวิรัติ กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีเนื้อสัตว์หรือปลา",
-    el:"Ακολουθώ χορτοφαγική διατροφή. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει κρέας ή ψάρι.",
-  },
-  pescetarian: {
-    da:"Jeg spiser pescetarisk. Sørg venligst for, at min mad ikke indeholder kød — fisk og skaldyr er okay.",
-    en:"I follow a pescetarian diet. Please make sure my food does not contain meat — fish and seafood are fine.",
-    de:"Ich ernähre mich pescetarisch. Bitte stellen Sie sicher, dass mein Essen kein Fleisch enthält — Fisch und Meeresfrüchte sind in Ordnung.",
-    fr:"Je suis pescétarien(ne). Veuillez vous assurer que mon repas ne contient pas de viande — le poisson et les fruits de mer conviennent.",
-    es:"Sigo una dieta pescetariana. Por favor, asegúrese de que mi comida no contenga carne — el pescado y el marisco están bien.",
-    it:"Seguo una dieta pescetariana. Assicuratevi che il mio pasto non contenga carne — pesce e frutti di mare vanno bene.",
-    nl:"Ik eet pescotarisch. Zorg ervoor dat mijn maaltijd geen vlees bevat — vis en zeevruchten zijn prima.",
-    pt:"Sigo uma dieta pescetariana. Por favor, certifique-se de que a minha refeição não contém carne — peixe e marisco não são problema.",
-    pl:"Stosuję dietę pescowegetariańską. Proszę dopilnować, aby moje jedzenie nie zawierało mięsa — ryby i owoce morza są w porządku.",
-    sv:"Jag äter pescetariskt. Se till att min måltid inte innehåller kött — fisk och skaldjur är okej.",
-    no:"Jeg spiser pescetarisk. Sørg for at maten min ikke inneholder kjøtt — fisk og sjømat er greit.",
-    ja:"私はペスクタリアンです。肉が含まれていない料理をお願いします（魚介類は問題ありません）。",
-    zh:"我遵循鱼素饮食。请确保我的食物不含肉类——鱼类和海鲜没问题。",
-    ar:"أتبع نظاماً غذائياً يعتمد على الأسماك. يرجى التأكد من أن طعامي لا يحتوي على اللحوم — الأسماك والمأكولات البحرية مقبولة.",
-    tr:"Pesketaryen besleniyorum. Lütfen yemeğimde et bulunmadığından emin olun — balık ve deniz ürünleri sorun değil.",
-    th:"ฉันกินอาหารเพสคาทาเรียน กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีเนื้อสัตว์ — ปลาและอาหารทะเลรับประทานได้",
-    el:"Ακολουθώ πεσκετεριανή διατροφή. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει κρέας — τα ψάρια και τα θαλασσινά είναι εντάξει.",
-  },
-  "gluten-free": {
-    da:"Jeg spiser glutenfrit. Sørg venligst for, at min mad ikke indeholder hvede, rug, byg eller andre glutenkilder.",
-    en:"I follow a gluten-free diet. Please make sure my food does not contain wheat, rye, barley or other sources of gluten.",
-    de:"Ich ernähre mich glutenfrei. Bitte stellen Sie sicher, dass mein Essen keinen Weizen, Roggen, Gerste oder andere glutenhaltige Zutaten enthält.",
-    fr:"Je suis un régime sans gluten. Veuillez vous assurer que mon repas ne contient ni blé, ni seigle, ni orge, ni aucune autre source de gluten.",
-    es:"Sigo una dieta sin gluten. Por favor, asegúrese de que mi comida no contenga trigo, centeno, cebada ni ninguna otra fuente de gluten.",
-    it:"Seguo una dieta senza glutine. Assicuratevi che il mio pasto non contenga frumento, segale, orzo o altre fonti di glutine.",
-    nl:"Ik eet glutenvrij. Zorg ervoor dat mijn maaltijd geen tarwe, rogge, gerst of andere glutenbronnen bevat.",
-    pt:"Sigo uma dieta sem glúten. Por favor, certifique-se de que a minha refeição não contém trigo, centeio, cevada ou outras fontes de glúten.",
-    pl:"Stosuję dietę bezglutenową. Proszę dopilnować, aby moje jedzenie nie zawierało pszenicy, żyta, jęczmienia ani innych źródeł glutenu.",
-    sv:"Jag äter glutenfritt. Se till att min måltid inte innehåller vete, råg, korn eller andra glutenkällor.",
-    no:"Jeg spiser glutenfritt. Sørg for at maten min ikke inneholder hvete, rug, bygg eller andre glutenkilder.",
-    ja:"私はグルテンフリーの食事をしています。小麦、ライ麦、大麦、その他グルテンを含む原材料が入っていない料理をお願いします。",
-    zh:"我遵循无麸质饮食。请确保我的食物不含小麦、黑麦、大麦或其他麸质来源。",
-    ar:"أتبع نظاماً خالياً من الغلوتين. يرجى التأكد من أن طعامي لا يحتوي على القمح أو الجاودار أو الشعير أو أي مصدر آخر للغلوتين.",
-    tr:"Glutensiz besleniyorum. Lütfen yemeğimde buğday, çavdar, arpa veya başka gluten kaynakları bulunmadığından emin olun.",
-    th:"ฉันกินอาหารปลอดกลูเตน กรุณาตรวจสอบให้แน่ใจว่าอาหารของฉันไม่มีข้าวสาลี ข้าวไรย์ ข้าวบาร์เลย์ หรือแหล่งกลูเตนอื่นๆ",
-    el:"Ακολουθώ διατροφή χωρίς γλουτένη. Παρακαλώ φροντίστε το φαγητό μου να μην περιέχει σιτάρι, σίκαλη, κριθάρι ή άλλες πηγές γλουτένης.",
-  },
-  keto: {
-    da:"Jeg spiser lavkulhydrat (keto). Begræns venligst kulhydratrige ingredienser som sukker, brød, pasta og ris i min mad.",
-    en:"I follow a low-carb (keto) diet. Please limit high-carbohydrate ingredients such as sugar, bread, pasta and rice in my food.",
-    de:"Ich ernähre mich kohlenhydratarm (Keto). Bitte begrenzen Sie kohlenhydratreiche Zutaten wie Zucker, Brot, Nudeln und Reis in meinem Essen.",
-    fr:"Je suis un régime pauvre en glucides (cétogène). Veuillez limiter les ingrédients riches en glucides comme le sucre, le pain, les pâtes et le riz dans mon repas.",
-    es:"Sigo una dieta baja en carbohidratos (keto). Por favor, limite los ingredientes ricos en carbohidratos como azúcar, pan, pasta y arroz en mi comida.",
-    it:"Seguo una dieta a basso contenuto di carboidrati (cheto). Vi prego di limitare ingredienti ricchi di carboidrati come zucchero, pane, pasta e riso nel mio pasto.",
-    nl:"Ik eet koolhydraatarm (keto). Beperk alstublieft koolhydraatrijke ingrediënten zoals suiker, brood, pasta en rijst in mijn maaltijd.",
-    pt:"Sigo uma dieta baixa em hidratos de carbono (keto). Por favor, limite ingredientes ricos em hidratos de carbono como açúcar, pão, massa e arroz na minha refeição.",
-    pl:"Stosuję dietę niskowęglowodanową (keto). Proszę ograniczyć składniki bogate w węglowodany, takie jak cukier, chleb, makaron i ryż, w moim posiłku.",
-    sv:"Jag äter lågkolhydratkost (keto). Begränsa gärna kolhydratrika ingredienser som socker, bröd, pasta och ris i min måltid.",
-    no:"Jeg spiser lavkarbo (keto). Vennligst begrens karbohydratrike ingredienser som sukker, brød, pasta og ris i maten min.",
-    ja:"私は低炭水化物（ケトジェニック）食を実践しています。砂糖、パン、パスタ、米などの炭水化物の多い食材はできるだけ控えてください。",
-    zh:"我遵循低碳水化合物（生酮）饮食。请尽量减少我食物中的糖、面包、面食和米饭等高碳水化合物成分。",
-    ar:"أتبع نظاماً غذائياً منخفض الكربوهيدرات (كيتو). يرجى تقليل المكونات الغنية بالكربوهيدرات مثل السكر والخبز والمعكرونة والأرز في طعامي.",
-    tr:"Düşük karbonhidratlı (keto) besleniyorum. Lütfen yemeğimde şeker, ekmek, makarna ve pirinç gibi yüksek karbonhidratlı malzemeleri sınırlandırın.",
-    th:"ฉันกินอาหารคาร์บต่ำ (คีโต) กรุณาจำกัดส่วนผสมที่มีคาร์โบไฮเดรตสูง เช่น น้ำตาล ขนมปัง พาสต้า และข้าว ในอาหารของฉัน",
-    el:"Ακολουθώ διατροφή χαμηλή σε υδατάνθρακες (κέτο). Παρακαλώ περιορίστε συστατικά πλούσια σε υδατάνθρακες όπως ζάχαρη, ψωμί, ζυμαρικά και ρύζι στο φαγητό μου.",
-  },
 };
 
 // Sikkerheds-sætning under hvert enkelt allergen-/fritekst-emne i
@@ -480,20 +358,6 @@ export function madpasAllergenLabel(a, lang) {
   if (lang === "da") return a.label;
   return ALLERGEN_T[a.id]?.[lang]?.n || ALLERGEN_T[a.id]?.en?.n || a.label;
 }
-export function madpasDietLabel(dietId, lang) {
-  const d = DIETS.find(x => x.id === dietId);
-  if (!d) return null;
-  if (lang === "da") return d.label;
-  return DIET_T[dietId]?.[lang] || DIET_T[dietId]?.en || d.label;
-}
-// Kort, tydelig besked til personalet pr. diæt (27. sept. 2026, Madpas-
-// finpolish, krav 1-2) — diæter skal have samme type besked som allergier,
-// ikke kun vises som badges. Se MADPAS_DIET_MESSAGE_T i constants.jsx.
-export function madpasDietMessage(dietId, lang) {
-  const messages = MADPAS_DIET_MESSAGE_T[dietId];
-  if (!messages) return "";
-  return messages[lang] || messages.en || "";
-}
 // Korte, oversatte fødevare-eksempler til Madpas' tjener-visning/PDF/
 // offentlige side (26. sept. 2026, Madpas-redesign, afsnit 8-10) — "Fx:
 // Bread, Pasta, Cakes" under selve allergenet, IKKE en fuld/garanteret
@@ -555,7 +419,7 @@ export function madpasCrossContactNote(names, lang) {
 }
 
 // Hele oplæsningsteksten til "Læs højt" (samme sætninger som på skærmen).
-export function madpasSpeechText({ lang, speakAllergens, speakCustom, speakDiets, crossContact }) {
+export function madpasSpeechText({ lang, speakAllergens, speakCustom, crossContact }) {
   const parts = [];
     parts.push(MADPAS_SPEECH_INTRO_T[lang] || MADPAS_SPEECH_INTRO_T.en);
 
@@ -591,10 +455,6 @@ export function madpasSpeechText({ lang, speakAllergens, speakCustom, speakDiets
       parts.push((MADPAS_SPEECH_CANNOT_T[lang] || MADPAS_SPEECH_CANNOT_T.en) + ": " + intoleranceNames.join(", "));
     }
 
-    if (speakDiets.length > 0) {
-      const dietNames = speakDiets.map(d => madpasDietLabel(d, lang)).filter(Boolean).join(", ");
-      parts.push(dietNames);
-    }
     parts.push(MADPAS_SPEECH_OUTRO_T[lang] || MADPAS_SPEECH_OUTRO_T.en);
   return parts.join(". ");
 }

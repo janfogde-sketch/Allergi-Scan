@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { useState } from "react";
-import { visibleDiets } from "./helpers.js";
 import { MADPAS_LANGUAGES } from "./constants.jsx";
 
 // Madpas-teksterne (madpasText.js) er store og indlæses først, når Madpas-skærmen
@@ -37,9 +36,8 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
     // når man taler for et familiemedlems madpas. E-numre er fjernet helt
     // fra Madpas (opfølgende polish-runde, samme dag) — en tjener har ikke
     // brug for at høre E-nummer-koder oplæst.
-    const speakDiets = visibleDiets(activeProfile ? activeProfile.diets : user.diets);
 
-    const text = madpasText.madpasSpeechText({ lang, speakAllergens, speakCustom, speakDiets, crossContact: madpasCrossContact });
+    const text = madpasText.madpasSpeechText({ lang, speakAllergens, speakCustom, crossContact: madpasCrossContact });
 
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = bcp;

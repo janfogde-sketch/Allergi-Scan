@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { SCREENS, DIETS_ENABLED } from "./constants.jsx";
+import { SCREENS } from "./constants.jsx";
 import { addUniqueCustom, pruneAllergenLevels, traceEligible } from "./helpers.js";
 import { showToast, ConfirmDialog } from "./SharedComponents.jsx";
 import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, CustomAllergenField } from "./AllergenPicker.jsx";
@@ -42,7 +42,7 @@ export function makeRenderStep2(c) {
       setAllergens([]); setCustomAllerg([]); setCustomInput("");
       setUser(u => ({ ...u, allergenLevels: {} }));
       setNoAllergiesConfirmed(true);
-      try { await saveAllergensStep2([], []); setOnboardStep(DIETS_ENABLED ? 3 : 4); }
+      try { await saveAllergensStep2([], []); setOnboardStep(4); }
       catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
     };
 
@@ -63,11 +63,6 @@ export function makeRenderStep2(c) {
             setUser(u => ({ ...u, allergenLevels: pruneAllergenLevels(u.allergenLevels, arr) }));
             if (noAllergiesConfirmed) setNoAllergiesConfirmed(false);
           }} />
-          {/* Spor-valget har sit eget trin 3, når kostpræferencer er på pause; ellers vises det her */}
-          {DIETS_ENABLED && (
-            <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
-              onChange={lv => setUser(u => ({ ...u, allergenLevels: lv }))} />
-          )}
 
           {/* Skriv selv — samme delte felt som Rediger præferencer og familieformularen (2. okt. 2026) */}
           <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
@@ -110,7 +105,7 @@ export function makeRenderStep2(c) {
               if (effectiveCount > 0 && !consent.current) await consent.give();
               await saveAllergensStep2(allergens, nextCustom);
               // Egne valg har ingen sporvalg, så trin 3 (spor) springes over, hvis der kun er egne valg
-              setOnboardStep(DIETS_ENABLED || traceEligible(allergens).length > 0 ? 3 : 4); }
+              setOnboardStep(traceEligible(allergens).length > 0 ? 3 : 4); }
             catch { showToast("Dine allergier kunne ikke gemmes. Tjek din forbindelse og prøv igen.", "error"); }
           }}>Fortsæt →</PrimaryButton>
 
