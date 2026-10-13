@@ -9,9 +9,9 @@ export function consentFromRows(rows) {
   return { given: r.action === "given", at: r.created_at || null, version: r.version || null };
 }
 
-// Forældet samtykke: givet på en ældre version af samtykketeksten end den nuværende. Versionen i constants.jsx hæves KUN, når
-// selve samtykketeksten ændres væsentligt (se healthConsent.test.js, der binder teksten til versionen). Ændringer i politikken alene
-// kræver ikke nyt samtykke. Dataene bevares; brugeren bliver bedt om at bekræfte på ny ved næste gem (og kan se det i Indstillinger).
+// Forældet samtykke: givet på en ældre version af samtykketeksten end den nuværende. Versionen i constants.jsx hæves, når
+// samtykketeksten ELLER privatlivspolitikken ændres væsentligt (13. okt. 2026; healthConsent.test.js binder begge til versionen).
+// Dataene bevares; brugeren bliver ved næste appåbning bedt om at bekræfte på ny (ConsentRenewalModal), og kan se det i Indstillinger.
 export function isConsentStale({ given, version }, currentVersion) {
   return Boolean(given) && version !== currentVersion;
 }
