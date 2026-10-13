@@ -1,0 +1,6 @@
+-- Leksikonets kilder del 2 (to do 0bf32b9d), del 4 af 4. Sætter kun sources; idempotent.
+insert into public.admin_todo_comments (todo_id, body)
+select '0bf32b9d-62a2-4c07-afaa-f24c90bea64b',
+       'Status 13. okt. 2026: alle opslag har nu en konkret side at henvise til. FAQ (inkl. 4 nye), kostformer og de fun facts, hvor en kilde dækker påstanden, peger på Sundhed.dk, Astma-Allergi Danmark, Fødevarestyrelsen, Cøliaki Forening, WHO, PubMed/PMC eller Lex. E-numre peger på EFSAs udtalelse om det enkelte stof (via DOI), hvor den findes, ellers på Fødevarestyrelsen/EFSA/EU-Kommissionen. Ingredienser og retter peger på en emneside (Lex/Wikipedia) plus Fødevarestyrelsens allergenside; det er baggrund, ikke lægefaglig dokumentation. Ti fun facts er ikke rørt, fordi ingen kilde bekræfter påstanden (Avocado er en bær, Frisk pasta, Frossen spinat/oxalat, Fuldfede mejeriprodukter, Gurkemeje, Kefir/laktose, Lilla gulerødder, Peanut butter, Peber som kongens krydderi, Vandmelon): ret eller fjern dem. Medicinsk rigtighed er stadig ikke vurderet af en faglig læser.'
+where exists (select 1 from public.admin_todos where id = '0bf32b9d-62a2-4c07-afaa-f24c90bea64b')
+  and not exists (select 1 from public.admin_todo_comments where todo_id = '0bf32b9d-62a2-4c07-afaa-f24c90bea64b' and body like 'Status 13. okt. 2026: alle opslag%');
