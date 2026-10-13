@@ -91,3 +91,7 @@ $$;
 revoke all on function public.run_nutrition_nemlig() from public, anon, authenticated;
 
 select cron.schedule('nutrition-backfill-nemlig', '*/2 * * * *', 'select public.run_nutrition_nemlig();');
+
+-- Rettelse af sql-tests (access_rules): sikkerhedskopien fra kategori-migrationen (#692) manglede revoke,
+-- så anon kunne skrive i den. Samme lukning som for de øvrige sikkerhedskopier; ingen app bruger tabellen.
+revoke all on public.products_category_backup_20261013 from public, anon, authenticated;
