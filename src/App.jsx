@@ -27,7 +27,6 @@ const NotificationsScreen = React.lazy(() => import('./NotificationsScreen.jsx')
 const NotificationScreen = React.lazy(() => import('./NotificationScreen.jsx'));
 const TicketScreen = React.lazy(() => import('./TicketScreen.jsx'));
 import ScannerScreen from './ScannerScreen.jsx';
-const RecipesScreen = React.lazy(() => import('./RecipesScreen.jsx'));
 const KnowledgeScreen = React.lazy(() => import('./KnowledgeScreen.jsx'));
 const TermsScreen = React.lazy(() => import('./TermsScreen.jsx'));
 const PrivacyScreen = React.lazy(() => import('./PrivacyScreen.jsx'));
@@ -50,7 +49,6 @@ const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen.jsx')
 import { useOnboarding } from './useOnboarding.js';
 import { useAdmin } from './useAdmin.js';
 import { useScanner } from './useScanner.js';
-import { useRecipes } from './useRecipes.js';
 import { useProduct, runLookupProduct } from './useProduct.js';
 
 import { useMadpas } from './useMadpas.js';
@@ -231,7 +229,6 @@ export default function EatSafe() {
   const [vibrateOnWarning, setVibrateOnWarning] = useState(() => localStorage.getItem("as_vibrate_on_warning") !== "0");
   const [soundOnWarning, setSoundOnWarning] = useState(() => localStorage.getItem("as_sound_on_warning") !== "0");
   // madpasActiveProfile → computed after hooks (uses family)
-  // Recipes → useRecipes hook (kaldet efter useAuth nedenfor)
 
   const [showManualEan, setShowManualEan] = useState(false);
   const [selectedENumbers, setSelectedENumbers] = useState([]);
@@ -283,7 +280,6 @@ export default function EatSafe() {
 
   // ── ADMIN FUNKTIONER → useAdmin hook ──
 
-  // loadRecipes, loadRecipeIngredients, submitUserRecipe → useRecipes hook
 
     // loadShoppingList → useShoppingList
   // addToList → useShoppingList
@@ -435,27 +431,6 @@ export default function EatSafe() {
     missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
     importLog, importLoading, runImport,
   } = useAdminTools(accessToken);
-
-  // Recipes → useRecipes hook
-  const {
-    recipes, setRecipes, recipesLoading,
-    selectedRecipe, setSelectedRecipe,
-    recipeIngredients, setRecipeIngredients,
-    recipeFilter, setRecipeFilter,
-    favoriteRecipes, setFavoriteRecipes,
-    showSubmitRecipe, setShowSubmitRecipe,
-    submitRecipe, setSubmitRecipe,
-    submitSteps, setSubmitSteps,
-    submitIngredients, setSubmitIngredients,
-    submittingRecipe,
-    recipeTermsOpen, setRecipeTermsOpen,
-    completedSteps, setCompletedSteps,
-    recipeTermsAccepted, setRecipeTermsAccepted,
-    recipeServings, setRecipeServings,
-    recipeSearch, setRecipeSearch,
-    recipeSafeOnly, setRecipeSafeOnly,
-    loadRecipes, loadRecipeIngredients, submitUserRecipe,
-  } = useRecipes(accessToken, userId);
 
   // ── Familie-invitation og delt indkøbsliste via link → useIncomingLinks ──
   const { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin } = useIncomingLinks({
@@ -926,7 +901,7 @@ export default function EatSafe() {
             open={feedbackOpen} onClose={() => setFeedbackOpen(false)}
             authTab={authTab} onboardStep={onboardStep}
             scanResult={scanResult} madpasWaiterView={madpasWaiterView}
-            madpasLang={madpasLang} selectedRecipe={selectedRecipe}
+            madpasLang={madpasLang}
             editMode={editMode} showManualEan={showManualEan}
             profilePopup={profilePopup}
           />
@@ -1131,35 +1106,6 @@ export default function EatSafe() {
             soundOnWarning={soundOnWarning} setSoundOnWarning={setSoundOnWarning}
             onOpenFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
             onOpenSafetyInfo={openSafetyInfo}
-          />
-          </ErrorBoundary>
-          </Suspense>
-        )}
-
-        {/* ══ RECIPES SCREEN ══ */}
-        {screen === SCREENS.RECIPES && (
-          <Suspense fallback={LazyFallback}>
-          <ErrorBoundary screen="Opskrifter">
-          <RecipesScreen
-            recipes={recipes} recipesLoading={recipesLoading}
-            selectedRecipe={selectedRecipe} setSelectedRecipe={setSelectedRecipe}
-            recipeSearch={recipeSearch} setRecipeSearch={setRecipeSearch}
-            showSafeOnly={showSafeOnly} setShowSafeOnly={setShowSafeOnly}
-            showSubmitRecipe={showSubmitRecipe} setShowSubmitRecipe={setShowSubmitRecipe}
-            submitRecipe={submitRecipe} setSubmitRecipe={setSubmitRecipe}
-            submitSteps={submitSteps} setSubmitSteps={setSubmitSteps}
-            submitIngredients={submitIngredients} setSubmitIngredients={setSubmitIngredients}
-            submittingRecipe={submittingRecipe}
-            loadRecipes={loadRecipes} loadRecipeIngredients={loadRecipeIngredients} submitUserRecipe={submitUserRecipe}
-            loading={loading}
-            recipeFilter={recipeFilter} setRecipeFilter={setRecipeFilter}
-            recipeSafeOnly={recipeSafeOnly} setRecipeSafeOnly={setRecipeSafeOnly}
-            favoriteRecipes={favoriteRecipes} setFavoriteRecipes={setFavoriteRecipes}
-            activeIds={activeIds}
-            activeLevels={activeLevels}
-            completedSteps={completedSteps} setCompletedSteps={setCompletedSteps}
-            recipeServings={recipeServings} setRecipeServings={setRecipeServings}
-            setRecipes={setRecipes}
           />
           </ErrorBoundary>
           </Suspense>

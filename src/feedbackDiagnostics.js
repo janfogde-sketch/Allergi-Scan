@@ -62,7 +62,7 @@ function latestError(errors = []) {
 
 // `env` er browser-værdierne (sendes ind, så funktionen kan testes uden DOM).
 export function buildFeedbackContext({ type, env, app, state, traces = [], recentErrors = [] }) {
-  const { screen, scanResult, madpasLang, selectedRecipe, onboardStep } = state;
+  const { screen, scanResult, madpasLang, onboardStep } = state;
   const ua = env.userAgent || "";
   const os = detectOs(ua);
   const ctx = {
@@ -95,7 +95,6 @@ export function buildFeedbackContext({ type, env, app, state, traces = [], recen
     ctx.scan_result_name = scanResult.name || null;
   }
   if (screen === SCREENS.MADPAS && madpasLang) ctx.madpas_lang = madpasLang;
-  if (screen === SCREENS.RECIPES && selectedRecipe?.name) ctx.selected_recipe = selectedRecipe.name;
   // Crash: kun den seneste fejl, appen selv har registreret på enheden (hvis der er nogen)
   if (type === "crash") ctx.recent_errors = latestError(recentErrors);
   return ctx;
@@ -124,7 +123,6 @@ export function diagnosticGroups(ctx, { type, formatBuild } = {}) {
     ...(ctx.onboard_step ? [["Onboarding-trin", `${ctx.onboard_step} af 5`]] : []),
     ...(ctx.scan_result_name || ctx.scan_result_ean ? [["Produkt", `${ctx.scan_result_name || "—"} [${ctx.scan_result_ean || "—"}]`]] : []),
     ...(ctx.madpas_lang ? [["Madpas-sprog", ctx.madpas_lang]] : []),
-    ...(ctx.selected_recipe ? [["Opskrift", ctx.selected_recipe]] : []),
   ];
   const groups = [{ id: "tech", title: "Teknisk", rows: tech }];
   if (type === "crash") {

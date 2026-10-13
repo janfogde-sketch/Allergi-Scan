@@ -17,7 +17,6 @@ const ADMIN_NAV_GROUPS = [
     { id: "content",     icon: "list",     label: "Oversigt" },
     { id: "missing",     icon: "info",     label: "Manglende EAN'er" },
     { id: "import",      icon: "download", label: "Import" },
-    { id: "recipes",     icon: "book",     label: "Opskrifter" },
   ] },
   { id: "system", label: "Drift", items: [
     { id: "system",      icon: "settings", label: "Oversigt" },

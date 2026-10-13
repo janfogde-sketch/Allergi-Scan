@@ -80,13 +80,13 @@ sikre alternativer og indkøbsliste.
 ## 3. Arkitektur
 
 **Bundmenu:** Indkøbsliste | Scan (midten) | Historik. Øverst til højre et hamburger-ikon (tre streger) der åbner `ProfileMenu.jsx`
-(profil-hero → `SCREENS.PROFILE`, Favoritter, Familie, Scanningshistorik, Opskrifter, Allergileksikon, Madpas, Indstillinger, Admin hvis
+(profil-hero → `SCREENS.PROFILE`, Favoritter, Familie, Scanningshistorik, Allergileksikon, Madpas, Indstillinger, Admin hvis
 admin). Header: `AppHeader.jsx` med ren tekst-wordmark.
 
 **Skærme:** se `SCREENS` i `src/constants.jsx`. Én screen = én fil (`XxxScreen.jsx`). Vigtigste: HOME (`ScannerScreen.jsx`, også en
 intern router), RESULT, LIST, PROFILE/EDITPROFILE (kun navn)/EDITPREFERENCES, FAMILY, FAVORITES, HISTORY, MADPAS, KNOWLEDGE,
 SETTINGS, NOTIFICATIONS/NOTIFICATION/TICKET, WELCOME/LOGIN/VERIFYEMAIL/RESETPASSWORD/ONBOARD/BOOT, NOTFOUND/SUBMITTED, SUGGEST_EDIT,
-TERMS/PRIVACY, ADMIN (mobil), RECIPES (på pause).
+TERMS/PRIVACY, ADMIN (mobil).
 
 **Arkitekturregler (håndhæves i alle PR'er):**
 1. Props frem for masse-state; lokalt state lever i screen-komponenten.
@@ -181,8 +181,7 @@ alvorlige allergier"). Tryk-feedback `:active{transform:scale(.97)}`. Scan-knapp
 - `DIETS_ENABLED=false` (`constants.jsx`): kostpræferencer er skjult i hele appen (kode, kolonner `users.diets`/`family_members.diets`,
   Leksikon-indhold, admin og Madpas' diæt-tekster er bevaret). Tilbage: flaget til true, gennemgå privatlivs-/vilkårstekst og
   `helpers.test.js`. `visibleDiets()` i `helpers.js` er filteret.
-- `RECIPES_ENABLED=false` (`RecipesScreen.jsx`): Opskrifter på pause; alle 629 opskrifter er slettet permanent. Skal funktionen
-  tilbage, sættes flaget til true OG opskrifter importeres forfra.
+- Opskrifter er fjernet fra koden (Jan, 13. okt. 2026: skærm, hook, admin-faner, ugentlig opskriftsmail `weekly-digest` og `useFoodWaste.js`); alle 629 opskrifter var allerede slettet. Skal funktionen tilbage, hentes koden fra git-historikken (før denne ændring) OG opskrifter importeres forfra. Tabellen `recipes` og edge-funktionen `food-waste` er bevaret.
 - Restaurantguiden er slettet (Madpas dækker behovet); kan hentes fra git. `SCR-20` i `PAGE_IDS` genbruges ikke.
 - "Fortsæt med Apple" (8. okt. 2026) er bygget og vises øverst på Log ind/Ny bruger, så snart Apple-udbyderen er slået til i Supabase (`useOAuthProviders.js` læser `/auth/v1/settings`); ingen kodeændring ved aktivering. Opsætning: `docs/apple-login-opsaetning.md`.
 

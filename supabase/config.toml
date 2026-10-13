@@ -63,9 +63,6 @@ verify_jwt = false
 [functions.inactive-accounts]
 verify_jwt = false
 
-[functions.weekly-digest]
-verify_jwt = false
-
 # true: Supabase tjekker JWT før funktionen kaldes.
 
 [functions.auto-reparse]
@@ -110,4 +107,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.nutrition-backfill]
+verify_jwt = false
+
+[functions.nutrition-backfill-nemlig]
 verify_jwt = false

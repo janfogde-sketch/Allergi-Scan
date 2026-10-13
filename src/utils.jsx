@@ -54,7 +54,6 @@ export const buildScreenLabel = ({
   scanResult,
   madpasWaiterView,
   madpasLang,
-  selectedRecipe,
   editMode,
   showManualEan,
   profilePopup,
@@ -80,9 +79,6 @@ export const buildScreenLabel = ({
     [SCREENS.MADPAS]:       madpasWaiterView
       ? `Madpas — Tjenervisning (sprog: ${madpasLang})`
       : `Madpas (sprog: ${madpasLang})`,
-    [SCREENS.RECIPES]:      selectedRecipe
-      ? `Opskrifter — ${selectedRecipe.name || "ukendt opskrift"}`
-      : "Opskrifter — liste",
     [SCREENS.EDITPROFILE]:  `Rediger profil${editMode ? " (onboarding-flow)" : ""}`,
     [SCREENS.EDITPREFERENCES]: "Rediger præferencer",
     [SCREENS.ADMIN]:        "Admin dashboard",
@@ -93,7 +89,6 @@ export const buildScreenLabel = ({
   if (madpasWaiterView) extras.push("Madpas tjenervisning");
   if (editMode)        extras.push("Redigeringstilstand");
   if (profilePopup)    extras.push(`Profil-popup: ${profilePopup}`);
-  if (selectedRecipe)  extras.push(`Opskrift: ${selectedRecipe.name}`);
 
   return [labels[screen] || screen, ...extras].join(" · ");
 };
