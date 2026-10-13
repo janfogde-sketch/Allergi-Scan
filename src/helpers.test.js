@@ -816,3 +816,15 @@ describe("historik: scanninger og søgninger holdes adskilt", () => {
     expect(historyActivityText(g[0], { single: "for 2 timer siden", agoLabel: "x" })).toBe("for 2 timer siden");
   });
 });
+
+describe("ingredientsVerifiedText", () => {
+  it("viser dato, når produktet er kontrolleret", async () => {
+    const { ingredientsVerifiedText } = await import("./helpers.js");
+    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z")).toBe("Ingredienser kontrolleret 12. oktober 2026");
+  });
+  it("siger tydeligt, at det ikke er kontrolleret, uden dato", async () => {
+    const { ingredientsVerifiedText } = await import("./helpers.js");
+    expect(ingredientsVerifiedText(null)).toBe("Ikke kontrolleret mod emballagen endnu");
+    expect(ingredientsVerifiedText("ugyldig")).toBe("Ikke kontrolleret mod emballagen endnu");
+  });
+});

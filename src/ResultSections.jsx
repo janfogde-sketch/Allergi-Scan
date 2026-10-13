@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
+import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, ingredientsVerifiedText, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -326,6 +326,10 @@ export function makeResultSections(c) {
           {/* Dokumenteret navn: et enkeltords-navn ("Kiks") uden producent er upræcist, så mærket sættes foran; ellers navn og producent hver for sig. */}
           <div className="product-hero-name">{heroTitle}</div>
           {scanResult.brand && !heroBrandInTitle && <div className="product-hero-brand">{scanResult.brand}</div>}
+          {/* Seneste kontrol mod emballagen; datoen er ingen garanti, så "Kontrollér altid emballagen" står fast. */}
+          <div style={{ fontSize:12, lineHeight:1.45, color:"var(--muted)", marginTop:6 }}>
+            {ingredientsVerifiedText(scanResult.ingredients_verified_at)}. Kontrollér altid emballagen.
+          </div>
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>
             {/* Datakilde — samme genbrugelige verifiedBadge()-komponent for
