@@ -21,14 +21,9 @@ export { E_CATEGORIES, E_NUMBERS } from "./data/eNumbers.js";
 // intolerance, sulfit-følsomhed og gluten (cøliaki/glutenfølsomhed, som
 // ikke er det samme som hvedeallergi — deraf også "note"-feltet på gluten).
 export const ALLERGENS = [
-  // Note udvidet (28. sept. 2026, Profil-oprydning, krav 6) til også at
-  // forklare forholdet til kostpræferencen "Glutenfri" — de to er koblet
-  // (se useGlutenFreeSync i AllergenPicker.jsx: vælges Gluten her, tilføjes
-  // Glutenfri automatisk under Kostpræferencer), så brugeren ikke behøver
-  // vælge begge selv for at opnå samme filtrering.
   // Glutenfølsomhed (ikke-cøliakisk) er et eget valg: ikke det samme som hvedeallergi og ikke cøliaki (som er et eget valg, `coeliaki`).
   // `pickerLabel` bruges i valg-skærmene; `label` bruges i resultater ("Indeholder gluten"). Id'et er uændret.
-  { id:"gluten",        label:"Gluten",           pickerLabel:"Glutenfølsomhed", emoji:"🥖", type:"intolerance", note:"Glutenfølsomhed og glutenfri kost er koblet sammen. Vælger du glutenfølsomhed, kan glutenfri kost anvendes automatisk, så du ikke skal vælge begge. Det er ikke det samme som hvedeallergi eller cøliaki." },
+  { id:"gluten",        label:"Gluten",           pickerLabel:"Glutenfølsomhed", emoji:"🥖", type:"intolerance", note:"Glutenfølsomhed er ikke det samme som hvedeallergi eller cøliaki." },
   { id:"hvede",         label:"Hvede",             emoji:"🌾", type:"allergi", note:"Hvedeallergi gælder hvede. Det er ikke det samme som glutenfølsomhed, og de vælges hver for sig." },
   // Cøliaki (2. okt. 2026, Bjørn): et eget, eksplicit valg, aldrig udledt af Gluten eller Hvede. `profileOnly`: det er en tilstand hos brugeren,
   // ikke en egenskab ved et produkt, så det findes ikke som produktflag (se PRODUCT_ALLERGENS). Matches mod produktets gluten-/hvedeflag
@@ -97,19 +92,6 @@ export const PAGE_IDS = {
   notifications:"SCR-24", notification:"SCR-25", ticket:"SCR-26",
 };
 
-
-// Kostpræferencer (diæter) er sat på pause (2. okt. 2026, Jans beslutning): de vises ikke i appen og indgår
-// ikke i vurderinger, Madpas eller indstillinger, men al kode, alle data og al logik er bevaret. Sæt til true
-// for at tage funktionen i brug igen (se "Kostpræferencer sat på pause" i CLAUDE.md).
-export const DIETS_ENABLED = false;
-
-export const DIETS = [
-  { id:"vegan",       label:"Vegansk",       desc:"Ingen animalske produkter" },
-  { id:"vegetarian",  label:"Vegetarisk",    desc:"Ingen kød eller fisk" },
-  { id:"pescetarian", label:"Pescetarisk",   desc:"Ingen kød, men fisk ok" },
-  { id:"gluten-free", label:"Glutenfri",     desc:"Ingen gluten" },
-  { id:"keto",        label:"Keto",          desc:"Lavt kulhydratindhold" },
-];
 
 export const AVATAR_COLORS = ["#52b788","#74c69d","#40916c","#b7e4c7","#2d6a4f","#95d5b2","#f4a261","#e76f51"];
 

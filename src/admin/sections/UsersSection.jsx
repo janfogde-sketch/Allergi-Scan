@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { DIETS, ALLERGENS } from "../../constants.jsx";
+import { ALLERGENS } from "../../constants.jsx";
 import { AllergenGlyph } from "../../SharedComponents.jsx";
 import { downloadCsv } from "../csvExport.js";
 
@@ -36,9 +36,6 @@ export default function UsersSection({
   };
 
   const close = () => { setOpenAdminUser(null); setEditingAdminUser(null); };
-  const toggleDiet = (id) => setEditingAdminUser(s => ({
-    ...s, diets: s.diets.includes(id) ? s.diets.filter(x => x !== id) : [...s.diets, id],
-  }));
   const toggleLevel = (id) => setEditingAdminUser(s => {
     const next = { ...(s.allergen_levels || {}) };
     if (next[id] === "direct_only") delete next[id]; else next[id] = "direct_only";
@@ -164,26 +161,6 @@ export default function UsersSection({
                   <option value="user">Bruger</option>
                   <option value="admin">Admin</option>
                 </select>
-              </div>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Diæter</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {DIETS.map(d => {
-                  const isOn = editingAdminUser.diets.includes(d.id);
-                  return (
-                    <button key={d.id} type="button" onClick={() => toggleDiet(d.id)}
-                      style={{
-                        fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
-                        background: isOn ? "var(--green-lt)" : "var(--surface3)",
-                        color: isOn ? "var(--green)" : "var(--muted2)",
-                        border: `1px solid ${isOn ? "var(--green-mid)" : "var(--border)"}`,
-                      }}>
-                      {d.label}
-                    </button>
-                  );
-                })}
               </div>
             </div>
 

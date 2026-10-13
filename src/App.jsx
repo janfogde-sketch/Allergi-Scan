@@ -5,7 +5,7 @@ import React, { useState, Suspense, useEffect, useCallback, useRef, useMemo } fr
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
 import { SCREENS } from "./constants.jsx";
 
-import { householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, visibleDiets, mergeAllergenLevels } from "./helpers.js";
+import { householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, mergeAllergenLevels } from "./helpers.js";
 
 import { Icon, LazyFallback, ToastHost, showToast, ScanLoadingOverlay } from "./SharedComponents.jsx";
 
@@ -324,7 +324,6 @@ export default function EatSafe() {
     newMemberGender, setNewMemberGender,
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
     newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
@@ -389,7 +388,7 @@ export default function EatSafe() {
     editMode, setEditMode,
     tourIdx, setTourIdx,
     customInput, setCustomInput,
-    saveProfileStep1, saveAllergensStep2, saveDietStep3, finishOnboard: finishOnboardRaw,
+    saveProfileStep1, saveAllergensStep2, finishOnboard: finishOnboardRaw,
   } = useOnboarding({ accessToken, userId, user, loginEmail, screen,
                       onboardStep, setOnboardStep,
                       allergens, customAllerg, selectedENumbers,
@@ -670,14 +669,6 @@ export default function EatSafe() {
   const madpasActiveProfile = madpasProfileId === "self" ? null : scanFamily.find(m => m.id === madpasProfileId);
   const mpAllergens = madpasActiveProfile ? (madpasActiveProfile.allergens || []) : allergens;
   const mpCustom = madpasActiveProfile ? (madpasActiveProfile.custom || []) : customAllerg;
-  // Kostpræferencer fulgte tidligere ALTID den loggede bruger selv
-  // (user.diets), også når "Vis madpas for" pegede på et familiemedlem —
-  // reel bug, rettet 26. sept. 2026 (Madpas-redesign, krav 2: "Madpasset
-  // skal altid genereres ud fra den valgte profils aktuelle ...
-  // kostpræferencer"). Familiemedlemmer har eget diets-felt (se
-  // useFamily.js), samme som allergens/custom. E-numre er fjernet helt fra
-  // Madpas (opfølgende polish-runde, samme dag) sammen med link/QR-deling.
-  const mpDiets = visibleDiets(madpasActiveProfile ? madpasActiveProfile.diets : user.diets);
 
   useAndroidBack({ screen, setScreen, helpOpen, setHelpOpen, feedbackOpen, setFeedbackOpen, profilePopup, setProfilePopup, showProfileMenu, setShowProfileMenu, cameraActive, closeCameraFully });
 
@@ -712,7 +703,7 @@ export default function EatSafe() {
     listsError, familyMembers, loadFamilyMembers, createList, renameList, setListType, deleteList, joinByCode,
     getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList, addToList, toggleItem, removeItem,
     clearDone, newMemberName, setNewMemberName, newMemberBirthYear, setNewMemberBirthYear, newMemberGender, setNewMemberGender, newMemberAllerg,
-    setNewMemberAllerg, newMemberCustomAllerg, setNewMemberCustomAllerg, newMemberDiets, setNewMemberDiets, newMemberLevels, setNewMemberLevels, newMemberENumbers,
+    setNewMemberAllerg, newMemberCustomAllerg, setNewMemberCustomAllerg, newMemberLevels, setNewMemberLevels, newMemberENumbers,
     setNewMemberENumbers, newMemberSubtypes, setNewMemberSubtypes, newMemberCustomInput, setNewMemberCustomInput, editingMemberId, retryLoadFamily, familyError,
     addMember, updateMember, removeMember, startEditMember, cancelEditMember, eSearch, setESearch, eCategory,
     setECategory, allergenSubtypes, setAllergenSubtypes, selectedENumbers, setSelectedENumbers, activeSubtypeModal, setActiveSubtypeModal,
@@ -805,7 +796,6 @@ export default function EatSafe() {
             editMode={editMode} setEditMode={setEditMode}
             customInput={customInput} setCustomInput={setCustomInput}
             saveAllergensStep2={saveAllergensStep2}
-            saveDietStep3={saveDietStep3}
             saveProfileStep1={saveProfileStep1} finishOnboard={finishOnboard}
             StepBar={StepBar}
             buildLabel={formatBuildTime()}
@@ -1001,7 +991,6 @@ export default function EatSafe() {
             madpasWaiterView={madpasWaiterView} setMadpasWaiterView={setMadpasWaiterView}
             madpasCrossContact={madpasCrossContact} setMadpasCrossContact={setMadpasCrossContact}
             mpAllergens={mpAllergens} mpCustom={mpCustom}
-            mpDiets={mpDiets}
             langOpen={langOpen} setLangOpen={setLangOpen}
             madpasSpeak={madpasSpeak}
           />

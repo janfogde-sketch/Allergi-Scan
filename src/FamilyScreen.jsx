@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { DIETS, SUPABASE_URL, SCREENS } from "./constants.jsx";
-import { initials, getAllergenLabels, makeHeaders, apiCall, visibleDiets } from "./helpers.js";
+import { SUPABASE_URL, SCREENS } from "./constants.jsx";
+import { initials, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
 import { Icon, showToast, ConfirmDialog, AllergenGlyph, LoadErrorBox } from "./SharedComponents.jsx";
 import HelpModal from "./HelpModal.jsx";
 import { MemberForm } from "./MemberForm.jsx";
@@ -42,7 +42,6 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     newMemberGender, setNewMemberGender,
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
     newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
@@ -101,27 +100,24 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
     return () => { clearInterval(interval); document.removeEventListener("visibilitychange", refresh); };
   }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: intervallet startes igen ved nyt token; loadHousehold/loadPendingInvites genskabes hver render og må ikke genstarte det
 
-  // ── Scanningsrelevante chips (allergier → kostpræferencer → E-numre) ───────
+  // ── Scanningsrelevante chips (allergier → E-numre) ───────
   // Fælles for administrerede profiler OG rigtige husstandskonti (26. sept.
   // 2026, Familie-redesign: "brugeren skal med ét blik kunne se, hvad
   // profilen faktisk bliver kontrolleret imod ved scanning" gælder alle
   // familiemedlemmer). Rækkefølgen er bevidst — allergier/intolerancer først
-  // (vigtigst for sikkerheden), så kostpræferencer, så overvågede E-numre.
+  // (vigtigst for sikkerheden), så overvågede E-numre.
   const CHIP_VISIBLE_LIMIT = 4;
   const buildMemberChips = (m) => [
     ...getAllergenLabels(m.allergens || [], m.custom || []).map(item => ({ item, variant: item.id ? "allergy" : "custom" })),
-    ...visibleDiets(m.diets).map(id => DIETS.find(d => d.id === id)?.label).filter(Boolean).map(text => ({ text, variant:"diet" })),
     ...(m.eNumbers || []).map(text => ({ text, variant:"enumber" })),
   ];
   // Allergi-chips bruger den delte .tag-klasse med Profil-sidens farver.
-  // Kostpræferencer får en diskret, lysere grøn/neutral
-  // variant, E-numre en helt neutral variant — ingen nye, stærke farver,
+  // E-numre får en helt neutral variant — ingen nye, stærke farver,
   // kun eksisterende designsystem-tokens.
   // Allergi-tags har samme farver som på Profil-siden (4. okt. 2026, Bjørn): røde for valgte allergener, ravgule med blyant for egne valg.
   const CHIP_VARIANT_STYLE = {
     allergy: { background:"var(--red-lt)", color:"var(--red)", borderColor:"var(--red-md)" },
     custom: { background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" },
-    diet: { background:"var(--green-selected-bg)", borderColor:"var(--border)", color:"var(--ink2)" },
     enumber: { background:"var(--surface2)", borderColor:"var(--border)", color:"var(--ink2)" },
   };
   const renderMemberChips = (m, rowKey) => {
@@ -285,7 +281,6 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
             allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
             customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
             subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
-            diets={newMemberDiets} setDiets={setNewMemberDiets}
             levels={newMemberLevels} setLevels={setNewMemberLevels}
             eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
             customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}

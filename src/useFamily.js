@@ -20,7 +20,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const [newMemberGender, setNewMemberGender]       = useState("");
   const [newMemberAllerg, setNewMemberAllerg]       = useState([]);
   const [newMemberCustomAllerg, setNewMemberCustomAllerg] = useState([]);
-  const [newMemberDiets, setNewMemberDiets]         = useState([]);
   const [newMemberLevels, setNewMemberLevels]       = useState({});
   const [newMemberENumbers, setNewMemberENumbers]   = useState([]);
   const [newMemberSubtypes, setNewMemberSubtypes]   = useState({});
@@ -39,7 +38,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     setNewMemberGender("");
     setNewMemberAllerg([]);
     setNewMemberCustomAllerg([]);
-    setNewMemberDiets([]);
     setNewMemberLevels({});
     setNewMemberENumbers([]);
     setNewMemberSubtypes({});
@@ -56,7 +54,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     setNewMemberGender(member.gender || "");
     setNewMemberAllerg(member.allergens || []);
     setNewMemberCustomAllerg(member.custom || []);
-    setNewMemberDiets(member.diets || []);
     setNewMemberLevels(member.levels || {});
     setNewMemberENumbers(member.eNumbers || []);
     setNewMemberSubtypes({});
@@ -69,7 +66,7 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
   const loadFamily = async () => {
     try {
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,birth_year,gender,allergens,custom_allergens,diets,e_numbers,allergen_levels`,
+        `${SUPABASE_URL}/rest/v1/family_members?user_id=eq.${userId}&select=id,name,color,birth_year,gender,allergens,custom_allergens,e_numbers,allergen_levels`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) {
@@ -91,7 +88,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           gender: m.gender || "",
           allergens: m.allergens || [],
           custom: m.custom_allergens || [],
-          diets: m.diets || [],
           levels: m.allergen_levels || {},
           eNumbers: m.e_numbers || [],
         })));
@@ -117,7 +113,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       gender: newMemberGender,
       allergens: newMemberAllerg,
       custom: newMemberCustomAllerg,
-      diets: newMemberDiets,
       levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
       eNumbers: newMemberENumbers,
       color,
@@ -137,7 +132,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           color,
           allergens: newMemberAllerg,
           custom_allergens: newMemberCustomAllerg,
-          diets: newMemberDiets,
           allergen_levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
           e_numbers: newMemberENumbers,
         }),
@@ -177,7 +171,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
       gender: newMemberGender,
       allergens: newMemberAllerg,
       custom: newMemberCustomAllerg,
-      diets: newMemberDiets,
       levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
       eNumbers: newMemberENumbers,
     };
@@ -193,7 +186,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
           gender: patch.gender,
           allergens: newMemberAllerg,
           custom_allergens: newMemberCustomAllerg,
-          diets: newMemberDiets,
           allergen_levels: pruneAllergenLevels(newMemberLevels, newMemberAllerg),
           e_numbers: newMemberENumbers,
         }),
@@ -238,7 +230,6 @@ export function useFamily({ accessToken, userId, setActiveProfiles }) {
     newMemberGender, setNewMemberGender,
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
     newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,

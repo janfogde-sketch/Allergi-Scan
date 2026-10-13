@@ -19,9 +19,8 @@ import { isAllergenWord, keywordMatches } from "./allergenKeywords.js";
 // forklaring i stedet for det almindelige leksikon-opslag.
 const HIGHLIGHT_CATEGORY_STYLE = {
   allergy: { color: "var(--red)", bg: "var(--red-lt)" },
-  // Fælles statussystem (9. okt. 2026): konflikt med valgt E-nummer eller kostpræference er rød; kun spor er orange.
+  // Fælles statussystem (9. okt. 2026): konflikt med valgt E-nummer er rød; kun spor er orange.
   enumber: { color: "var(--red)", bg: "var(--red-lt)" },
-  diet: { color: "var(--red)", bg: "var(--red-lt)" },
   trace: { color: "var(--amber)", bg: "var(--amber-lt)" },
 };
 // Almindelige E-numre (ikke en konflikt for brugeren) er neutrale og klikbare, så de ikke ligner personlige konflikter.
@@ -121,7 +120,7 @@ function RuleIngredients({ cleaned, rules, onIngredientTap, onHighlightTap }) {
   matches.forEach((mt, i) => {
     if (mt.start > cursor) nodes.push(cleaned.slice(cursor, mt.start));
     const label = cleaned.slice(mt.start, mt.end);
-    const style = mt.rule ? (HIGHLIGHT_CATEGORY_STYLE[mt.rule.category] || HIGHLIGHT_CATEGORY_STYLE.diet)
+    const style = mt.rule ? (HIGHLIGHT_CATEGORY_STYLE[mt.rule.category] || HIGHLIGHT_CATEGORY_STYLE.allergy)
       : mt.kind === "vitamin" ? { color: "var(--blue)", bg: "var(--blue-lt)" } : NEUTRAL_E_STYLE;
     const handle = mt.rule && onHighlightTap ? () => onHighlightTap(mt.rule)
       : onIngredientTap ? () => onIngredientTap(label.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim())
@@ -245,7 +244,7 @@ export function IngredientsList({ text, allergenFlags = {}, onIngredientTap, hig
         // Rens ingrediens-tekst for opslag (fjern parenteser og ekstra tegn)
         const cleanPart = part.replace(/\(.*?\)/g, "").replace(/[*%]/g, "").trim();
         const knowledgeTerm = !highlighted && isKnowledgeTerm(part);
-        const ruleStyle = rule ? (HIGHLIGHT_CATEGORY_STYLE[rule.category] || HIGHLIGHT_CATEGORY_STYLE.diet) : (useRules && knowledgeTerm && E_CODE_RE.test(part) ? NEUTRAL_E_STYLE : null);
+        const ruleStyle = rule ? (HIGHLIGHT_CATEGORY_STYLE[rule.category] || HIGHLIGHT_CATEGORY_STYLE.allergy) : (useRules && knowledgeTerm && E_CODE_RE.test(part) ? NEUTRAL_E_STYLE : null);
         const handleClick = rule && onHighlightTap ? () => onHighlightTap(rule)
           : onIngredientTap ? () => onIngredientTap(cleanPart)
           : undefined;

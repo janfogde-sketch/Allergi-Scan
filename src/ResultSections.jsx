@@ -18,19 +18,18 @@ const MAX_REASON_CHIPS = 3;
 
 // Resultatsidens sektioner (flyttet ud af ResultScreen.jsx, ren omflytning). Får den beregnede tilstand som ctx.
 export function makeResultSections(c) {
-  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen, greenOpen, setGreenOpen } = c;
+  const { ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList, addedToList, buildAllergyChoiceRows, buildENumberChoiceRows, cannotAssess, findings, hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists, liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls, scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType, setKnowledgeSlug, setScreen, setShowListPicker, setUnknownOpen, shoppingList, soloProfile, toggleFavorite, toggleItem, topStatus, unknownOpen, verdictHeadingRef, confirmAddOpen, setConfirmAddOpen, reasonsOpen, setReasonsOpen, greenOpen, setGreenOpen } = c;
 
   const renderDineValg = () => {
     if (!soloProfile) return null;
     const allergyRows = buildAllergyChoiceRows();
-    const dietRows = buildDietChoiceRows();
     const eNumberRows = buildENumberChoiceRows();
-    if (allergyRows.length === 0 && dietRows.length === 0 && eNumberRows.length === 0) return null;
+    if (allergyRows.length === 0 && eNumberRows.length === 0) return null;
     // Rækkefølge (10. okt. 2026): røde konflikter, orange spor, valg der ikke kan vurderes, til sidst grønne ("ikke fundet"). Røde og orange står
     // altid synlige; ukontrollerede valg samles i én foldbar linje; flere grønne samles i "N øvrige fravalg ikke fundet".
     const isUnknown = r => r.status === "unknown";
     const isGreen = r => r.status === "check";
-    const allRows = [...allergyRows, ...dietRows, ...eNumberRows];
+    const allRows = [...allergyRows, ...eNumberRows];
     const unknownRows = allRows.filter(isUnknown);
     const greenRows = allRows.filter(isGreen);
     const shown = rows => rows.filter(r => !isUnknown(r) && !isGreen(r));
@@ -51,7 +50,6 @@ export function makeResultSections(c) {
         <div className="card-lbl">Dine valg</div>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           <ChoiceCategory title="Allergier og intolerancer" rows={shown(allergyRows)} />
-          <ChoiceCategory title="Kostpræferencer" rows={shown(dietRows)} />
           <ChoiceCategory title="E-numre og øvrige fravalg" rows={shown(eNumberRows)} />
           {unknownRows.length > 0 && (
             <div>
