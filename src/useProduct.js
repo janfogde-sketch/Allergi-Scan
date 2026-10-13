@@ -40,6 +40,7 @@ export function buildScanResultFromProductData({ product, data, ean, activeIds, 
     ingredients: ingredientsText,
     nutrition: product.nutrition || data?.nutrition || null,
     verified_status: product.verified_status || "unverified", source: product.source || data?.source,
+    ingredients_verified_at: product.ingredients_verified_at || null,
   };
   return scoreScanResult({ base, flags, activeIds, activeLevels, activeENumbers, family, activeProfiles });
 }
@@ -54,6 +55,7 @@ function rescoreCachedResult(cached, { activeIds, activeLevels, activeENumbers, 
     category: cached.category || null, subcategory: cached.subcategory || null, category_original: cached.category_original || null,
     ingredients: cached.ingredients || "", nutrition: cached.nutrition || null,
     verified_status: cached.verified_status || "unverified", source: cached.source,
+    ingredients_verified_at: cached.ingredients_verified_at || null,
   };
   return scoreScanResult({ base, flags: cached.allergen_flags || {}, activeIds, activeLevels, activeENumbers, family: family || [], activeProfiles: activeProfiles || [] });
 }

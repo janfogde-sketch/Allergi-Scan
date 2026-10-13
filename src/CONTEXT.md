@@ -32,7 +32,7 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
-| `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
+| `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, ingredients_verified_at (sat af trigger kun ved status verified), source, ingredients_text | ~20.200+ |
 | `users` | id, name, email, role, diets (jsonb), allergen_levels (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
 | `user_allergens` | user_id, allergen_id | |
 | `family_members` | id, user_id, name, allergens (jsonb), diets, e_numbers, family_owner_id | |

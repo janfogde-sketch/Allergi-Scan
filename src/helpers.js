@@ -136,6 +136,14 @@ export const STORE_SOURCES = ["bilka", "nemlig"];
 // Butikkens navn i ejefald til forklaringsteksten ("Bilkas varekatalog")
 export const STORE_CATALOG_NAMES = { bilka: "Bilkas", nemlig: "Nemligs" };
 
+// Linjen om seneste kontrol af ingredienser/allergener mod emballagen. Kun en rigtig verificeringsdato vises;
+// en importdato er ikke en verificering, så uden dato står der tydeligt, at det ikke er kontrolleret.
+export const ingredientsVerifiedText = (iso) => {
+  const d = iso ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return "Ikke kontrolleret mod emballagen endnu";
+  return `Ingredienser kontrolleret ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}`;
+};
+
 export const verifiedBadge = (verified_status, source) => {
   // Producent-data — højeste troværdighed
   if (verified_status === "verified" || source === "producer")
