@@ -17,8 +17,8 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 - `src/App.jsx` routing/global state; `constants.jsx` (ALLERGENS, SCREENS, DIETS, E_NUMBERS, tekster); `helpers.js` (allergenlogik, API-hjælpere);
   `theme.jsx` (al CSS); `SharedComponents.jsx` (Icon, EatSafeLogo, InfoSheet, toasts m.fl.).
 - Skærme `src/*Screen.jsx` (én pr. SCREENS-konstant; `ScannerScreen` er HOME + intern router). `ProfileScreen`, `EditProfileScreen`,
-  `EditPreferencesScreen`, `FamilyScreen`, `HistoryScreen`, `FavoritesScreen`, `SettingsScreen` er hver sin fil. Mobil-admin: `AdminScreen.jsx` +
-  `Admin*Section.jsx`.
+  `EditPreferencesScreen`, `FamilyScreen`, `HistoryScreen`, `FavoritesScreen`, `SettingsScreen` er hver sin fil. Admin findes kun som web-admin (`src/admin/`, mobilvenlig under 820 px; 13. okt. 2026), og
+  menupunktet "Admin panel" i appen åbner `/admin.html`.
 - Hooks `src/use*.js` (scanner, søgning, alternativer, madpas, admin, indkøbsliste, auth, onboarding, household, push, notifikationer m.fl.),
   contexts `src/*Context.jsx`.
 - Desktop-admin: `src/admin/` (eget Vite-entry `admin.html`, egen React-rod, egen CSS i `adminTheme.js`; deler localStorage-session
@@ -178,7 +178,7 @@ On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fu
 |---|---|
 | Madspild-tilbud ("i køleskabet") | `food-waste`-funktionen virker (Salling API, `SALLING_API_TOKEN`), men UI-knappen er fjernet fra `ResultScreen.jsx`. Genoptag ved at koble (hook slettet 13. okt. 2026, hent fra git) `useFoodWaste` (`src/useFoodWaste.js`) på en skærm igen (se git-historik omkring 17. sept. 2026 for den gamle UI) |
 | Leksikon 1000+ entries | Planlagt; i dag ca. 770 |
-| Desktop-admin | Alle faner er bygget (se §2). Mobil-adminens Debug-fane (`getTraceLog()`) er bevidst ikke porteret. Detaljer om hver fane og de tilhørende RLS-migrationer (`admin_can_write_user_allergens`, `admin_can_read_family_invites`, `admin_can_manage_family_data`) står i `.claude/HISTORY.md` |
+| Desktop-admin | Alle faner er bygget (se §2). Den tidligere mobil-admin er fjernet (13. okt. 2026); dens Debug-fane (`getTraceLog()`) blev ikke porteret. Detaljer om hver fane og de tilhørende RLS-migrationer (`admin_can_write_user_allergens`, `admin_can_read_family_invites`, `admin_can_manage_family_data`) står i `.claude/HISTORY.md` |
 
 ## 9. Notifikationer (live siden 1. okt. 2026)
 

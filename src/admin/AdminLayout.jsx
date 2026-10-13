@@ -46,9 +46,12 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
     setCollapsed(next);
     try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
   };
+  const [navOpen, setNavOpen] = useState(false);
+  const pick = (id) => { setSection(id); setNavOpen(false); };
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
+      {navOpen && <div className="admin-nav-backdrop" onClick={() => setNavOpen(false)} />}
+      <aside className={`admin-sidebar${navOpen ? " open" : ""}`}>
         <div className="admin-sidebar-logo"><EatSafeLogo variant="horizontal" size={20} /> Admin</div>
         <nav className="admin-nav">
           {NAV_GROUPS.map(group => {
@@ -67,7 +70,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
                   const badgeVal = item.badgeKey ? badges[item.badgeKey] : null;
                   return (
                     <button key={item.id} className={`admin-nav-item admin-nav-sub${section === item.id ? " active" : ""}`}
-                      onClick={() => setSection(item.id)}>
+                      onClick={() => pick(item.id)}>
                       <Icon name={item.icon} size={16} color={section === item.id ? "var(--green)" : "var(--ink2)"} />
                       {item.label}
                       {!!badgeVal && <span className="badge">{badgeVal}</span>}
@@ -86,6 +89,9 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
       </aside>
       <div className="admin-main">
         <div className="admin-topbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <button className="admin-menu-btn" aria-label="Åbn menu" aria-expanded={navOpen} onClick={() => setNavOpen(o => !o)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
           <h1>{NAV_ITEMS.find(i => i.id === section)?.label || "Admin"}</h1>
           {topbarExtra}
         </div>

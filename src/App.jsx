@@ -18,7 +18,6 @@ import { useAppContextValues } from "./useAppContextValues.js";
 import { useAndroidBack } from "./useAndroidBack.js";
 import { useArtifactPreview } from "./useArtifactPreview.js";
 import { ONBOARDING_EXEMPT_SCREENS, AUTH_FLOW_SCREENS } from "./appScreens.js";
-const AdminScreen = React.lazy(() => import('./AdminScreen.jsx'));
 const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
 const MadpasScreen = React.lazy(() => import('./MadpasScreen.jsx'));
 const ProfileScreen = React.lazy(() => import('./ProfileScreen.jsx'));
@@ -1112,15 +1111,6 @@ export default function EatSafe() {
         )}
 
 
-
-        {/* ADMIN PANEL */}
-        {screen === SCREENS.ADMIN && user?.role === "admin" && (
-          <Suspense fallback={null}>
-          <ErrorBoundary screen="Admin">
-          <AdminScreen />
-          </ErrorBoundary>
-          </Suspense>
-        )}
 
         {/* BUNDNAVIGATION — skjult på Brugsvilkår/Privatlivspolitik (29. sept. 2026), samme begrundelse som TOPBAR ovenfor. */}
         {!isOnboard && !madpasWaiterView && !isLegalPage && !hideNavForContribution && (
