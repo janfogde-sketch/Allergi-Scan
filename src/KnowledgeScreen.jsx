@@ -60,10 +60,23 @@ const KNOWN_SOURCES = {
   "efsa.europa.eu": "EFSA",
   "food.ec.europa.eu": "EU-Kommissionen",
   "lex.dk": "Lex",
+  "pmc.ncbi.nlm.nih.gov": "NCBI / National Library of Medicine",
+  "pubmed.ncbi.nlm.nih.gov": "PubMed",
+  "who.int": "WHO",
+  "cdn.who.int": "WHO",
+  "cancer.dk": "Kræftens Bekæmpelse",
+  "bfr.bund.de": "BfR (Tyskland)",
+  "fda.gov": "FDA (USA)",
+  "retsinformation.dk": "Retsinformation",
+  "eur-lex.europa.eu": "EUR-Lex",
+  "dyrenesbeskyttelse.dk": "Dyrenes Beskyttelse",
+  "da.wikipedia.org": "Wikipedia",
+  "food.dtu.dk": "DTU Fødevareinstituttet",
 };
 function sourceLabel(url) {
   try {
     const host = new URL(url).hostname.replace(/^www\./, "");
+    if (host === "doi.org" && url.includes("/10.2903/j.efsa.")) return "EFSA Journal";
     return KNOWN_SOURCES[host] || host;
   } catch { return url; }
 }
