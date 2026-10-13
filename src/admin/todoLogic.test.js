@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
+import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, hasValidDue, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
 
 const T = (o) => ({ id: "x", title: "t", description: "", status: "todo", priority: "normal", track: "backend", assignee_id: null, due_date: null, created_at: "2026-10-01T08:00:00Z", completed_at: null, ...o });
 const TODAY = "2026-10-01";
@@ -181,5 +181,25 @@ describe("kommentarafsender, datoformat og betaoverblik", () => {
     expect(f("design")).toEqual(["x"]);
     expect(f("jan")).toEqual(["x"]);
     expect(f("pull/9")).toEqual(["x"]);
+  });
+});
+
+describe("frister: gyldige og ugyldige", () => {
+  it("hasValidDue kræver en rigtig dato", () => {
+    expect(hasValidDue({ due_date: "2026-10-20" })).toBe(true);
+    for (const v of [null, undefined, "", "abc", "2026-13-45", "2026-02-30", "20.10.2026"]) expect(hasValidDue({ due_date: v })).toBe(false);
+  });
+  it("ugyldig frist er aldrig overskredet og vises ikke som frist, og tæller som 'uden frist' i filter og overblik", () => {
+    const bad = T({ id: "bad", due_date: "2026-13-45" }), none = T({ id: "none", due_date: null }), ok = T({ id: "ok", due_date: "2026-10-20" });
+    expect(isOverdue(bad, "2030-01-01")).toBe(false);
+    expect(dueInfo(bad, "2026-10-10")).toBeNull();
+    expect(filterTodos([bad, none, ok], { view: "open", due: "none" }, "u").map((t) => t.id)).toEqual(["bad", "none"]);
+    expect(betaOverview([bad, none, ok, T({ id: "d", status: "done", due_date: null })], []).noDue).toBe(2);
+  });
+  it("antallet opdateres, når en frist tilføjes eller fjernes", () => {
+    const before = [T({ id: "1", due_date: null })];
+    expect(betaOverview(before, []).noDue).toBe(1);
+    expect(betaOverview([{ ...before[0], due_date: "2026-11-01" }], []).noDue).toBe(0);
+    expect(betaOverview([{ ...before[0], due_date: "2026-11-01" }].map((t) => ({ ...t, due_date: null })), []).noDue).toBe(1);
   });
 });

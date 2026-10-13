@@ -45,6 +45,8 @@ export default function AdminApp() {
   const clientErrors = useClientErrors(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
+  // Et filter fra Dashboard gælder kun den ene åbning af To do: forlades siden, ryddes det, så menuen åbner den almindelige liste
+  useEffect(() => { if (section !== "todo") setTodoPreset(null); }, [section]);
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
@@ -186,7 +188,9 @@ export default function AdminApp() {
     >
       {section === "dashboard" && (
         <DashboardSection adminStats={admin.adminStats} setSection={setSection} todos={todos.todos} admins={todos.admins}
-          openTodos={(preset) => { setTodoPreset({ id: Date.now(), ...preset }); setSection("todo"); }} />
+          openTodos={(preset) => { setTodoPreset({ id: Date.now(), ...preset }); setSection("todo"); }}
+          openTickets={() => { admin.setAdminTicketFilter("open"); setSection("tickets"); }}
+          openSubmissions={() => { admin.setSubmissionFilter("pending"); setSection("submissions"); }} />
       )}
       {section === "users" && (
         <UsersSection

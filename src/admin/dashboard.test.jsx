@@ -19,7 +19,7 @@ describe("dashboard", () => {
     render(<DashboardSection adminStats={stats()} setSection={() => {}} />);
     expect(screen.getByText("20.182")).toBeTruthy();
     expect(screen.getByText("heraf 2 admin")).toBeTruthy();
-    expect(screen.getByText("+ 7 via søgning")).toBeTruthy();
+    expect(screen.getByText("Søgninger i alt: 7")).toBeTruthy(); // søgninger er separate rækker (found_via=search), ikke en del af scanninger
   });
   it("kort med en naturlig destination åbner siden", () => {
     const setSection = vi.fn();
@@ -28,6 +28,39 @@ describe("dashboard", () => {
     expect(setSection).toHaveBeenCalledWith("products");
     fireEvent.click(screen.getByRole("button", { name: /Åbne tickets: 2/ }));
     expect(setSection).toHaveBeenCalledWith("tickets");
+  });
+  it("Åbne tickets åbner ticketsiden med filteret Åbne, og Afventende indsendelser med Afventer", () => {
+    const openTickets = vi.fn(), openSubmissions = vi.fn(), setSection = vi.fn();
+    render(<DashboardSection adminStats={stats()} setSection={setSection} openTickets={openTickets} openSubmissions={openSubmissions} />);
+    fireEvent.click(screen.getByRole("button", { name: /Åbne tickets: 2/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Afventende indsendelser: 4/ }));
+    expect(openTickets).toHaveBeenCalledTimes(1);
+    expect(openSubmissions).toHaveBeenCalledTimes(1);
+    expect(setSection).not.toHaveBeenCalled();
+  });
+  it("sektionen Genveje findes ikke længere", () => {
+    render(<DashboardSection adminStats={stats()} setSection={() => {}} todos={[]} admins={[]} openTodos={() => {}} />);
+    expect(screen.queryByText("Genveje")).toBeNull();
+    expect(screen.queryByText(/Gennemgå \d+ afventende/)).toBeNull();
+  });
+  it("Opgaveoverblik: seks felter, hvert åbner To do med sit filter, og Uden frist tæller kun åbne opgaver med manglende eller ugyldig frist", () => {
+    const T = (o) => ({ id: Math.random().toString(), status: "todo", priority: "normal", assignee_id: "a1", due_date: "2026-12-01", ...o });
+    const todos = [
+      T({ due_date: null }), T({ due_date: "" }), T({ due_date: "ikke-en-dato" }), T({ due_date: "2026-13-45" }),
+      T({ status: "done", due_date: null }), // færdig tæller ikke
+      T({ priority: "high", assignee_id: null }), T({ status: "blocked" }), T({ due_date: "2020-01-01" }),
+    ];
+    const openTodos = vi.fn();
+    render(<DashboardSection adminStats={stats()} setSection={() => {}} todos={todos} admins={[{ id: "a1", name: "Jan" }]} openTodos={openTodos} />);
+    const cell = (label) => screen.getByText(label).closest("button");
+    expect(cell("Uden frist").querySelector("b").textContent).toBe("4");
+    expect(cell("Åbne opgaver").querySelector("b").textContent).toBe("7");
+    const expected = { "Åbne opgaver": {}, "Høj prioritet": { priority: "high" }, "Venter": { status: "blocked" }, "Frist overskredet": { due: "overdue" }, "Uden ansvarlig": { assigneeId: "none" }, "Uden frist": { due: "none" } };
+    for (const [label, preset] of Object.entries(expected)) {
+      openTodos.mockClear();
+      fireEvent.click(cell(label));
+      expect(openTodos).toHaveBeenCalledWith(preset);
+    }
   });
   it("periodevalg 7/14/30 ændrer antal søjler (standard 14)", () => {
     render(<DashboardSection adminStats={stats()} setSection={() => {}} />);

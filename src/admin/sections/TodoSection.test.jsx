@@ -74,3 +74,37 @@ describe("To do: tællere, sortering og færdige opgaver", () => {
     expect(adminCss).not.toMatch(/\.(admin-item-title|todo-title)\.done\{[^}]*line-through/);
   });
 });
+
+describe("To do åbnet fra Dashboard med et filter", () => {
+  const items = [
+    todo({ id: "p1", title: "Uden frist A", due_date: null }),
+    todo({ id: "p2", title: "Med frist B", due_date: "2099-01-01" }),
+    todo({ id: "p3", title: "Ugyldig frist C", due_date: "ikke-en-dato" }),
+    todo({ id: "p4", title: "Færdig uden frist D", status: "done", due_date: null }),
+    todo({ id: "p5", title: "Høj E", priority: "high", due_date: "2099-01-01" }),
+    todo({ id: "p6", title: "Venter F", status: "blocked", due_date: "2099-01-01" }),
+  ];
+  const withPreset = (preset) => render(<TodoSection {...base} doneLoaded doneCount={1} todos={items} preset={preset} />);
+  it("due: none viser kun åbne opgaver uden (gyldig) frist", () => {
+    withPreset({ id: 1, due: "none" });
+    expect(screen.getByText("Uden frist A")).toBeTruthy();
+    expect(screen.getByText("Ugyldig frist C")).toBeTruthy();
+    expect(screen.queryByText("Med frist B")).toBeNull();
+    expect(screen.queryByText("Færdig uden frist D")).toBeNull();
+    expect(screen.getByRole("button", { name: "Filtre (1)" })).toBeTruthy();
+  });
+  it("priority: high og status: blocked anvendes faktisk", () => {
+    const { unmount } = withPreset({ id: 2, priority: "high" });
+    expect(screen.getByText("Høj E")).toBeTruthy();
+    expect(screen.queryByText("Med frist B")).toBeNull();
+    unmount();
+    withPreset({ id: 3, status: "blocked" });
+    expect(screen.getByText("Venter F")).toBeTruthy();
+    expect(screen.queryByText("Høj E")).toBeNull();
+  });
+  it("uden filter vises den almindelige åbne liste", () => {
+    withPreset(null);
+    expect(screen.getByText("Med frist B")).toBeTruthy();
+    expect(screen.getByText("Uden frist A")).toBeTruthy();
+  });
+});

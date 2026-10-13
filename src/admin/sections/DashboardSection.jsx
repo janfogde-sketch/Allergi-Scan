@@ -9,11 +9,21 @@ const STATS = [
   { key: "total_users", label: "Brugere i alt", to: "users", hint: (s) => (s.admin_users ? `heraf ${fmtNum(s.admin_users)} admin` : "") },
   { key: "new_users_today", label: "Nye brugere i dag", to: "users" },
   { key: "total_products", label: "Produkter", to: "products" },
-  { key: "total_scans", label: "Scanninger i alt", hint: (s) => (s.search_opens ? `+ ${fmtNum(s.search_opens)} via søgning` : "") },
+  { key: "total_scans", label: "Scanninger i alt", hint: (s) => (Number.isFinite(s.search_opens) ? `Søgninger i alt: ${fmtNum(s.search_opens)}` : "") },
   { key: "scans_today", label: "Scanninger i dag" },
   { key: "total_families", label: "Familiemedlemmer", to: "family", hint: () => "børneprofiler uden konto" },
   { key: "pending_submissions", label: "Afventende indsendelser", to: "submissions" },
   { key: "open_tickets", label: "Åbne tickets", to: "tickets" },
+];
+
+// Felterne i opgaveoverblikket. `preset` er det filter, To do åbner med; `attn` = kræver handling, når tallet er over nul.
+const OVERVIEW = [
+  { key: "open", label: "Åbne opgaver", preset: {} },
+  { key: "high", label: "Høj prioritet", preset: { priority: "high" }, attn: true },
+  { key: "blocked", label: "Venter", preset: { status: "blocked" }, attn: true },
+  { key: "overdue", label: "Frist overskredet", preset: { due: "overdue" }, attn: true, late: true },
+  { key: "unassigned", label: "Uden ansvarlig", preset: { assigneeId: "none" } },
+  { key: "noDue", label: "Uden frist", preset: { due: "none" } },
 ];
 
 const PERIODS = [7, 14, 30];
@@ -77,7 +87,7 @@ function TrendChart({ title, unit, data, color, colorLt, narrow }) {
   );
 }
 
-export default function DashboardSection({ adminStats, setSection, todos = [], admins = [], openTodos }) {
+export default function DashboardSection({ adminStats, setSection, todos = [], admins = [], openTodos, openTickets, openSubmissions }) {
   const [period, setPeriod] = useState(14);
   const [showDefs, setShowDefs] = useState(false);
   const narrow = useIsMobile();
@@ -105,7 +115,7 @@ export default function DashboardSection({ adminStats, setSection, todos = [], a
             </>
           );
           return s.to
-            ? <button key={s.key} type="button" className="admin-stat-card admin-stat-link" onClick={() => setSection(s.to)} aria-label={`${s.label}: ${fmtNum(adminStats[s.key])}. Åbn ${s.label.toLowerCase()}`}>{inner}</button>
+            ? <button key={s.key} type="button" className="admin-stat-card admin-stat-link" onClick={() => (s.key === "open_tickets" && openTickets ? openTickets() : s.key === "pending_submissions" && openSubmissions ? openSubmissions() : setSection(s.to))} aria-label={`${s.label}: ${fmtNum(adminStats[s.key])}. Åbn ${s.label.toLowerCase()}`}>{inner}</button>
             : <div key={s.key} className="admin-stat-card">{inner}</div>;
         })}
       </div>
@@ -135,17 +145,21 @@ export default function DashboardSection({ adminStats, setSection, todos = [], a
       )}
 
       {openTodos && (
-        <div className="admin-card">
+        <div className="admin-card" style={{ marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>Opgaveoverblik</div>
             <div style={{ fontSize: 11, color: "var(--muted)" }}>Alle åbne opgaver · tryk for at se dem</div>
           </div>
           <div className="beta-grid">
-            <button type="button" className="beta-cell" onClick={() => openTodos({})}><b>{fmtNum(beta.open)}</b><span>Åbne opgaver</span></button>
-            <button type="button" className="beta-cell" onClick={() => openTodos({ priority: "high" })}><b>{fmtNum(beta.high)}</b><span>Høj prioritet</span></button>
-            <button type="button" className="beta-cell" onClick={() => openTodos({ status: "blocked" })}><b>{fmtNum(beta.blocked)}</b><span>Venter</span></button>
-            <button type="button" className="beta-cell" onClick={() => openTodos({ due: "overdue" })}><b style={{ color: beta.overdue ? "var(--red)" : undefined }}>{fmtNum(beta.overdue)}</b><span>Frist overskredet</span></button>
-            <button type="button" className="beta-cell" onClick={() => openTodos({ assigneeId: "none" })}><b>{fmtNum(beta.unassigned)}</b><span>Uden ansvarlig</span></button>
+            {OVERVIEW.map(c => {
+              const n = beta[c.key];
+              const attn = c.attn && n > 0;
+              return (
+                <button key={c.key} type="button" className={`beta-cell${attn ? " attn" : ""}`} onClick={() => openTodos(c.preset)}>
+                  <b style={{ color: c.late && n > 0 ? "var(--red)" : undefined }}>{fmtNum(n)}</b><span>{c.label}</span>
+                </button>
+              );
+            })}
           </div>
           {beta.byAssignee.length > 0 && (
             <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 10 }}>
@@ -154,23 +168,6 @@ export default function DashboardSection({ adminStats, setSection, todos = [], a
           )}
         </div>
       )}
-
-      <div className="admin-card">
-        <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Genveje</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {adminStats.open_tickets > 0 && (
-            <button className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setSection("tickets")}>
-              Åbne tickets ({fmtNum(adminStats.open_tickets)})
-            </button>
-          )}
-          {adminStats.pending_submissions > 0 && (
-            <button className="admin-btn admin-btn-primary admin-btn-sm admin-touch" onClick={() => setSection("submissions")}>
-              Afventende indsendelser ({fmtNum(adminStats.pending_submissions)})
-            </button>
-          )}
-          {!(adminStats.open_tickets > 0 || adminStats.pending_submissions > 0) && <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Ingen åbne handlinger lige nu.</span>}
-        </div>
-      </div>
     </>
   );
 }

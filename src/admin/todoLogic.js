@@ -17,13 +17,21 @@ export function todayKey(now = new Date()) {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Copenhagen" }).format(now);
 }
 
+/** En frist er kun gyldig som en rigtig dato i formatet YYYY-MM-DD; tomme og ugyldige værdier tæller som "uden frist". */
+export function hasValidDue(todo) {
+  const v = todo && todo.due_date;
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(`${v}T12:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+}
+
 export function isOverdue(todo, today = todayKey()) {
-  return !!todo.due_date && todo.status !== "done" && todo.due_date < today;
+  return hasValidDue(todo) && todo.status !== "done" && todo.due_date < today;
 }
 
 /** "I dag", "I morgen", "I går", ellers "3. okt." — og om fristen er overskredet. */
 export function dueInfo(todo, today = todayKey()) {
-  if (!todo.due_date) return null;
+  if (!hasValidDue(todo)) return null;
   const d = new Date(`${todo.due_date}T12:00:00Z`);
   const t = new Date(`${today}T12:00:00Z`);
   const diff = Math.round((d - t) / 86400_000);
@@ -101,7 +109,7 @@ export function filterTodos(list, filters, userId, today = todayKey()) {
     if (priority && t.priority !== priority) return false;
     if (status && t.status !== status) return false;
     if (due === "overdue" && !isOverdue(t, today)) return false;
-    if (due === "none" && t.due_date) return false;
+    if (due === "none" && hasValidDue(t)) return false;
     if (due === "week" && !(t.due_date && t.due_date <= weekEnd && t.status !== "done")) return false;
     if (assigneeId === "none" && t.assignee_id) return false;
     if (assigneeId && assigneeId !== "none" && t.assignee_id !== assigneeId) return false;
@@ -177,6 +185,7 @@ export function betaOverview(list, admins = [], today = todayKey()) {
     overdue: open.filter((t) => isOverdue(t, today)).length,
     high: open.filter((t) => t.priority === "high").length,
     unassigned: open.filter((t) => !t.assignee_id).length,
+    noDue: open.filter((t) => !hasValidDue(t)).length,
     byAssignee: [...counts.entries()].map(([id, count]) => ({ id, name: personName(admins, id), count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "da")),
   };
 }
