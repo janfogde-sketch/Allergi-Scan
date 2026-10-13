@@ -50,10 +50,6 @@ export default {
     ],
     [
       "p",
-      "**Kostpræferencer**\nEksempelvis vegansk, vegetarisk eller andre kosthensyn, du selv vælger."
-    ],
-    [
-      "p",
       "**E-numre og øvrige fravalg**\nOplysninger om tilsætningsstoffer eller andre forhold, som du vælger at holde øje med eller undgå."
     ],
     [
@@ -157,7 +153,7 @@ export default {
       [
         "oprette og administrere din konto",
         "gemme dine indstillinger og præferencer",
-        "sammenholde produktoplysninger med dine valgte allergier, intolerancer, kostpræferencer, E-numre og andre valg",
+        "sammenholde produktoplysninger med dine valgte allergier, intolerancer, E-numre og andre valg",
         "vise personlige produktresultater og advarsler",
         "levere familiefunktioner",
         "gemme historik, favoritter og indkøbslister",

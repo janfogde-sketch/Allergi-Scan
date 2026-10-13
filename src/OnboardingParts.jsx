@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { SCREENS, DIETS_ENABLED } from "./constants.jsx";
+import { SCREENS } from "./constants.jsx";
 import { traceEligible } from "./helpers.js";
 
 // Delt stil for de juridiske inline-tekstlinks (brugsvilkår/privatlivs-
@@ -55,7 +55,7 @@ export const memberTraceNote = (m) => {
   return "";
 };
 
-// Trinnet før `step`. Trin 3 er kostpræferencer, når de er slået til (DIETS_ENABLED). Ellers er trin 3 valget "Spor"
+// Trinnet før `step`. Trin 3 er valget "Spor"
 // (hvad der skal ske, når pakken siger "kan indeholde spor af"); det springes over, hvis brugeren ingen allergier har valgt.
-export const prevOnboardStep = (step, hasAllergens) => (!DIETS_ENABLED && step === 4 && !hasAllergens ? 2 : step - 1);
+export const prevOnboardStep = (step, hasAllergens) => (step === 4 && !hasAllergens ? 2 : step - 1);
 
