@@ -1,0 +1,7 @@
+-- To do til Jan (13. okt. 2026): skriv undtagelsen for to do-only PR'er ind i CLAUDE.md. Kun skrivning til to do-listen.
+insert into public.admin_todos (title, description, status, priority, track, assignee_id)
+select
+  'Skriv undtagelsen om to do-PR''er ind i CLAUDE.md',
+  'Jan har besluttet (13. okt. 2026), at en PR der KUN ændrer to do-listen (migrationsfiler der opretter, kommenterer eller lukker admin_todos, og intet andet) må tråden selv pushe og squash-merge uden at spørge. Undtagelsen står i projektinstruktionerne, men ikke i CLAUDE.md, som vinder ved uenighed. Tekst: "**Undtagelse (Jan, 13. okt. 2026):** en PR, der KUN ændrer to do-listen (migrationsfiler, der opretter, kommenterer eller lukker `admin_todos`, og intet andet), må tråden selv pushe og squash-merge uden at spørge. Rører PR''en appen, andre tabeller eller data, gælder hovedreglen." Skal stå i afsnittet "Push er den ENESTE ting, der kræver eksplicit godkendelse", lige efter sætningen om stop-hookens "Please push"-beskeder. Forslag: Jan indsætter den selv på GitHub (Claude må ikke ændre sine egne push-regler). Forsøget fejlede 13. okt. med GitHubs "File could not be edited" (ingen rulesets eller branch-beskyttelse); prøv igen i et privat browservindue.',
+  'todo', 'low', 'backend', public._admin_id('jafo')
+ where not exists (select 1 from public.admin_todos where title = 'Skriv undtagelsen om to do-PR''er ind i CLAUDE.md');
