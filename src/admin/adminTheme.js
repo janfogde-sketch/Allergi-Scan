@@ -126,4 +126,25 @@ select.admin-select:focus,.admin-field input[type=date]:focus{outline:2px solid 
 .todo-comment{background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
 .todo-link-btn{background:none;border:none;color:var(--muted);font-family:var(--f);font-size:11.5px;font-weight:700;cursor:pointer;padding:0;}
 .todo-link-btn:hover{color:var(--red);}
+
+/* ── Mobil: sidemenuen bliver en udtrækskuffe, indholdet fylder hele bredden ── */
+.admin-menu-btn,.admin-nav-backdrop{display:none;}
+@media (max-width:820px){
+  .admin-sidebar{position:fixed;left:0;top:0;bottom:0;z-index:120;transform:translateX(-100%);transition:transform .2s ease;box-shadow:none;width:min(280px,86vw);}
+  .admin-sidebar.open{transform:none;box-shadow:0 0 40px rgba(21,32,26,.25);}
+  .admin-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(21,32,26,.45);z-index:110;}
+  .admin-menu-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin:-6px 8px -6px -8px;border:none;background:none;border-radius:8px;cursor:pointer;flex-shrink:0;}
+  .admin-menu-btn:active{background:var(--surface2);}
+  .admin-topbar{padding:12px 16px;position:sticky;top:0;z-index:50;}
+  .admin-topbar h1{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .admin-content{padding:16px;}
+  .admin-nav-item{padding:12px 10px;}
+  .admin-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table.admin-table{min-width:560px;}
+  .admin-modal-overlay{padding:0;align-items:flex-end;}
+  .admin-modal{max-width:none;max-height:92vh;border-radius:14px 14px 0 0;padding:18px 16px;}
+  .admin-search{max-width:none;}
+  .admin-tabs{overflow-x:auto;white-space:nowrap;}
+  .admin-field input,.admin-field select.admin-select,select.admin-select,.admin-search,textarea.admin-textarea{font-size:16px;}
+}
 `;
