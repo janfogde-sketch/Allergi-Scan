@@ -23,6 +23,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const loadedOnce = useRef(false);
+  const [loaded, setLoaded] = useState(false); // første indlæsning er lykkedes (adskiller 0 opgaver fra ikke indlæst)
   const openCommentsFor = useRef(null);
 
   const headers = useCallback(() => makeHeaders(accessToken), [accessToken]);
@@ -56,6 +57,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
       ]);
       setTodos([...(Array.isArray(open) ? open : []), ...done]);
       loadedOnce.current = true;
+      setLoaded(true);
       loadDoneCount();
     } catch (e) {
       if (!quiet) showToast("Kunne ikke hente to do-listen: " + e.message, "error");
@@ -194,5 +196,5 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     }
   };
 
-  return { todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
+  return { todos, admins, loading, loaded, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
 }

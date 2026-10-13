@@ -1,73 +1,112 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Icon } from "../../SharedComponents.jsx";
 import { fmtNum, lastDays, axisScale, labelIndexes } from "../statsLogic.js";
 import { useIsMobile } from "../useIsMobile.js";
 import { betaOverview } from "../todoLogic.js";
 
-// Nøgletal. `to` er den naturlige administrationsside, hvis der findes en; `hint` forklarer, hvad der tælles.
+// Overblik: nøgletal. `to` er den naturlige administrationsside, hvis der findes en; `hint` er en kort, diskret sekundær oplysning.
 const STATS = [
   { key: "total_users", label: "Brugere i alt", to: "users", hint: (s) => (s.admin_users ? `heraf ${fmtNum(s.admin_users)} admin` : "") },
   { key: "new_users_today", label: "Nye brugere i dag", to: "users" },
   { key: "total_products", label: "Produkter", to: "products" },
-  { key: "total_scans", label: "Scanninger i alt", hint: (s) => (Number.isFinite(s.search_opens) ? `Søgninger i alt: ${fmtNum(s.search_opens)}` : "") },
+  { key: "total_families", label: "Familiemedlemmer", to: "family", hint: () => "profiler uden egen konto" },
+  { key: "total_scans", label: "Scanninger i alt" },
   { key: "scans_today", label: "Scanninger i dag" },
-  { key: "total_families", label: "Familiemedlemmer", to: "family", hint: () => "børneprofiler uden konto" },
+  { key: "search_opens", label: "Søgninger i alt" },
   { key: "pending_submissions", label: "Afventende indsendelser", to: "submissions" },
   { key: "open_tickets", label: "Åbne tickets", to: "tickets" },
 ];
 
-// Felterne i opgaveoverblikket. `preset` er det filter, To do åbner med; `attn` = kræver handling, når tallet er over nul.
+// Opgaveoverblik: fire primære målinger, to mere i det udvidelige område. `preset` er det filter, To do åbner med.
 const OVERVIEW = [
   { key: "open", label: "Åbne opgaver", preset: {} },
-  { key: "high", label: "Høj prioritet", preset: { priority: "high" }, attn: true },
-  { key: "blocked", label: "Venter", preset: { status: "blocked" }, attn: true },
-  { key: "overdue", label: "Frist overskredet", preset: { due: "overdue" }, attn: true, late: true },
+  { key: "high", label: "Høj prioritet", preset: { priority: "high" } },
+  { key: "blocked", label: "Venter", preset: { status: "blocked" } },
+  { key: "overdue", label: "Frist overskredet", preset: { due: "overdue" }, late: true },
+];
+const OVERVIEW_MORE = [
   { key: "unassigned", label: "Uden ansvarlig", preset: { assigneeId: "none" } },
   { key: "noDue", label: "Uden frist", preset: { due: "none" } },
 ];
 
 const PERIODS = [7, 14, 30];
+// Periodevalget huskes i denne fane (sessionStorage), så det består, når man navigerer væk fra Dashboard og tilbage.
+const PERIOD_KEY = "admin_dash_period";
+const readPeriod = () => { try { const v = Number(sessionStorage.getItem(PERIOD_KEY)); return PERIODS.includes(v) ? v : 14; } catch { return 14; } };
+const savePeriod = (p) => { try { sessionStorage.setItem(PERIOD_KEY, String(p)); } catch { /* valget er en bekvemmelighed */ } };
+
 const longDate = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "long" });
 const shortDate = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("da-DK", { day: "numeric", month: "short" });
+const unitFor = (unit, n) => (n === 1 ? unit[0] : unit[1]);
 
-// Søjlediagram for én tidsserie. Hver søjle er en knap: tryk (eller tastatur) viser præcis dato og antal. Dage uden aktivitet vises som en tynd søjle og har værdien 0.
+// Søjlediagram for én tidsserie. Tryk eller træk over søjlerne viser dato og antal i en lille tooltip, som holdes inden for diagrammet; tryk udenfor (eller Escape) fjerner den.
 // `data` er null, når tallene ikke kunne hentes (adskilt fra 0 registreringer).
-function TrendChart({ title, unit, data, color, colorLt, narrow }) {
+function TrendChart({ title, unit, data, color, narrow }) {
   const [picked, setPicked] = useState(null);
+  const plotRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!picked) return undefined;
+    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setPicked(null); };
+    const onKey = (e) => { if (e.key === "Escape") setPicked(null); };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [picked]);
+
   if (!data) {
     return (
-      <figure className="admin-card" style={{ margin: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 6 }}>{title}</div>
+      <figure className="admin-card dash-chart" style={{ margin: 0 }}>
+        <div className="dash-chart-title">{title}</div>
         <div className="admin-info-note" role="status" style={{ marginBottom: 0 }}>Tallene kunne ikke hentes. Prøv at genindlæse siden.</div>
       </figure>
     );
   }
-  const { top, ticks } = axisScale(Math.max(0, ...data.map(d => d.count)));
+  const { top, ticks } = axisScale(Math.max(0, ...data.map((d) => d.count)));
   const total = data.reduce((sum, d) => sum + d.count, 0);
-  const sel = picked && data.find(d => d.date === picked);
+  const idx = picked ? data.findIndex((d) => d.date === picked) : -1;
+  const sel = idx >= 0 ? data[idx] : null;
   const labels = new Set(labelIndexes(data.length, narrow ? 3 : 5));
   const gap = data.length > 20 ? 1 : 2;
+
+  // Vælg søjlen under fingeren/musen; virker også ved træk hen over diagrammet
+  const pickAt = (e) => {
+    const el = plotRef.current;
+    if (!el || !data.length) return;
+    const r = el.getBoundingClientRect();
+    const i = Math.min(data.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * data.length)));
+    setPicked(data[i].date);
+  };
+  const pct = idx >= 0 ? ((idx + 0.5) / data.length) * 100 : 0;
+  // Tooltippen ligger over kortets overskrift, vandret ud for søjlen, og holdes inden for kortet ved kanterne
+  const tipPos = pct < 22 ? { left: 12 } : pct > 78 ? { right: 12 } : { left: `calc(46px + (100% - 62px) * ${(pct / 100).toFixed(4)})`, transform: "translateX(-50%)" };
+
   return (
-    <figure className="admin-card" style={{ margin: 0, position: "relative" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-        <div style={{ fontSize: 13, fontWeight: 800 }}>{title}</div>
-        <div style={{ fontSize: 11, color: "var(--muted)" }}>{fmtNum(total)} i alt, seneste {data.length} dage</div>
-      </div>
-      <div style={{ fontSize: 12, minHeight: 18, color: sel ? "var(--ink)" : "var(--muted)", fontWeight: sel ? 700 : 500 }} aria-live="polite">
-        {sel ? `${longDate(sel.date)}: ${fmtNum(sel.count)} ${unit}` : total === 0 ? `Ingen ${unit} i perioden` : "Tryk på en søjle for dato og antal"}
-      </div>
-      <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-        <div className="admin-axis" aria-hidden="true">
-          {ticks.map(t => <span key={t}>{fmtNum(t)}</span>)}
+    <figure className="admin-card dash-chart" style={{ margin: 0 }} ref={wrapRef}>
+      {sel && (
+        <div className="dash-tip" role="status" style={tipPos}>
+          {longDate(sel.date)}: {fmtNum(sel.count)} {unitFor(unit, sel.count)}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "flex-end", gap, height: 72, borderBottom: "1px solid var(--border)" }} role="group" aria-label={`${title}, seneste ${data.length} dage`}>
-            {data.map(d => (
-              <button key={d.date} type="button" className="admin-bar" aria-pressed={picked === d.date}
-                aria-label={`${longDate(d.date)}: ${fmtNum(d.count)} ${unit}`} title={`${shortDate(d.date)}: ${d.count}`}
-                onClick={() => setPicked(p => (p === d.date ? null : d.date))}>
-                <span style={{ display: "block", width: "100%", borderRadius: "3px 3px 0 0", height: `${d.count > 0 ? Math.max(6, (d.count / top) * 100) : 4}%`,
-                  background: d.count > 0 ? color : colorLt, outline: picked === d.date ? `2px solid ${color}` : "none", outlineOffset: 1 }} />
+      )}
+      <div className="dash-chart-head">
+        <div className="dash-chart-title">{title}</div>
+        <div className="dash-chart-total">{fmtNum(total)} i alt, seneste {data.length} dage</div>
+      </div>
+      <div style={{ display: "flex", gap: 4 }}>
+        <div className="admin-axis" aria-hidden="true">
+          {ticks.map((t) => <span key={t}>{fmtNum(t)}</span>)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+          <div ref={plotRef} className="dash-plot" style={{ gap }} role="group" aria-label={`${title}, seneste ${data.length} dage`}
+            onPointerDown={pickAt} onPointerMove={(e) => { if (e.buttons) pickAt(e); }}>
+            {data.map((d) => (
+              <button key={d.date} type="button" className={`admin-bar${picked === d.date ? " sel" : ""}`} aria-pressed={picked === d.date}
+                aria-label={`${longDate(d.date)}: ${fmtNum(d.count)} ${unitFor(unit, d.count)}`}
+                onClick={(e) => { if (e.detail === 0) setPicked(d.date); }}>
+                <span style={{ display: "block", width: "100%", borderRadius: "3px 3px 0 0", height: `${d.count > 0 ? Math.max(6, (d.count / top) * 100) : 3}%`,
+                  background: d.count > 0 ? color : "var(--border2)" }} />
               </button>
             ))}
           </div>
@@ -87,87 +126,184 @@ function TrendChart({ title, unit, data, color, colorLt, narrow }) {
   );
 }
 
-export default function DashboardSection({ adminStats, setSection, todos = [], admins = [], openTodos, openTickets, openSubmissions }) {
-  const [period, setPeriod] = useState(14);
-  const [showDefs, setShowDefs] = useState(false);
+// Forklaring af tallene: konkret og i overensstemmelse med, hvordan de beregnes (useAdmin.loadAdminStats og todoLogic.betaOverview).
+function StatsInfo({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const Row = ({ t, children }) => <li style={{ marginBottom: 8 }}><strong>{t}</strong>: {children}</li>;
+  return (
+    <div className="admin-modal-overlay" onClick={onClose}>
+      <div className="admin-modal" role="dialog" aria-modal="true" aria-label="Hvad tæller tallene" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+        <div className="admin-modal-header">
+          <div style={{ fontSize: 15, fontWeight: 800 }}>Hvad tæller tallene?</div>
+          <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={onClose}>Luk</button>
+        </div>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.55 }}>
+          <Row t="Brugere i alt">alle oprettede konti, også admin- og testkonti. "Nye brugere i dag" er konti oprettet siden midnat.</Row>
+          <Row t="Produkter">alle produkter i produktdatabasen.</Row>
+          <Row t="Familiemedlemmer">profiler uden selvstændig konto (børneprofiler). Voksne med egen konto tælles som brugere.</Row>
+          <Row t="Scanninger">opslag med kamera eller indtastet kode. Hvert opslag tæller, også gentagelser af samme produkt. "Scanninger i dag" er siden midnat.</Row>
+          <Row t="Søgninger">produkter, der er valgt i søgning eller åbnet fra Favoritter, alternativer eller beskeder. De tælles separat og indgår ikke i scanninger.</Row>
+          <Row t="Afventende indsendelser">produktindsendelser og rettelser, der endnu ikke er godkendt eller afvist.</Row>
+          <Row t="Åbne tickets">tickets med status Åben. Tickets i gang og løste tælles ikke med.</Row>
+          <Row t="Aktivitet">dagene regnes i dansk tid. Periodevælgeren (7, 14 eller 30 dage) styrer kun graferne, ikke nøgletallene øverst. Totalen er summen af søjlerne i perioden.</Row>
+          <Row t="Opgaveoverblik">kun åbne opgaver (ikke Færdige). "Venter" er status Venter, "Frist overskredet" er en gyldig frist før i dag, og "Uden frist" er åbne opgaver uden en gyldig dato.</Row>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function InfoButton({ onClick, label = "Hvad tæller tallene?" }) {
+  return (
+    <button type="button" className="dash-info-btn" aria-label={label} title={label} onClick={onClick}>
+      <Icon name="info" size={16} />
+    </button>
+  );
+}
+
+export default function DashboardSection({ adminStats, setSection, todos = [], todosLoaded = true, admins = [], openTodos, openTickets, openSubmissions }) {
+  const [period, setPeriodState] = useState(readPeriod);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const narrow = useIsMobile();
+  const setPeriod = (p) => { savePeriod(p); setPeriodState(p); };
   const beta = betaOverview(todos, admins);
+
   if (!adminStats) {
     return (
       <div aria-busy="true" aria-label="Henter statistik">
-        <div className="admin-stat-grid">
-          {STATS.map(s => <div key={s.key} className="admin-stat-card admin-skeleton"><div className="admin-stat-num">&nbsp;</div><div className="admin-stat-label">{s.label}</div></div>)}
+        <div className="dash-stat-grid">
+          {STATS.map((s) => <div key={s.key} className="admin-stat-card admin-skeleton"><div className="admin-stat-num">&nbsp;</div><div className="admin-stat-label">{s.label}</div></div>)}
         </div>
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter statistik…</div>
       </div>
     );
   }
+
+  const goStat = (s) => (s.key === "open_tickets" && openTickets ? openTickets() : s.key === "pending_submissions" && openSubmissions ? openSubmissions() : setSection(s.to));
+
+  // Kræver opmærksomhed: kun forhold, hvor handling er relevant (tal over nul). Farve har betydning: rød = frist overskredet, gul = bør prioriteres, neutral = afventer behandling.
+  const attention = [];
+  if (adminStats.open_tickets > 0) attention.push({ key: "t", tone: "info", icon: "info", text: `${fmtNum(adminStats.open_tickets)} ${adminStats.open_tickets === 1 ? "åben ticket" : "åbne tickets"}`, go: () => (openTickets ? openTickets() : setSection("tickets")) });
+  if (adminStats.pending_submissions > 0) attention.push({ key: "s", tone: "info", icon: "file", text: `${fmtNum(adminStats.pending_submissions)} ${adminStats.pending_submissions === 1 ? "afventende indsendelse" : "afventende indsendelser"}`, go: () => (openSubmissions ? openSubmissions() : setSection("submissions")) });
+  if (openTodos && todosLoaded) {
+    if (beta.overdue > 0) attention.push({ key: "o", tone: "late", icon: "warning", text: `${fmtNum(beta.overdue)} ${beta.overdue === 1 ? "opgave" : "opgaver"} med overskredet frist`, go: () => openTodos({ due: "overdue" }) });
+    if (beta.highUnassigned > 0) attention.push({ key: "hu", tone: "warn", icon: "warning", text: `${fmtNum(beta.highUnassigned)} ${beta.highUnassigned === 1 ? "opgave" : "opgaver"} med høj prioritet uden ansvarlig`, go: () => openTodos({ priority: "high", assigneeId: "none" }) });
+    if (beta.high > 0) attention.push({ key: "h", tone: "warn", icon: "clock", text: `${fmtNum(beta.high)} ${beta.high === 1 ? "opgave" : "opgaver"} med høj prioritet`, go: () => openTodos({ priority: "high" }) });
+  }
+
   return (
-    <>
-      <div className="admin-stat-grid">
-        {STATS.map(s => {
-          const hint = s.hint ? s.hint(adminStats) : "";
-          const inner = (
-            <>
-              <div className="admin-stat-num">{fmtNum(adminStats[s.key])}</div>
-              <div className="admin-stat-label">{s.label}</div>
-              <div className="admin-stat-hint">{hint || " "}</div>
-            </>
-          );
-          return s.to
-            ? <button key={s.key} type="button" className="admin-stat-card admin-stat-link" onClick={() => (s.key === "open_tickets" && openTickets ? openTickets() : s.key === "pending_submissions" && openSubmissions ? openSubmissions() : setSection(s.to))} aria-label={`${s.label}: ${fmtNum(adminStats[s.key])}. Åbn ${s.label.toLowerCase()}`}>{inner}</button>
-            : <div key={s.key} className="admin-stat-card">{inner}</div>;
-        })}
-      </div>
-
-      {(
-        <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-            <div className="admin-segment" role="group" aria-label="Periode">
-              {PERIODS.map(p => (
-                <button key={p} type="button" className={period === p ? "active" : ""} aria-pressed={period === p} onClick={() => setPeriod(p)}>{p} dage</button>
-              ))}
+    <div className="dash">
+      <div className="dash-top">
+        <section aria-labelledby="dash-h-overview">
+          <div className="dash-head">
+            <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <h2 id="dash-h-overview" className="dash-h">Overblik</h2>
+              <InfoButton onClick={() => setShowInfo(true)} />
             </div>
-            <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-expanded={showDefs} onClick={() => setShowDefs(v => !v)}><span aria-hidden="true">ⓘ </span>Hvad tæller tallene?</button>
           </div>
-          {showDefs && (
-            <div className="admin-info-note" role="note">
-              <strong>Scanning</strong>: et opslag med kamera eller indtastet kode (hvert opslag tæller, også gentagelser). Åbninger via søgning, Favoritter, alternativer og beskeder tælles ikke som scanninger.{" "}
-              <strong>Ny bruger</strong>: en oprettet konto (inkl. admin- og testkonti). <strong>Familiemedlem</strong>: en profil uden egen konto (børneprofil); voksne med egen konto tælles som brugere.{" "}
-              Dagene regnes i dansk tid.
-            </div>
-          )}
-          <div className="admin-chart-grid">
-            <TrendChart title="Scanninger pr. dag" unit="scanninger" data={adminStats.scan_trend ? lastDays(adminStats.scan_trend, period) : null} color="var(--green)" colorLt="var(--green-lt)" narrow={narrow} />
-            <TrendChart title="Nye brugere pr. dag" unit="nye brugere" data={adminStats.user_trend ? lastDays(adminStats.user_trend, period) : null} color="var(--blue)" colorLt="var(--blue-lt)" narrow={narrow} />
-          </div>
-        </>
-      )}
-
-      {openTodos && (
-        <div className="admin-card" style={{ marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>Opgaveoverblik</div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>Alle åbne opgaver · tryk for at se dem</div>
-          </div>
-          <div className="beta-grid">
-            {OVERVIEW.map(c => {
-              const n = beta[c.key];
-              const attn = c.attn && n > 0;
-              return (
-                <button key={c.key} type="button" className={`beta-cell${attn ? " attn" : ""}`} onClick={() => openTodos(c.preset)}>
-                  <b style={{ color: c.late && n > 0 ? "var(--red)" : undefined }}>{fmtNum(n)}</b><span>{c.label}</span>
-                </button>
+          <div className="dash-stat-grid">
+            {STATS.map((s) => {
+              const hint = s.hint ? s.hint(adminStats) : "";
+              const inner = (
+                <>
+                  <div className="admin-stat-num">{fmtNum(adminStats[s.key])}</div>
+                  <div className="admin-stat-label">{s.label}</div>
+                  {hint && <div className="admin-stat-hint">{hint}</div>}
+                </>
               );
+              return s.to
+                ? <button key={s.key} type="button" className="admin-stat-card admin-stat-link" onClick={() => goStat(s)} aria-label={`${s.label}: ${fmtNum(adminStats[s.key])}. Åbn ${s.label.toLowerCase()}`}>{inner}</button>
+                : <div key={s.key} className="admin-stat-card">{inner}</div>;
             })}
           </div>
-          {beta.byAssignee.length > 0 && (
-            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 10 }}>
-              Fordeling: {beta.byAssignee.map(a => `${a.name} ${fmtNum(a.count)}`).join(" · ")}
-            </div>
-          )}
+        </section>
+
+        <section aria-labelledby="dash-h-attn">
+          <div className="dash-head"><h2 id="dash-h-attn" className="dash-h">Kræver opmærksomhed</h2></div>
+          <div className="admin-card dash-attn">
+            {attention.length === 0 ? (
+              <div className="dash-empty">{openTodos && !todosLoaded ? "Henter…" : "Intet kræver opmærksomhed lige nu."}</div>
+            ) : attention.map((a) => (
+              <button key={a.key} type="button" className="dash-attn-row" onClick={a.go}>
+                <span className={`dash-attn-icon ${a.tone}`} aria-hidden="true"><Icon name={a.icon} size={16} /></span>
+                <span className="dash-attn-text">{a.text}</span>
+                <Icon name="chevronRight" size={14} color="var(--muted)" />
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <section aria-labelledby="dash-h-activity">
+        <div className="dash-head">
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <h2 id="dash-h-activity" className="dash-h">Aktivitet</h2>
+            <InfoButton onClick={() => setShowInfo(true)} label="Hvordan aktiviteten opgøres" />
+          </div>
+          <div className="admin-segment dash-period" role="group" aria-label="Periode for graferne">
+            {PERIODS.map((p) => (
+              <button key={p} type="button" className={period === p ? "active" : ""} aria-pressed={period === p} onClick={() => setPeriod(p)}>{p} dage</button>
+            ))}
+          </div>
         </div>
+        <div className="admin-chart-grid">
+          <TrendChart title="Scanninger pr. dag" unit={["scanning", "scanninger"]} data={adminStats.scan_trend ? lastDays(adminStats.scan_trend, period) : null} color="var(--green)" narrow={narrow} />
+          <TrendChart title="Nye brugere pr. dag" unit={["ny bruger", "nye brugere"]} data={adminStats.user_trend ? lastDays(adminStats.user_trend, period) : null} color="var(--blue)" narrow={narrow} />
+        </div>
+      </section>
+
+      {openTodos && (
+        <section aria-labelledby="dash-h-tasks">
+          <div className="dash-head"><h2 id="dash-h-tasks" className="dash-h">Opgaveoverblik</h2></div>
+          <div className="admin-card" style={{ marginBottom: 0 }}>
+            {!todosLoaded ? (
+              <div className="dash-empty">Henter opgaver…</div>
+            ) : (
+              <>
+                <div className="beta-grid">
+                  {OVERVIEW.map((c) => (
+                    <button key={c.key} type="button" className="beta-cell" onClick={() => openTodos(c.preset)}>
+                      <b style={{ color: c.late && beta[c.key] > 0 ? "var(--red)" : undefined }}>{fmtNum(beta[c.key])}</b><span>{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="dash-more" aria-expanded={showMore} onClick={() => setShowMore((v) => !v)}>
+                  {showMore ? "Skjul" : "Flere"} <Icon name={showMore ? "chevronUp" : "chevronDown"} size={12} />
+                </button>
+                {showMore && (
+                  <div className="beta-grid" style={{ marginTop: 8 }}>
+                    {OVERVIEW_MORE.map((c) => (
+                      <button key={c.key} type="button" className="beta-cell" onClick={() => openTodos(c.preset)}>
+                        <b>{fmtNum(beta[c.key])}</b><span>{c.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {beta.open > 0 && (
+                  <div className="dash-dist">
+                    <div className="dash-dist-label">Opgaver pr. ansvarlig</div>
+                    {[...beta.byAssignee.map((a) => ({ key: a.id, name: a.name, count: a.count, preset: { assigneeId: a.id } })),
+                      ...(beta.unassigned > 0 ? [{ key: "none", name: "Uden ansvarlig", count: beta.unassigned, preset: { assigneeId: "none" }, muted: true }] : [])].map((r) => (
+                      <button key={r.key} type="button" className="dash-dist-row" onClick={() => openTodos(r.preset)} aria-label={`${r.name}: ${r.count} åbne opgaver`}>
+                        <span className="dash-dist-name" style={{ color: r.muted ? "var(--muted)" : undefined }}>{r.name}</span>
+                        <span className="dash-dist-bar" aria-hidden="true"><span style={{ width: `${Math.max(3, (r.count / beta.open) * 100)}%`, background: r.muted ? "var(--border2)" : "var(--green)" }} /></span>
+                        <span className="dash-dist-count">{fmtNum(r.count)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
       )}
-    </>
+
+      {showInfo && <StatsInfo onClose={() => setShowInfo(false)} />}
+    </div>
   );
 }
