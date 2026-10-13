@@ -32,7 +32,7 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 
 | Tabel | Nøglefelter | Noter |
 |-------|-------------|-------|
-| `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, source, ingredients_text | ~20.200+ |
+| `products` | id, ean, name, brand, allergen_flags (jsonb), allergen_quality, allergen_source_method, nutrition (jsonb), verified_status, ingredients_verified_at (sat af trigger kun ved status verified), source, ingredients_text | ~20.200+ |
 | `users` | id, name, email, role, diets (jsonb), allergen_levels (jsonb), onboarding_completed, onboarding_step | Se note nedenfor |
 | `user_allergens` | user_id, allergen_id | |
 | `family_members` | id, user_id, name, allergens (jsonb), diets, e_numbers, family_owner_id | |
@@ -383,4 +383,4 @@ Kontoen låses ikke, og intet ændres ved den. Kun recovery-mailen har linket (m
 OFF-billeder skal krediteres. Kilden aflæses af `image_url` (`images.openfoodfacts.org`) via `imageAttribution()` i `helpers.js`, ingen kolonne. Resultatsiden viser "Billede: Open Food Facts, CC BY-SA" under billedet (link til OFF-produktet); miniaturer (`ProductImage`) har et lille "OFF"-mærke, og Indstillinger → Om EatSafe har en samlet kildelinje. Vilkårene nævner licensen allerede.
 
 ### Android-app (TWA) og fast vært (6. okt. 2026)
-Appens faste adresse er `https://www.eatsafe.dk` (`eatsafe.dk` videresender dertil med 307). Android-appen (TWA, Bubblewrap) skal bygges mod `www`, ellers fejler verifikationen. `public/.well-known/assetlinks.json` kobler appen til siden (pakkenavn `dk.eatsafe.app`, foreløbigt); `sha256_cert_fingerprints` er TOM, til Play Console har oprettet appen (Play App Signing-fingeraftrykket, evt. også uploadnøglens). Indsæt dem, når Jan har dem. `vercel.json` sætter `Content-Type: application/json` på filen (test `src/assetlinks.test.js`). Efter deploy: `curl -sI https://www.eatsafe.dk/.well-known/assetlinks.json` skal give 200 og `application/json`.
+Appens faste adresse er `https://www.eatsafe.dk` (`eatsafe.dk` videresender dertil med 307). Android-appen (TWA, Bubblewrap) skal bygges mod `www`, ellers fejler verifikationen. `public/.well-known/assetlinks.json` kobler appen til siden (pakkenavn `dk.eatsafe.app`, foreløbigt); `sha256_cert_fingerprints` er TOM, til Play Console har oprettet appen (Play App Signing-fingeraftrykket, evt. også uploadnøglens). Indsæt dem, når Jan har dem. `vercel.json` sætter `Content-Type: application/json` på filen (test `src/assetlinks.test.js`). Efter deploy: `curl -sI https://www.eatsafe.dk/.well-known/assetlinks.json` skal give 200 og `application/json`. Bubblewrap-opsætning i `android/twa-manifest.json`; hvad der mangler til Play-kontoen: `docs/android-google-play-tjekliste.md`.
