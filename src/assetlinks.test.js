@@ -24,4 +24,12 @@ describe("Android TWA: assetlinks.json", () => {
     const h = vercel.headers.find((x) => x.source === "/.well-known/assetlinks.json");
     expect(h.headers).toContainEqual({ key: "Content-Type", value: "application/json" });
   });
+
+  it("TWA-opsætningen peger på samme pakke og på www", () => {
+    const twa = read("../android/twa-manifest.json");
+    expect(twa.packageId).toBe(target.package_name);
+    expect(twa.host).toBe("www.eatsafe.dk");
+    expect(twa.webManifestUrl).toBe("https://www.eatsafe.dk/manifest.json");
+    expect(twa.signingKey.path).not.toMatch(/\.(jks|keystore)$/);
+  });
 });
