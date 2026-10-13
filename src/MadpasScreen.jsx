@@ -1,9 +1,9 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS, DIETS_ENABLED, MADPAS_LANGUAGES } from "./constants.jsx";
+import { ALLERGENS, SCREENS, MADPAS_LANGUAGES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
-import { madpasAllergenLabel, madpasDietLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, madpasDietMessage, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_WRITTEN_IN_DANISH_T } from "./madpasText.js";
+import { madpasAllergenLabel, madpasAllergenExamples, madpasSafetyNote, madpasAllergyStatement, madpasCrossContactNote, MADPAS_SECTIONS_T, MADPAS_INTOLERANCE_HEADLINE_T, MADPAS_EXAMPLES_LABEL_T, MADPAS_WRITTEN_IN_DANISH_T } from "./madpasText.js";
 import { preloadMadpasText } from "./useMadpas.js";
 
 // Gør oplæsningen klar, så "Læs højt" kan starte direkte fra knaptrykket.
@@ -41,7 +41,7 @@ const MADPAS_ALLERGEN_ICON = {
 // IKKE kun til restauranter. Strukturerede sektioner efter type (FOOD
 // ALLERGIES/INTOLERANCES/DIET, se ALLERGENS[].type) i stedet for én generisk
 // "kan ikke spise"-liste, og et madpas der ALTID afspejler den valgte
-// profils AKTUELLE data (allergener/custom/diæter — se mpDiets i App.jsx for
+// profils AKTUELLE data (allergener/custom — se mpAllergens i App.jsx for
 // hvorfor profil-scoping betyder noget).
 //
 // 26. sept. 2026, polish-runde: link-/QR-deling, PDF/print og E-numre er
@@ -62,7 +62,7 @@ export default function MadpasScreen({
   madpasSpeaking, setMadpasSpeaking,
   madpasWaiterView, setMadpasWaiterView,
   madpasCrossContact, setMadpasCrossContact,
-  mpAllergens, mpCustom, mpDiets,
+  mpAllergens, mpCustom,
   langOpen, setLangOpen,
   madpasSpeak,
 }) {
@@ -85,7 +85,6 @@ export default function MadpasScreen({
       allergyItems: allergenItems.filter(a => a.type === "allergi" || a.id === "coeliaki"),
       intoleranceItems: allergenItems.filter(a => a.type === "intolerance" && a.id !== "coeliaki"),
       customItems: (mpCustom || []).filter(c => typeof c === "string" && !mpAllergens.includes(c)),
-      dietItems: (mpDiets || []).map(id => ({ id, label: madpasDietLabel(id, lang) })).filter(x => x.label),
     };
   };
 
@@ -99,7 +98,7 @@ export default function MadpasScreen({
     const lang = madpasLang;
     const rtl = MADPAS_LANGUAGES.find(l => l.code === lang)?.rtl;
     const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
-    const { allergyItems, intoleranceItems, customItems, dietItems } = buildGroups(lang);
+    const { allergyItems, intoleranceItems, customItems } = buildGroups(lang);
     // Bruges til den kombinerede krydskontaminerings-sætning nedenfor —
     // IKKE til den enkelte sikkerhedstekst, som nu genereres pr. emne.
     const crossContactNames = [...allergyItems.filter(a => a.id !== "coeliaki").map(a => madpasAllergenLabel(a, lang)), ...customItems];
@@ -254,25 +253,6 @@ export default function MadpasScreen({
               </div>
             </div>
           )}
-
-          {dietItems.length > 0 && (
-            <div>
-              <div style={sectionLbl}>{MADPAS_SECTIONS_T.diet[lang] || MADPAS_SECTIONS_T.diet.en}</div>
-              <div style={itemList}>
-                {/* Diæter må ikke kun vises som badges — de skal have en
-                    kort, tydelig besked til personalet på samme måde som
-                    allergier (27. sept. 2026, Madpas-finpolish, krav 1-2). */}
-                {dietItems.map(d => (
-                  <div key={d.id} style={itemBlock}>
-                    <div style={itemName}>{d.label}</div>
-                    <div style={{ fontSize:15.5, fontWeight:700, color:"var(--ink)", marginTop:10, lineHeight:1.5 }}>
-                      {madpasDietMessage(d.id, lang)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           </div>
         </div>
 
@@ -301,8 +281,7 @@ export default function MadpasScreen({
   const PREVIEW_LIMIT = 6;
   const renderCompactPreview = () => {
     const lang = madpasLang;
-    const { allergyItems, intoleranceItems, customItems, dietItems } = buildGroups(lang);
-    const dietStyle = { background:"var(--green-selected-bg)", borderColor:"var(--border)", color:"var(--ink2)" };
+    const { allergyItems, intoleranceItems, customItems } = buildGroups(lang);
     // `text` er et React-node, ikke en ren streng (29. sept. 2026, Laktose-
     // ikon-opgaven) — de fleste allergener stringificerer stadig deres eget
     // emoji direkte via <AllergenGlyph>, som viser et specialtegnet ikon for
@@ -311,7 +290,6 @@ export default function MadpasScreen({
       ...allergyItems.map(a => ({ key:`a-${a.id}`, text:<><AllergenGlyph a={a} size={12} /> {madpasAllergenLabel(a, lang)}</> })),
       ...intoleranceItems.map(a => ({ key:`i-${a.id}`, text:<><AllergenGlyph a={a} size={12} /> {madpasAllergenLabel(a, lang)}</> })),
       ...customItems.map((c,i) => ({ key:`c-${i}`, text:c })),
-      ...dietItems.map(d => ({ key:`d-${d.id}`, text:d.label, style:dietStyle })),
     ];
     const visible = chips.slice(0, PREVIEW_LIMIT);
     const overflow = chips.length - visible.length;
@@ -348,7 +326,7 @@ export default function MadpasScreen({
     </div>
   );
 
-  const hasAnyData = mpAllergens.length > 0 || mpCustom.length > 0 || mpDiets.length > 0;
+  const hasAnyData = mpAllergens.length > 0 || mpCustom.length > 0;
 
   return (
     <>
@@ -363,7 +341,7 @@ export default function MadpasScreen({
               {/* HEADER */}
               <div className="mp-head">
                 <div className="mp-title">Madpas</div>
-                <div className="mp-subtitle">{DIETS_ENABLED ? "Vis dine allergier og kosthensyn på det lokale sprog." : "Vis dine allergier og intolerancer på det lokale sprog."}</div>
+                <div className="mp-subtitle">Vis dine allergier og intolerancer på det lokale sprog.</div>
 
                 {/* Profilvælger — kun vist når der reelt er noget at vælge
                     mellem. Én relevant profil (kun brugeren selv) vises
@@ -445,7 +423,7 @@ export default function MadpasScreen({
                 <div className="empty-state" style={{ paddingTop:32 }}>
                   <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="shield" size={23} color="var(--muted)" /></span>
                   <div className="empty-txt">Ingen allergier registreret</div>
-                  <div className="empty-sub">{DIETS_ENABLED ? "Tilføj dine allergier, intolerancer og diæter under Profil → Mine præferencer" : "Tilføj dine allergier og intoleranser under Profil → Mine præferencer"}</div>
+                  <div className="empty-sub">Tilføj dine allergier og intoleranser under Profil → Mine præferencer</div>
                 </div>
               )}
 

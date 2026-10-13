@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from "react";
-import { SCREENS, DIETS_ENABLED } from "./constants.jsx";
+import { SCREENS } from "./constants.jsx";
 import { EatSafeLogo, Icon } from "./SharedComponents.jsx";
 import { WelcomeIntro, WELCOME_BENEFITS } from "./OnboardingParts.jsx";
 
@@ -16,13 +16,11 @@ export function renderWelcome(c) {
 
             {/* Logo + værdiforslag (25. sept. 2026-brief: kort, tydelig
                 value proposition i stedet for den tidligere slogan-agtige
-                "Scan. Tjek. Spis trygt."). Teksten udvidet 28. sept. 2026
-                ("FINAL POLISH") til også at nævne kosthensyn, ikke kun
-                allergier — matcher at appen også dækker diæter/E-numre. */}
+                "Scan. Tjek. Spis trygt."). */}
             <div className="welcome-logo-wrap">
               <EatSafeLogo variant="horizontal" size={56} />
               <div className="brand-slogan">Mere tryghed i hverdagen</div>
-              <div className="welcome-tagline">{DIETS_ENABLED ? "Scan produkter og se straks, om de passer til dine allergier og kosthensyn." : "Scan produkter og se straks, om de passer til dine allergier og intolerancer."}</div>
+              <div className="welcome-tagline">"Scan produkter og se straks, om de passer til dine allergier og intolerancer."</div>
             </div>
 
             {/* 3 fordele */}

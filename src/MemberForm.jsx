@@ -6,16 +6,15 @@ import HealthConsentBox from "./HealthConsentBox.jsx";
 import { memberConsentTexts } from "./healthConsent.js";
 import { UI } from "./styleUtils.js";
 import { AgeSelect, GenderPicker } from "./FormFields.jsx";
-import { AllergenChipPicker, AllergenSensitivity, CustomAllergenField, DietChipPicker, ENumberPicker, useGlutenFreeSync } from "./AllergenPicker.jsx";
+import { AllergenChipPicker, AllergenSensitivity, CustomAllergenField, ENumberPicker } from "./AllergenPicker.jsx";
 import { Accordion, PrimaryButton, SecondaryButton, InputField } from "./DesignSystem.jsx";
 import { pruneAllergenLevels } from "./helpers.js";
-import { DIETS_ENABLED } from "./constants.jsx";
 
 // Familiemedlem-formularen genbruger nu PRÆCIS de samme felt-komponenter som
 // onboarding trin 1-3 (25. sept. 2026, brugerfeedback: "Ingen nye designs...
 // Brugeren skal føle at de udfylder det samme for deres familiemedlem, ikke
 // møder et nyt formularsystem") — Alder/Køn fra FormFields.jsx, allergi-
-// og kostpræference-vælgerne samt E-nummer-vælgeren fra AllergenPicker.jsx.
+// og E-nummer-vælgeren fra AllergenPicker.jsx.
 // Rettede samtidig at hele formularen tidligere brugte RØD som valgt-farve
 // for allergier/E-numre (rød er reserveret til "produkt indeholder
 // allergen"/fejl i resten af appen) — de delte komponenter bruger allerede
@@ -26,7 +25,6 @@ export const MemberForm = ({
   gender, setGender,
   allergens, setAllergens,
   customAllerg, setCustomAllerg,
-  diets, setDiets,
   levels, setLevels,
   eNumbers, setENumbers,
   customInput, setCustomInput,
@@ -68,12 +66,6 @@ export const MemberForm = ({
   // brugerfeedback). Lokal state, da MemberForm er en selvstændig,
   // genbrugelig komponent uden adgang til onboardingens egen state.
   const [showENumre, setShowENumre] = React.useState(false);
-
-  // Gluten ↔ Glutenfri-synkronisering — samme delte hook som onboarding og
-  // ProfileScreen.jsx's "Rediger præferencer" bruger (28. sept. 2026,
-  // Profil-restrukturering: én implementering af logikken i stedet for tre
-  // kopier), så hovedprofil og familiemedlemmer ikke opfører sig forskelligt.
-  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useGlutenFreeSync(allergens, diets, setDiets);
 
   return (
     <div>
@@ -147,20 +139,6 @@ export const MemberForm = ({
 
       {/* Spor af allergener — efter allergivalget, så rækkefølgen er Allergier → Spor → E-numre */}
       {setLevels && <AllergenSensitivity selected={allergens} levels={levels} onChange={setLevels} />}
-
-      {/* Kostpræferencer — delt DietChipPicker, samme som trin 3 (grøn
-          valgt-state, sidste-ulige-kort spænder hele bredden). */}
-      {DIETS_ENABLED && (
-        <>
-          <div className="card-lbl" style={{ marginTop:16, marginBottom:8 }}>Kostpræferencer</div>
-          <DietChipPicker selected={diets}
-            autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
-            onChange={arr => {
-              if (arr.includes("gluten-free") !== diets.includes("gluten-free")) setGlutenFreeAutoApplied(false);
-              setDiets(arr);
-            }} />
-        </>
-      )}
 
       {/* E-numre — samme delte ENumberPicker og lukkede-som-standard
           Accordion-mønster som trin 2. Erstatter den tidligere lokale, røde

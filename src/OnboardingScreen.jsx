@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { SCREENS } from "./constants.jsx";
 import { traceEligible } from "./helpers.js";
 import { EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
-import { useGlutenFreeSync } from "./AllergenPicker.jsx";
 
 import { prevOnboardStep } from "./OnboardingParts.jsx";
 import { makeRenderStep1 } from "./OnboardingStep1.jsx";
@@ -31,7 +30,7 @@ export default function OnboardingScreen({
   tourIdx, setTourIdx,
   editMode, setEditMode,
   customInput, setCustomInput,
-  saveAllergensStep2, saveDietStep3,
+  saveAllergensStep2,
   saveProfileStep1, finishOnboard,
   StepBar,
   hasPendingJoinList,
@@ -56,7 +55,6 @@ export default function OnboardingScreen({
     newMemberGender, setNewMemberGender,
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
     newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
@@ -98,32 +96,11 @@ export default function OnboardingScreen({
   const consent = useHealthConsent();
   const [consentChecked, setConsentChecked] = useState(false);
 
-  // Trin 3: samme mønster som noAllergiesConfirmed ovenfor — "Fortsæt" må
-  // ikke være aktiv ved "0 valgt", for ellers kan appen ikke skelne mellem
-  // "brugeren har bevidst ingen kostpræferencer" og "brugeren glemte bare at
-  // vælge noget" (25. sept. 2026, brugerfeedback).
-  const [noDietConfirmed, setNoDietConfirmed] = useState(false);
-
   // Trin 4 (Familie) er valgfrit og skal føles sådan (2. okt. 2026, onboarding-polering): trinnet starter uden formular, kun med
   // "+ Tilføj familiemedlem" og "Jeg vil ikke tilføje familiemedlemmer nu". Formularen foldes først ud efter et tryk på "+ Tilføj …"
   // (eller "Rediger") og lukkes igen ved Annuller/Gem, så der aldrig står en stor tom formular uopfordret.
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [confirmRemoveMember, setConfirmRemoveMember] = useState(null); // familiemedlem, der afventer "Fjern"-bekræftelse
-
-  // Gluten ↔ Glutenfri-synkronisering — LIVE reaktion på allergen-valget,
-  // ikke kun én gang ved ankomst til trin 3: vælges "Gluten", markeres
-  // "Glutenfri" automatisk med samme grønne valgt-state. Fjernes "Gluten"
-  // igen, fjernes "Glutenfri" automatisk KUN hvis den stadig er den
-  // auto-tilføjede (glutenFreeAutoApplied) — har brugeren selv rørt ved
-  // Glutenfri-kortet siden (tilføjet ELLER fjernet det manuelt), låses
-  // valget som brugerens eget og røres ikke igen (nulstillet i
-  // DietChipPickers onChange nedenfor). Udtrukket til ÉN delt hook (28.
-  // sept. 2026, Profil-restrukturering) — samme logik bruges nu også af
-  // MemberForm.jsx og ProfileScreen.jsx's "Rediger præferencer", i stedet
-  // for tre kopier af samme effekt.
-  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useGlutenFreeSync(
-    allergens, user.diets || [], (arr) => setUser(u => ({ ...u, diets: arr }))
-  );
 
   // FIX: disse hooks lå tidligere INDE i en betinget IIFE, som kun blev kaldt
   // når onboardStep === 5. Det bryder Reacts "Rules of Hooks" (hooks skal
@@ -163,11 +140,11 @@ export default function OnboardingScreen({
     setUser, step1Attempted, user, allergens, confirmNoAllergies, consent,
     consentChecked, customAllerg, customInput, noAllergiesConfirmed, saveAllergensStep2, selectedENumbers,
     setAllergens, setConfirmNoAllergies, setConsentChecked, setCustomAllerg, setCustomInput, setNoAllergiesConfirmed,
-    setSelectedENumbers, setShowENumbersInOnboard, showENumbersInOnboard, glutenFreeAutoApplied, noDietConfirmed, saveDietStep3,
-    setGlutenFreeAutoApplied, setNoDietConfirmed, addMember, cancelEditMember, confirmRemoveMember, editingMemberId,
-    family, newMemberAllerg, newMemberBirthYear, newMemberCustomAllerg, newMemberCustomInput, newMemberDiets,
+    setSelectedENumbers, setShowENumbersInOnboard, showENumbersInOnboard,
+    addMember, cancelEditMember, confirmRemoveMember, editingMemberId,
+    family, newMemberAllerg, newMemberBirthYear, newMemberCustomAllerg, newMemberCustomInput,
     newMemberENumbers, newMemberGender, newMemberLevels, newMemberName, newMemberSubtypes, removeMember,
-    setConfirmRemoveMember, setNewMemberAllerg, setNewMemberBirthYear, setNewMemberCustomAllerg, setNewMemberCustomInput, setNewMemberDiets,
+    setConfirmRemoveMember, setNewMemberAllerg, setNewMemberBirthYear, setNewMemberCustomAllerg, setNewMemberCustomInput,
     setNewMemberENumbers, setNewMemberGender, setNewMemberLevels, setNewMemberName, setNewMemberSubtypes, setShowAddMemberForm,
     showAddMemberForm, startEditMember, updateMember, finishOnboard, handleEnablePush, pushDenied,
     pushDone, pushLoading, pushSupported, onActivatePreview,
@@ -306,7 +283,7 @@ export default function OnboardingScreen({
             {/* ── TRIN 5: Push-notifikationer ── */}
             {onboardStep === 5 && renderStep5(ctx)}
 
-            {/* ── TRIN 3: Kostpræferencer ── */}
+            {/* ── TRIN 3: Spor ── */}
             {onboardStep === 3 && renderStep3()}
 
                     </div>

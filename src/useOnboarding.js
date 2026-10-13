@@ -77,7 +77,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
   };
 
   // overrideAllergens/overrideCustomAllerg (29. sept. 2026, "auto-fremad ved
-  // 'ingen allergier'") — samme princip som saveDietStep3(diets) nedenfor:
+  // 'ingen allergier'") — samme princip som E-numre:
   // knappen der rydder+gemmer+går videre i ét klik kalder setAllergens([])/
   // setCustomAllerg([]) og skal gemme den SAMME tomme liste med det samme,
   // men React batcher state-opdateringer, så allergens/customAllerg i denne
@@ -100,24 +100,13 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     });
   };
 
-  // Samme hul som E-numre ovenfor gjaldt kostpræferencer (trin 3) — valgt i
-  // UI'et (user.diets), men aldrig gemt til backend under selve onboardingen.
-  const saveDietStep3 = async (diets) => {
-    if (previewNoSession) return;
-    await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-      method: "PATCH",
-      headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      body: JSON.stringify({ diets: diets || [] }),
-    });
-  };
-
   const finishOnboard = async () => {
     try {
       if (!previewNoSession) await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
           "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
-        body: JSON.stringify({ onboarding_completed: true, diets: user.diets || [], e_numbers: selectedENumbers }),
+        body: JSON.stringify({ onboarding_completed: true, e_numbers: selectedENumbers }),
       });
     } catch {}
     // markOnboardingCompleted (IKKE et almindeligt setUser-kald — se dens
@@ -141,7 +130,6 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     customInput, setCustomInput,
     saveProfileStep1,
     saveAllergensStep2,
-    saveDietStep3,
     finishOnboard,
   };
 }

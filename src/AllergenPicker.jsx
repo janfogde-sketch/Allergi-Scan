@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
-import { ALLERGENS, E_NUMBERS, E_CATEGORIES, DIETS, DIETS_ENABLED } from "./constants.jsx";
+import { ALLERGENS, E_NUMBERS, E_CATEGORIES } from "./constants.jsx";
 import { UI } from "./styleUtils.js";
 import { ChoiceChip } from "./DesignSystem.jsx";
 import { addUniqueCustom, traceEligible, COELIAC_ID } from "./helpers.js";
@@ -15,25 +15,6 @@ import { addUniqueCustom, traceEligible, COELIAC_ID } from "./helpers.js";
 // FULDE nye array, samme kontrakt som DietChipPicker/AllergenChipPickers
 // egen `onChange`. Bruges nu tre steder: onboarding, MemberForm og
 // ProfileScreen.jsx's "Rediger præferencer".
-export function useGlutenFreeSync(allergens, diets, setDiets) {
-  const [glutenFreeAutoApplied, setGlutenFreeAutoApplied] = useState(false);
-  React.useEffect(() => {
-    // Kostpræferencer er sat på pause: ingen automatisk "Glutenfri"-diæt (koden er bevaret til genoptagelse)
-    if (!DIETS_ENABLED) return;
-    const hasGluten = allergens.includes("gluten");
-    const hasGlutenFree = diets.includes("gluten-free");
-    if (hasGluten && !hasGlutenFree) {
-      setDiets([...diets, "gluten-free"]);
-      setGlutenFreeAutoApplied(true);
-    } else if (!hasGluten && hasGlutenFree && glutenFreeAutoApplied) {
-      setDiets(diets.filter(d => d !== "gluten-free"));
-      setGlutenFreeAutoApplied(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: reagerer kun på ændret allergenvalg; diets/setDiets læses friskt i samme render
-  }, [allergens]);
-  return [glutenFreeAutoApplied, setGlutenFreeAutoApplied];
-}
-
 // Delt allergi-vælger (grøn valgt-state, ✓, allergi/intolerance-opdeling,
 // ⓘ-note på gluten) — udtrukket fra OnboardingScreen.jsx's trin 2 (25. sept.
 // 2026, brugerfeedback: familie-formularen på trin 4 skal genbruge PRÆCIS
@@ -168,49 +149,6 @@ export const AllergenSensitivity = ({ selected, levels, onChange, showIntro = tr
           </div>
         );
       })}
-    </div>
-  );
-};
-
-// Delt kostpræference-vælger (grøn valgt-state, ✓, sidste-ulige-kort spænder
-// hele bredden) — udtrukket fra OnboardingScreen.jsx's trin 3, samme
-// begrundelse som AllergenChipPicker ovenfor. `autoNote` er valgfri:
-// { id, text } viser en forklarende note under ét specifikt kort i stedet
-// for dets normale beskrivelse (bruges til den Gluten→Glutenfri-afledte
-// note på trin 3 — MemberForm bruger den ikke).
-export const DietChipPicker = ({ selected, onChange, showCount = true, autoNote }) => {
-  const selectedCount = selected.length;
-  return (
-    <div>
-      {showCount && (
-        <div style={{ fontSize:12, fontWeight:700, color: selectedCount > 0 ? "var(--green)" : "var(--muted)", marginBottom:14 }}>
-          {selectedCount} valgt
-        </div>
-      )}
-      <div className="chip-grid">
-        {DIETS.map((d, i, arr) => {
-          const on = selected.includes(d.id);
-          const isDanglingLast = i === arr.length - 1 && arr.length % 2 !== 0;
-          const showAutoNote = autoNote && d.id === autoNote.id;
-          return (
-            <ChoiceChip key={d.id} selected={on} showCheck={false}
-              style={isDanglingLast ? { gridColumn:"1 / -1" } : undefined}
-              onClick={() => onChange(on ? selected.filter(x => x !== d.id) : [...selected, d.id])}>
-              <div style={UI.flex1}>
-                <div style={UI.ufw700}>{d.label}</div>
-                {showAutoNote ? (
-                  <div style={{ fontSize:9.5, color: on ? "var(--green)" : "var(--muted)", fontWeight:500, marginTop:2, lineHeight:1.3 }}>
-                    {autoNote.text}
-                  </div>
-                ) : (
-                  <div style={UI.muted11mt2}>{d.desc}</div>
-                )}
-              </div>
-              {on && <div className="chip-check"><Icon name="check" size={9} color="var(--ink)" /></div>}
-            </ChoiceChip>
-          );
-        })}
-      </div>
     </div>
   );
 };
