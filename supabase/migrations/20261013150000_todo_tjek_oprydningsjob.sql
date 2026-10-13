@@ -4,5 +4,5 @@ values (
   'Tjek de daglige oprydningsjob og slettefristerne',
   'Tjekker (kun læsning) at de planlagte oprydningsjob kører, og at fristerne i privatlivspolitikken er det, databasen gør. Resultat og evt. rettelser står i kommentarerne.',
   'doing', 'normal', 'backend',
-  (select id from public.users where role = 'admin' and email = 'janfogde@gmail.com' limit 1)
+  public._admin_id('jafo')
 );
