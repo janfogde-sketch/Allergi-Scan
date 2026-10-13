@@ -106,3 +106,23 @@ describe("buildTodoPrompt", () => {
     expect(personName([], null)).toBe("");
   });
 });
+
+import { activeFilterCount } from "./todoLogic.js";
+describe("flere filtre på opgaver", () => {
+  const today = "2026-10-13";
+  const mk = (id, over = {}) => ({ id, title: id, status: "todo", priority: "normal", track: "backend", assignee_id: null, due_date: null, ...over });
+  const list = [mk("a", { priority: "high", due_date: "2026-10-10" }), mk("b", { due_date: "2026-10-18", status: "doing" }), mk("c", { due_date: "2026-11-30" }), mk("d")];
+  const ids = (f) => filterTodos(list, { view: "all", ...f }, "me", today).map((t) => t.id);
+  it("prioritet, status og frist kan kombineres", () => {
+    expect(ids({ priority: "high" })).toEqual(["a"]);
+    expect(ids({ status: "doing" })).toEqual(["b"]);
+    expect(ids({ due: "overdue" })).toEqual(["a"]);
+    expect(ids({ due: "week" })).toEqual(["a", "b"]);
+    expect(ids({ due: "none" })).toEqual(["d"]);
+    expect(ids({ priority: "normal", due: "week" })).toEqual(["b"]);
+  });
+  it("tæller aktive filtre (ikke visning eller søgeord)", () => {
+    expect(activeFilterCount({})).toBe(0);
+    expect(activeFilterCount({ track: "design", due: "overdue" })).toBe(2);
+  });
+});

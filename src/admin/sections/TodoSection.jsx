@@ -1,9 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { showToast } from "../../SharedComponents.jsx";
+import { useIsMobile } from "../useIsMobile.js";
+import ActionsMenu from "../ActionsMenu.jsx";
 import {
   STATUS_LABELS, STATUS_PILL, PRIORITY_LABELS, PRIORITY_PILL, TRACK_LABELS,
-  todayKey, dueInfo, sortTodos, filterTodos, countByView, viewNeedsDone, personName, buildTodoPrompt,
+  todayKey, dueInfo, sortTodos, filterTodos, activeFilterCount, countByView, viewNeedsDone, personName, buildTodoPrompt,
 } from "../todoLogic.js";
 
 const VIEWS = [
@@ -169,20 +171,63 @@ function TodoModal({ todo, isNew = false, admins, userId, comments = [], comment
   );
 }
 
+function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket }) {
+  const due = dueInfo(t, today);
+  const done = t.status === "done";
+  const assignee = personName(admins, t.assignee_id);
+  return (
+    <div className="admin-item-card" role="button" tabIndex={0} onClick={onOpen}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <button type="button" className={`todo-check${done ? " done" : ""}`} style={{ marginTop: 1 }}
+          onClick={(e) => { e.stopPropagation(); onToggle(); }}
+          aria-label={done ? `Genåbn: ${t.title}` : `Markér som færdig: ${t.title}`}>{done ? "✓" : ""}</button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className={`admin-item-title${done ? " done" : ""}`}>{t.title}</div>
+          <div className="admin-item-pills">
+            <span className="admin-pill admin-pill-neutral">{TRACK_LABELS[t.track]}</span>
+            {!done && <span className={`admin-pill ${PRIORITY_PILL[t.priority]}`}>{PRIORITY_LABELS[t.priority]} prioritet</span>}
+            <span className={`admin-pill ${STATUS_PILL[t.status]}`}>{STATUS_LABELS[t.status]}</span>
+            {t.ticket_id && <span className="admin-pill admin-pill-neutral">Ticket</span>}
+          </div>
+          <dl className="admin-item-facts">
+            <dt>Ansvarlig</dt><dd>{assignee || <span style={{ color: "var(--muted2)" }}>Ingen</span>}</dd>
+            <dt>Frist</dt><dd style={{ color: due?.overdue ? "var(--red)" : undefined }}>{due ? due.label : <span style={{ color: "var(--muted2)", fontWeight: 500 }}>Ikke fastsat</span>}</dd>
+          </dl>
+          <div className="admin-item-actions">
+            <span className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-hidden="true">Åbn opgave</span>
+            {t.ticket_id && onOpenTicket && (
+              <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-label={`Åbn ticketten bag: ${t.title}`}
+                onClick={(e) => { e.stopPropagation(); onOpenTicket(t.ticket_id); }}>Åbn ticket</button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TodoSection({ onOpenTicket, todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
+  const isMobile = useIsMobile();
   const [view, setView] = useState("open");
   const [track, setTrack] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+  const [priority, setPriority] = useState("");
+  const [status, setStatus] = useState("");
+  const [due, setDue] = useState("");
   const [query, setQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [openId, setOpenId] = useState(null);
-
-  const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
 
   const today = todayKey();
   const counts = countByView(todos, userId, { doneCount, doneLoaded });
-  const visible = sortTodos(filterTodos(todos, { view, track, assigneeId, query }, userId));
+  const filters = { view, track, assigneeId, query, priority, status, due };
+  const visible = sortTodos(filterTodos(todos, filters, userId));
+  const activeFilters = activeFilterCount(filters);
   const openTodo = openId ? todos.find((t) => t.id === openId) : null;
+  const resetFilters = () => { setTrack(""); setAssigneeId(""); setPriority(""); setStatus(""); setDue(""); };
 
   // Færdige opgaver hentes først, når Færdige eller Alle åbnes
   useEffect(() => {
@@ -195,59 +240,90 @@ export default function TodoSection({ onOpenTicket, todos, admins, loading, load
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: kommentarer hentes kun ved skift af åben opgave; loadComments/closeComments genskabes hver gang
   }, [openId]);
 
-  // "Tilføj" åbner den udvidede opgavemenu med titlen udfyldt; først "Opret opgave" gemmer.
-  const startNew = (e) => {
-    e.preventDefault();
-    if (newTitle.trim()) setCreating(true);
-  };
-
   const toggleDone = (t) => update(t.id, { status: t.status === "done" ? "todo" : "done" });
 
   return (
     <>
-      <form className="admin-card todo-add" onSubmit={startNew}>
-        <input className="admin-search" style={{ maxWidth: "none", flex: "1 1 280px" }} value={newTitle} maxLength={200}
-          placeholder="Ny opgave — skriv en titel og tryk Enter" aria-label="Titel på ny opgave" onChange={(e) => setNewTitle(e.target.value)} />
-        <button type="submit" className="admin-btn admin-btn-primary" disabled={!newTitle.trim()}>Tilføj</button>
-      </form>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <button type="button" className="admin-btn admin-btn-primary admin-touch" onClick={() => setCreating(true)}>+ Ny opgave</button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-expanded={showInfo} onClick={() => setShowInfo((v) => !v)}>
+            <span aria-hidden="true">ⓘ </span>Sådan fungerer opgaver
+          </button>
+          <ActionsMenu items={[{ label: "Opdatér listen", onClick: () => load() }]} />
+        </div>
+      </div>
+      {showInfo && (
+        <div className="admin-info-note" role="note">
+          Fælles liste for admin-brugerne. Tickets lægges automatisk her med ansvarlig og prioritet ud fra indholdet, og status følger med begge veje. Færdige opgaver hentes først, når du åbner Færdige eller Alle. Opgaver med høj prioritet, eller hvis frist er overskredet, tæller i menuen.
+        </div>
+      )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
-        <div className="admin-tabs" style={{ marginBottom: 0, border: "none", flexWrap: "wrap" }}>
-          {VIEWS.map((v) => (
-            <button key={v.id} className={`admin-tab-btn${view === v.id ? " active" : ""}`} onClick={() => setView(v.id)}>
-              {v.label} ({counts[v.id]})
-            </button>
+      <div className="admin-tabs" style={{ marginBottom: 10 }}>
+        {VIEWS.map((v) => (
+          <button key={v.id} className={`admin-tab-btn${view === v.id ? " active" : ""}`} aria-pressed={view === v.id} onClick={() => setView(v.id)}>
+            {v.label} ({counts[v.id]})
+          </button>
+        ))}
+      </div>
+
+      <div className="admin-toolbar">
+        <input className="admin-search" value={query} placeholder="Søg i opgaver…" aria-label="Søg i opgaver" onChange={(e) => setQuery(e.target.value)} />
+        <button type="button" className={`admin-btn admin-btn-sm admin-touch ${activeFilters ? "admin-btn-primary" : "admin-btn-ghost"}`} aria-expanded={showFilters} onClick={() => setShowFilters((v) => !v)}>
+          Filtre{activeFilters ? ` (${activeFilters})` : ""}
+        </button>
+        {activeFilters > 0 && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={resetFilters}>Nulstil</button>}
+      </div>
+      {showFilters && (
+        <div className="admin-filter-panel">
+          <div><label htmlFor="f-track">Spor</label>
+            <Select id="f-track" value={track} onChange={setTrack} label="Filtrér på spor">
+              <option value="">Alle spor</option>
+              {Object.entries(TRACK_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </Select></div>
+          <div><label htmlFor="f-assignee">Ansvarlig</label>
+            <Select id="f-assignee" value={assigneeId} onChange={setAssigneeId} label="Filtrér på ansvarlig">
+              <option value="">Alle ansvarlige</option>
+              <option value="none">Uden ansvarlig</option>
+              {admins.map((a) => <option key={a.id} value={a.id}>{a.id === userId ? "Mig" : (a.name || a.email)}</option>)}
+            </Select></div>
+          <div><label htmlFor="f-priority">Prioritet</label>
+            <Select id="f-priority" value={priority} onChange={setPriority} label="Filtrér på prioritet">
+              <option value="">Alle</option>
+              {Object.entries(PRIORITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </Select></div>
+          <div><label htmlFor="f-status">Status</label>
+            <Select id="f-status" value={status} onChange={setStatus} label="Filtrér på status">
+              <option value="">Alle</option>
+              {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </Select></div>
+          <div><label htmlFor="f-due">Frist</label>
+            <Select id="f-due" value={due} onChange={setDue} label="Filtrér på frist">
+              <option value="">Alle</option>
+              <option value="overdue">Overskredet</option>
+              <option value="week">Inden for 7 dage</option>
+              <option value="none">Uden frist</option>
+            </Select></div>
+        </div>
+      )}
+
+      {loading && todos.length === 0 ? (
+        <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
+      ) : visible.length === 0 ? (
+        <div className="admin-table-empty">{todos.length === 0 && !viewNeedsDone(view) ? "Ingen åbne opgaver. Tryk + Ny opgave for at oprette en." : "Ingen opgaver matcher filtrene"}</div>
+      ) : isMobile ? (
+        <div className="admin-card-list">
+          {visible.map((t) => (
+            <TodoCard key={t.id} t={t} admins={admins} today={today} onOpen={() => setOpenId(t.id)} onToggle={() => toggleDone(t)} onOpenTicket={onOpenTicket} />
           ))}
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <Select value={track} onChange={setTrack} label="Filtrér på spor">
-            <option value="">Alle spor</option>
-            {Object.entries(TRACK_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </Select>
-          <Select value={assigneeId} onChange={setAssigneeId} label="Filtrér på ansvarlig">
-            <option value="">Alle ansvarlige</option>
-            <option value="none">Uden ansvarlig</option>
-            {admins.map((a) => <option key={a.id} value={a.id}>{a.id === userId ? "Mig" : (a.name || a.email)}</option>)}
-          </Select>
-          <input className="admin-search" style={{ maxWidth: 200 }} value={query} placeholder="Søg…" aria-label="Søg i opgaver" onChange={(e) => setQuery(e.target.value)} />
-          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => load()}>Opdater</button>
-        </div>
-      </div>
-      <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-        Fælles liste for admin-brugerne. Tickets lægges automatisk her med ansvarlig og prioritet ud fra indholdet, og status følger med begge veje. Færdige opgaver hentes først, når du åbner Færdige eller Alle. Opgaver med høj prioritet, eller hvis frist er overskredet, tæller i menuen.
-      </div>
-
-      <div className="admin-table-wrap">
-        {loading && todos.length === 0 ? (
-          <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
-        ) : visible.length === 0 ? (
-          <div className="admin-table-empty">{todos.length === 0 && !viewNeedsDone(view) ? "Ingen åbne opgaver. Skriv en ny ovenfor." : "Ingen opgaver matcher filtrene"}</div>
-        ) : (
+      ) : (
+        <div className="admin-table-wrap">
           <table className="admin-table">
             <thead><tr><th style={{ width: 34 }}></th><th>Opgave</th><th>Spor</th><th>Prioritet</th><th>Ansvarlig</th><th>Frist</th><th>Status</th></tr></thead>
             <tbody>
               {visible.map((t) => {
-                const due = dueInfo(t, today);
+                const dueI = dueInfo(t, today);
                 const done = t.status === "done";
                 return (
                   <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => setOpenId(t.id)}>
@@ -257,7 +333,7 @@ export default function TodoSection({ onOpenTicket, todos, admins, loading, load
                         {done ? "✓" : ""}
                       </button>
                     </td>
-                    <td style={{ maxWidth: 520 }}>
+                    <td style={{ maxWidth: 520, minWidth: 240 }}>
                       <div className={`todo-title${done ? " done" : ""}`}>
                         {t.title}{t.ticket_id && (onOpenTicket
                           ? <button type="button" className="admin-pill admin-pill-neutral" style={{ marginLeft: 8, verticalAlign: "middle", cursor: "pointer", border: "none", font: "inherit" }}
@@ -273,8 +349,8 @@ export default function TodoSection({ onOpenTicket, todos, admins, loading, load
                     <td><span className="admin-pill admin-pill-neutral">{TRACK_LABELS[t.track]}</span></td>
                     <td>{!done && <span className={`admin-pill ${PRIORITY_PILL[t.priority]}`}>{PRIORITY_LABELS[t.priority]}</span>}</td>
                     <td style={{ whiteSpace: "nowrap" }}>{personName(admins, t.assignee_id) || <span style={{ color: "var(--muted2)" }}>—</span>}</td>
-                    <td style={{ whiteSpace: "nowrap", color: due?.overdue ? "var(--red)" : undefined, fontWeight: due?.overdue ? 800 : undefined }}>
-                      {due ? due.label : <span style={{ color: "var(--muted2)" }}>—</span>}
+                    <td style={{ whiteSpace: "nowrap", color: dueI?.overdue ? "var(--red)" : undefined, fontWeight: dueI?.overdue ? 800 : undefined }}>
+                      {dueI ? dueI.label : <span style={{ color: "var(--muted2)" }}>—</span>}
                     </td>
                     <td><span className={`admin-pill ${STATUS_PILL[t.status]}`}>{STATUS_LABELS[t.status]}</span></td>
                   </tr>
@@ -282,18 +358,14 @@ export default function TodoSection({ onOpenTicket, todos, admins, loading, load
               })}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
       {creating && (
         <TodoModal
           isNew admins={admins} userId={userId}
-          todo={{ title: newTitle.trim(), status: "todo", priority: "normal", track: "backend", assignee_id: userId || "" }}
-          onSave={async (fields) => {
-            const ok = await create(fields);
-            if (ok) setNewTitle("");
-            return ok;
-          }}
+          todo={{ title: "", status: "todo", priority: "normal", track: "backend", assignee_id: userId || "" }}
+          onSave={(fields) => create(fields)}
           onClose={() => setCreating(false)}
         />
       )}

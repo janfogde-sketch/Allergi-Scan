@@ -3,7 +3,8 @@
 // filtre, frister og en færdig prompt til en Claude Code-session. Ingen React, så den kan testes.
 
 export const STATUS_LABELS = { todo: "Skal laves", doing: "I gang", blocked: "Venter", done: "Færdig" };
-export const STATUS_PILL = { todo: "admin-pill-neutral", doing: "admin-pill-amber", blocked: "admin-pill-red", done: "admin-pill-green" };
+import { statusPill } from "./statusTone.js";
+export const STATUS_PILL = { todo: statusPill("todo"), doing: statusPill("doing"), blocked: statusPill("blocked"), done: statusPill("done") };
 export const PRIORITY_LABELS = { high: "Høj", normal: "Normal", low: "Lav" };
 export const PRIORITY_PILL = { high: "admin-pill-red", normal: "admin-pill-neutral", low: "admin-pill-neutral" };
 export const TRACK_LABELS = { backend: "Backend", design: "Design", test: "Test", drift: "Drift" };
@@ -65,18 +66,32 @@ function matchesView(todo, view, userId) {
   }
 }
 
-/** filters: { view, track, assigneeId, query } — assigneeId "" = alle, "none" = uden ansvarlig. */
-export function filterTodos(list, filters, userId) {
-  const { view = "open", track = "", assigneeId = "", query = "" } = filters;
+/**
+ * filters: { view, track, assigneeId, query, priority, status, due } — assigneeId "" = alle, "none" = uden ansvarlig.
+ * due: "" = alle, "overdue" = frist overskredet, "week" = frist inden for 7 dage, "none" = uden frist.
+ */
+export function filterTodos(list, filters, userId, today = todayKey()) {
+  const { view = "open", track = "", assigneeId = "", query = "", priority = "", status = "", due = "" } = filters;
   const q = query.trim().toLowerCase();
+  const weekEnd = (() => { const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 7); return d.toISOString().slice(0, 10); })();
   return list.filter((t) => {
     if (!matchesView(t, view, userId)) return false;
     if (track && t.track !== track) return false;
+    if (priority && t.priority !== priority) return false;
+    if (status && t.status !== status) return false;
+    if (due === "overdue" && !isOverdue(t, today)) return false;
+    if (due === "none" && t.due_date) return false;
+    if (due === "week" && !(t.due_date && t.due_date <= weekEnd && t.status !== "done")) return false;
     if (assigneeId === "none" && t.assignee_id) return false;
     if (assigneeId && assigneeId !== "none" && t.assignee_id !== assigneeId) return false;
     if (q && !`${t.title} ${t.description ?? ""}`.toLowerCase().includes(q)) return false;
     return true;
   });
+}
+
+/** Antal aktive filtre ud over visningen og søgeordet (til filterknappen). */
+export function activeFilterCount({ track = "", assigneeId = "", priority = "", status = "", due = "" } = {}) {
+  return [track, assigneeId, priority, status, due].filter(Boolean).length;
 }
 
 // Færdige opgaver hentes først, når man beder om det (doneLoaded). Indtil da kommer antallet fra serveren (doneCount).

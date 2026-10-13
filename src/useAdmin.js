@@ -912,6 +912,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       });
       loadTickets();
       setOpenTicket(null);
+      showToast("Ticketstatus ændret", "success");
     } catch (e) {
       console.error("updateTicketStatus:", e);
       showToast("Kunne ikke opdatere ticket-status: " + e.message, "error");

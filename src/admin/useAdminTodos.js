@@ -114,6 +114,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
         method: "POST", headers: { ...headers(), Prefer: "return=representation" }, body: JSON.stringify(body),
       });
       if (Array.isArray(rows) && rows[0]) setTodos((prev) => [rows[0], ...prev]);
+      showToast("Opgave oprettet", "success");
       return true;
     } catch (e) {
       showToast("Kunne ikke oprette opgaven: " + e.message, "error");
@@ -130,6 +131,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/admin_todos?id=eq.${id}`, { method: "PATCH", headers: minimal(), body: JSON.stringify(clean) });
       load({ quiet: true }); // henter trigger-felter (completed_at m.fl.)
+      showToast("Opgave opdateret", "success");
       return true;
     } catch (e) {
       setTodos(before);
@@ -143,6 +145,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     setTodos((prev) => prev.filter((t) => t.id !== id));
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/admin_todos?id=eq.${id}`, { method: "DELETE", headers: minimal() });
+      showToast("Opgave slettet", "success");
       return true;
     } catch (e) {
       setTodos(before);
