@@ -55,6 +55,11 @@ const KNOWN_SOURCES = {
   "ncbi.nlm.nih.gov": "NCBI / National Library of Medicine",
   "sundhed.dk": "Sundhed.dk",
   "datatilsynet.dk": "Datatilsynet",
+  "foedevarestyrelsen.dk": "Fødevarestyrelsen",
+  "coeliaki.dk": "Dansk Cøliaki Forening",
+  "efsa.europa.eu": "EFSA",
+  "food.ec.europa.eu": "EU-Kommissionen",
+  "lex.dk": "Lex",
 };
 function sourceLabel(url) {
   try {
