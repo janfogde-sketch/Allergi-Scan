@@ -146,7 +146,7 @@ Kritiske produktionsfejl (fx crashende skærm) shippes straks som isoleret hotfi
 ændringer (`CLAUDE.md`, `src/CONTEXT.md`, `.claude/HISTORY.md`, kommentarer, workflow-filer uden app-effekt) afsluttes med commit,
 men pushes ikke alene: de følger med næste funktionsændring eller shippes, når brugeren beder om det. Kun et push til `main`
 udløser et deploy. Udebliver et deploy, tjek `mcp__Vercel__list_deployments` for et forsøg på commit-SHA'en; findes intet, er det
-en webhook-hik: udløs `mcp__Vercel__create_deployment` med `gitSource` (ref `main`, seneste SHA, `target:"production"`).
+en webhook-hik: udløs `mcp__Vercel__create_deployment` med `gitSource` (ref `main`, seneste SHA, `target:"production"`). Er Vercel-forbindelsen ikke tilsluttet, kan `gh api repos/janfogde-sketch/Allergi-Scan/deployments` vise, om SHA'en har en deployment, og en lille ægte følgecommit til `main` udløser et nyt deploy (13. okt. 2026: #715 fik ingen deployment; aldrig en tom commit).
 
 **Design verificeres i en Artifact-preview** i stedet for et deploy: `npx vite build --base=./ --outDir dist-preview --mode
 artifact-preview`; flyt `index.html` til `app.html`; skriv en lille `index.html` der viser den i en 393×852-telefonramme
