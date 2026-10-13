@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { dkDayKey, dkDayStartISO, shiftDayKey, bucketByDkDay } from "./admin/statsLogic.js";
 import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
@@ -108,57 +109,50 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setDeletingAccount(false);
   };
 
-  // Bygger dags-buckets for de seneste `days` dage (inkl. i dag) ud fra en
-  // liste af rå rækker med et timestamp-felt — PostgREST har ingen simpel
-  // GROUP BY-dag, så vi henter de rå rækker (kun id+timestamp, billigt) og
-  // bucketter dem selv i JS. Fylder tomme dage med 0 i stedet for at
-  // springe dem over, så en graf altid har præcis `days` punkter.
-  const bucketByDay = (rows, field, days) => {
-    const buckets = {};
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(today); d.setDate(d.getDate() - i);
-      buckets[d.toISOString().slice(0, 10)] = 0;
+  // Dashboard-tal (13. okt. 2026): døgn i dansk tid (statsLogic.js), scanninger = found_via 'scan', og trendrækker hentes side for side, så PostgREST's
+  // loft på 1.000 rækker ikke stille afkorter grafen.
+  const fetchAllRows = async (url, headers, pageSize = 1000, maxPages = 30) => {
+    const out = [];
+    for (let page = 0; page < maxPages; page++) {
+      const res = await fetch(url, { headers: { ...headers, "Range-Unit": "items", Range: `${page * pageSize}-${page * pageSize + pageSize - 1}` } });
+      const rows = await res.json();
+      if (!Array.isArray(rows)) throw new Error(rows?.message || "Uventet svar fra databasen");
+      out.push(...rows);
+      if (rows.length < pageSize) break;
     }
-    for (const row of rows) {
-      const key = (row[field] || "").slice(0, 10);
-      if (key in buckets) buckets[key]++;
-    }
-    return Object.entries(buckets).map(([date, count]) => ({ date, count }));
+    return out;
   };
 
   const loadAdminStats = async () => {
     try {
       const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
       const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
-      const today = new Date(); today.setHours(0,0,0,0);
-      const todayISO = today.toISOString();
-      const TREND_DAYS = 14;
-      const trendStart = new Date(today); trendStart.setDate(trendStart.getDate() - (TREND_DAYS - 1));
-      const trendStartISO = trendStart.toISOString();
-      const [users, products, scans, subs, families, tickets, scansToday, newUsersToday, scanTrendRows, userTrendRows] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id`, { headers: h }).then(async r => { const ct = r.headers.get("content-range"); return ct ? parseInt(ct.split("/")[1]) : (await r.json()).length; }),
-        fetch(`${SUPABASE_URL}/rest/v1/submissions?status=eq.pending&select=id`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/family_members?select=id`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/feedback_tickets?status=eq.open&select=id`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=id&scanned_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=id&created_at=gte.${todayISO}`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/scan_history?select=scanned_at&scanned_at=gte.${trendStartISO}`, { headers: hNoCount }).then(r => r.json()),
-        fetch(`${SUPABASE_URL}/rest/v1/users?select=created_at&created_at=gte.${trendStartISO}`, { headers: hNoCount }).then(r => r.json()),
+      const count = (path) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { ...h, "Range-Unit": "items", Range: "0-0" } })
+        .then(r => { const ct = r.headers.get("content-range"); if (!ct || !r.ok) throw new Error("Kunne ikke tælle " + path.split("?")[0]); return parseInt(ct.split("/")[1]); });
+      const TREND_DAYS = 30;
+      const todayKey = dkDayKey(new Date());
+      const todayISO = dkDayStartISO(todayKey);
+      const trendStartISO = dkDayStartISO(shiftDayKey(todayKey, -(TREND_DAYS - 1)));
+      const [users, admins, products, scans, searchOpens, subs, families, tickets, scansToday, newUsersToday, scanTrendRows, userTrendRows] = await Promise.all([
+        count("users?select=id"),
+        count("users?select=id&role=eq.admin"),
+        count("products?select=id"),
+        count("scan_history?select=id&found_via=eq.scan"),
+        count("scan_history?select=id&found_via=eq.search"),
+        count("submissions?select=id&status=eq.pending"),
+        count("family_members?select=id"),
+        count("feedback_tickets?select=id&status=eq.open"),
+        count(`scan_history?select=id&found_via=eq.scan&scanned_at=gte.${todayISO}`),
+        count(`users?select=id&created_at=gte.${todayISO}`),
+        fetchAllRows(`${SUPABASE_URL}/rest/v1/scan_history?select=scanned_at&found_via=eq.scan&scanned_at=gte.${trendStartISO}&order=scanned_at.asc`, hNoCount),
+        fetchAllRows(`${SUPABASE_URL}/rest/v1/users?select=created_at&created_at=gte.${trendStartISO}&order=created_at.asc`, hNoCount),
       ]);
       setAdminStats({
-        total_users: typeof users === "number" ? users : (Array.isArray(users) ? users.length : 0),
-        total_products: typeof products === "number" ? products : (Array.isArray(products) ? products.length : 0),
-        total_scans: typeof scans === "number" ? scans : (Array.isArray(scans) ? scans.length : 0),
-        pending_submissions: Array.isArray(subs) ? subs.length : 0,
-        total_families: Array.isArray(families) ? families.length : 0,
-        open_tickets: Array.isArray(tickets) ? tickets.length : 0,
-        scans_today: Array.isArray(scansToday) ? scansToday.length : 0,
-        new_users_today: Array.isArray(newUsersToday) ? newUsersToday.length : 0,
-        scan_trend: bucketByDay(Array.isArray(scanTrendRows) ? scanTrendRows : [], "scanned_at", TREND_DAYS),
-        user_trend: bucketByDay(Array.isArray(userTrendRows) ? userTrendRows : [], "created_at", TREND_DAYS),
+        total_users: users, admin_users: admins, total_products: products, total_scans: scans, search_opens: searchOpens,
+        pending_submissions: subs, total_families: families, open_tickets: tickets,
+        scans_today: scansToday, new_users_today: newUsersToday,
+        scan_trend: bucketByDkDay(scanTrendRows, "scanned_at", TREND_DAYS),
+        user_trend: bucketByDkDay(userTrendRows, "created_at", TREND_DAYS),
       });
     } catch (e) {
       console.error("loadAdminStats fejl:", e.message);

@@ -1,5 +1,7 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useIsMobile } from "./useIsMobile.js";
+import { watchTableCells } from "./tableCards.js";
 import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
 
@@ -47,6 +49,13 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
     try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
   };
   const [navOpen, setNavOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const contentRef = useRef(null);
+  // Mobil: tabeller vises som kort, så hver celle skal kende sin kolonneoverskrift (se tableCards.js).
+  useEffect(() => {
+    if (!isMobile || !contentRef.current) return undefined;
+    return watchTableCells(contentRef.current);
+  }, [isMobile]);
   const pick = (id) => { setSection(id); setNavOpen(false); };
   return (
     <div className="admin-shell">
@@ -95,7 +104,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
           <h1>{NAV_ITEMS.find(i => i.id === section)?.label || "Admin"}</h1>
           {topbarExtra}
         </div>
-        <div className="admin-content">{children}</div>
+        <div className="admin-content" ref={contentRef}>{children}</div>
       </div>
     </div>
   );
