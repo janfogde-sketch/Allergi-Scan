@@ -41,11 +41,11 @@ describe("TodoModal", () => {
   });
   it("advarer om ikke-gemte ændringer, før panelet lukkes", () => {
     const props = setup();
-    fireEvent.click(screen.getAllByRole("button", { name: "Luk" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
     expect(props.onClose).toHaveBeenCalledTimes(1); // ingen ændringer: lukker direkte
     props.onClose.mockClear();
     fireEvent.change(screen.getByLabelText("Beskrivelse"), { target: { value: "x" } });
-    fireEvent.click(screen.getAllByRole("button", { name: "Luk" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
     expect(props.onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("alertdialog", { name: "Ikke-gemte ændringer" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Bliv og ret" }));
@@ -54,15 +54,50 @@ describe("TodoModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Kassér ændringer" }));
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
-  it("sletning kræver bekræftelse og kan annulleres", async () => {
+  it("sletning ligger i Flere handlinger, kræver bekræftelse og kan annulleres", async () => {
     const props = setup();
-    fireEvent.click(screen.getByRole("button", { name: "Slet" }));
+    expect(screen.queryByRole("button", { name: "Slet" })).toBeNull(); // ikke en fast knap i bunden
+    fireEvent.click(screen.getByRole("button", { name: /Flere handlinger/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Slet opgave" }));
     expect(props.onDelete).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Annullér" }));
     expect(screen.queryByRole("alertdialog")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Slet" }));
+    fireEvent.click(screen.getByRole("button", { name: /Flere handlinger/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Slet opgave" }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Ja, slet opgaven" })); });
     expect(props.onDelete).toHaveBeenCalledTimes(1);
+  });
+  it("kun én Luk (øverst) og Gem i bunden", () => {
+    setup();
+    expect(screen.getAllByRole("button", { name: "Luk" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Gem" })).toBeTruthy();
+  });
+  it("titlen er et voksende tekstområde, der viser hele den lange titel og ikke tillader linjeskift", () => {
+    setup();
+    const title = screen.getByLabelText("Titel");
+    expect(title.tagName).toBe("TEXTAREA");
+    expect(title.value).toBe(todo.title);
+    fireEvent.change(title, { target: { value: "Første\nanden" } });
+    expect(title.value).toBe("Første anden");
+  });
+  it("fristen vises i dansk format med kalenderikon, 'Vælg dato' uden frist og kan fjernes uden at ændre lagringsformatet", async () => {
+    const props = setup();
+    expect(screen.getByText("Vælg dato")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Frist"), { target: { value: "2026-10-20" } });
+    expect(screen.getByText(/20\. okt\.? 2026/)).toBeTruthy();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Gem" })); });
+    expect(props.onSave).toHaveBeenCalledWith({ due_date: "2026-10-20" });
+  });
+  it("lange kommentarer foldes sammen med Vis mere/Vis mindre, korte vises fuldt", () => {
+    const long = Array.from({ length: 9 }, (_, i) => `linje ${i + 1}`).join("\n");
+    setup({ comments: [{ id: "c1", author_id: "a1", body: long, created_at: "2026-10-14T06:15:00Z" }, { id: "c2", author_id: "a1", body: "kort", created_at: "2026-10-14T06:16:00Z" }] });
+    expect(document.querySelector(".todo-comment-body.clamped")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Vis mere" }));
+    expect(document.querySelector(".todo-comment-body.clamped")).toBeNull();
+    expect(screen.getByText(/linje 9/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Vis mindre" }));
+    expect(document.querySelector(".todo-comment-body.clamped")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /Vis mere/ })).toHaveLength(1); // kun den lange har knappen
   });
   it("låser baggrundens scroll, mens panelet er åbent, og frigiver den igen", () => {
     document.body.style.overflow = "auto";
@@ -103,7 +138,7 @@ describe("TodoModal", () => {
   it("en ny opgave med indtastet titel advarer også ved luk", () => {
     const props = setup({ isNew: true, todo: { title: "", status: "todo", priority: "normal", track: "backend", assignee_id: "a1" } });
     fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Udkast" } });
-    fireEvent.click(screen.getByRole("button", { name: "Annullér" }));
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
     expect(props.onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("alertdialog")).toBeTruthy();
   });

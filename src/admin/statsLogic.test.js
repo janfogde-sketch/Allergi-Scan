@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { dkDayKey, dkDayStartISO, shiftDayKey, bucketByDkDay, lastDays, fmtNum, niceMax, axisTicks, labelIndexes } from "./statsLogic.js";
+import { dkDayKey, dkDayStartISO, shiftDayKey, bucketByDkDay, lastDays, fmtNum, axisScale, labelIndexes } from "./statsLogic.js";
 
 describe("dagsregning i dansk tid", () => {
   it("dkDayKey følger dansk dato, også lige efter midnat (sommer- og vintertid)", () => {
@@ -42,12 +42,20 @@ describe("bucketByDkDay", () => {
 });
 
 describe("diagramskala", () => {
-  it("niceMax runder op til 1, 2, 5, 10 …", () => {
-    expect([0, 1, 2, 3, 7, 12, 48, 130, 999].map(niceMax)).toEqual([1, 1, 2, 5, 10, 20, 50, 200, 1000]);
-  });
-  it("axisTicks giver øvre grænse, midte og 0", () => {
-    expect(axisTicks(10)).toEqual([10, 5, 0]);
-    expect(axisTicks(1)).toEqual([1, 0]);
+  it("axisScale giver hele tal og undgår store spring", () => {
+    expect(axisScale(0)).toEqual({ top: 1, ticks: [1, 0] });
+    expect(axisScale(1)).toEqual({ top: 1, ticks: [1, 0] });
+    expect(axisScale(3)).toEqual({ top: 3, ticks: [3, 2, 1, 0] });
+    expect(axisScale(7)).toEqual({ top: 8, ticks: [8, 4, 0] });
+    expect(axisScale(12)).toEqual({ top: 12, ticks: [12, 8, 4, 0] });
+    expect(axisScale(48)).toEqual({ top: 60, ticks: [60, 40, 20, 0] });
+    for (const m of [1, 2, 5, 9, 17, 33, 101, 480, 1999]) {
+      const { top, ticks } = axisScale(m);
+      expect(top).toBeGreaterThanOrEqual(m);
+      expect(top).toBeLessThan(m * 1.6 + 2); // aldrig et stort spring over maksimum
+      expect(ticks.every(Number.isInteger)).toBe(true);
+      expect(ticks.length).toBeLessThanOrEqual(6);
+    }
   });
   it("labelIndexes viser højst n etiketter, altid første og sidste", () => {
     expect(labelIndexes(7, 7)).toEqual([0, 1, 2, 3, 4, 5, 6]);

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { fmtNum, lastDays, niceMax, axisTicks, labelIndexes } from "../statsLogic.js";
+import { fmtNum, lastDays, axisScale, labelIndexes } from "../statsLogic.js";
 import { useIsMobile } from "../useIsMobile.js";
 import { betaOverview } from "../todoLogic.js";
 
@@ -32,7 +32,7 @@ function TrendChart({ title, unit, data, color, colorLt, narrow }) {
       </figure>
     );
   }
-  const top = niceMax(Math.max(0, ...data.map(d => d.count)));
+  const { top, ticks } = axisScale(Math.max(0, ...data.map(d => d.count)));
   const total = data.reduce((sum, d) => sum + d.count, 0);
   const sel = picked && data.find(d => d.date === picked);
   const labels = new Set(labelIndexes(data.length, narrow ? 3 : 5));
@@ -48,7 +48,7 @@ function TrendChart({ title, unit, data, color, colorLt, narrow }) {
       </div>
       <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
         <div className="admin-axis" aria-hidden="true">
-          {axisTicks(top).map(t => <span key={t}>{fmtNum(t)}</span>)}
+          {ticks.map(t => <span key={t}>{fmtNum(t)}</span>)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "flex-end", gap, height: 72, borderBottom: "1px solid var(--border)" }} role="group" aria-label={`${title}, seneste ${data.length} dage`}>
@@ -137,8 +137,8 @@ export default function DashboardSection({ adminStats, setSection, todos = [], a
       {openTodos && (
         <div className="admin-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>Klar til beta</div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>Åbne opgaver, direkte fra To do-listen</div>
+            <div style={{ fontSize: 13, fontWeight: 800 }}>Opgaveoverblik</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>Alle åbne opgaver · tryk for at se dem</div>
           </div>
           <div className="beta-grid">
             <button type="button" className="beta-cell" onClick={() => openTodos({})}><b>{fmtNum(beta.open)}</b><span>Åbne opgaver</span></button>
@@ -168,13 +168,7 @@ export default function DashboardSection({ adminStats, setSection, todos = [], a
               Afventende indsendelser ({fmtNum(adminStats.pending_submissions)})
             </button>
           )}
-          {openTodos && beta.high > 0 && (
-            <button className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => openTodos({ priority: "high" })}>Kritiske opgaver ({fmtNum(beta.high)})</button>
-          )}
-          {openTodos && (
-            <button className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => openTodos({})}>Alle opgaver ({fmtNum(beta.open)})</button>
-          )}
-          {!(adminStats.open_tickets > 0 || adminStats.pending_submissions > 0 || openTodos) && <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Ingen åbne handlinger lige nu.</span>}
+          {!(adminStats.open_tickets > 0 || adminStats.pending_submissions > 0) && <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Ingen åbne handlinger lige nu.</span>}
         </div>
       </div>
     </>

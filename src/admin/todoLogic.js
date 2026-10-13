@@ -35,7 +35,7 @@ export function dueInfo(todo, today = todayKey()) {
   return { label, overdue: isOverdue(todo, today) };
 }
 
-export const SORT_MODES = { smart: "Smart", priority: "Prioritet", due: "Frist", updated: "Senest opdateret" };
+export const SORT_MODES = { smart: "Anbefalet", priority: "Højeste prioritet", due: "Nærmeste frist", updated: "Senest opdateret", oldest: "Ældste først" };
 
 const cmpDue = (a, b) => {
   if (a.due_date === b.due_date) return 0;
@@ -57,14 +57,15 @@ export function urgencyTier(t, today = todayKey()) {
 
 /**
  * Åbne opgaver først, færdige nederst (senest afsluttet først). Åbne sorteres efter mode:
- * smart (standard): urgencyTier, derefter i gang → skal laves → venter, frist og nyeste;
- * priority: prioritet, derefter frist; due: frist (uden frist sidst); updated: senest ændret først.
+ * smart ("Anbefalet", standard): urgencyTier, derefter i gang → skal laves → venter, frist og nyeste;
+ * priority: prioritet, derefter frist; due: frist (uden frist sidst); updated: senest ændret først; oldest: ældst oprettet først.
  */
 export function sortTodos(list, mode = "smart", today = todayKey()) {
   return [...list].sort((a, b) => {
     const ad = a.status === "done", bd = b.status === "done";
     if (ad !== bd) return ad ? 1 : -1;
     if (ad && bd) return String(b.completed_at ?? "").localeCompare(String(a.completed_at ?? ""));
+    if (mode === "oldest") return String(a.created_at ?? "").localeCompare(String(b.created_at ?? ""));
     if (mode === "updated") return String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""));
     if (mode === "due") return cmpDue(a, b) || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpCreated(a, b);
     if (mode === "priority") return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpDue(a, b) || cmpCreated(a, b);
@@ -136,6 +137,15 @@ export function personName(admins, id) {
   const a = admins.find((x) => x.id === id);
   return a ? (a.name || a.email || "Ukendt") : "Ukendt";
 }
+
+/** "14. okt. 2026" af en lagret dato (YYYY-MM-DD) uden tidszoneforskydning; tom streng uden dato. */
+export function fmtDanishDate(key) {
+  if (!key) return "";
+  return new Intl.DateTimeFormat("da-DK", { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }).format(new Date(`${key}T12:00:00Z`));
+}
+
+/** Lange kommentarer foldes sammen: mere end 5 linjer eller 300 tegn. */
+export const isLongComment = (body) => String(body ?? "").split("\n").length > 5 || String(body ?? "").length > 300;
 
 /**
  * Afsender af en kommentar. Kommentarer skrevet af systemet eller via migrationer har ingen afsender (author_id er tom): "Uden afsender".

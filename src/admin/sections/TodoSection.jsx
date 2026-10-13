@@ -70,6 +70,8 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
   const [creating, setCreating] = useState(false);
   const [undo, setUndo] = useState(null);
   const undoTimer = useRef(null);
+  const chipsRef = useRef(null);
+  const [chipsMore, setChipsMore] = useState(false);
 
   const today = todayKey();
   const counts = countByView(todos, userId, { doneCount, doneLoaded });
@@ -101,6 +103,17 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: kommentarer hentes kun ved skift af åben opgave; loadComments/closeComments genskabes hver gang
   }, [openId]);
 
+  // Diskret udtoning i højre side, så længe der er flere hurtigfiltre at rulle til
+  const updateChipsMore = () => {
+    const el = chipsRef.current;
+    if (el) setChipsMore(el.scrollWidth - el.clientWidth - el.scrollLeft > 4);
+  };
+  useEffect(() => {
+    updateChipsMore();
+    window.addEventListener("resize", updateChipsMore);
+    return () => window.removeEventListener("resize", updateChipsMore);
+  }, [view, todos.length]);
+
   useEffect(() => () => clearTimeout(undoTimer.current), []);
   useEffect(() => {
     if (!showInfo) return undefined;
@@ -130,7 +143,8 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
       {label}{count !== undefined ? ` (${count})` : ""}
     </button>
   );
-  const openCount = (f) => filterTodos(todos, { view: "open", ...f }, userId).length;
+  // Tællerne på chipsene viser opgaverne i den aktive fane, før chippen (og søgning og øvrige filtre) anvendes
+  const chipCount = (f) => filterTodos(todos, { view, ...f }, userId).length;
   const emptyMessage = todos.length === 0 && !viewNeedsDone(view) ? "Ingen åbne opgaver. Tryk + Ny opgave for at oprette en."
     : (activeFilters || query.trim()) ? "Ingen opgaver matcher søgningen og filtrene." : (view === "done" ? "Ingen færdige opgaver endnu." : "Ingen åbne opgaver.");
 
@@ -175,11 +189,11 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
         {activeFilters > 0 && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={resetFilters}>Nulstil</button>}
       </div>
 
-      <div className="todo-chips" role="group" aria-label="Hurtige filtre">
-        {chip("Mine", !!userId && assigneeId === userId, () => setAssigneeId(assigneeId === userId ? "" : userId), openCount({ assigneeId: userId }))}
-        {chip("Uden ansvarlig", assigneeId === "none", () => setAssigneeId(assigneeId === "none" ? "" : "none"), openCount({ assigneeId: "none" }))}
-        {chip("Høj prioritet", priority === "high", () => setPriority(priority === "high" ? "" : "high"), openCount({ priority: "high" }))}
-        {chip("Overskredet frist", due === "overdue", () => setDue(due === "overdue" ? "" : "overdue"), openCount({ due: "overdue" }))}
+      <div ref={chipsRef} className={`todo-chips${chipsMore ? " more" : ""}`} role="group" aria-label="Hurtige filtre" onScroll={updateChipsMore}>
+        {chip("Mine", !!userId && assigneeId === userId, () => setAssigneeId(assigneeId === userId ? "" : userId), chipCount({ assigneeId: userId }))}
+        {chip("Uden ansvarlig", assigneeId === "none", () => setAssigneeId(assigneeId === "none" ? "" : "none"), chipCount({ assigneeId: "none" }))}
+        {chip("Høj prioritet", priority === "high", () => setPriority(priority === "high" ? "" : "high"), chipCount({ priority: "high" }))}
+        {chip("Overskredet frist", due === "overdue", () => setDue(due === "overdue" ? "" : "overdue"), chipCount({ due: "overdue" }))}
       </div>
 
       {showFilters && (

@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { submissionAllergenFlags } from "./admin/submissionLogic.js";
 import { dkDayKey, dkDayStartISO, shiftDayKey, bucketByDkDay } from "./admin/statsLogic.js";
 import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
@@ -815,11 +816,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
       const submission = submissions.find(s => s.id === id);
       if (!submission) continue;
       try {
-        const allergenFlags = {};
-        for (const a of ALLERGENS) {
-          const v = submission.ai_parsed_data?.[a.id];
-          if (v) allergenFlags[a.id] = v;
-        }
+        // Både direkte og (ældre) indlejrede flag læses; kun angivne værdier sendes, manglende bliver aldrig til "nej"
+        const allergenFlags = submissionAllergenFlags(submission);
         await apiCall(`${SUPABASE_URL}/functions/v1/submissions/${id}`, {
           method: "PATCH",
           headers: makeHeaders(accessToken),

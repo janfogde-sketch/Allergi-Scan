@@ -41,3 +41,36 @@ describe("To do: link til ticketten bag en opgave", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("To do: tællere, sortering og færdige opgaver", () => {
+  const list = [
+    todo({ id: "o1", title: "Åben høj", priority: "high", assignee_id: "a1" }),
+    todo({ id: "o2", title: "Åben normal", assignee_id: null }),
+    todo({ id: "d1", title: "Færdig høj", status: "done", priority: "high", assignee_id: "a1", completed_at: "2026-10-05T10:00:00Z" }),
+    todo({ id: "d2", title: "Færdig normal", status: "done", assignee_id: "a1", completed_at: "2026-10-04T10:00:00Z" }),
+  ];
+  it("chipsenes tal gælder den aktive fane og følger opgavernes status", () => {
+    const { rerender } = render(<TodoSection {...base} doneLoaded doneCount={2} todos={list} />);
+    expect(screen.getByRole("button", { name: "Mine (1)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Høj prioritet (1)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Uden ansvarlig (1)" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Færdige/ }));
+    expect(screen.getByRole("button", { name: "Mine (2)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Høj prioritet (1)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Uden ansvarlig (0)" })).toBeTruthy();
+    // en åben opgave bliver færdig: tallene i begge faner opdateres
+    rerender(<TodoSection {...base} doneLoaded doneCount={3} todos={list.map((t) => (t.id === "o1" ? { ...t, status: "done", completed_at: "2026-10-06T10:00:00Z" } : t))} />);
+    expect(screen.getByRole("button", { name: "Høj prioritet (2)" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Åbne/ }));
+    expect(screen.getByRole("button", { name: "Høj prioritet (0)" })).toBeTruthy();
+  });
+  it("sorteringen hedder Anbefalet og har de øvrige valg", () => {
+    render(<TodoSection {...base} todos={list} />);
+    const sel = screen.getByLabelText("Sortering");
+    expect([...sel.options].map((o) => o.textContent)).toEqual(["Sortér: Anbefalet", "Sortér: Højeste prioritet", "Sortér: Nærmeste frist", "Sortér: Senest opdateret", "Sortér: Ældste først"]);
+  });
+  it("færdige opgaver er ikke gennemstreget i CSS'en", async () => {
+    const { adminCss } = await import("../adminTheme.js");
+    expect(adminCss).not.toMatch(/\.(admin-item-title|todo-title)\.done\{[^}]*line-through/);
+  });
+});

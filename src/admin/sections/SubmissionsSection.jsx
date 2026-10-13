@@ -1,9 +1,80 @@
 // @ts-nocheck
 import { useIsMobile } from "../useIsMobile.js";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PRODUCT_ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
 import { apiCall, makeHeaders, extractENumbers, normalizeENumber, addENumberToText } from "../../helpers.js";
 import { showToast } from "../../SharedComponents.jsx";
+import { statusPill } from "../statusTone.js";
+import {
+  submissionAllergenFlags, allergenSummary, allergenLine, nameAllergenMismatch,
+  SUBMISSION_STATUS_LABELS, SUBMISSION_ACTION_LABELS, submissionTypeLabel,
+} from "../submissionLogic.js";
+
+const fmtDate = (d) => new Intl.DateTimeFormat("da-DK", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", year: "numeric" }).format(new Date(d));
+const productName = (s) => s.ai_parsed_data?.name || s.product_name || "Ukendt produkt";
+
+// Antal indsendelser pr. status (tom side med Content-Range), så fanerne viser rigtige tal uanset hvilken fane der er åben.
+function useStatusCounts(accessToken, refreshKey) {
+  const [counts, setCounts] = useState({});
+  useEffect(() => {
+    if (!accessToken) return undefined;
+    let alive = true;
+    (async () => {
+      const next = {};
+      await Promise.all(["pending", "approved", "rejected"].map(async (st) => {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/submissions?status=eq.${st}&select=id`, { headers: { ...makeHeaders(accessToken), Prefer: "count=exact", Range: "0-0" } });
+          const total = parseInt((res.headers.get("content-range") || "").split("/")[1], 10);
+          if (Number.isFinite(total)) next[st] = total;
+        } catch { /* tallet er en bekvemmelighed */ }
+      }));
+      if (alive) setCounts(next);
+    })();
+    return () => { alive = false; };
+  }, [accessToken, refreshKey]);
+  return counts;
+}
+
+function AllergenText({ s }) {
+  const sum = allergenSummary(s);
+  const warn = sum.state === "missing" || sum.state === "partial" || sum.state === "unverified";
+  const mismatch = nameAllergenMismatch(s);
+  return (
+    <>
+      <span style={{ color: warn ? "var(--amber)" : sum.state === "found" || sum.state === "traces" ? "var(--ink)" : "var(--muted)", fontWeight: warn ? 700 : 500 }}>{allergenLine(sum)}</span>
+      {mismatch.length > 0 && (
+        <div style={{ fontSize: 11.5, color: "var(--amber)", marginTop: 2 }}>
+          Navnet nævner {mismatch.map((m) => m.label.toLowerCase()).join(", ")}, men det er ikke angivet. Tjek ingredienslisten.
+        </div>
+      )}
+    </>
+  );
+}
+
+function SubmissionCard({ s, selectable, selected, onToggle, onOpen }) {
+  return (
+    <div className="admin-item-card" role="button" tabIndex={0} onClick={onOpen}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        {selectable && (
+          <input type="checkbox" checked={selected} aria-label={`Vælg ${productName(s)}`} style={{ width: 22, height: 22, marginTop: 1, flexShrink: 0 }}
+            onClick={(e) => e.stopPropagation()} onChange={onToggle} />
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="admin-item-title" style={{ textAlign: "left" }}>{productName(s)}</div>
+          <div className="todo-meta-line" style={{ fontFamily: "var(--mono)" }}>EAN: {s.ean}</div>
+          <div className="todo-meta-line">{submissionTypeLabel(s)} · Indsendt {fmtDate(s.created_at)}</div>
+          <div className="todo-meta-line"><AllergenText s={s} /></div>
+          <div className="todo-meta" style={{ justifyContent: "space-between" }}>
+            <span className={`admin-pill ${statusPill(s.status)}`}>{SUBMISSION_STATUS_LABELS[s.status] || s.status}</span>
+            <button type="button" className={`admin-btn admin-btn-sm admin-touch ${s.status === "pending" ? "admin-btn-primary" : "admin-btn-ghost"}`}
+              onClick={(e) => { e.stopPropagation(); onOpen(); }}>{SUBMISSION_ACTION_LABELS[s.status] || "Se detaljer"}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const FILTERS = [
   { val: "pending", label: "Afventer" },
@@ -28,6 +99,7 @@ export default function SubmissionsSection({
   const [submitterInfo, setSubmitterInfo] = useState(null);
   const [submitterLoading, setSubmitterLoading] = useState(false);
   const [newENumber, setNewENumber] = useState("");
+  const counts = useStatusCounts(accessToken, `${submissionFilter}:${submissions.length}`);
 
   const addENumber = () => {
     const normalized = normalizeENumber(newENumber);
@@ -66,7 +138,7 @@ export default function SubmissionsSection({
       setEditingSubmission({
         name: s.ai_parsed_data?.name || s.product_name || "",
         brand: s.ai_parsed_data?.brand || s.brand || "",
-        allergen_flags: s.ai_parsed_data || {},
+        allergen_flags: submissionAllergenFlags(s),
         nutrition: Object.fromEntries(NUTRITION_FIELDS.map(([k]) => [k, String(s.ai_parsed_data?.nutrition?.[k] ?? "")])),
       });
     }
@@ -89,6 +161,7 @@ export default function SubmissionsSection({
   const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };
 
   const isMobile = useIsMobile();
+  const readOnly = !!openSubmission && openSubmission.status !== "pending"; // godkendte og afviste indsendelser kan kun ses, aldrig behandles igen herfra
   const isPendingView = submissionFilter === "pending";
   const allSelected = isPendingView && submissions.length > 0 && submissions.every(s => selectedSubmissionIds.includes(s.id));
 
@@ -98,7 +171,8 @@ export default function SubmissionsSection({
         <div className="admin-tabs" style={{ marginBottom: 0, maxWidth: "100%" }}>
           {FILTERS.map(f => (
             <button key={f.val} className={`admin-tab-btn${submissionFilter === f.val ? " active" : ""}`}
-              onClick={() => { setSubmissionFilter(f.val); loadSubmissions(f.val); clearSubmissionSelection(); }}>{f.label}</button>
+              aria-pressed={submissionFilter === f.val}
+              onClick={() => { setSubmissionFilter(f.val); loadSubmissions(f.val); clearSubmissionSelection(); }}>{f.label}{counts[f.val] !== undefined ? ` (${counts[f.val]})` : ""}</button>
           ))}
         </div>
         {isPendingView && selectedSubmissionIds.length > 0 && (
@@ -118,52 +192,55 @@ export default function SubmissionsSection({
           Vælg alle ({submissions.length})
         </label>
       )}
-      <div className="admin-table-wrap">
-        {submissionsLoading ? (
-          <div className="admin-loading-row"><div className="admin-spinner" /> Henter indsendelser…</div>
-        ) : submissions.length === 0 ? (
-          <div className="admin-table-empty">Ingen indsendelser her</div>
-        ) : (
+      {submissionsLoading ? (
+        <div className="admin-loading-row"><div className="admin-spinner" /> Henter indsendelser…</div>
+      ) : submissions.length === 0 ? (
+        <div className="admin-table-empty">Ingen {SUBMISSION_STATUS_LABELS[submissionFilter]?.toLowerCase() || ""} indsendelser</div>
+      ) : isMobile ? (
+        <div className="admin-card-list">
+          {submissions.map(s => (
+            <SubmissionCard key={s.id} s={s} selectable={isPendingView} selected={selectedSubmissionIds.includes(s.id)}
+              onToggle={() => toggleSubmissionSelection(s.id)} onOpen={() => openForReview(s)} />
+          ))}
+        </div>
+      ) : (
+        <div className="admin-table-wrap">
           <table className="admin-table">
             <thead><tr>
-              {isPendingView && <th style={{ width: 28 }}><input type="checkbox" checked={allSelected} onChange={e => selectAllSubmissions(e.target.checked ? submissions.map(s => s.id) : [])} /></th>}
-              <th>ID</th><th>Produkt</th><th>EAN</th><th>Type</th><th>Allergener</th><th>Indsendt</th><th></th>
+              {isPendingView && <th style={{ width: 28 }}><input type="checkbox" aria-label="Vælg alle" checked={allSelected} onChange={e => selectAllSubmissions(e.target.checked ? submissions.map(s => s.id) : [])} /></th>}
+              <th>Produkt</th><th>EAN</th><th>Type</th><th>Allergener</th><th>Indsendt</th><th>Status</th><th></th>
             </tr></thead>
             <tbody>
-              {submissions.map(s => {
-                const flags = s.ai_parsed_data || {};
-                const danger = PRODUCT_ALLERGENS.filter(a => flags[a.id] === "yes" || flags[a.id] === true);
-                const isEdit = s.type === "edit";
-                return (
-                  <tr key={s.id} style={{ cursor: "pointer" }} onClick={() => openForReview(s)}>
-                    {isPendingView && (
-                      <td onClick={e => e.stopPropagation()}>
-                        <input type="checkbox" checked={selectedSubmissionIds.includes(s.id)} onChange={() => toggleSubmissionSelection(s.id)} />
-                      </td>
-                    )}
-                    <td style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--muted)" }} title={s.id}>{s.id.slice(0, 8)}</td>
-                    <td>{s.ai_parsed_data?.name || s.product_name || "Ukendt produkt"}</td>
-                    <td style={{ fontFamily: "var(--mono)" }}>{s.ean}</td>
-                    <td>{isEdit ? <span className="admin-pill admin-pill-amber">Rettelse</span> : <span className="admin-pill admin-pill-neutral">Nyt produkt</span>}</td>
-                    <td>{danger.length === 0 ? <span style={{ color: "var(--muted)" }}>Ingen</span> : danger.slice(0, 3).map(a => a.label).join(", ")}</td>
-                    <td>{new Date(s.created_at).toLocaleDateString("da-DK")}</td>
-                    <td><button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={(e) => { e.stopPropagation(); openForReview(s); }}>Gennemgå</button></td>
-                  </tr>
-                );
-              })}
+              {submissions.map(s => (
+                <tr key={s.id} style={{ cursor: "pointer" }} onClick={() => openForReview(s)}>
+                  {isPendingView && (
+                    <td onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" aria-label={`Vælg ${productName(s)}`} checked={selectedSubmissionIds.includes(s.id)} onChange={() => toggleSubmissionSelection(s.id)} />
+                    </td>
+                  )}
+                  <td style={{ overflowWrap: "anywhere", fontWeight: 700 }}>{productName(s)}</td>
+                  <td style={{ fontFamily: "var(--mono)" }}>{s.ean}</td>
+                  <td>{s.type === "edit" ? <span className="admin-pill admin-pill-amber">Rettelse</span> : <span className="admin-pill admin-pill-neutral">Nyt produkt</span>}</td>
+                  <td><AllergenText s={s} /></td>
+                  <td style={{ whiteSpace: "nowrap" }}>{fmtDate(s.created_at)}</td>
+                  <td><span className={`admin-pill ${statusPill(s.status)}`}>{SUBMISSION_STATUS_LABELS[s.status] || s.status}</span></td>
+                  <td><button className={`admin-btn admin-btn-sm ${s.status === "pending" ? "admin-btn-primary" : "admin-btn-ghost"}`} onClick={(e) => { e.stopPropagation(); openForReview(s); }}>{SUBMISSION_ACTION_LABELS[s.status] || "Se detaljer"}</button></td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
       {openSubmission && editingSubmission && (
         <div className="admin-modal-overlay" onClick={close}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
             <div className="admin-modal-header">
               <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
-                <div style={{ fontSize: 12, color: "var(--muted)" }}>EAN {openSubmission.ean} · {new Date(openSubmission.created_at).toLocaleDateString("da-DK")}</div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, fontFamily: "var(--mono)" }} title={openSubmission.id}>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>{readOnly ? "Detaljer" : openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
+                <div style={{ marginTop: 4 }}><span className={`admin-pill ${statusPill(openSubmission.status)}`}>{SUBMISSION_STATUS_LABELS[openSubmission.status] || openSubmission.status}</span></div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>EAN {openSubmission.ean} · {fmtDate(openSubmission.created_at)}</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, fontFamily: "var(--mono)", overflowWrap: "anywhere" }} title={openSubmission.id}>
                   ID: {openSubmission.id}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
@@ -178,6 +255,7 @@ export default function SubmissionsSection({
               <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
             </div>
 
+            <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <div className="admin-field">
               <label className="admin-label">Produktnavn</label>
               <input value={editingSubmission.name} onChange={e => setEditingSubmission(s => ({ ...s, name: e.target.value }))} />
@@ -292,37 +370,59 @@ export default function SubmissionsSection({
             )}
 
             <div className="admin-field">
-              <label className="admin-label">Allergener (klik for at skifte: Nej → Ja → Spor)</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 }}>
+              <label className="admin-label">{readOnly ? "Allergener" : "Allergener (klik for at skifte: Ikke angivet → Nej → Ja → Spor)"}</label>
+              {(() => {
+                const sum = allergenSummary(openSubmission);
+                const mismatch = nameAllergenMismatch({ ...openSubmission, ai_parsed_data: { ...(openSubmission.ai_parsed_data || {}), ...editingSubmission.allergen_flags, name: editingSubmission.name } });
+                return (
+                  <>
+                    {(sum.state === "missing" || sum.state === "partial") && (
+                      <div className="admin-info-note" role="note">{sum.text}. "Ikke angivet" betyder, at allergenet ikke er vurderet, ikke at det er fraværende.</div>
+                    )}
+                    {mismatch.length > 0 && (
+                      <div className="admin-info-note" role="note" style={{ color: "var(--amber)" }}>
+                        Produktnavnet nævner {mismatch.map((m) => m.label.toLowerCase()).join(", ")}, men det er ikke angivet. Navnet er ikke dokumentation: tjek ingredienslisten.
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6 }}>
                 {PRODUCT_ALLERGENS.map(a => {
-                  const val = editingSubmission.allergen_flags[a.id] || "no";
-                  const next = val === "no" ? "yes" : val === "yes" ? "traces" : "no";
+                  const val = editingSubmission.allergen_flags[a.id];
+                  const unset = val === undefined || val === "unknown";
+                  const next = unset ? "no" : val === "no" ? "yes" : val === "yes" ? "traces" : "no";
                   const isYes = val === "yes", isTrace = val === "traces";
                   return (
-                    <button key={a.id}
+                    <button key={a.id} type="button" disabled={readOnly}
                       onClick={() => setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
                       style={{
-                        display: "flex", alignItems: "center", gap: 6, padding: "7px 10px", borderRadius: 8, cursor: "pointer",
-                        border: `1px solid ${isYes ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border)"}`,
+                        display: "flex", alignItems: "center", gap: 6, padding: "7px 10px", borderRadius: 8, cursor: readOnly ? "default" : "pointer", minHeight: 44,
+                        border: `1px ${unset ? "dashed" : "solid"} ${isYes ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border)"}`,
                         background: isYes ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--surface3)",
                         fontFamily: "var(--f)", fontSize: 12,
                       }}>
-                      <span style={{ flex: 1, textAlign: "left", fontWeight: 600, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>{a.label}</span>
+                      <span style={{ flex: 1, textAlign: "left", fontWeight: 600, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--ink2)", overflowWrap: "anywhere" }}>{a.label}{a.type === "intolerance" ? " (intolerance)" : ""}</span>
                       <span style={{ fontSize: 10, fontWeight: 800, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted)" }}>
-                        {isYes ? "JA" : isTrace ? "SPOR" : "NEJ"}
+                        {unset ? "IKKE ANGIVET" : isYes ? "JA" : isTrace ? "SPOR" : "NEJ"}
                       </span>
                     </button>
                   );
                 })}
               </div>
             </div>
+            </fieldset>
 
-            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <button className="admin-btn admin-btn-primary" onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}>
-                {openSubmission.type === "edit" ? "Godkend og opdater produkt" : "Godkend og opret produkt"}
-              </button>
-              <button className="admin-btn admin-btn-danger" onClick={() => rejectSubmission(openSubmission.id)}>Afvis</button>
-              <button className="admin-btn admin-btn-ghost" onClick={close} style={{ marginLeft: "auto" }}>Annullér</button>
+            <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+              {!readOnly && (
+                <>
+                  <button className="admin-btn admin-btn-primary admin-touch" onClick={() => updateSubmissionAndApprove(openSubmission, editingSubmission)}>
+                    {openSubmission.type === "edit" ? "Godkend og opdater produkt" : "Godkend og opret produkt"}
+                  </button>
+                  <button className="admin-btn admin-btn-danger admin-touch" onClick={() => rejectSubmission(openSubmission.id)}>Afvis</button>
+                </>
+              )}
+              {!readOnly && <button className="admin-btn admin-btn-ghost admin-touch" onClick={close} style={{ marginLeft: "auto" }}>Annullér</button>}
             </div>
           </div>
         </div>
