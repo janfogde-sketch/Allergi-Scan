@@ -1,5 +1,5 @@
 -- Kostpræferencer (diæter) er fjernet fra appen og fra privatlivspolitikken (13. okt. 2026, Jan).
--- Kolonnerne users.diets og family_members.diets og deres gemte værdier er urørt (Jans plan). Rydningen står i næste migration (20261013200100).
+-- Kolonnerne users.diets og family_members.diets og deres gemte værdier er urørt (Jans plan). Rydningen står i næste migration (20261013201100).
 
 -- To do b0554005 (Fjern Opskrifter, diæter og madspild-hook): afsluttet.
 update public.admin_todos set status = 'done' where id::text like 'b0554005%' and status <> 'done';
