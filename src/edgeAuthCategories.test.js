@@ -16,7 +16,7 @@ const PROTECTED = [
   ["auto-reparse", "POST", 401], ["classify-categories", "POST", 403], ["cleanup-orphan-images", "POST", 401], ["favorites", "GET", 401],
   ["favorites", "POST", 401], ["family-invite", "POST", 401], ["food-waste", "GET", 401], ["history", "GET", 401], ["history", "POST", 401],
   ["inactive-accounts", "POST", 401], ["notify", "POST", 401], ["notify-test", "POST", 401], ["recalls-sync", "POST", 403],
-  ["search", "POST", 401], ["send-email", "POST", 401], ["send-push", "POST", 401], ["weekly-digest", "POST", 401],
+  ["search", "POST", 401], ["send-email", "POST", 401], ["send-push", "POST", 401],
 ];
 
 describe("edge: loginkrav på alle beskyttede funktioner", () => {

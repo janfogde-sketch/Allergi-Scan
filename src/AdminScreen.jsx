@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { apiCall, makeHeaders } from "./helpers.js";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -16,7 +16,6 @@ import AdminTicketsSection from "./AdminTicketsSection.jsx";
 import AdminMissingSection from "./AdminMissingSection.jsx";
 import AdminImportSection from "./AdminImportSection.jsx";
 import AdminDebugSection from "./AdminDebugSection.jsx";
-import AdminRecipesSection from "./AdminRecipesSection.jsx";
 import AdminMobileNav from "./AdminMobileNav.jsx";
 import AdminHubSection from "./AdminHubSection.jsx";
 
@@ -91,66 +90,6 @@ export default function AdminScreen() {
     if (s.ocr_raw_text) cleanOcrWithAI(s.ocr_raw_text);
   };
 
-  // ── Admin opskrifter — lokal state ──────────────────────────────────────────
-  // Holdt her (i stedet for i AdminRecipesSection) fordi fane-baren nedenfor
-  // skal kunne kalde loadAdminRecipes() direkte ved klik på "Opskrifter"-fanen.
-  const [adminRecipes, setAdminRecipes] = useState([]);
-  const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);
-  const [adminRecipeFilter, setAdminRecipeFilter] = useState("pending");
-  const [editingRecipe, setEditingRecipe] = useState(null);
-  const [recipeActionLoading, setRecipeActionLoading] = useState(false);
-
-  // Værn mod hurtige fane-skift — samme mønster som loadSubmissions i
-  // useAdmin.js: uden det kan et ældre svar for en tidligere valgt fane nå
-  // at overskrive listen efter et nyere, hurtigere svar for den fane admin
-  // faktisk ser nu.
-  const adminRecipesLoadToken = useRef(0);
-  const loadAdminRecipes = async (filter = adminRecipeFilter) => {
-    const myToken = ++adminRecipesLoadToken.current;
-    setAdminRecipesLoading(true);
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/recipes?status=eq.${filter}&order=created_at.desc&limit=100&select=id,title,category,status,submitted_by,created_at,allergen_flags,description,servings,prep_time_minutes,cook_time_minutes,tags,instructions,image_url`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      if (adminRecipesLoadToken.current !== myToken) return;
-      setAdminRecipes(Array.isArray(data) ? data : []);
-    } catch (e) {
-      if (adminRecipesLoadToken.current !== myToken) return;
-      console.error("loadAdminRecipes:", e);
-    }
-    if (adminRecipesLoadToken.current === myToken) setAdminRecipesLoading(false);
-  };
-
-  const updateRecipeStatus = async (id, status) => {
-    setRecipeActionLoading(true);
-    try {
-      await apiCall(
-        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
-        { method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-          body: JSON.stringify({ status }) }
-      );
-      setAdminRecipes(prev => prev.filter(r => r.id !== id));
-      setEditingRecipe(null);
-    } catch (e) { showToast("Fejl: " + e.message, "error"); }
-    setRecipeActionLoading(false);
-  };
-
-  const saveRecipeEdit = async () => {
-    if (!editingRecipe) return;
-    setRecipeActionLoading(true);
-    try {
-      const { id, ...fields } = editingRecipe;
-      await apiCall(
-        `${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`,
-        { method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-          body: JSON.stringify(fields) }
-      );
-      showToast("Gemt");
-    } catch (e) { showToast("Fejl: " + e.message, "error"); }
-    setRecipeActionLoading(false);
-  };
-
   const selectSection = (id) => {
     setAdminSection(id);
     if (id === "missing") loadMissingEans();
@@ -159,7 +98,6 @@ export default function AdminScreen() {
     if (id === "tickets") loadTickets({ includeDone: true });
     if (id === "dashboard") loadAdminStats();
     if (id === "users") loadAdminUsers();
-    if (id === "recipes") loadAdminRecipes();
   };
   // Fra Indhold/Drift-oversigterne: "approved" er en genvej til godkendte indsendelser, resten åbner værktøjet.
   const openTool = (id) => {
@@ -248,17 +186,6 @@ export default function AdminScreen() {
 
             {adminSection === "debug" && (
               <AdminDebugSection />
-            )}
-
-            {adminSection === "recipes" && (
-              <AdminRecipesSection
-                adminRecipes={adminRecipes} adminRecipesLoading={adminRecipesLoading}
-                adminRecipeFilter={adminRecipeFilter} setAdminRecipeFilter={setAdminRecipeFilter}
-                loadAdminRecipes={loadAdminRecipes}
-                editingRecipe={editingRecipe} setEditingRecipe={setEditingRecipe}
-                recipeActionLoading={recipeActionLoading} saveRecipeEdit={saveRecipeEdit}
-                updateRecipeStatus={updateRecipeStatus}
-              />
             )}
 
           </div>

@@ -34,7 +34,6 @@ export default function AdminHubSection({ kind, onOpen }) {
           <div style={LABEL}>Indholdsværktøjer</div>
           <Tool icon="info"     title="Manglende EAN'er" text="Find og håndtér produkter uden gyldig stregkode." onClick={() => onOpen("missing")} />
           <Tool icon="download" title="Import"           text="Importér produktdata eller indhold." onClick={() => onOpen("import")} />
-          <Tool icon="book"     title="Opskrifter"       text="Administrér opskrifter og tilknyttet indhold." onClick={() => onOpen("recipes")} />
           <Tool icon="check"    title="Godkendte produkter" text="Se produkter, der allerede er godkendt." onClick={() => onOpen("approved")} />
         </>
       ) : (

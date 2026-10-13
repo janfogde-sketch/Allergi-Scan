@@ -12,7 +12,6 @@ import SubmissionsSection from "./sections/SubmissionsSection.jsx";
 import TicketsSection from "./sections/TicketsSection.jsx";
 import MissingSection from "./sections/MissingSection.jsx";
 import ImportSection from "./sections/ImportSection.jsx";
-import RecipesSection from "./sections/RecipesSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
@@ -94,55 +93,6 @@ export default function AdminApp() {
     setImportLoading(false);
   };
 
-  // ── Opskrifter (porteret fra AdminScreen.jsx — samme logik) ───────────────
-  const [adminRecipes, setAdminRecipes] = useState([]);
-  const [adminRecipesLoading, setAdminRecipesLoading] = useState(false);
-  const [adminRecipeFilter, setAdminRecipeFilter] = useState("pending");
-  const [editingRecipe, setEditingRecipe] = useState(null);
-  const [recipeActionLoading, setRecipeActionLoading] = useState(false);
-  const loadAdminRecipes = async (filter = adminRecipeFilter) => {
-    setAdminRecipesLoading(true);
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/recipes?status=eq.${filter}&order=created_at.desc&limit=100&select=id,title,category,status,submitted_by,created_at,allergen_flags,description,servings,prep_time_minutes,cook_time_minutes,tags,instructions,image_url`,
-        { headers: makeHeaders(accessToken) }
-      );
-      setAdminRecipes(Array.isArray(data) ? data : []);
-    } catch (e) {
-      showToast("Kunne ikke hente opskrifter: " + e.message, "error");
-    }
-    setAdminRecipesLoading(false);
-  };
-  const updateRecipeStatus = async (id, status) => {
-    setRecipeActionLoading(true);
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`, {
-        method: "PATCH", headers: { ...makeHeaders(accessToken), Prefer: "return=minimal" },
-        body: JSON.stringify({ status }),
-      });
-      setAdminRecipes(prev => prev.filter(r => r.id !== id));
-      setEditingRecipe(null);
-    } catch (e) {
-      showToast("Kunne ikke opdatere opskrift-status: " + e.message, "error");
-    }
-    setRecipeActionLoading(false);
-  };
-  const saveRecipeEdit = async () => {
-    if (!editingRecipe) return;
-    setRecipeActionLoading(true);
-    try {
-      const { id, ...fields } = editingRecipe;
-      await apiCall(`${SUPABASE_URL}/rest/v1/recipes?id=eq.${id}`, {
-        method: "PATCH", headers: { ...makeHeaders(accessToken), Prefer: "return=minimal" },
-        body: JSON.stringify(fields),
-      });
-      showToast("Gemt");
-    } catch (e) {
-      showToast("Kunne ikke gemme ændringer: " + e.message, "error");
-    }
-    setRecipeActionLoading(false);
-  };
-
   // ── Sektion-skift henter frisk data ────────────────────────────────────────
   useEffect(() => {
     if (!accessToken || !isAdmin) return;
@@ -151,7 +101,6 @@ export default function AdminApp() {
     if (section === "submissions") admin.loadSubmissions(admin.submissionFilter);
     if (section === "tickets") admin.loadTickets();
     if (section === "missing") loadMissingEans();
-    if (section === "recipes") loadAdminRecipes();
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") admin.loadKnowledgeEntries();
     if (section === "history") admin.loadRevisionLog();
@@ -279,15 +228,6 @@ export default function AdminApp() {
         <ImportSection
           importLog={importLog} importLoading={importLoading} runImport={runImport}
           reparseLog={admin.reparseLog} reparseLoading={admin.reparseLoading} runReparse={admin.runReparse}
-        />
-      )}
-      {section === "recipes" && (
-        <RecipesSection
-          adminRecipes={adminRecipes} adminRecipesLoading={adminRecipesLoading}
-          adminRecipeFilter={adminRecipeFilter} setAdminRecipeFilter={setAdminRecipeFilter}
-          loadAdminRecipes={loadAdminRecipes} updateRecipeStatus={updateRecipeStatus}
-          editingRecipe={editingRecipe} setEditingRecipe={setEditingRecipe}
-          recipeActionLoading={recipeActionLoading} saveRecipeEdit={saveRecipeEdit}
         />
       )}
       {section === "products" && (

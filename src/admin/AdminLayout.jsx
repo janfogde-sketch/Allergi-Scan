@@ -16,7 +16,6 @@ const NAV_GROUPS = [
   { id: "content", label: "Indhold & data", items: [
     { id: "products",    icon: "tag",      label: "Produkter" },
     { id: "knowledge",   icon: "file",     label: "Leksikon" },
-    { id: "recipes",     icon: "book",     label: "Opskrifter" },
     { id: "missing",     icon: "info",     label: "Manglende EAN'er" },
     { id: "import",      icon: "download", label: "Import" },
     { id: "history",     icon: "clock",    label: "Historik" },
