@@ -44,6 +44,7 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
   const auditLog = useAuditLog(accessToken);
+  const [todoPreset, setTodoPreset] = useState(null);
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
@@ -184,7 +185,8 @@ export default function AdminApp() {
       }
     >
       {section === "dashboard" && (
-        <DashboardSection adminStats={admin.adminStats} setSection={setSection} />
+        <DashboardSection adminStats={admin.adminStats} setSection={setSection} todos={todos.todos} admins={todos.admins}
+          openTodos={(preset) => { setTodoPreset({ id: Date.now(), ...preset }); setSection("todo"); }} />
       )}
       {section === "users" && (
         <UsersSection
@@ -273,7 +275,7 @@ export default function AdminApp() {
       {section === "recalls" && <RecallsSection {...recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && (
-        <TodoSection {...todos} userId={userId}
+        <TodoSection {...todos} userId={userId} preset={todoPreset}
           onOpenTicket={(ticketId) => { setSection("tickets"); admin.openTicketById(ticketId); }} />
       )}
       {section === "family" && (

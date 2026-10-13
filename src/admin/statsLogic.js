@@ -52,3 +52,26 @@ export const lastDays = (/** @type {{date:string,count:number}[]} */ series, /**
 
 /** Dansk talformat: 20182 -> "20.182". */
 export const fmtNum = (/** @type {unknown} */ v) => (typeof v === "number" && Number.isFinite(v) ? v.toLocaleString("da-DK") : "–");
+
+/** Rund op til en "pæn" øvre grænse (1, 2, 5, 10, 20, 50 …) til y-aksen, så søjler og skala stemmer overens. */
+export function niceMax(/** @type {number} */ max) {
+  if (!(max > 0)) return 1;
+  const pow = Math.pow(10, Math.floor(Math.log10(max)));
+  for (const m of [1, 2, 5, 10]) if (max <= m * pow) return m * pow;
+  return 10 * pow;
+}
+
+/** Y-aksens mærker oppefra og ned: øvre grænse, midten (hvis et helt tal) og 0. */
+export function axisTicks(/** @type {number} */ top) {
+  const mid = top / 2;
+  return Number.isInteger(mid) && mid > 0 ? [top, mid, 0] : [top, 0];
+}
+
+/** Hvilke søjler får en datoetiket: højst `maxLabels`, altid første og sidste, så etiketterne ikke overlapper på små skærme. */
+export function labelIndexes(/** @type {number} */ n, /** @type {number} */ maxLabels) {
+  if (n <= 0) return [];
+  if (n <= maxLabels) return Array.from({ length: n }, (_, i) => i);
+  const out = [];
+  for (let k = 0; k < maxLabels; k++) out.push(Math.round((k * (n - 1)) / (maxLabels - 1)));
+  return [...new Set(out)];
+}

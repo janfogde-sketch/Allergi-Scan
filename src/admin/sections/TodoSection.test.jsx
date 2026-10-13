@@ -35,7 +35,8 @@ describe("To do: link til ticketten bag en opgave", () => {
     render(<TodoSection {...base} todos={[todo({ ticket_id: "tk-2" })]} onOpenTicket={onOpenTicket} />);
     fireEvent.click(screen.getByText("Ret fejl"));
     expect(screen.getByRole("dialog")).toBeTruthy();
-    fireEvent.click(screen.getAllByText("Åbn ticket").find(el => el.className.includes("admin-btn")));
+    fireEvent.click(screen.getByRole("button", { name: /Flere handlinger/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Åbn ticket" }));
     expect(onOpenTicket).toHaveBeenCalledWith("tk-2");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
