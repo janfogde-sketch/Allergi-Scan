@@ -1,0 +1,7 @@
+-- To do til Jan: live-test af adminadgang med en almindelig testkonto (PR "Adminlog og adgangskontrol", 14. okt. 2026). Kun skrivning til to do-listen.
+insert into public.admin_todos (title, description, status, priority, track, assignee_id)
+select
+  'Live-test af adminadgang med en almindelig konto',
+  E'Mangler fra adgangskontrol-PR\'en: test i produktion, at en almindelig bruger (uden admin-rolle) afvises, og at en administrator får adgang. Kræver en testkonto, som Jan opretter og bekræfter selv (bekræftelsesmailen kan Claude ikke åbne). Brug en adresse, I selv ejer; testmail sendes kun til Jans/Bjørns egne konti.\n\nTjek med den almindelige konto: (1) admin.html viser ingen data, og kald til admin_audit_log, admin_todos, client_errors og andres tickets giver tomt svar eller afvisning; (2) edge-funktionerne admin og delete-user (på en andens konto) afviser med 401/403; (3) kontoen kan ikke ændre sin egen rolle. Tjek med administrator: rolleskift og ticketstatus dukker op i fanen Aktivitetslog med tid og admin. Bagefter: slet testkontoen. DB-testen supabase/tests/admin_audit.sql dækker de samme regler i CI mod en frisk database, men ikke produktionsopsætningen.\n\nSvar her med testkontoens e-mail og adgangskode (eller bed Claude køre testen), så udføres den.',
+  'todo', 'normal', 'test', public._admin_id('jafo')
+ where not exists (select 1 from public.admin_todos where title = 'Live-test af adminadgang med en almindelig konto');
