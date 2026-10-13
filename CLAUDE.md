@@ -31,7 +31,7 @@
   `helpers.js`). Ændres kravene i Supabase, ret `helpers.js` tilsvarende.
 - **Notifikationer** er live (push og mail slået til via `app_flags`; beskeder i appen påvirkes ikke af flagene). Detaljer, test-
   plan og rollback i `src/CONTEXT.md` §9 og `docs/notifikationer-testplan.md`.
-- **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle. Reference i
+- **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle. Kun én admin: mobilvenlig under 820 px, "Admin panel" i profilmenuen åbner den (Jan, 13. okt. 2026; den gamle mobil-admin er fjernet). Reference i
   `src/CONTEXT.md` §2 og §10.
 
 ---
@@ -86,13 +86,13 @@ admin). Header: `AppHeader.jsx` med ren tekst-wordmark.
 **Skærme:** se `SCREENS` i `src/constants.jsx`. Én screen = én fil (`XxxScreen.jsx`). Vigtigste: HOME (`ScannerScreen.jsx`, også en
 intern router), RESULT, LIST, PROFILE/EDITPROFILE (kun navn)/EDITPREFERENCES, FAMILY, FAVORITES, HISTORY, MADPAS, KNOWLEDGE,
 SETTINGS, NOTIFICATIONS/NOTIFICATION/TICKET, WELCOME/LOGIN/VERIFYEMAIL/RESETPASSWORD/ONBOARD/BOOT, NOTFOUND/SUBMITTED, SUGGEST_EDIT,
-TERMS/PRIVACY, ADMIN (mobil).
+TERMS/PRIVACY.
 
 **Arkitekturregler (håndhæves i alle PR'er):**
 1. Props frem for masse-state; lokalt state lever i screen-komponenten.
 2. Ingen IIFE i JSX. Ingen hooks i betinget kode eller loops.
 3. Logik i dedikerede hooks (`useXxx.js`), ikke inlinet i `App.jsx`. Er en skærm for stor, del den i `<Skærm><Sektion>Section.jsx`
-   (hovedfilen beholder kun routing/fane-state), som AdminScreen er delt.
+   (hovedfilen beholder kun routing/fane-state), som web-adminen i `src/admin/` er delt.
 4. Overlays/drawers renderes via `ReactDOM.createPortal(..., document.body)`: `.screen.fade-in` efterlader en permanent
    `transform`, som fanger `position:fixed`-børn (brugt i `ListPickerSheet`, `InfoSheet`, `ProfileMenu`).
    Bundnavigationen er ca. 113 px høj på iPhones med hjemmeindikator (79 px uden), men `.screen` har kun 110 px bundpadding. Skærme med fast

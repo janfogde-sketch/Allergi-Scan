@@ -144,6 +144,9 @@ select.admin-select:focus,.admin-field input[type=date]:focus{outline:2px solid 
   .admin-modal-overlay{padding:0;align-items:flex-end;}
   .admin-modal{max-width:none;max-height:92vh;border-radius:14px 14px 0 0;padding:18px 16px;}
   .admin-search{max-width:none;}
+  .admin-content [style*="grid-template-columns"]{grid-template-columns:1fr !important;}
+  .admin-content .admin-stat-grid{grid-template-columns:repeat(2,1fr) !important;}
+  .admin-content img{max-width:100%;}
   .admin-tabs{overflow-x:auto;white-space:nowrap;}
   .admin-field input,.admin-field select.admin-select,select.admin-select,.admin-search,textarea.admin-textarea{font-size:16px;}
 }
