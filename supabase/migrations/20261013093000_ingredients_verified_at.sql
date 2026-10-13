@@ -31,7 +31,7 @@ create trigger trg_set_ingredients_verified_at
 insert into public.admin_todos (title, description, status, priority, track, assignee_id)
 select '[Før beta] Design: Gennemlæs tekst og placering af "Ingredienser kontrolleret"-linjen på produktsiden',
        'Jan har sagt ja til, at produktsiden viser, hvornår ingredienser og allergener sidst blev kontrolleret mod emballagen (to do 982ca5ad). Bygget med eksisterende stil lige under produktnavnet: "Ingredienser kontrolleret 12. oktober 2026" eller, hvis ingen har kontrolleret dem, "Ikke kontrolleret mod emballagen endnu", plus "Kontrollér altid emballagen". Datoen sættes kun, når en administrator sætter produktets status til Verificeret i admin. Bjørn: gennemlæs ordlyd og placering, og ret efter behov. Ingen iPhone-test nødvendig ud over et hurtigt blik på en produktside.',
-       'todo', 'normal', 'frontend', 'd8ff299b-449e-4c88-98fd-58f397199f1c'
+       'todo', 'normal', 'design', 'd8ff299b-449e-4c88-98fd-58f397199f1c'
  where not exists (select 1 from public.admin_todos where title like '%Ingredienser kontrolleret"-linjen%');
 
 insert into public.admin_todo_comments (todo_id, body)
