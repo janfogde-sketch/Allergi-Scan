@@ -12,7 +12,10 @@ begin
   insert into auth.users(id,email,aud,role) values (adm,'adm-'||substr(adm::text,1,8)||'@example.invalid','authenticated','authenticated');
   insert into auth.users(id,email,aud,role) values (usr,'usr-'||substr(usr::text,1,8)||'@example.invalid','authenticated','authenticated');
   insert into auth.users(id,email,aud,role) values (oth,'oth-'||substr(oth::text,1,8)||'@example.invalid','authenticated','authenticated');
+  -- Opsætning: udløseren mod selvophøjelse slås fra et øjeblik (uden login-id afviser den alle), og audit-udløseren skal ikke logge opsætningen
+  alter table public.users disable trigger prevent_role_self_escalation_trigger;
   update public.users set role='admin' where id=adm;
+  alter table public.users enable trigger prevent_role_self_escalation_trigger;
   insert into feedback_tickets(type,description,submitted_by) values ('bug','d',oth) returning id into tid;
 
   -- Almindelig bruger
