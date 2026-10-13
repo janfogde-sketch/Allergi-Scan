@@ -5,7 +5,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "10. oktober 2026",
+  "updated": "13. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -102,7 +102,7 @@ export default {
     ],
     [
       "p",
-      "Ændrer vi ordlyden af samtykket på en måde, der har betydning for dig, beder vi dig om at bekræfte det på ny, første gang du gemmer helbredsoplysninger efter ændringen. Dit tidligere samtykke gælder, indtil du har svaret, og du kan i stedet trække det tilbage."
+      "Ændrer vi ordlyden af samtykket eller denne privatlivspolitik på en måde, der har betydning for dig, beder vi dig om at bekræfte samtykket på ny, første gang du åbner appen efter ændringen. Dit tidligere samtykke gælder, indtil du har svaret, og dine oplysninger slettes ikke imens. Du kan i stedet trække samtykket tilbage."
     ],
     [
       "p",

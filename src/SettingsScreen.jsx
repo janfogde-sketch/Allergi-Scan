@@ -332,7 +332,7 @@ export default function SettingsScreen({
               <>
                 {consent.stale && (
                   <div style={{ marginBottom:10, fontWeight:700, color:"var(--ink)" }}>
-                    Ordlyden af samtykket er ændret. Du bliver bedt om at bekræfte det på ny, næste gang du gemmer allergier eller andre helbredsoplysninger. Indtil da gælder dit tidligere samtykke.
+                    Samtykketeksten eller privatlivspolitikken er ændret. Du bliver bedt om at bekræfte på ny, første gang du åbner appen. Indtil da gælder dit tidligere samtykke.
                   </div>
                 )}
                 <div style={{ marginBottom:10 }}>

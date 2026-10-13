@@ -59,6 +59,7 @@ import { useAlternatives } from './useAlternatives.js';
 import InstallPrompt from "./InstallPrompt.jsx";
 import HelpModal from "./HelpModal.jsx";
 import SafetyInfoModal from "./SafetyInfoModal.jsx";
+import ConsentRenewalModal from "./ConsentRenewalModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
@@ -910,6 +911,9 @@ export default function EatSafe() {
 
         {/* ══ SIKKERHEDSINFORMATION ══ */}
         {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}
+
+        {/* ══ FORNYET SAMTYKKE (samtykketeksten/politikken er ændret siden brugerens ja) ══ */}
+        {!showSafetyInfo && <ConsentRenewalModal screen={screen} onboarded={user.onboarding_completed === true} openLegal={openLegal} />}
 
         {/* ══ TOAST (delt succes-/fejl-besked, erstatter native alert()) ══ */}
         <ToastHost top={screen === SCREENS.ONBOARD} />

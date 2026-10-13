@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { HEALTH_CONSENT_VERSION } from "./constants.jsx";
+import privacy from "./legalText/privacy.js";
 import { isConsentStale, consentFromRows, needsHealthConsent, canSaveHealthData, HEALTH_CONSENT_TEXT, HEALTH_CONSENT_WITHDRAW_TEXT, memberConsentTexts } from "./healthConsent.js";
 
 describe("consentFromRows", () => {
@@ -61,10 +62,12 @@ describe("isConsentStale (samtykke forældet)", () => {
     expect(isConsentStale({ given: true, version: "2026-10-02" }, "2026-11-01")).toBe(true);
     expect(isConsentStale({ given: false, version: null }, "2026-11-01")).toBe(false);
   });
-  // Binder samtykketeksten til versionen: ændres teksten, skal HEALTH_CONSENT_VERSION hæves (så alle bliver bedt om at bekræfte på ny),
-  // og først derefter opdateres de to felter her. Politikændringer alene kræver ikke ny version.
-  it("samtykketeksten og versionen hører sammen", () => {
-    const snapshot = { version: "2026-10-02", text: HEALTH_CONSENT_TEXT };
+  // Binder samtykketeksten og privatlivspolitikken til versionen: ændres en af dem væsentligt, skal HEALTH_CONSENT_VERSION hæves
+  // (så alle bliver bedt om at bekræfte på ny ved næste appåbning), og først derefter opdateres felterne her. Er politikændringen
+  // kun en rettelse uden betydning for brugeren, opdateres kun datoen her (versionen røres ikke).
+  it("samtykketeksten, politikken og versionen hører sammen", () => {
+    const snapshot = { version: "2026-10-02", text: HEALTH_CONSENT_TEXT, policyUpdated: "13. oktober 2026" };
+    expect(privacy.updated).toBe(snapshot.policyUpdated);
     expect(HEALTH_CONSENT_VERSION).toBe(snapshot.version);
     expect(snapshot.text).toBe("Jeg giver udtrykkeligt samtykke til, at EatSafe behandler mine allergi-, intolerance- og andre helbredsoplysninger for at give mig personlige produktkontroller og advarsler.");
   });
