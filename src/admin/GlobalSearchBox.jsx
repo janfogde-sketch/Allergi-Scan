@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useRef, useEffect } from "react";
+import { useIsMobile } from "./useIsMobile.js";
 
 export default function GlobalSearchBox({
   globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
@@ -13,6 +14,16 @@ export default function GlobalSearchBox({
 }) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false); // mobil: søgningen åbner som egen visning
+  const inputRef = useRef(null);
+  useEffect(() => { if (sheetOpen) inputRef.current?.focus(); }, [sheetOpen]);
+  useEffect(() => {
+    if (!sheetOpen) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setSheetOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [sheetOpen]);
 
   useEffect(() => {
     const onClickOutside = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
@@ -27,27 +38,19 @@ export default function GlobalSearchBox({
   };
 
   const goToUser = (u) => {
-    setSection("users"); setUserSearch(u.name || u.email || ""); setOpen(false);
+    setSection("users"); setUserSearch(u.name || u.email || ""); setOpen(false); setSheetOpen(false);
   };
   const goToProduct = (p) => {
-    setSection("products"); setProductSearch(p.ean || p.name || ""); loadProducts(p.ean || p.name || ""); setOpen(false);
+    setSection("products"); setProductSearch(p.ean || p.name || ""); loadProducts(p.ean || p.name || ""); setOpen(false); setSheetOpen(false);
   };
-  const goToTicket = () => { setSection("tickets"); setOpen(false); };
+  const goToTicket = () => { setSection("tickets"); setOpen(false); setSheetOpen(false); };
 
   const total = globalSearchResults
     ? globalSearchResults.users.length + globalSearchResults.products.length + globalSearchResults.tickets.length
     : 0;
 
-  return (
-    <div ref={boxRef} style={{ position: "relative", width: 320 }}>
-      <form onSubmit={submit}>
-        <input className="admin-search" placeholder="Søg brugere, produkter, tickets…" style={{ width: "100%" }}
-          value={globalSearch}
-          onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }}
-          onFocus={() => { if (globalSearchResults) setOpen(true); }} />
-      </form>
-      {open && (
-        <div className="admin-modal" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 380, maxHeight: 420, overflowY: "auto", padding: 12, zIndex: 50 }}>
+  const resultsBody = (
+    <>
           {globalSearchLoading ? (
             <div className="admin-loading-row"><div className="admin-spinner" /> Søger…</div>
           ) : !globalSearchResults ? (
@@ -91,6 +94,43 @@ export default function GlobalSearchBox({
               )}
             </>
           )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <button type="button" className="admin-iconbtn" aria-label="Søg i admin" onClick={() => setSheetOpen(true)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path strokeLinecap="round" d="M20 20l-4-4"/></svg>
+        </button>
+        {sheetOpen && (
+          <div className="admin-search-sheet" role="dialog" aria-modal="true" aria-label="Søg i admin">
+            <div className="admin-search-sheet-bar">
+              <form onSubmit={(e) => { e.preventDefault(); runGlobalSearch(globalSearch); }}>
+                <input ref={inputRef} className="admin-search" style={{ width: "100%" }} placeholder="Søg brugere, produkter, tickets…" enterKeyHint="search"
+                  value={globalSearch}
+                  onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }} />
+              </form>
+              <button type="button" className="admin-btn admin-btn-ghost admin-touch" onClick={() => setSheetOpen(false)}>Luk</button>
+            </div>
+            <div className="admin-search-sheet-body">{resultsBody}</div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div ref={boxRef} style={{ position: "relative", width: 320 }}>
+      <form onSubmit={submit}>
+        <input className="admin-search" placeholder="Søg brugere, produkter, tickets…" style={{ width: "100%" }}
+          value={globalSearch}
+          onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }}
+          onFocus={() => { if (globalSearchResults) setOpen(true); }} />
+      </form>
+      {open && (
+        <div className="admin-modal" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 380, maxHeight: 420, overflowY: "auto", padding: 12, zIndex: 50 }}>
+          {resultsBody}
         </div>
       )}
     </div>

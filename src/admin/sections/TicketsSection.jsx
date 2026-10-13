@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 import { ticketReporter, ticketDevice } from "../../ticketReporter.js";
+import { useIsMobile } from "../useIsMobile.js";
+import ActionsMenu from "../ActionsMenu.jsx";
+import { statusPill } from "../statusTone.js";
 
 const TYPE_LABELS = { bug: "Fejl", ui: "Design", missing: "Mangler", content: "Indhold", crash: "Crash", suggestion: "Forslag" };
 const STATUS_LABELS = { open: "Åben", in_progress: "I gang", resolved: "Løst" };
-const STATUS_PILL = { open: "admin-pill-red", in_progress: "admin-pill-amber", resolved: "admin-pill-green" };
 
 // Bygger en færdig, indsætbar prompt til Claude Code pr. ticket — så admin
 // kan tage indholdet af en downloadet/kopieret ticket og smide det direkte
@@ -64,6 +66,45 @@ function exportOpenTickets(tickets) {
   a.click(); URL.revokeObjectURL(url);
 }
 
+// Kort titel + uddrag ud fra beskrivelsen (tickets har ingen egen titel): første linje/sætning er titlen, resten uddraget.
+export function ticketTitleParts(description) {
+  const text = String(description || "").trim().replace(/\r/g, "");
+  if (!text) return { title: "(ingen beskrivelse)", excerpt: "" };
+  const firstLine = text.split("\n")[0];
+  const m = firstLine.match(/^(.{20,90}?[.!?])(\s|$)/);
+  const title = m ? m[1] : (firstLine.length > 90 ? firstLine.slice(0, 87).trimEnd() + "…" : firstLine);
+  const rest = text.slice(title.length).replace(/^\s*[…]?\s*/, "").trim();
+  return { title, excerpt: rest };
+}
+
+function TicketCard({ t, onOpen, onStatus }) {
+  const { title, excerpt } = ticketTitleParts(t.description);
+  return (
+    <div className="admin-item-card" role="button" tabIndex={0} onClick={onOpen}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }}>
+      <div className="admin-item-title">{title}</div>
+      {excerpt && <div className="admin-item-excerpt">{excerpt}</div>}
+      <div className="admin-item-pills">
+        <span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span>
+        <span className={`admin-pill ${statusPill(t.status)}`}>{STATUS_LABELS[t.status] || t.status}</span>
+      </div>
+      <dl className="admin-item-facts">
+        <dt>Skærm</dt><dd>{t.context?.screen_label || t.context?.screen || "–"}</dd>
+        <dt>Dato</dt><dd>{new Date(t.created_at).toLocaleDateString("da-DK")}</dd>
+        <dt>Bruger</dt><dd>{ticketReporter(t)}</dd>
+      </dl>
+      <div className="admin-item-actions" onClick={(e) => e.stopPropagation()}>
+        <select value={t.status} aria-label={`Status for: ${title}`} onChange={(e) => onStatus(t, e.target.value)}
+          className={`admin-pill ${statusPill(t.status)}`} style={{ fontFamily: "var(--f)", border: "none", cursor: "pointer", minHeight: 36 }}>
+          {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => copyTicketPrompt(t)}>Kopiér prompt</button>
+        <span className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-hidden="true" onClick={onOpen}>Åbn</span>
+      </div>
+    </div>
+  );
+}
+
 // "Aktive" (standard) er åbne + i gang. Løst og Alle henter først de færdige tickets, når de åbnes.
 const TABS = ["active", "open", "in_progress", "resolved", "all"];
 const TAB_LABEL = { active: "Aktive", all: "Alle", ...STATUS_LABELS };
@@ -81,6 +122,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
     if (status === "resolved") { setNote(""); setClosing(true); setOpenTicket(t); return; }
     updateTicketStatus(t.id, status);
   };
+  const isMobile = useIsMobile();
   const filtered = adminTickets.filter(t => matchesTab(t, adminTicketFilter));
   const openCount = adminTickets.filter(t => t.status === "open").length;
 
@@ -91,36 +133,43 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <div className="admin-tabs" style={{ marginBottom: 0, border: "none" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        <div className="admin-tabs" style={{ marginBottom: 0, border: "none", flex: "1 1 auto", minWidth: 0 }}>
           {TABS.map(s => (
-            <button key={s} className={`admin-tab-btn${adminTicketFilter === s ? " active" : ""}`} onClick={() => setAdminTicketFilter(s)}>
+            <button key={s} className={`admin-tab-btn${adminTicketFilter === s ? " active" : ""}`} aria-pressed={adminTicketFilter === s} onClick={() => setAdminTicketFilter(s)}>
               {TAB_LABEL[s]}{needsDone(s) && !ticketsIncludeDone ? "" : ` (${adminTickets.filter(t => matchesTab(t, s)).length})`}
             </button>
           ))}
         </div>
-        {openCount > 0 && <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => exportOpenTickets(adminTickets)}>Download åbne + prompts ({openCount})</button>}
+        <ActionsMenu items={[
+          openCount > 0 && { label: `Download åbne + prompts (${openCount})`, hint: "Én tekstfil med alle åbne tickets som færdige prompts", onClick: () => { exportOpenTickets(adminTickets); showToast("Eksport gennemført", "success"); } },
+          { label: "Opdatér listen", onClick: () => loadTickets({ includeDone: ticketsIncludeDone }) },
+        ]} />
       </div>
 
-      <div className="admin-table-wrap">
-        {ticketsLoading ? (
-          <div className="admin-loading-row"><div className="admin-spinner" /> Henter tickets…</div>
-        ) : filtered.length === 0 ? (
-          <div className="admin-table-empty">Ingen tickets her</div>
-        ) : (
+      {ticketsLoading ? (
+        <div className="admin-loading-row"><div className="admin-spinner" /> Henter tickets…</div>
+      ) : filtered.length === 0 ? (
+        <div className="admin-table-empty">Ingen tickets her</div>
+      ) : isMobile ? (
+        <div className="admin-card-list">
+          {filtered.map(t => <TicketCard key={t.id} t={t} onOpen={() => openModal(t)} onStatus={pickStatus} />)}
+        </div>
+      ) : (
+        <div className="admin-table-wrap">
           <table className="admin-table">
             <thead><tr><th>Type</th><th>Beskrivelse</th><th>Bruger</th><th>Skærm</th><th>Dato</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {filtered.map(t => (
                 <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => openModal(t)}>
                   <td><span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span></td>
-                  <td style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.description}</td>
+                  <td style={{ maxWidth: 380, minWidth: 220 }}><div className="admin-item-excerpt" style={{ marginTop: 0, color: "var(--ink)", WebkitLineClamp: 3 }}>{t.description}</div></td>
                   <td>{ticketReporter(t)}</td>
                   <td>{t.context?.screen_label || t.context?.screen || "–"}</td>
-                  <td>{new Date(t.created_at).toLocaleDateString("da-DK")}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>{new Date(t.created_at).toLocaleDateString("da-DK")}</td>
                   <td onClick={e => e.stopPropagation()}>
                     <select value={t.status} onChange={e => pickStatus(t, e.target.value)}
-                      className={`admin-pill ${STATUS_PILL[t.status] || "admin-pill-neutral"}`}
+                      className={`admin-pill ${statusPill(t.status)}`}
                       style={{ fontFamily: "var(--f)", border: "none", cursor: "pointer" }}>
                       {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
@@ -132,8 +181,8 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
       {openTicket && (
         <div className="admin-modal-overlay" onClick={closeModal}>
