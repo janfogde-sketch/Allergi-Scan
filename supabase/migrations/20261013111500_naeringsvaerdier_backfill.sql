@@ -18,6 +18,7 @@ select p.id, p.ean, p.nutrition, now() as backed_up_at
      )
    );
 alter table public.products_nutrition_backup_20261013 enable row level security;
+revoke all on public.products_nutrition_backup_20261013 from public, anon, authenticated;
 
 -- 7 brugerindsendte produkter med gamle feltnavne og tekstværdier: oversæt til de nuværende nøgler.
 do $$
