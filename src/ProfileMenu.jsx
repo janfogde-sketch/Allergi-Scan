@@ -88,7 +88,7 @@ export default function ProfileMenu({ open, onClose, onNavigate, onOpenSafetyInf
     {
       label: "APP",
       items: [
-        ...(user?.role === "admin" ? [{ icon:"shield", label:"Admin panel", sub:"Godkend og administrér produkter", screen: SCREENS.ADMIN }] : []),
+        ...(user?.role === "admin" ? [{ icon:"shield", label:"Admin panel", sub:"Godkend og administrér produkter", action: () => { window.location.href = "/admin.html"; } }] : []),
         // Genåbner sikkerhedsinformationen manuelt (SafetyInfoModal) — erstatter
         // den tidligere permanente "Beta-information"-knap på Scan-forsiden,
         // som IKKE er genindført.
