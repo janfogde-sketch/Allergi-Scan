@@ -187,7 +187,7 @@ export default function AdminApp() {
       }
     >
       {section === "dashboard" && (
-        <DashboardSection adminStats={admin.adminStats} setSection={setSection} todos={todos.todos} admins={todos.admins}
+        <DashboardSection adminStats={admin.adminStats} setSection={setSection} todos={todos.todos} todosLoaded={todos.loaded} admins={todos.admins}
           openTodos={(preset) => { setTodoPreset({ id: Date.now(), ...preset }); setSection("todo"); }}
           openTickets={() => { admin.setAdminTicketFilter("open"); setSection("tickets"); }}
           openSubmissions={() => { admin.setSubmissionFilter("pending"); setSection("submissions"); }} />

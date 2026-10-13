@@ -186,6 +186,7 @@ export function betaOverview(list, admins = [], today = todayKey()) {
     high: open.filter((t) => t.priority === "high").length,
     unassigned: open.filter((t) => !t.assignee_id).length,
     noDue: open.filter((t) => !hasValidDue(t)).length,
+    highUnassigned: open.filter((t) => t.priority === "high" && !t.assignee_id).length,
     byAssignee: [...counts.entries()].map(([id, count]) => ({ id, name: personName(admins, id), count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "da")),
   };
 }
