@@ -30,6 +30,8 @@ import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
 import { attentionCount } from "./todoLogic.js";
 import { useClientErrors } from "./useClientErrors.js";
+import { useAuditLog } from "./useAuditLog.js";
+import AuditLogSection from "./sections/AuditLogSection.jsx";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
 
 export default function AdminApp() {
@@ -41,6 +43,7 @@ export default function AdminApp() {
   const admin = useAdmin(accessToken, userId, logout);
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
+  const auditLog = useAuditLog(accessToken);
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
@@ -106,6 +109,7 @@ export default function AdminApp() {
     if (section === "history") admin.loadRevisionLog();
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
+    if (section === "audit") auditLog.load();
     if (section === "ai-usage") aiUsage.load();
     if (section === "onboarding") onboardingFunnel.load();
     if (section === "todo") todos.load();
@@ -263,6 +267,7 @@ export default function AdminApp() {
         />
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
+      {section === "audit" && <AuditLogSection {...auditLog} />}
       {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
       {section === "onboarding" && <OnboardingFunnelSection {...onboardingFunnel} />}
       {section === "recalls" && <RecallsSection {...recalls} />}
