@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useIsMobile } from "../useIsMobile.js";
 import React, { useState } from "react";
 import { PRODUCT_ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
 import { apiCall, makeHeaders, extractENumbers, normalizeENumber, addENumberToText } from "../../helpers.js";
@@ -87,20 +88,21 @@ export default function SubmissionsSection({
 
   const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };
 
+  const isMobile = useIsMobile();
   const isPendingView = submissionFilter === "pending";
   const allSelected = isPendingView && submissions.length > 0 && submissions.every(s => selectedSubmissionIds.includes(s.id));
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <div className="admin-tabs" style={{ marginBottom: 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <div className="admin-tabs" style={{ marginBottom: 0, maxWidth: "100%" }}>
           {FILTERS.map(f => (
             <button key={f.val} className={`admin-tab-btn${submissionFilter === f.val ? " active" : ""}`}
               onClick={() => { setSubmissionFilter(f.val); loadSubmissions(f.val); clearSubmissionSelection(); }}>{f.label}</button>
           ))}
         </div>
         {isPendingView && selectedSubmissionIds.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>{selectedSubmissionIds.length} valgt</span>
             <button className="admin-btn admin-btn-primary admin-btn-sm" disabled={bulkActionLoading} onClick={bulkApproveSubmissions}>Godkend valgte</button>
             <button className="admin-btn admin-btn-danger admin-btn-sm" disabled={bulkActionLoading} onClick={bulkRejectSubmissions}>Afvis valgte</button>
@@ -109,6 +111,13 @@ export default function SubmissionsSection({
         )}
       </div>
 
+      {/* Mobil: tabeloverskriften (med "vælg alle") er skjult, når rækkerne vises som kort, så valget ligger her */}
+      {isMobile && isPendingView && submissions.length > 0 && (
+        <label className="admin-info-note" style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, cursor: "pointer" }}>
+          <input type="checkbox" style={{ width: 20, height: 20 }} checked={allSelected} onChange={e => selectAllSubmissions(e.target.checked ? submissions.map(s => s.id) : [])} />
+          Vælg alle ({submissions.length})
+        </label>
+      )}
       <div className="admin-table-wrap">
         {submissionsLoading ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter indsendelser…</div>

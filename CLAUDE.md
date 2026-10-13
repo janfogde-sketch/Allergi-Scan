@@ -31,7 +31,7 @@
   `helpers.js`). Ændres kravene i Supabase, ret `helpers.js` tilsvarende.
 - **Notifikationer** er live (push og mail slået til via `app_flags`; beskeder i appen påvirkes ikke af flagene). Detaljer, test-
   plan og rollback i `src/CONTEXT.md` §9 og `docs/notifikationer-testplan.md`.
-- **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle. **Responsivt (13. okt.):** på mobil (højst 820 px, `useIsMobile`) vises To do og Tickets som kort, på desktop som tabel; sekundære handlinger ligger i "Flere handlinger" (`ActionsMenu`), og opgave- og ticketstatus har fælles farver (`statusTone.js`, `docs/admin-statusser.md`). Kun én admin: mobilvenlig under 820 px, "Admin panel" i profilmenuen åbner den (Jan, 13. okt. 2026; den gamle mobil-admin er fjernet). Reference i
+- **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle. **Responsivt (13. okt.):** på mobil (højst 820 px, `useIsMobile`) vises To do og Tickets som kort, på desktop som tabel; sekundære handlinger ligger i "Flere handlinger" (`ActionsMenu`), og opgave- og ticketstatus har fælles farver (`statusTone.js`, `docs/admin-statusser.md`). Øvrige tabeller bliver til kort på mobil (`tableCards.js`: celler får `data-label`; `data-no-cards` på en tabel beholder den som tabel). Dashboardets døgn regnes i dansk tid (`statsLogic.js`); en scanning = `scan_history.found_via='scan'`, søgeåbninger tælles ikke med, og graferne har periodevalg 7/14/30 dage. Kun én admin: mobilvenlig under 820 px, "Admin panel" i profilmenuen åbner den (Jan, 13. okt. 2026; den gamle mobil-admin er fjernet). Reference i
   `src/CONTEXT.md` §2 og §10.
 
 ---
