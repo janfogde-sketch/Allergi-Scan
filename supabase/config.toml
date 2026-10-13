@@ -111,3 +111,6 @@ verify_jwt = true
 
 [functions.nutrition-backfill]
 verify_jwt = false
+
+[functions.nutrition-backfill-nemlig]
+verify_jwt = false
