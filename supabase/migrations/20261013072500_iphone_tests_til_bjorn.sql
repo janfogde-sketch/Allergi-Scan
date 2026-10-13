@@ -22,3 +22,19 @@ select '[Før beta] iPhone-test: Læs højt i Madpas og allergen-ikoner (hurtige
   from public.users b
  where lower(b.email) = 'bjangst@gmail.com'
    and not exists (select 1 from public.admin_todos where title like '%iPhone-test: Læs højt i Madpas%');
+
+insert into public.admin_todos (title, description, status, priority, track, assignee_id)
+select '[Før beta] iPhone-test: forbliver man logget ind efter lukning af appen (login-nøgle i sikker cookie)',
+       'Test på iPhone efter PR #649 (login-nøglen er flyttet fra let lagring til en sikker cookie): (1) Log ind. (2) Luk appen helt og åbn den igen; du skal stadig være logget ind. (3) Gentag næste dag. (4) Log ud, og tjek at du kommer til velkomstsiden. Meld "virker" eller fejl tilbage her.',
+       'todo', 'normal', 'test', b.id
+  from public.users b
+ where lower(b.email) = 'bjangst@gmail.com'
+   and not exists (select 1 from public.admin_todos where title like '%iPhone-test: forbliver man logget ind%');
+
+insert into public.admin_todos (title, description, status, priority, track, assignee_id)
+select '[Før beta] iPhone-test: Scan, Historik og Indkøbsliste efter opdeling af store filer',
+       'Test på iPhone efter PR #653-#658 (store filer er delt op, ingen ændring ønsket): Scan (kamera og "Indtast kode"), Historik og Indkøbsliste skal se ud og virke som før. Tjek også et scanningsresultat og at tilføje en vare til listen. Meld "virker" eller fejl tilbage her.',
+       'todo', 'normal', 'test', b.id
+  from public.users b
+ where lower(b.email) = 'bjangst@gmail.com'
+   and not exists (select 1 from public.admin_todos where title like '%iPhone-test: Scan, Historik og Indkøbsliste%');
