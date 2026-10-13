@@ -252,10 +252,13 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
-      const group = await callerFamilyGroup();
-      const { data: accessRows } = await supabase.from("shopping_list_access").select("list_id").eq("user_id", userId);
+      // De tre små opslag er uafhængige af hinanden og køres samtidig i stedet for efter hinanden.
+      const [group, { data: accessRows }, { data: hiddenRows }] = await Promise.all([
+        callerFamilyGroup(),
+        supabase.from("shopping_list_access").select("list_id").eq("user_id", userId),
+        supabase.from("shopping_list_hidden").select("list_id").eq("user_id", userId),
+      ]);
       const sharedListIds = (accessRows ?? []).map((r) => r.list_id);
-      const { data: hiddenRows } = await supabase.from("shopping_list_hidden").select("list_id").eq("user_id", userId);
       const hiddenIds = new Set((hiddenRows ?? []).map((r) => r.list_id));
 
       let query = supabase
@@ -279,17 +282,20 @@ Deno.serve(async (req) => {
       const rows = (lists ?? []).filter((l) => l.owner_id === userId || sharedListIds.includes(l.id) || !hiddenIds.has(l.id));
       const foreignOwnerIds = [...new Set(rows.filter((l) => l.owner_id !== userId).map((l) => l.owner_id))];
       const ownIds = rows.filter((l) => l.owner_id === userId).map((l) => l.id);
-      const { data: owners } = foreignOwnerIds.length
-        ? await supabase.from("users").select("id, name").in("id", foreignOwnerIds) : { data: [] };
-      const { data: ownAccess } = ownIds.length
-        ? await supabase.from("shopping_list_access").select("list_id, users(name)").in("list_id", ownIds) : { data: [] };
+      const [{ data: owners }, { data: ownAccess }, withImages] = await Promise.all([
+        foreignOwnerIds.length ? supabase.from("users").select("id, name").in("id", foreignOwnerIds) : Promise.resolve({ data: [] }),
+        ownIds.length ? supabase.from("shopping_list_access").select("list_id, users(name)").in("list_id", ownIds) : Promise.resolve({ data: [] }),
+        // Ét samlet opslag af manglende varebilleder for alle lister (før: ét opslag pr. liste, efter hinanden).
+        withProductImages(rows.flatMap((l) => l.shopping_list_items ?? [])),
+      ]);
       const ownerName = new Map((owners ?? []).map((o) => [o.id, firstName(o.name)]));
       const sharedWith = new Map<string, string[]>();
       for (const a of ownAccess ?? []) {
         const u = Array.isArray(a.users) ? a.users[0] : a.users;
         sharedWith.set(a.list_id, [...(sharedWith.get(a.list_id) ?? []), firstName(u?.name) ?? "En person"]);
       }
-      for (const l of rows) l.shopping_list_items = await withProductImages(l.shopping_list_items);
+      const imageById = new Map((withImages as { id: string; image_url?: string | null }[]).map((i) => [i.id, i.image_url]));
+      for (const l of rows) l.shopping_list_items = (l.shopping_list_items ?? []).map((i: { id: string; image_url?: string | null }) => ({ ...i, image_url: imageById.get(i.id) ?? i.image_url }));
       const enriched = rows.map((l) => l.owner_id === userId
         ? { ...l, shared_with: sharedWith.get(l.id) ?? [], via_access: false }
         : { ...l, share_link: null, owner_name: ownerName.get(l.owner_id) ?? null, via_access: sharedListIds.includes(l.id) });

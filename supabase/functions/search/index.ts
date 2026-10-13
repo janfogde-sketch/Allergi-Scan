@@ -10,6 +10,14 @@ const normalize = (s: string) => s.toLowerCase()
   .replace(/\s+/g, " ")
   .trim();
 
+// Delt søgecache pr. serverinstans: kort levetid, fordi populariteten ændrer sig langsomt og kun brugere uden eget valg bruger den.
+const SEARCH_CACHE_MS = 3 * 60 * 1000;
+const SEARCH_CACHE_MAX = 300;
+// deno-lint-ignore no-explicit-any
+const searchCache = new Map<string, { at: number; result: any }>();
+// deno-lint-ignore no-explicit-any
+const searchInflight = new Map<string, Promise<{ data: any; error: any }>>();
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -115,6 +123,7 @@ Deno.serve(async (req) => {
   // ordet (fx et rent smags-/brandnavn som "KiMs Flødeost & Peberrod").
   // Hvem søger? Bruges kun til den personlige rangeringsboost — en
   // ikke-autoriseret søgning fungerer stadig fint, bare uden den boost.
+  // getClaims() tjekker loginnet lokalt (signatur og udløb) uden et ekstra kald til login-tjenesten.
   let callerId: string | null = null;
   const authHeader = req.headers.get("Authorization");
   if (authHeader) {
@@ -123,16 +132,52 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: { user } } = await userClient.auth.getUser();
-    callerId = user?.id ?? null;
+    try {
+      const { data: claims } = await userClient.auth.getClaims(authHeader.replace(/^Bearer\s+/i, ""));
+      callerId = (claims?.claims?.sub as string | undefined) ?? null;
+    } catch {
+      const { data: { user } } = await userClient.auth.getUser();
+      callerId = user?.id ?? null;
+    }
   }
 
-  const { data: result, error } = await supabase.rpc("search_products", {
+  // Den personlige boost kræver, at brugeren selv har valgt noget for netop dette søgeord. Har brugeren ikke det, er svaret
+  // det samme for alle, og så deles det i få minutter (samme søgning på samme tid regnes kun ud én gang pr. serverinstans).
+  let personal = false;
+  if (callerId) {
+    const { data: mine } = await supabase.from("search_selections").select("id").eq("user_id", callerId).eq("query_norm", qNorm).limit(1);
+    personal = (mine?.length ?? 0) > 0;
+  }
+  const cacheKey = `${qNorm}|${offset}`;
+  const runSearch = () => supabase.rpc("search_products", {
     p_q_norm: qNorm,
-    p_user_id: callerId,
+    p_user_id: personal ? callerId : null,
     p_offset: offset,
     p_limit: PAGE_SIZE,
   });
+  let result: { products?: unknown[]; hasMore?: boolean; total?: number } | null = null;
+  let error: { message: string } | null = null;
+  if (personal) {
+    ({ data: result, error } = await runSearch());
+  } else {
+    const now = Date.now();
+    const hit = searchCache.get(cacheKey);
+    if (hit && now - hit.at < SEARCH_CACHE_MS) {
+      result = hit.result;
+    } else {
+      let pending = searchInflight.get(cacheKey);
+      if (!pending) {
+        pending = (async () => runSearch())().finally(() => searchInflight.delete(cacheKey));
+        searchInflight.set(cacheKey, pending);
+      }
+      const r = await pending;
+      result = r.data; error = r.error;
+      if (!error && result) {
+        if (searchCache.size >= SEARCH_CACHE_MAX) searchCache.delete(searchCache.keys().next().value as string);
+        searchCache.set(cacheKey, { at: Date.now(), result });
+      }
+    }
+  }
 
   if (error) {
     return new Response(JSON.stringify({ success: false, error: error.message }), {
