@@ -13,6 +13,7 @@ begin;
 do $$
 declare
   covered text[] := array[
+    'admin_audit_log.admin_id', -- fremmednøgle on delete set null; loggen slettes efter 12 mdr. (cleanup_notifications)
     'admin_todo_comments.author_id','admin_todos.assignee_id','admin_todos.completed_by','admin_todos.created_by',
     'api_usage.user_id','client_errors.user_id','consent_log.user_id','custom_allergens.created_by',
     'families.created_by','family_invites.accepted_by','family_invites.invited_by','family_invites.invitee_email',
