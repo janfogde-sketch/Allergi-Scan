@@ -35,22 +35,42 @@ export function dueInfo(todo, today = todayKey()) {
   return { label, overdue: isOverdue(todo, today) };
 }
 
-/** Åbne først (i gang → skal laves → venter), derefter prioritet, frist og nyeste; færdige nederst, senest afsluttet først. */
-export function sortTodos(list) {
+export const SORT_MODES = { smart: "Smart", priority: "Prioritet", due: "Frist", updated: "Senest opdateret" };
+
+const cmpDue = (a, b) => {
+  if (a.due_date === b.due_date) return 0;
+  if (!a.due_date) return 1;
+  if (!b.due_date) return -1;
+  return a.due_date < b.due_date ? -1 : 1;
+};
+const cmpCreated = (a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+
+/** Trin i standardsorteringen: 0 høj prioritet og (overskredet eller venter), 1 overskredet frist, 2 høj prioritet, 3 kommende frist, 4 resten. */
+export function urgencyTier(t, today = todayKey()) {
+  const overdue = isOverdue(t, today);
+  if (t.priority === "high" && (overdue || t.status === "blocked")) return 0;
+  if (overdue) return 1;
+  if (t.priority === "high") return 2;
+  if (t.due_date) return 3;
+  return 4;
+}
+
+/**
+ * Åbne opgaver først, færdige nederst (senest afsluttet først). Åbne sorteres efter mode:
+ * smart (standard): urgencyTier, derefter i gang → skal laves → venter, frist og nyeste;
+ * priority: prioritet, derefter frist; due: frist (uden frist sidst); updated: senest ændret først.
+ */
+export function sortTodos(list, mode = "smart", today = todayKey()) {
   return [...list].sort((a, b) => {
     const ad = a.status === "done", bd = b.status === "done";
     if (ad !== bd) return ad ? 1 : -1;
     if (ad && bd) return String(b.completed_at ?? "").localeCompare(String(a.completed_at ?? ""));
-    const s = STATUS_RANK[a.status] - STATUS_RANK[b.status];
-    if (s) return s;
-    const p = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
-    if (p) return p;
-    if (a.due_date !== b.due_date) {
-      if (!a.due_date) return 1;
-      if (!b.due_date) return -1;
-      return a.due_date < b.due_date ? -1 : 1;
-    }
-    return String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+    if (mode === "updated") return String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""));
+    if (mode === "due") return cmpDue(a, b) || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpCreated(a, b);
+    if (mode === "priority") return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpDue(a, b) || cmpCreated(a, b);
+    const tier = urgencyTier(a, today) - urgencyTier(b, today);
+    if (tier) return tier;
+    return STATUS_RANK[a.status] - STATUS_RANK[b.status] || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpDue(a, b) || cmpCreated(a, b);
   });
 }
 
@@ -71,7 +91,7 @@ function matchesView(todo, view, userId) {
  * due: "" = alle, "overdue" = frist overskredet, "week" = frist inden for 7 dage, "none" = uden frist.
  */
 export function filterTodos(list, filters, userId, today = todayKey()) {
-  const { view = "open", track = "", assigneeId = "", query = "", priority = "", status = "", due = "" } = filters;
+  const { view = "open", track = "", assigneeId = "", query = "", priority = "", status = "", due = "", admins = [] } = filters;
   const q = query.trim().toLowerCase();
   const weekEnd = (() => { const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 7); return d.toISOString().slice(0, 10); })();
   return list.filter((t) => {
@@ -84,7 +104,7 @@ export function filterTodos(list, filters, userId, today = todayKey()) {
     if (due === "week" && !(t.due_date && t.due_date <= weekEnd && t.status !== "done")) return false;
     if (assigneeId === "none" && t.assignee_id) return false;
     if (assigneeId && assigneeId !== "none" && t.assignee_id !== assigneeId) return false;
-    if (q && !`${t.title} ${t.description ?? ""}`.toLowerCase().includes(q)) return false;
+    if (q && !`${t.title} ${t.description ?? ""} ${t.link ?? ""} ${TRACK_LABELS[t.track] ?? ""} ${personName(admins, t.assignee_id)}`.toLowerCase().includes(q)) return false;
     return true;
   });
 }
@@ -117,6 +137,40 @@ export function personName(admins, id) {
   return a ? (a.name || a.email || "Ukendt") : "Ukendt";
 }
 
+/**
+ * Afsender af en kommentar. Kommentarer skrevet af systemet eller via migrationer har ingen afsender (author_id er tom): "Uden afsender".
+ * En afsender, der ikke længere er administrator eller er slettet: "Tidligere administrator". Aldrig et opdigtet navn.
+ */
+export function authorName(admins, id) {
+  if (!id) return "Uden afsender";
+  const a = admins.find((x) => x.id === id);
+  return a ? (a.name || a.email || "Tidligere administrator") : "Tidligere administrator";
+}
+
+/** "14. okt. 2026, 08:15" i dansk tid. */
+export function fmtDanishDateTime(value) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("da-DK", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+/**
+ * Overblik over åbne opgaver før lancering. Kun tal, der kan læses direkte af opgavedata: ingen procent eller fremdrift.
+ * blocked = status "Venter"; byAssignee tæller åbne opgaver pr. administrator (mest først), unassigned = uden ansvarlig.
+ */
+export function betaOverview(list, admins = [], today = todayKey()) {
+  const open = list.filter(isOpen);
+  const counts = new Map();
+  for (const t of open) if (t.assignee_id) counts.set(t.assignee_id, (counts.get(t.assignee_id) || 0) + 1);
+  return {
+    open: open.length,
+    blocked: open.filter((t) => t.status === "blocked").length,
+    overdue: open.filter((t) => isOverdue(t, today)).length,
+    high: open.filter((t) => t.priority === "high").length,
+    unassigned: open.filter((t) => !t.assignee_id).length,
+    byAssignee: [...counts.entries()].map(([id, count]) => ({ id, name: personName(admins, id), count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "da")),
+  };
+}
+
 /** Færdig, indsætbar prompt til en Claude Code-session. */
 export function buildTodoPrompt(todo, admins = [], comments = []) {
   const due = todo.due_date ? `Frist: ${todo.due_date}` : "Ingen frist";
@@ -130,7 +184,7 @@ export function buildTodoPrompt(todo, admins = [], comments = []) {
     ``,
     `Beskrivelse:`,
     todo.description || "(ingen)",
-    ...(comments.length ? [``, `Kommentarer:`, ...comments.map((c) => `- ${personName(admins, c.author_id) || "Ukendt"}: ${c.body}`)] : []),
+    ...(comments.length ? [``, `Kommentarer:`, ...comments.map((c) => `- ${authorName(admins, c.author_id)}: ${c.body}`)] : []),
     ``,
     `Læs CLAUDE.md, og løs opgaven. Er den stor eller risikabel (database, sikkerhed, politikker, flere skærme eller filer), så foreslå først en plan, og vent på min bekræftelse, før du retter. Push først efter mit ja.`,
   ].join("\n");

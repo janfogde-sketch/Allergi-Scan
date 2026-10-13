@@ -126,8 +126,44 @@ textarea.admin-textarea{width:100%;padding:9px 12px;border:1px solid var(--borde
 select.admin-select{padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:var(--f);font-size:13px;background:var(--surface);color:var(--ink);max-width:100%;}
 select.admin-select:focus,.admin-field input[type=date]:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green);}
 .admin-field select.admin-select{width:100%;padding:9px 12px;font-size:13.5px;}
+.admin-modal{overflow-x:hidden;min-width:0;overscroll-behavior:contain;}
+.todo-panel{display:flex;flex-direction:column;padding:0;overflow:hidden;}
+.todo-panel-head{flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.todo-panel-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.todo-panel-foot{flex:0 0 auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);}
+.todo-panel-foot .todo-spacer{margin-left:auto;}
+.todo-panel .admin-field,.todo-panel .admin-field *,.todo-comment,.todo-comment *{min-width:0;max-width:100%;}
+.todo-panel .admin-field select.admin-select,.todo-panel textarea.admin-textarea,.todo-panel .admin-field input{width:100%;}
+.todo-date-row{display:flex;gap:8px;align-items:stretch;}
+.todo-date-row input{flex:1 1 auto;}
+.todo-comment-body{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-size:13px;line-height:1.45;margin-top:3px;}
+.todo-comment.fresh{border-color:var(--green);background:var(--green-selected-bg);}
+.todo-confirm{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;}
+.todo-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 6px;margin-bottom:6px;-webkit-overflow-scrolling:touch;}
+.todo-chips::-webkit-scrollbar{display:none;}
+.todo-chip{flex:0 0 auto;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--ink2);background:var(--surface);border:1px solid var(--border2);border-radius:999px;padding:6px 12px;min-height:36px;cursor:pointer;white-space:nowrap;}
+.todo-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
+.todo-chip:focus-visible,.todo-check:focus-visible,.admin-item-card:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+.todo-check{position:relative;}
+.todo-check::after{content:"";position:absolute;inset:-11px;}
+.todo-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;}
+.todo-meta-line{font-size:12.5px;color:var(--muted);margin-top:6px;overflow-wrap:anywhere;}
+.todo-meta-line strong{color:var(--ink2);font-weight:600;}
+.todo-meta-line .late{color:var(--red);font-weight:800;}
+.admin-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--border2);background:var(--surface);color:var(--ink2);cursor:pointer;padding:0;}
+.admin-icon-btn:hover{border-color:var(--green);color:var(--green);}
+.admin-icon-btn:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+.todo-undo{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:120;display:flex;align-items:center;gap:12px;background:var(--ink);color:#fff;border-radius:12px;padding:8px 8px 8px 16px;font-size:13px;max-width:calc(100vw - 32px);box-shadow:var(--sh);}
+.todo-undo button{background:none;border:none;color:#fff;font-family:var(--f);font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer;min-height:44px;padding:0 12px;}
+.beta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;}
+.beta-cell{background:var(--surface2);border-radius:10px;padding:10px 12px;text-align:left;border:none;font-family:var(--f);}
+.beta-cell b{display:block;font-size:20px;font-weight:800;line-height:1.1;}
+.beta-cell span{font-size:11.5px;color:var(--muted);}
+button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px solid var(--green);outline-offset:2px;}
+.admin-axis{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-size:10px;color:var(--muted);height:72px;padding-right:6px;min-width:22px;}
 .todo-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;}
-.todo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 14px;}
+.todo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:0 14px;}
+.todo-grid>*{min-width:0;}
 .todo-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:var(--surface);color:#fff;font-size:12px;font-weight:900;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}
 .todo-check:hover{border-color:var(--green);}
 .todo-check.done{background:var(--green);border-color:var(--green);}
@@ -197,8 +233,12 @@ select.admin-select:focus,.admin-field input[type=date]:focus{outline:2px solid 
   table.admin-table[data-no-cards]{min-width:560px;}
   .admin-table-wrap:has(table.admin-table[data-no-cards]){overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--surface);border:1px solid var(--border);border-radius:12px;}
   .admin-table-empty{background:var(--surface);border:1px solid var(--border);border-radius:12px;}
-  .admin-modal-overlay{padding:0;align-items:flex-end;}
+  .admin-modal-overlay{padding:0;align-items:flex-end;overflow:hidden;}
   .admin-modal{max-width:none;max-height:92vh;border-radius:14px 14px 0 0;padding:18px 16px;}
+  .admin-modal.todo-panel{width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding:0;}
+  .admin-touch{min-height:44px;}
+  .todo-chip{min-height:44px;}
+  .todo-panel .admin-btn{min-height:44px;}
   .admin-search{max-width:none;}
   .admin-content > div[style*="display: flex"]{flex-wrap:wrap;row-gap:8px;}
   .admin-content > div[style*="display: flex"] > .admin-tabs{flex:1 1 100%;max-width:100%;min-width:0;}

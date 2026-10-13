@@ -31,6 +31,7 @@ const NAV_GROUPS = [
   { id: "system", label: "Drift", items: [
     { id: "errors",      icon: "warning",  label: "Fejl" },
     { id: "ai-usage",    icon: "chart",    label: "AI-forbrug" },
+    { id: "audit",       icon: "clock",    label: "Aktivitetslog" },
   ] },
 ];
 const NAV_ITEMS = NAV_GROUPS.flatMap(g => g.items);

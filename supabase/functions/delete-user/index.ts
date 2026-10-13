@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
 
     const { uid } = await req.json();
     if (!uid) throw new Error("uid er påkrævet");
+    let adminActorId: string | null = null; // sættes når en admin sletter en andens konto (logges i admin_audit_log)
 
     if (!isSystemCall) {
       const userClient = createClient(
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
         const { data: callerProfile } = await supabase
           .from("users").select("role").eq("id", caller.id).single();
         if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
+        adminActorId = caller.id;
       }
     }
 
@@ -113,6 +115,13 @@ Deno.serve(async (req) => {
     // Slet fra auth.users (kræver service role)
     const { error: authError } = await supabase.auth.admin.deleteUser(uid);
     if (authError) throw new DeleteStepError("auth.users", authError.message);
+
+    // Adminlog: kun handlingen og det slettede bruger-id (ingen e-mail eller navn). Fejl her må ikke få sletningen til at se fejlet ud.
+    if (adminActorId) {
+      const { error: auditError } = await supabase.from("admin_audit_log")
+        .insert({ admin_id: adminActorId, action: "bruger_slettet", target_table: "users", target_id: uid });
+      if (auditError) console.error(`delete-user: adminlog fejlede: ${auditError.message}`);
+    }
 
     // P4: slettekvittering — først EFTER en gennemført sletning, og kun når mailkanalen er slået til
     // (notifications_email_enabled, eller brugeren står på testlisten). Fejl her må aldrig få selve sletningen til at se fejlet ud.

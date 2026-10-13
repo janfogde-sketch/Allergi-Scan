@@ -30,7 +30,9 @@ describe("opgaver: mobilkort og desktoptabel", () => {
     expect(screen.getByText("Høj prioritet")).toBeTruthy();
     expect(screen.getByText("Backend")).toBeTruthy();
     expect(screen.getByText("Skal laves")).toBeTruthy();
-    expect(screen.getByText("Ikke fastsat")).toBeTruthy();
+    expect(screen.getByText("Jan")).toBeTruthy();
+    expect(container.querySelector(".todo-meta-line").textContent).not.toContain("Frist"); // uden frist vises ingen fristtekst
+    expect(screen.queryByText("Åbn opgave")).toBeNull(); // hele kortet åbner opgaven
     fireEvent.click(container.querySelector(".admin-item-card"));
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
@@ -53,18 +55,18 @@ describe("opgaver: mobilkort og desktoptabel", () => {
     expect(screen.getByRole("dialog", { name: "Ny opgave" })).toBe(dlg); // blev åben, fordi oprettelsen fejlede
     expect(screen.getByLabelText("Titel").value).toBe("Min opgave");
   });
-  it("filtre kan åbnes, tælles og nulstilles; forklaringen ligger bag et infoikon", () => {
+  it("hurtigfiltre kan kombineres, tælles og nulstilles; forklaringen ligger bag et infoikon", () => {
     setMobile(false);
-    render(<TodoSection {...todoBase} todos={[todo(), todo({ id: "t2", title: "Lav", priority: "low" })]} />);
-    expect(screen.queryByRole("note")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Sådan fungerer opgaver/ }));
-    expect(screen.getByRole("note")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Filtre" }));
-    fireEvent.change(screen.getByLabelText("Filtrér på prioritet"), { target: { value: "low" } });
-    expect(screen.queryByText(/Byg Android-app/)).toBeNull();
+    render(<TodoSection {...todoBase} todos={[todo(), todo({ id: "t2", title: "Lavprio-opgave", priority: "low" })]} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Sådan fungerer opgaver" }));
+    expect(screen.getByRole("dialog", { name: "Sådan fungerer opgaver" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
+    fireEvent.click(screen.getByRole("button", { name: /Høj prioritet/ }));
+    expect(screen.queryByText("Lavprio-opgave")).toBeNull();
     expect(screen.getByRole("button", { name: "Filtre (1)" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Nulstil" }));
-    expect(screen.getByText(/Byg Android-app/)).toBeTruthy();
+    expect(screen.getByText("Lavprio-opgave")).toBeTruthy();
   });
 });
 

@@ -30,6 +30,8 @@ import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
 import { attentionCount } from "./todoLogic.js";
 import { useClientErrors } from "./useClientErrors.js";
+import { useAuditLog } from "./useAuditLog.js";
+import AuditLogSection from "./sections/AuditLogSection.jsx";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
 
 export default function AdminApp() {
@@ -41,6 +43,8 @@ export default function AdminApp() {
   const admin = useAdmin(accessToken, userId, logout);
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
+  const auditLog = useAuditLog(accessToken);
+  const [todoPreset, setTodoPreset] = useState(null);
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
@@ -106,6 +110,7 @@ export default function AdminApp() {
     if (section === "history") admin.loadRevisionLog();
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
+    if (section === "audit") auditLog.load();
     if (section === "ai-usage") aiUsage.load();
     if (section === "onboarding") onboardingFunnel.load();
     if (section === "todo") todos.load();
@@ -180,7 +185,8 @@ export default function AdminApp() {
       }
     >
       {section === "dashboard" && (
-        <DashboardSection adminStats={admin.adminStats} setSection={setSection} />
+        <DashboardSection adminStats={admin.adminStats} setSection={setSection} todos={todos.todos} admins={todos.admins}
+          openTodos={(preset) => { setTodoPreset({ id: Date.now(), ...preset }); setSection("todo"); }} />
       )}
       {section === "users" && (
         <UsersSection
@@ -263,12 +269,13 @@ export default function AdminApp() {
         />
       )}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
+      {section === "audit" && <AuditLogSection {...auditLog} />}
       {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
       {section === "onboarding" && <OnboardingFunnelSection {...onboardingFunnel} />}
       {section === "recalls" && <RecallsSection {...recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && (
-        <TodoSection {...todos} userId={userId}
+        <TodoSection {...todos} userId={userId} preset={todoPreset}
           onOpenTicket={(ticketId) => { setSection("tickets"); admin.openTicketById(ticketId); }} />
       )}
       {section === "family" && (

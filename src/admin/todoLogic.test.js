@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { todayKey, isOverdue, dueInfo, sortTodos, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
+import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
 
 const T = (o) => ({ id: "x", title: "t", description: "", status: "todo", priority: "normal", track: "backend", assignee_id: null, due_date: null, created_at: "2026-10-01T08:00:00Z", completed_at: null, ...o });
 const TODAY = "2026-10-01";
@@ -36,7 +36,30 @@ describe("sortTodos", () => {
       T({ id: "done-new", status: "done", completed_at: "2026-09-30T10:00:00Z" }),
       T({ id: "high-nodate", priority: "high" }),
     ];
-    expect(sortTodos(list).map((t) => t.id)).toEqual(["doing", "high-soon", "high-late", "high-nodate", "low", "blocked", "done-new", "done-old"]);
+    // Smart: høj prioritet + venter først, så høj prioritet (frist stigende), så resten (i gang før skal laves); færdige nederst.
+    expect(sortTodos(list, "smart", "2026-10-01").map((t) => t.id)).toEqual(["blocked", "high-soon", "high-late", "high-nodate", "doing", "low", "done-new", "done-old"]);
+  });
+  it("overskredne frister kommer før høj prioritet uden frist, og høj + overskredet allerførst", () => {
+    const today = "2026-10-10";
+    const list = [
+      T({ id: "high", priority: "high" }),
+      T({ id: "late-normal", due_date: "2026-10-05" }),
+      T({ id: "late-high", priority: "high", due_date: "2026-10-05" }),
+      T({ id: "soon", due_date: "2026-10-20" }),
+      T({ id: "plain" }),
+    ];
+    expect(sortTodos(list, "smart", today).map((t) => t.id)).toEqual(["late-high", "late-normal", "high", "soon", "plain"]);
+    expect(urgencyTier(list[2], today)).toBe(0);
+  });
+  it("manuel sortering: prioritet, frist og senest opdateret", () => {
+    const list = [
+      T({ id: "a", priority: "low", due_date: "2026-10-01", updated_at: "2026-10-03T00:00:00Z" }),
+      T({ id: "b", priority: "high", updated_at: "2026-10-01T00:00:00Z" }),
+      T({ id: "c", priority: "normal", due_date: "2026-10-05", updated_at: "2026-10-02T00:00:00Z" }),
+    ];
+    expect(sortTodos(list, "priority").map((t) => t.id)).toEqual(["b", "c", "a"]);
+    expect(sortTodos(list, "due").map((t) => t.id)).toEqual(["a", "c", "b"]);
+    expect(sortTodos(list, "updated").map((t) => t.id)).toEqual(["a", "c", "b"]);
   });
   it("ændrer ikke den oprindelige liste", () => {
     const list = [T({ id: "b", priority: "low" }), T({ id: "a", priority: "high" })];
@@ -124,5 +147,39 @@ describe("flere filtre på opgaver", () => {
   it("tæller aktive filtre (ikke visning eller søgeord)", () => {
     expect(activeFilterCount({})).toBe(0);
     expect(activeFilterCount({ track: "design", due: "overdue" })).toBe(2);
+  });
+});
+
+describe("kommentarafsender, datoformat og betaoverblik", () => {
+  const admins = [{ id: "u1", name: "Jan", email: "j@x.dk" }, { id: "u2", name: "", email: "b@x.dk" }];
+  it("authorName opfinder aldrig et navn", () => {
+    expect(authorName(admins, null)).toBe("Uden afsender");
+    expect(authorName(admins, "u1")).toBe("Jan");
+    expect(authorName(admins, "u2")).toBe("b@x.dk");
+    expect(authorName(admins, "slettet")).toBe("Tidligere administrator");
+  });
+  it("datoer vises i dansk tid med år", () => {
+    expect(fmtDanishDateTime("2026-10-14T06:15:00Z")).toMatch(/14\. okt\.? 2026/);
+    expect(fmtDanishDateTime("2026-10-14T06:15:00Z")).toMatch(/08[.:]15/);
+    expect(fmtDanishDateTime(null)).toBe("");
+  });
+  it("betaOverview tæller kun åbne opgaver og giver ingen procent", () => {
+    const list = [
+      T({ id: "1", assignee_id: "u1", priority: "high", due_date: "2026-10-01" }),
+      T({ id: "2", assignee_id: "u1", status: "blocked" }),
+      T({ id: "3" }),
+      T({ id: "4", status: "done", assignee_id: "u2" }),
+    ];
+    const o = betaOverview(list, admins, "2026-10-10");
+    expect(o).toMatchObject({ open: 3, blocked: 1, overdue: 1, high: 1, unassigned: 1 });
+    expect(o.byAssignee).toEqual([{ id: "u1", name: "Jan", count: 2 }]);
+    expect(Object.keys(o)).not.toContain("percent");
+  });
+  it("søgning finder også spor, ansvarlig og link", () => {
+    const list = [T({ id: "x", title: "Abc", track: "design", assignee_id: "u1", link: "https://github.com/pull/9" })];
+    const f = (query) => filterTodos(list, { view: "all", query, admins }, "u1").map((t) => t.id);
+    expect(f("design")).toEqual(["x"]);
+    expect(f("jan")).toEqual(["x"]);
+    expect(f("pull/9")).toEqual(["x"]);
   });
 });
