@@ -53,18 +53,19 @@ export const lastDays = (/** @type {{date:string,count:number}[]} */ series, /**
 /** Dansk talformat: 20182 -> "20.182". */
 export const fmtNum = (/** @type {unknown} */ v) => (typeof v === "number" && Number.isFinite(v) ? v.toLocaleString("da-DK") : "–");
 
-/** Rund op til en "pæn" øvre grænse (1, 2, 5, 10, 20, 50 …) til y-aksen, så søjler og skala stemmer overens. */
-export function niceMax(/** @type {number} */ max) {
-  if (!(max > 0)) return 1;
-  const pow = Math.pow(10, Math.floor(Math.log10(max)));
-  for (const m of [1, 2, 5, 10]) if (max <= m * pow) return m * pow;
-  return 10 * pow;
-}
-
-/** Y-aksens mærker oppefra og ned: øvre grænse, midten (hvis et helt tal) og 0. */
-export function axisTicks(/** @type {number} */ top) {
-  const mid = top / 2;
-  return Number.isInteger(mid) && mid > 0 ? [top, mid, 0] : [top, 0];
+/**
+ * Y-akse tilpasset de faktiske værdier: et naturligt trin (1, 2, 4, 5, 10 × 10^n), så skalaen højst runder lidt op over maksimum,
+ * og mærkerne er hele tal (ca. tre intervaller). Mærkerne står oppefra og ned, sidst 0. Uden data: 1 og 0.
+ */
+export function axisScale(/** @type {number} */ max) {
+  if (!(max > 0)) return { top: 1, ticks: [1, 0] };
+  const raw = Math.max(1, max / 3);
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 4, 5, 10].map((m) => m * pow).find((st) => st >= raw) || 10 * pow;
+  const top = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = top; v >= 0; v -= step) ticks.push(v);
+  return { top, ticks };
 }
 
 /** Hvilke søjler får en datoetiket: højst `maxLabels`, altid første og sidste, så etiketterne ikke overlapper på små skærme. */

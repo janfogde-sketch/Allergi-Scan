@@ -2,17 +2,45 @@
 // Redigering af én opgave (eller oprettelse af en ny). På mobil et fuldskærmspanel med fast header og fast bundbjælke (Gem/Slet
 // ligger over safe area), på desktop den eksisterende dialog. Indholdet scroller inde i panelet, og baggrunden er låst, mens det er åbent.
 import React, { useState, useEffect, useRef } from "react";
-import { showToast } from "../../SharedComponents.jsx";
+import { showToast, Icon } from "../../SharedComponents.jsx";
 import ActionsMenu from "../ActionsMenu.jsx";
 import { useIsMobile } from "../useIsMobile.js";
 import {
-  STATUS_LABELS, PRIORITY_LABELS, TRACK_LABELS, personName, authorName, fmtDanishDateTime, buildTodoPrompt,
+  STATUS_LABELS, PRIORITY_LABELS, TRACK_LABELS, personName, authorName, fmtDanishDateTime, fmtDanishDate, isLongComment, buildTodoPrompt,
 } from "../todoLogic.js";
 
 export const isHttpUrl = (s) => /^https?:\/\/\S+$/i.test(s);
 
 function Select({ id, value, onChange, children }) {
   return <select id={id} className="admin-select" value={value} onChange={(e) => onChange(e.target.value)}>{children}</select>;
+}
+
+// Titlen er et tekstområde, der vokser med indholdet, så lange titler kan ses i sin helhed uden vandret rulning.
+function GrowingTitle({ id, value, onChange, invalid, autoFocus }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+  return (
+    <textarea id={id} ref={ref} className="admin-textarea todo-title-input" rows={1} value={value} maxLength={200} aria-invalid={invalid} autoFocus={autoFocus}
+      onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+      onChange={(e) => onChange(e.target.value.replace(/\s*\n+\s*/g, " "))} />
+  );
+}
+
+// Lang kommentar vises med de første linjer; "Vis mere"/"Vis mindre" folder resten ud. Teksten er uændret.
+function CommentBody({ body }) {
+  const long = isLongComment(body);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className={`todo-comment-body${long && !open ? " clamped" : ""}`}>{body}</div>
+      {long && <button type="button" className="todo-link-btn" style={{ minHeight: 32, marginTop: 2 }} aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? "Vis mindre" : "Vis mere"}</button>}
+    </>
+  );
 }
 
 // Højden af det synlige område (uden iPhone-tastaturet), så Gem og kommentarfeltet aldrig ligger bag tastaturet.
@@ -103,6 +131,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
   const menuItems = isNew ? [] : [
     { label: "Kopiér som prompt", onClick: copyPrompt },
     todo.ticket_id && onOpenTicket ? { label: "Åbn ticket", onClick: () => { onOpenTicket(todo.ticket_id); onClose(); } } : null,
+    { label: "Slet opgave", onClick: () => setConfirm("delete") },
   ];
 
   return (
@@ -152,7 +181,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
         <div className="todo-panel-body">
           <div className="admin-field">
             <label htmlFor="todo-title">Titel</label>
-            <input id="todo-title" autoFocus={isNew} value={draft.title} maxLength={200} aria-invalid={!titleOk} onChange={(e) => set("title")(e.target.value)} />
+            <GrowingTitle id="todo-title" autoFocus={isNew} value={draft.title} invalid={!titleOk} onChange={set("title")} />
           </div>
           <div className="admin-field">
             <label htmlFor="todo-desc">Beskrivelse</label>
@@ -189,8 +218,12 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
             <div className="admin-field">
               <label htmlFor="todo-due">Frist</label>
               <div className="todo-date-row">
-                <input id="todo-due" type="date" value={draft.due_date} onChange={(e) => set("due_date")(e.target.value)} />
-                {draft.due_date && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => set("due_date")("")} aria-label="Fjern frist">Ryd</button>}
+                <label className="todo-date-field" htmlFor="todo-due">
+                  <Icon name="calendar" size={16} color="var(--muted)" />
+                  <span style={{ color: draft.due_date ? "var(--ink)" : "var(--muted)" }}>{draft.due_date ? fmtDanishDate(draft.due_date) : "Vælg dato"}</span>
+                  <input id="todo-due" type="date" value={draft.due_date} onChange={(e) => set("due_date")(e.target.value)} />
+                </label>
+                {draft.due_date && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => set("due_date")("")} aria-label="Fjern frist">Fjern</button>}
               </div>
             </div>
           </div>
@@ -217,7 +250,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
                         <button type="button" className="todo-link-btn" onClick={() => onDeleteComment(c.id)} aria-label="Slet kommentar" style={{ minHeight: 32, padding: "0 4px" }}>Slet</button>
                       )}
                     </div>
-                    <div className="todo-comment-body">{c.body}</div>
+                    <CommentBody body={c.body} />
                   </div>
                 ))}
               </div>
@@ -234,11 +267,9 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
         </div>
 
         <div className="todo-panel-foot">
-          <button type="button" className="admin-btn admin-btn-primary admin-touch" onClick={save} disabled={!canSave}>
+          <button type="button" className="admin-btn admin-btn-primary admin-touch" style={{ flex: 1 }} onClick={save} disabled={!canSave}>
             {saving ? (isNew ? "Opretter…" : "Gemmer…") : (isNew ? "Opret opgave" : "Gem")}
           </button>
-          <button type="button" className="admin-btn admin-btn-ghost admin-touch" onClick={requestClose}>{isNew ? "Annullér" : "Luk"}</button>
-          {!isNew && <button type="button" className="admin-btn admin-btn-ghost admin-touch todo-spacer" style={{ color: "var(--red)" }} onClick={() => setConfirm("delete")}>Slet</button>}
         </div>
       </div>
     </div>
