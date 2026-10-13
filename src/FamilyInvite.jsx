@@ -4,7 +4,7 @@
 // (Bjørn, 6. okt.). Række for en afventende invitation. Modtagere kommer ind via linket; der er ingen "indsæt link"-funktion længere. Ordforråd: "Familie" = voksne med egen konto.
 // "Link til listen" (indkøbsliste) er noget helt andet og hører hjemme i Del liste. Udskilt fra FamilyScreen.jsx (arkitekturregel 3).
 import React, { useState } from "react";
-import { SUPABASE_URL, DIETS_ENABLED } from "./constants.jsx";
+import { SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 import { Icon, showToast } from "./SharedComponents.jsx";
 import { TextLink } from "./DesignSystem.jsx";
@@ -109,7 +109,7 @@ export function PendingInviteCard({ invite, onCancel, accessToken }) {
 }
 
 const SHARED_POINTS = [
-  DIETS_ENABLED ? "Allergier og kostvalg" : "Allergier",
+  "Allergier",
   "Indkøbslister",
   "Historik og favoritter, hvis I ønsker det",
 ];

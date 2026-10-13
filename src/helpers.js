@@ -1,5 +1,5 @@
 // @ts-check
-import { ALLERGENS, DIETS, DIETS_ENABLED, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { ALLERGENS, AVATAR_COLORS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
 import { ALLERGEN_KEYWORDS, keywordMatches, matchCustomAllergens } from "./allergenKeywords.js";
 import { looksNonDanish } from "../supabase/functions/_shared/allergenEngine.js";
 
@@ -471,115 +471,10 @@ const DAIRY_EGG_KEYWORDS = [
   "lanolin", "animalsk fedt", "svinefedt", "talg", "tallow",
 ];
 
-// "hvede" er en egen ALLERGENS-kategori (specifik hvedeallergi), men hvede
-// indeholder selvfølgelig gluten — så et glutenfri-tjek skal fange begge lister,
-// ikke kun "gluten"-nøgleordene, ellers overses fx "hvedemel" i ingredienslisten
-const GLUTEN_KEYWORDS = [...ALLERGEN_KEYWORDS.gluten, ...ALLERGEN_KEYWORDS.hvede];
-
-// Tjek om et produkt er kompatibelt med en diæt
-// Returnerer: { ok: true/false/null, reasons: string[], confidence: "high"/"medium"/"low" }
-export function checkDietCompatibility(dietId, allergenFlags, ingredientsText, nutrition) {
-  const flags = allergenFlags || {};
-  const lower = (ingredientsText || "").toLowerCase();
-  const reasons = [];
-
-  // Genbruger allergenKeywords.js' keywordMatches i stedet for en egen kopi
-  // af ordgrænse-logikken — den udgave scanner ALLE forekomster af ordet
-  // (ikke kun den første) og er negations-bevidst ("glutenfri" matcher IKKE
-  // "gluten"), begge dele fundet manglende her ved en allergen-logik-
-  // gennemgang (16. sept. 2026). Uden negations-tjekket ville et produkt der
-  // eksplicit skriver "glutenfri havre" fejlagtigt blive vist som "Indeholder
-  // gluten" — det modsatte af hvad emballagen rent faktisk siger.
-  const hasIngredient = (keyword) => keywordMatches(lower, keyword);
-
-  switch (dietId) {
-    case "vegan": {
-      // Allergen-flags tjek
-      if (flags.maelkeallergi === "yes") reasons.push("Indeholder mælkeprotein");
-      else if (flags.maelkeallergi === "traces") reasons.push("Kan indeholde spor af mælk");
-      if (flags.laktose === "yes") reasons.push("Indeholder laktose");
-      if (flags.aeg === "yes") reasons.push("Indeholder æg");
-      else if (flags.aeg === "traces") reasons.push("Kan indeholde spor af æg");
-      if (flags.fisk === "yes") reasons.push("Indeholder fisk");
-      if (flags.skaldyr === "yes") reasons.push("Indeholder skaldyr");
-      if (flags.bloeddyr === "yes") reasons.push("Indeholder bløddyr");
-      // Ingrediens-tjek for ting allergen-flags ikke fanger
-      for (const kw of ANIMAL_KEYWORDS) {
-        if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
-      }
-      const confidence = lower.length > 10 ? "high" : "low";
-      return { ok: reasons.length === 0, reasons, confidence };
-    }
-
-    case "vegetarian": {
-      // Tillader mælk og æg, men ikke kød/fisk
-      if (flags.fisk === "yes") reasons.push("Indeholder fisk");
-      if (flags.skaldyr === "yes") reasons.push("Indeholder skaldyr");
-      if (flags.bloeddyr === "yes") reasons.push("Indeholder bløddyr");
-      for (const kw of MEAT_KEYWORDS) {
-        if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
-      }
-      for (const kw of DAIRY_EGG_KEYWORDS) {
-        if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
-      }
-      const confidence = lower.length > 10 ? "high" : "low";
-      return { ok: reasons.length === 0, reasons, confidence };
-    }
-
-    case "pescetarian": {
-      // Tillader fisk, skaldyr, bløddyr, mælk, æg — men ikke kød
-      for (const kw of MEAT_KEYWORDS) {
-        if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
-      }
-      const confidence = lower.length > 10 ? "high" : "low";
-      return { ok: reasons.length === 0, reasons, confidence };
-    }
-
-    case "gluten-free": {
-      if (flags.gluten === "yes") reasons.push("Indeholder gluten");
-      else if (flags.gluten === "traces") reasons.push("Kan indeholde spor af gluten");
-      if (flags.hvede === "yes") reasons.push("Indeholder hvede");
-      else if (flags.hvede === "traces") reasons.push("Kan indeholde spor af hvede");
-      // Strukturerede allergen-flags mangler tit (bruger-indsendte/delvist
-      // verificerede produkter) — uden dette tjek ville et sådant produkt
-      // fremstå "glutenfri, høj sikkerhed" selvom ingredienslisten fx siger
-      // "hvedemel". Samme mønster som vegansk/vegetarisk herover.
-      if (reasons.length === 0) {
-        for (const kw of GLUTEN_KEYWORDS) {
-          if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
-        }
-      }
-      const flagsKnown = ["yes","no","traces"].includes(flags.gluten) || ["yes","no","traces"].includes(flags.hvede);
-      const confidence = flagsKnown ? "high" : (lower.length > 10 ? "medium" : "low");
-      return { ok: reasons.length === 0, reasons, confidence };
-    }
-
-    case "keto": {
-      // Keto kræver næringsdata — tjek kulhydrater per 100g
-      if (nutrition && nutrition.carbohydrates != null) {
-        const carbs = parseFloat(nutrition.carbohydrates);
-        if (carbs > 10) reasons.push("Højt kulhydratindhold (" + carbs + "g/100g)");
-        else if (carbs > 5) reasons.push("Moderat kulhydrat (" + carbs + "g/100g)");
-        return { ok: reasons.length === 0, reasons, confidence: "medium" };
-      }
-      // Uden næringsdata: tjek for oplagte keto-brud
-      const ketoBreakers = ["sukker", "glucose", "fructose", "sirup", "mel", "stivelse", "kartoffel", "ris", "pasta", "brød"];
-      for (const kw of ketoBreakers) {
-        if (hasIngredient(kw)) { reasons.push("Indeholder " + kw); break; }
-      }
-      if (reasons.length > 0) return { ok: false, reasons, confidence: "low" };
-      return { ok: null, reasons: ["Næringsdata mangler — kan ikke vurdere keto"], confidence: "low" };
-    }
-
-    default:
-      return { ok: null, reasons: ["Ukendt diæt"], confidence: "low" };
-  }
-}
-
 // ─── PER-PROFIL SIKKERHEDSVURDERING ──────────────────────────────────────────
 // Delt mellem ResultScreen (efter et scan) og ListScreen (for varer på
 // indkøbslisten med kendt produktdata) — begge skal vurdere et produkt
-// SEPARAT mod hver aktiv profils allergier/kostpræferencer/overvågede
+// SEPARAT mod hver aktiv profils allergier/overvågede
 // E-numre, ikke kun det sammenlagte allergisæt. Udtrukket til én fælles
 // implementation (25. sept. 2026, opfølgning på PR #325) — to uafhængige
 // kopier af samme sikkerhedsrelevante beregning har allerede forårsaget
@@ -602,7 +497,6 @@ export function householdToProfiles(household) {
     color: AVATAR_COLORS[(i + 3) % AVATAR_COLORS.length],
     allergens: m.allergens || [],
     custom: m.custom || [],
-    diets: visibleDiets(m.diets),
     levels: m.allergenLevels || {},
     eNumbers: m.eNumbers || [],
     linked: true,
@@ -621,13 +515,11 @@ export function syncLinkedActiveProfiles(activeProfiles, linkedIds, knownIds) {
   return next.length === current.length && next.every((id, i) => id === current[i]) ? current : next;
 }
 
-/** Profilens valgte kostpræferencer, som appen må bruge: tom liste, mens kostpræferencer er sat på pause (DIETS_ENABLED). */
-export const visibleDiets = (diets) => (DIETS_ENABLED ? (diets || []) : []);
 
 export function buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles }) {
   return [
-    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], diets: visibleDiets(user?.diets), levels: user?.allergenLevels || {}, eNumbers: selectedENumbers || [], color: null },
-    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], diets: visibleDiets(m.diets), levels: m.levels || {}, eNumbers: m.eNumbers || [], color: m.color })),
+    { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], levels: user?.allergenLevels || {}, eNumbers: selectedENumbers || [], color: null },
+    ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], levels: m.levels || {}, eNumbers: m.eNumbers || [], color: m.color })),
   ].filter(p => (activeProfiles || []).includes(p.id));
 }
 
@@ -674,45 +566,38 @@ export function computeProfileResults(profiles, { allergen_flags, ingredients, n
     // matchCustomAllergens' egen kommentar for hvorfor dette er mindre
     // pålideligt end de faste allergener (ingen synonymer).
     const customMatches = p.custom?.length ? matchCustomAllergens(ingredientsText, p.custom) : [];
-    const dietResults = (p.diets || []).map(d => ({
-      id: d, label: DIETS.find(x => x.id === d)?.label || d,
-      ...checkDietCompatibility(d, resultFlags, ingredientsText, nutrition),
-    }));
-    const dietFails = dietResults.filter(r => r.ok === false);
     const eNumberMatches = (productENumbers?.length > 0 && p.eNumbers?.length > 0)
       ? compareENumbers(productENumbers, p.eNumbers).matched
       : [];
 
-    // Utilstrækkelige oplysninger (9. okt. 2026): valg, der kræver en ingrediensliste (egne allergier, E-numre, kostpræferencer),
+    // Utilstrækkelige oplysninger (9. okt. 2026): valg, der kræver en ingrediensliste (egne allergier, E-numre),
     // kan ikke kontrolleres uden den. Manglende data er aldrig "ingen konflikt".
-    const needsIngredients = (p.custom?.length || 0) > 0 || (p.eNumbers?.length || 0) > 0 || (p.diets?.length || 0) > 0;
+    const needsIngredients = (p.custom?.length || 0) > 0 || (p.eNumbers?.length || 0) > 0;
     const anySelection = needsIngredients || (p.allergens?.length || 0) > 0;
     const insufficient = [
       ...(needsIngredients && !ingredientsText.trim() ? ["Ingrediensliste mangler"] : []),
       ...(incomplete && anySelection ? [incomplete] : []),
-      ...dietResults.filter(r => r.ok === null).map(r => `${r.label}: kan ikke afgøres`),
     ];
     const reasons = [
       ...danger.map(id => ALLERGENS.find(a => a.id === id)?.label || id),
       ...customMatches.map(t => `Muligvis "${t}"`),
       ...warning.map(id => `Spor af ${ALLERGENS.find(a => a.id === id)?.label || id}`),
-      ...dietFails.map(r => `${r.label}: ${r.reasons[0] || "passer ikke"}`),
       ...eNumberMatches.map(e => `Indeholder ${e}`),
       ...unknown.map(id => `${allergenChoiceLabel(ALLERGENS.find(a => a.id === id)) || id}: kan ikke afgøres`),
     ];
-    // Rød: registreret konflikt med allergi, intolerance, egen allergi, E-nummer eller kostpræference (9. okt. 2026).
+    // Rød: registreret konflikt med allergi, intolerance, egen allergi eller E-nummer (9. okt. 2026).
     // Orange/"warn": spor, eller for lidt data til at vurdere (profileWarnLabel skelner).
-    const status = (danger.length > 0 || customMatches.length > 0 || dietFails.length > 0 || eNumberMatches.length > 0) ? "danger"
+    const status = (danger.length > 0 || customMatches.length > 0 || eNumberMatches.length > 0) ? "danger"
       : (warning.length > 0 || unknown.length > 0 || insufficient.length > 0) ? "warn"
       : "safe";
-    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, insufficient, customMatches, dietFails, eNumberMatches };
+    return { ...p, status, reasons, danger, warning, ignoredTraces, unknown, insufficient, customMatches, eNumberMatches };
   });
 }
 
 // ─── FÆLLES STATUSSYSTEM (9. okt. 2026, Bjørn) ──────────────────────────────────────────────────────
 // Samme fire tilstande og ord overalt (scanner, produktside, historik, favoritter, indkøbsliste, søgning):
 //   grøn "Ingen registrerede konflikter" (kun med tilstrækkelige data til ALLE valg i profilen),
-//   orange "Kan indeholde spor", rød "Konflikt med din profil" (allergi, intolerance, E-nummer, kostpræference),
+//   orange "Kan indeholde spor", rød "Konflikt med din profil" (allergi, intolerance, E-nummer),
 //   grå "Kan ikke vurderes". Manglende oplysninger er aldrig "ingen konflikt".
 export const STATUS_TEXT = {
   safe: "Ingen registrerede konflikter",
@@ -762,7 +647,6 @@ export function evaluateProductForProfiles(profiles, product) {
     ...r.danger.map(id => `Indeholder ${lower(ALLERGENS.find(a => a.id === id)?.label || id)}`),
     ...r.customMatches.map(t => `Muligvis "${t}"`),
     ...r.eNumberMatches.map(e => `Indeholder ${e}`),
-    ...r.dietFails.map(d => `${d.label}: ${d.reasons?.[0] || "passer ikke"}`),
   ]))];
   const nutDetail = traceNutNames(ingredientsText);
   const traceReasons = [...new Set(results.flatMap(r => r.warning.map(id => `Spor af ${lower(ALLERGENS.find(a => a.id === id)?.label || id)}${id === "noedder" && nutDetail.length ? ` (${nutDetail.join(", ")})` : ""}`)))];
@@ -771,7 +655,7 @@ export function evaluateProductForProfiles(profiles, product) {
     ...(r.insufficient || []),
   ]))];
   const hasAnyData = !!product && ((product.allergen_flags && Object.keys(product.allergen_flags).length > 0) || ingredientsText.trim().length > 0);
-  const nothingToCheck = (profiles || []).every(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) + (p.diets?.length || 0) === 0);
+  const nothingToCheck = (profiles || []).every(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) === 0);
   let level = "safe";
   if (conflict) level = "danger";
   else if (traceReasons.length > 0) level = "warn";
@@ -802,15 +686,15 @@ export function scanTargetCopy(activeProfiles, family) {
 // ─── PRODUKTRESULTAT: KATEGORISEREDE FUND (28. sept. 2026) ──────────────────
 // FINAL PRODUCT RESULT PAGE — ét genbrugeligt, data-drevet lag der grupperer
 // et allerede-beregnet scan-resultats matches (matchedDanger/matchedWarning
-// fra compareAllergens, matchede E-numre fra compareENumbers, diæt-resultater
-// fra checkDietCompatibility) i allergi/intolerance/E-nummer/diæt ud fra
+// fra compareAllergens, matchede E-numre fra compareENumbers
+// i allergi/intolerance/E-nummer ud fra
 // ALLERGENS' eget `type`-felt ("allergi" vs "intolerance") — ingen ny
 // allergen-logik, kun en omstrukturering af data der allerede findes.
-// Rører IKKE ved compareAllergens/compareENumbers/checkDietCompatibility
+// Rører IKKE ved compareAllergens/compareENumbers
 // selv, og ændrer intet ved scanResult.status/headline/summary, som History/
 // ListScreen/SearchScreen fortsat bruger uændret — kun ResultScreen.jsx
 // bruger disse to funktioner, til sin egen, dynamiske statusvisning.
-export function categorizeProductFindings({ matchedDanger, matchedWarning, ignoredTraces, customAllergenMatches, matchedENumbers, dietResults }) {
+export function categorizeProductFindings({ matchedDanger, matchedWarning, ignoredTraces, customAllergenMatches, matchedENumbers }) {
   const lookup = (ids, severity) => (ids || [])
     .map(id => {
       const a = ALLERGENS.find(x => x.id === id);
@@ -827,16 +711,13 @@ export function categorizeProductFindings({ matchedDanger, matchedWarning, ignor
     ignoredTraceMatches: lookup(ignoredTraces, "traces_ignored"),
     customMatches: (customAllergenMatches || []).map(term => ({ id: term, label: term, severity: "custom" })),
     eNumberMatches: matchedENumbers || [],
-    dietFails: (dietResults || []).filter(r => r.ok === false),
-    dietUnknowns: (dietResults || []).filter(r => r.ok === null),
-    dietPasses: (dietResults || []).filter(r => r.ok === true),
   };
 }
 
 // Beregner ÉN, tydelig topstatus ud fra de kategoriserede fund + om EatSafe reelt har nok data til at have foretaget kontrollen
-// (`hasSufficientData`). Fælles statussystem (STATUS_TEXT): rød = konflikt (allergi, intolerance, egen allergi, E-nummer, kostpræference),
+// (`hasSufficientData`). Fælles statussystem (STATUS_TEXT): rød = konflikt (allergi, intolerance, egen allergi, E-nummer),
 // orange = spor, grå = kan ikke vurderes, grøn = ingen registrerede konflikter MED tilstrækkelige data. Aldrig "sikkert"/"allergifrit".
-export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, traceMatches, customMatches, eNumberMatches, dietFails }) {
+export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranceMatches, traceMatches, customMatches, eNumberMatches }) {
   const lower = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : t);
   const eLabel = (e) => (typeof e === "string" ? e : e.label || String(e));
   // Konkrete årsager (9. okt. 2026): "Indeholder æg", "Indeholder E120", "Spor af soja". Direkte fund først, sporene vises stadig under en konflikt.
@@ -845,11 +726,10 @@ export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranc
     ...(allergyMatches || []).map(m => `Indeholder ${lower(m.label)}`),
     ...(intoleranceMatches || []).map(m => `Indeholder ${lower(m.label)}`),
     ...(eNumberMatches || []).map(e => `Indeholder ${eLabel(e)}`),
-    ...(dietFails || []).map(d => `${d.label}: ${d.reasons?.[0] ? lower(d.reasons[0]) : "passer ikke"}`),
   ];
   const traceReasons = (traceMatches || []).map(m => `Spor af ${lower(m.label)}`);
   const names = [...(customMatches || []), ...(allergyMatches || []), ...(intoleranceMatches || [])].map(m => m.label)
-    .concat((eNumberMatches || []).map(eLabel), (dietFails || []).map(d => d.label));
+    .concat((eNumberMatches || []).map(eLabel));
   if (directReasons.length > 0) {
     return { level: "danger", icon: "warning", headline: STATUS_TEXT.danger, names, reasons: [...directReasons, ...traceReasons] };
   }

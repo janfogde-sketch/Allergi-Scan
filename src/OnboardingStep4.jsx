@@ -9,7 +9,7 @@ import { UI } from "./styleUtils.js";
 import { memberTraceNote } from "./OnboardingParts.jsx";
 
 export function renderStep4(c) {
-  const { addMember, cancelEditMember, confirmRemoveMember, editingMemberId, family, newMemberAllerg, newMemberBirthYear, newMemberCustomAllerg, newMemberCustomInput, newMemberDiets, newMemberENumbers, newMemberGender, newMemberLevels, newMemberName, newMemberSubtypes, openLegal, removeMember, setConfirmRemoveMember, setNewMemberAllerg, setNewMemberBirthYear, setNewMemberCustomAllerg, setNewMemberCustomInput, setNewMemberDiets, setNewMemberENumbers, setNewMemberGender, setNewMemberLevels, setNewMemberName, setNewMemberSubtypes, setOnboardStep, setShowAddMemberForm, showAddMemberForm, startEditMember, updateMember } = c;
+  const { addMember, cancelEditMember, confirmRemoveMember, editingMemberId, family, newMemberAllerg, newMemberBirthYear, newMemberCustomAllerg, newMemberCustomInput, newMemberENumbers, newMemberGender, newMemberLevels, newMemberName, newMemberSubtypes, openLegal, removeMember, setConfirmRemoveMember, setNewMemberAllerg, setNewMemberBirthYear, setNewMemberCustomAllerg, setNewMemberCustomInput, setNewMemberDiets, setNewMemberENumbers, setNewMemberGender, setNewMemberLevels, setNewMemberName, setNewMemberSubtypes, setOnboardStep, setShowAddMemberForm, showAddMemberForm, startEditMember, updateMember } = c;
   return (
               <div className="fade-in">
                 {confirmRemoveMember && (
@@ -94,7 +94,6 @@ export function renderStep4(c) {
                       allergens={newMemberAllerg} setAllergens={setNewMemberAllerg}
                       customAllerg={newMemberCustomAllerg} setCustomAllerg={setNewMemberCustomAllerg}
                       subtypes={newMemberSubtypes} setSubtypes={setNewMemberSubtypes}
-                      diets={newMemberDiets} setDiets={setNewMemberDiets}
             levels={newMemberLevels} setLevels={setNewMemberLevels}
                       eNumbers={newMemberENumbers} setENumbers={setNewMemberENumbers}
                       customInput={newMemberCustomInput} setCustomInput={setNewMemberCustomInput}

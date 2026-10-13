@@ -1,11 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { SCREENS, DIETS_ENABLED } from "./constants.jsx";
+import { SCREENS } from "./constants.jsx";
 import { addUniqueCustom, pruneAllergenLevels } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { Accordion } from "./DesignSystem.jsx";
-import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, DietChipPicker, CustomAllergenField } from "./AllergenPicker.jsx";
+import { ENumberPicker, AllergenChipPicker, AllergenSensitivity, CustomAllergenField } from "./AllergenPicker.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -19,9 +19,9 @@ import { reportError } from "./errorReporter.js";
 import { saveMyAllergens } from "./saveMyAllergens.js";
 
 // Sorteret, sammenlignelig udgave af alt, siden kan ændre — bruges til at afgøre, om der er ugemte ændringer.
-const prefsSnapshot = ({ allergens, customAllerg, levels, diets, eNumbers }) => JSON.stringify({
+const prefsSnapshot = ({ allergens, customAllerg, levels, eNumbers }) => JSON.stringify({
   a: [...(allergens || [])].sort(), c: [...(customAllerg || [])].sort(), l: Object.entries(levels || {}).sort(),
-  d: [...(diets || [])].sort(), e: [...(eNumbers || [])].sort(),
+  e: [...(eNumbers || [])].sort(),
 });
 
 // "Rediger præferencer" — KUN allergier/intolerancer/diæter/
@@ -38,7 +38,7 @@ const prefsSnapshot = ({ allergens, customAllerg, levels, diets, eNumbers }) => 
 // glutenFreeAutoApplied kommer fra ProfileScreen, fordi gluten↔glutenfri-
 // synkroniseringen (useGlutenFreeSync) hele tiden har kørt, mens profil-
 // skærmene er åbne — ikke kun på denne skærm.
-export default function EditPreferencesScreen({ customInput, setCustomInput, glutenFreeAutoApplied, setGlutenFreeAutoApplied }) {
+export default function EditPreferencesScreen({ customInput, setCustomInput }) {
   const { user, setUser, userId, accessToken } = useAuthContext();
   const { allergens, setAllergens, customAllerg, setCustomAllerg } = useProfileContext();
   const { setScreen, openLegal } = useNavigationContext();
@@ -55,7 +55,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
   // Ugemte ændringer (2. okt. 2026): "Gem ændringer" vises kun, når brugeren har ændret noget. Grundlinjen følger med, indtil brugeren
   // selv rører ved noget (data kan nå at blive indlæst efter skærmen er åbnet), og fryses derefter. Skrives der i "Skriv selv"-feltet,
   // tæller det også som en ændring, fordi teksten tilføjes ved gem.
-  const snapshot = prefsSnapshot({ allergens, customAllerg, levels: user.allergenLevels, diets: user.diets, eNumbers: selectedENumbers });
+  const snapshot = prefsSnapshot({ allergens, customAllerg, levels: user.allergenLevels, eNumbers: selectedENumbers });
   const [touched, setTouched] = useState(false);
   const [baseline, setBaseline] = useState(snapshot);
   useEffect(() => { if (!touched) setBaseline(snapshot); }, [snapshot, touched]);
@@ -82,8 +82,6 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         accessToken, userId, allergens, custom: allCustom,
         eNumbers: selectedENumbers || [],
         allergenLevels: pruneAllergenLevels(user.allergenLevels, allergens),
-        // Mens kostpræferencer er på pause, røres de gemte valg ikke (sendes ikke med)
-        ...(DIETS_ENABLED ? { diets: user.diets || [] } : {}),
       });
       setScreen(SCREENS.PROFILE);
     } catch (e) {
@@ -113,19 +111,6 @@ export default function EditPreferencesScreen({ customInput, setCustomInput, glu
         <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
           onChange={() => setTouched(true)} />
       </div>
-
-      {DIETS_ENABLED && (
-        <div className="card" style={UI.mb10}>
-          <div className="card-lbl" style={UI.mb8}>Kostpræferencer</div>
-          <DietChipPicker selected={user.diets || []}
-            autoNote={glutenFreeAutoApplied ? { id:"gluten-free", text:"Valgt ud fra gluten" } : undefined}
-            onChange={arr => {
-              if (arr.includes("gluten-free") !== (user.diets||[]).includes("gluten-free")) setGlutenFreeAutoApplied(false);
-              setTouched(true);
-              setUser(u => ({ ...u, diets: arr }));
-            }} />
-        </div>
-      )}
 
       <div className="card" style={UI.mb10}>
         <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}

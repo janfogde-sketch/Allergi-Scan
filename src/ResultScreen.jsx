@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
-import { ALLERGENS, SCREENS, E_NUMBERS, DIETS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, checkDietCompatibility, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
+import { ALLERGENS, SCREENS, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+import { allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -97,7 +97,7 @@ export default function ResultScreen({
 
   // ── Per-profil sikkerhedsvurdering (25. sept. 2026, brugerfeedback) ──────
   // Hver aktiv profil evalueres SEPARAT mod produktets allergener,
-  // kostpræferencer og overvågede E-numre — profiler slås ikke sammen til
+  // og overvågede E-numre — profiler slås ikke sammen til
   // ét anonymt allergisæt. Beregnet her ved render-tid (ikke i selve
   // scanResult, som useProduct.js bygger ud fra det sammenlagte activeIds-
   // sæt til appens øvrige, eksisterende brug af det) — et skift af aktive
@@ -116,7 +116,7 @@ export default function ResultScreen({
   });
 
   // Alternativer (9. okt. 2026): kun produkter, der efter det fælles statussystem har GRØN status for ALLE aktive profilers valg (inkl. E-numre,
-  // egne allergier og kostpræferencer, med tilstrækkelige data). Spor, konflikt og mangelfulde data udelades. Det er ikke en garanti.
+  // egne allergier, med tilstrækkelige data). Spor, konflikt og mangelfulde data udelades. Det er ikke en garanti.
   const safeAlternatives = (alternatives || []).filter(p => evaluateProductForProfiles(resultProfilesRaw, p).level === "safe");
 
   const isMultiProfile = profileResults.length > 1;
@@ -135,20 +135,10 @@ export default function ResultScreen({
   // ── FINAL PRODUCT RESULT PAGE — dynamisk, kategoriseret statuslogik (28.
   // sept. 2026) ──────────────────────────────────────────────────────────
   // Bygget udelukkende af data der allerede findes på scanResult + brugerens
-  // egne aktive valg (allergener/E-numre/diæter) — ingen specialcases pr.
+  // egne aktive valg (allergener/E-numre) — ingen specialcases pr.
   // produkt. Ændrer IKKE scanResult.status/headline/summary selv (History/
   // ListScreen/SearchScreen bruger fortsat dem uændret) — kun denne skærms
-  // egen, rigere visning bygger på `topStatus`/`findings` herfra. Diæt-
-  // resultaterne er en UNION på tværs af alle aktive profilers valgte
-  // diæter (samme som den tidligere ad hoc-beregning i renderSafetyDiet),
-  // ikke kun den loggede brugers egne — bevarer multi-profil-understøttelsen.
-  const allActiveDiets = new Set();
-  profileResults.forEach(p => (p.diets || []).forEach(d => allActiveDiets.add(d)));
-  const dietResults = [...allActiveDiets].map(d => ({
-    id: d,
-    label: DIETS.find(x => x.id === d)?.label || d,
-    ...checkDietCompatibility(d, scanResult.allergen_flags, scanResult.ingredients, scanResult.nutrition),
-  }));
+  // egen, rigere visning bygger på `topStatus`/`findings` herfra.
   const matchedENumbersForUser = (scanResult.productENumbers?.length > 0 && activeENumbers?.length > 0)
     ? compareENumbers(scanResult.productENumbers, activeENumbers).matched
     : [];
@@ -172,7 +162,6 @@ export default function ResultScreen({
     ignoredTraces: liveIgnoredTraces,
     customAllergenMatches: liveCustom,
     matchedENumbers: matchedENumbersForUser,
-    dietResults,
   });
   // "Utilstrækkelige data" (krav 2F) — enten mangler brugerens EGNE aktive
   // allergener klassifikation (profilernes "unknown", beregnet ovenfor for
@@ -191,25 +180,6 @@ export default function ResultScreen({
   // egen kommentar i SharedComponents.jsx for hvorfor det er en bevidst
   // forskel fra standard-opførslen). Hver regel bærer sin egen korte
   // forklaring til tap-forklaringen (krav 9).
-  //
-  // Diæt-fund er det eneste sted hvor et rent tekst-nøgleord skal udledes
-  // bagefter, i stedet for at være kendt på forhånd — checkDietCompatibility
-  // (helpers.js) returnerer kun en færdig sætning ("Indeholder gelatine"
-  // eller "Indeholder mælkeprotein"). For allergen-flag-baserede diæt-brud
-  // (mælk/laktose/æg/fisk/skaldyr/bløddyr/gluten/hvede) er selve ordet i
-  // sætningen ikke nødvendigvis det ord der reelt står i ingredienslisten
-  // (fx "mælkeprotein" vs. den faktiske ingrediens "skummetmælkspulver") —
-  // mappet til det rigtige allergens egen ordliste herunder. For de
-  // resterende (ingrediens-nøgleords-baserede, fx "Indeholder gelatine")
-  // ER selve ordet i sætningen garanteret det ord der udløste matchet, så
-  // en simpel præfiks-afstrejning er nok.
-  const DIET_REASON_TO_ALLERGEN_ID = { "mælkeprotein":"maelkeallergi", "laktose":"laktose", "æg":"aeg", "fisk":"fisk", "skaldyr":"skaldyr", "bløddyr":"bloeddyr", "gluten":"gluten", "hvede":"hvede" };
-  const dietFailKeywords = (reasonText) => {
-    const stripped = (reasonText || "").replace(/^(Indeholder|Kan indeholde spor af)\s+/i, "").trim().toLowerCase();
-    const mappedId = DIET_REASON_TO_ALLERGEN_ID[stripped];
-    if (mappedId && ALLERGEN_KEYWORDS[mappedId]) return ALLERGEN_KEYWORDS[mappedId];
-    return stripped ? [stripped] : [];
-  };
   const ingredientHighlightRules = [
     ...findings.allergyMatches.map(m => ({
       keywords: ALLERGEN_KEYWORDS[m.id] || [m.label],
@@ -240,11 +210,6 @@ export default function ResultScreen({
       category: "enumber", label: code,
       reason: "Du har valgt at undgå dette E-nummer.",
     })),
-    ...findings.dietFails.map(d => ({
-      keywords: dietFailKeywords(d.reasons?.[0]),
-      category: "diet", label: d.label,
-      reason: d.reasons?.[0] ? `${d.reasons[0]} — passer derfor ikke til ${d.label.toLowerCase()}.` : `Passer ikke til ${d.label.toLowerCase()}.`,
-    })).filter(r => r.keywords.length > 0),
   ];
   const onIngredientHighlightTap = (rule) => showToast(`${rule.label} — ${rule.reason}`, "info");
 
@@ -252,7 +217,7 @@ export default function ResultScreen({
   // Én samlet, neutral forklaringssektion for ÉN aktiv profil — erstatter
   // "Relevant for dig" + "Passer til dine kostpræferencer", som begge viste
   // en delvist overlappende konklusion. Viser ALLE brugerens EGNE valgte
-  // allergier/intolerancer, kostpræferencer og overvågede E-numre — hver
+  // allergier/intolerancer, og overvågede E-numre — hver
   // med ✓ (matcher ikke)/✕ (matcher, med konkret grund)/? (kan ikke
   // afgøres ud fra produktdata) — aldrig kun de der matcher, og aldrig en
   // overskrift der lover et bestemt udfald (krav 3: "brug ALDRIG 'PASSER
@@ -291,22 +256,6 @@ export default function ResultScreen({
         : { status: "unknown", label: term, reason: "Ordet står ikke i ingredienslisten. Andre navne og spor fanges ikke, så tjek selv pakken." };
     });
     return [...rows, ...customRows].sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
-  };
-
-  const buildDietChoiceRows = () => {
-    if (!soloProfile) return [];
-    return dietResults.map(r => {
-      if (r.ok === false) return { status: "cross", label: r.label, reason: r.reasons?.[0] || "Passer ikke til dit valg." };
-      // Lav datasikkerhed (fx tom ingrediensliste) kan give et falsk "ok:true"
-      // for vegan/vegetarisk/pescetarian (de returnerer aldrig ok:null, kun en
-      // lav confidence, se checkDietCompatibility) — vis "?" i stedet for en
-      // falsk grøn ✓, så denne sektion aldrig modsiger et gråt "utilstrækkelige
-      // data"-resultatkort ovenfor.
-      if (r.ok === null || (r.ok === true && r.confidence === "low")) {
-        return { status: "unknown", label: r.label, reason: r.reasons?.[0] ? `${r.reasons[0]} — kan ikke afgøres med sikkerhed.` : "Kan ikke afgøres ud fra de tilgængelige produktdata." };
-      }
-      return { status: "check", label: r.label, reason: "Ikke fundet" };
-    }).sort((a, b) => CHOICE_STATUS_ORDER[a.status] - CHOICE_STATUS_ORDER[b.status]);
   };
 
   const eNumberChoiceLabel = (id) => E_NUMBERS[id] ? `${id} — ${E_NUMBERS[id].split("—")[0].trim()}` : id;
@@ -436,7 +385,7 @@ export default function ResultScreen({
   // Sektionerne bor i ResultSections.jsx og får den beregnede tilstand som ctx.
   const ctx = {
     ChoiceCategory, ChoiceRow, activeENumbers, activeList, activeListId, addToList,
-    addedToList, buildAllergyChoiceRows, buildDietChoiceRows, buildENumberChoiceRows, cannotAssess, findings,
+    addedToList, buildAllergyChoiceRows, buildENumberChoiceRows, cannotAssess, findings,
     hasIngredientsText, infantProfiles, infantWarnings, isFavorite, isMultiProfile, lists,
     liveDanger, liveWarning, overallHeadline, overallStatus, profileResults, recalls,
     scanResult, setAddedToList, setEditIngText, setEditNote, setEditStep, setEditType,

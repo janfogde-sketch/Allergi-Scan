@@ -31,7 +31,7 @@ export function useAppContextValues(v) {
     joinByCode, getListAccess, grantAccess, revokeAccess, rotateListCode, leaveList,
     addToList, toggleItem, removeItem, clearDone, newMemberName, setNewMemberName,
     newMemberBirthYear, setNewMemberBirthYear, newMemberGender, setNewMemberGender, newMemberAllerg, setNewMemberAllerg,
-    newMemberCustomAllerg, setNewMemberCustomAllerg, newMemberDiets, setNewMemberDiets, newMemberLevels, setNewMemberLevels,
+    newMemberCustomAllerg, setNewMemberCustomAllerg, newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers, newMemberSubtypes, setNewMemberSubtypes, newMemberCustomInput, setNewMemberCustomInput,
     editingMemberId, retryLoadFamily, familyError, addMember, updateMember, removeMember,
     startEditMember, cancelEditMember, eSearch, setESearch, eCategory, setECategory,
@@ -118,7 +118,7 @@ export function useAppContextValues(v) {
     newMemberGender, setNewMemberGender,
     newMemberAllerg, setNewMemberAllerg,
     newMemberCustomAllerg, setNewMemberCustomAllerg,
-    newMemberDiets, setNewMemberDiets,
+   
     newMemberLevels, setNewMemberLevels,
     newMemberENumbers, setNewMemberENumbers,
     newMemberSubtypes, setNewMemberSubtypes,
@@ -127,7 +127,7 @@ export function useAppContextValues(v) {
     addMember, updateMember, removeMember, startEditMember, cancelEditMember,
   }), [
     newMemberName, newMemberBirthYear, newMemberGender, newMemberAllerg,
-    newMemberCustomAllerg, newMemberDiets, newMemberLevels, newMemberENumbers, newMemberSubtypes,
+    newMemberCustomAllerg, newMemberLevels, newMemberENumbers, newMemberSubtypes,
     newMemberCustomInput, editingMemberId, addMember, updateMember, removeMember,
     startEditMember, cancelEditMember, retryLoadFamily, familyError,
   ]);
