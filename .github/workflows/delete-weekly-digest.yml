@@ -1,0 +1,21 @@
+# Engangs-workflow: sletter den gamle serverfunktion weekly-digest fra Supabase
+# (opskriftsmailen blev fjernet i #698). Fjernes igen efter kørslen.
+name: Delete weekly-digest edge function
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+        with:
+          version: 2.120.0
+      - name: Slet funktionen
+        run: supabase functions delete weekly-digest --project-ref jegrpcflyguadyxialkm --yes
