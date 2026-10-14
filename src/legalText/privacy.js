@@ -296,7 +296,7 @@ export default {
     ],
     [
       "p",
-      "**Open Food Facts**\nAnvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder kan hentes direkte fra Open Food Facts’ servere, hvorved din IP-adresse og tekniske enhedsoplysninger kan blive synlige for dem."
+      "**Open Food Facts**\nAnvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder fra Open Food Facts hentes af EatSafes server og vises fra EatSafes egen adresse, så Open Food Facts ikke modtager oplysninger om dig eller din enhed."
     ],
     [
       "p",

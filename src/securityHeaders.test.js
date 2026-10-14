@@ -25,8 +25,8 @@ describe("sikkerhedshoveder", () => {
       "wss://jegrpcflyguadyxialkm.supabase.co",
     ]);
   });
-  it("billeder fra Open Food Facts og Supabase er tilladt", () => {
-    expect(csp["img-src"]).toContain("https://images.openfoodfacts.org");
+  it("billeder hentes ikke direkte fra Open Food Facts (de går via /api/off-image), men Supabase er tilladt", () => {
+    expect(csp["img-src"]).not.toContain("https://images.openfoodfacts.org");
     expect(csp["img-src"]).toContain("https://jegrpcflyguadyxialkm.supabase.co");
   });
   it("øvrige hoveder er sat, og kameraet er tilladt for appen selv", () => {
@@ -34,6 +34,7 @@ describe("sikkerhedshoveder", () => {
     expect(header("X-Frame-Options")).toBe("DENY");
     expect(header("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
     expect(header("Permissions-Policy")).toContain("camera=(self)");
+    expect(header("Permissions-Policy")).toContain("geolocation=()");
   });
   it("ingen HTML-side har indlejret script eller hændelses-attributter", () => {
     const pages = ["index.html", "admin.html", ...readdirSync("public").filter((f) => f.endsWith(".html")).map((f) => `public/${f}`)];
