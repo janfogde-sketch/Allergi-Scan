@@ -64,7 +64,7 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
 
   return (
     <>
-      <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)} style={{ marginBottom: 6 }}>
+      <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)}>
         <Icon name="message" size={14} color="var(--ink2)" />Send feedback
       </button>
       {open && (

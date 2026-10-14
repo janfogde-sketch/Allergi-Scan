@@ -19,8 +19,8 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   const counts = { pendingSubmissions, openTickets, todoAttention, pendingRecalls };
   const toneOf = (key) => (key === "todoAttention" && Number(todoOverdue) > 0 ? "crit" : BADGE_INFO[key].tone);
   const [navOpen, setNavOpen] = useState(false);
-  // Udfoldede grupper: den aktive side er altid tilgængelig, øvrige er sammenklappede, og manuelle valg består, så længe menuen er åben.
-  const [expanded, setExpanded] = useState(() => new Set([groupOfSection(section)].filter(Boolean)));
+  // Harmonika: kun én kategori er udfoldet (eller ingen); åbning udfolder den aktive sides kategori.
+  const [expanded, setExpanded] = useState(() => groupOfSection(section) || null); // harmonika: højst én kategori ad gangen
   const isMobile = useIsMobile();
   const contentRef = useRef(null);
   const menuBtnRef = useRef(null);
@@ -28,16 +28,16 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   const touchRef = useRef(null);
   const selfBack = useRef(0); // antal popstate-hændelser, vi selv udløser ved at rydde vores historikpost, og som ikke må lukke en ny åbning
 
-  // Ny side: gruppen med den aktive side føjes til (aldrig fjernes andre manuelt åbnede)
+  // Ny side: dens kategori udfoldes
   useEffect(() => {
     const g = groupOfSection(section);
-    if (g) setExpanded((prev) => (prev.has(g) ? prev : new Set([...prev, g])));
+    if (g) setExpanded(g);
   }, [section]);
 
   const closeNav = useCallback(() => setNavOpen(false), []);
   const openNav = () => {
     // Hver åbning starter med kun den aktive gruppe udfoldet
-    setExpanded(new Set([groupOfSection(section)].filter(Boolean)));
+    setExpanded(groupOfSection(section) || null);
     setNavOpen(true);
   };
 
@@ -48,6 +48,11 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   }, [isMobile]);
 
   const drawerOpen = navOpen && isMobile;
+  // Den aktive side scrolles ind i det synlige område, når menuen åbnes eller en kategori foldes ud
+  useEffect(() => {
+    const el = document.querySelector(".admin-nav [aria-current='page']");
+    if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "nearest" });
+  }, [drawerOpen, expanded]);
   // Åben menu på mobil: baggrunden kan ikke scrolles, Escape og Android-tilbage lukker, og fokus flyttes ind i menuen og tilbage ved lukning
   useEffect(() => {
     if (!drawerOpen) return undefined;
@@ -73,7 +78,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   useEffect(() => { if (!isMobile) setNavOpen(false); }, [isMobile]);
 
   const pick = (id) => { setSection(id); setNavOpen(false); };
-  const toggleGroup = (id) => setExpanded((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const toggleGroup = (id) => setExpanded((prev) => (prev === id ? null : id));
 
   // Swipe mod venstre lukker (kun et overvejende vandret træk, så lodret rulning i menuen ikke rammes)
   const onTouchStart = (e) => { const t = e.touches[0]; touchRef.current = { x: t.clientX, y: t.clientY }; };
@@ -99,7 +104,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
         </div>
         <nav className="admin-nav" aria-label="Administration">
           {NAV_GROUPS.map((group) => {
-            const isOpen = expanded.has(group.id);
+            const isOpen = expanded === group.id;
             const groupBadges = group.items.filter((i) => i.badgeKey).map((i) => ({ n: Number(counts[i.badgeKey]) || 0, tone: toneOf(i.badgeKey) }));
             const groupTotal = groupBadges.reduce((s, b) => s + b.n, 0);
             return (
