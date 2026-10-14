@@ -94,7 +94,7 @@ describe("edge: products", () => {
 
 describe("edge: submissions", () => {
   const sub = (over) => ({ id: "s1", submitted_by: "user-a", type: "new_product", status: "pending", product_id: null, ean: "5701234567890", ...over });
-  const resolver = ({ submission = sub(), limitOk = true, existingProduct = null, pending = null } = {}) => (c) => {
+  const resolver = ({ submission = sub(), limitOk = true, existingProduct = null, pending = null, updated = [{ id: "s1" }], productInsertError = null } = {}) => (c) => {
     if (c.rpc === "bump_api_usage") return { data: limitOk, error: null };
     if (c.table === "users") return { data: { role: roleOf(c) }, error: null };
     if (c.table === "admin_todos") return { data: [], error: null };
@@ -102,6 +102,8 @@ describe("edge: submissions", () => {
       return c.has("eq", "status", "pending") && c.has("eq", "ean") ? { data: pending, error: null } : { data: submission, error: submission ? null : { message: "x" } };
     }
     if (c.table === "products" && c.kind === "select") return { data: existingProduct, error: existingProduct ? null : { message: "x" } };
+    if (c.table === "submissions" && c.kind === "update") return { data: updated, error: null };
+    if (c.table === "products" && c.kind === "insert" && productInsertError) return { data: null, error: productInsertError };
     if (c.kind === "insert") return { data: { id: "ny" }, error: null };
   };
   const body = { ean: "5701234567890", submitted_by: "user-a", ai_parsed_data: { name: "X" } };
@@ -179,7 +181,54 @@ describe("edge: submissions", () => {
     const h = await loadHandler("submissions", { tokens, resolver: resolver() });
     const r = await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "rejected", reviewed_by: "user-admin", review_note: "Utydeligt" } });
     expect(r.status).toBe(200);
-    expect(h.writes().map((c) => c.table)).toEqual(["submissions"]);
+    expect(h.writes().map((c) => c.table)).toEqual(["submissions", "admin_audit_log"]);
     expect(h.writes()[0].op("update")[0]).toMatchObject({ status: "rejected", review_note: "Utydeligt" });
+    expect(h.writes()[0].has("eq", "status", "pending")).toBe(true);
+    expect(h.writes()[1].op("insert")[0]).toMatchObject({ admin_id: "user-admin", action: "indsendelse_afvist", target_id: "s1" });
+  });
+
+  it("en allerede behandlet indsendelse kan ikke godkendes igen (409, intet skrives)", async () => {
+    const h = await loadHandler("submissions", { tokens, resolver: resolver({ submission: sub({ status: "approved" }) }) });
+    const r = await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "approved" } });
+    expect(r.status).toBe(409);
+    expect(h.writes()).toHaveLength(0);
+  });
+
+  it("ukendt status afvises (400)", async () => {
+    const h = await loadHandler("submissions", { tokens, resolver: resolver() });
+    expect((await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "pending" } })).status).toBe(400);
+    expect(h.writes()).toHaveLength(0);
+  });
+
+  describe("godkendelse af nyt produkt", () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it("opretter produktet FØR status skiftes, og knytter produktet til indsendelsen", async () => {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("{}")));
+      const h = await loadHandler("submissions", { tokens, resolver: resolver() });
+      const r = await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "approved", name: "Kiks" } });
+      expect(r.status).toBe(200);
+      const tables = h.writes().map((c) => c.table);
+      expect(tables.indexOf("products")).toBeLessThan(tables.indexOf("submissions"));
+      const upd = h.writes().find((c) => c.table === "submissions");
+      expect(upd.op("update")[0]).toMatchObject({ status: "approved", product_id: "ny" });
+      expect(h.writes().find((c) => c.table === "admin_audit_log").op("insert")[0]).toMatchObject({ action: "indsendelse_godkendt" });
+    });
+
+    it("findes stregkoden allerede, forbliver indsendelsen ventende (409)", async () => {
+      const h = await loadHandler("submissions", { tokens, resolver: resolver({ productInsertError: { code: "23505", message: "duplicate key" } }) });
+      const r = await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "approved" } });
+      expect(r.status).toBe(409);
+      expect(r.json.code).toBe("product_exists");
+      expect(h.writes().map((c) => c.table)).toEqual(["products"]);
+    });
+
+    it("et samtidigt klik, der allerede har skiftet status, giver 409 og ingen log", async () => {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("{}")));
+      const h = await loadHandler("submissions", { tokens, resolver: resolver({ updated: [] }) });
+      const r = await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "approved" } });
+      expect(r.status).toBe(409);
+      expect(h.writes().some((c) => c.table === "admin_audit_log")).toBe(false);
+    });
   });
 });

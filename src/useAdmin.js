@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { submissionAllergenFlags } from "./admin/submissionLogic.js";
+import { submissionAllergenFlags, cleanIngredientText, submissionMissingFields } from "./admin/submissionLogic.js";
 import { dkDayKey, dkDayStartISO, shiftDayKey, bucketByDkDay } from "./admin/statsLogic.js";
 import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
@@ -209,7 +209,9 @@ export function useAdmin(accessToken, userId, clearAuth) {
     }
   };
 
+  // Bekræftelse og låst egen række ligger i UsersSection; databasen nægter desuden at fjerne den sidste admin (G17).
   const updateUserRole = async (uid, role) => {
+    if (uid === userId) { showToast("Du kan ikke ændre din egen rolle", "error"); return; }
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
         method: "PATCH",
@@ -406,12 +408,31 @@ export function useAdmin(accessToken, userId, clearAuth) {
       setOpenProduct(null); setEditingProduct(null);
       showToast("Produkt slettet");
     } catch (e) {
-      // Fanger typisk en FK-fejl (produktet er stadig refereret fra fx en
-      // indkøbsliste, scanningshistorik eller ændringslog) — vis den reelle
-      // årsag i stedet for at lade sletningen fejle stille.
+      // Henvisninger fra historik, indkøbslister og ændringslog sættes til tom af databasen (G14), så en fejl her er reel.
       showToast("Kunne ikke slette produkt: " + e.message, "error");
     }
     setProductActionLoading(false);
+  };
+
+  // CSV-eksport sker i browseren; adminloggen får besked om den her (G13). Fejler logningen, stoppes eksporten ikke.
+  const logAdminExport = async (target, count) => {
+    try {
+      await apiCall(`${SUPABASE_URL}/rest/v1/rpc/log_admin_export`, {
+        method: "POST", headers: makeHeaders(accessToken),
+        body: JSON.stringify({ p_target: target, p_count: count }),
+      });
+    } catch (e) { console.warn("logAdminExport:", e); }
+  };
+
+  // Skærmbilleder i feedback ligger i den lukkede bucket feedback-screenshots (G15); admin får et link, der udløber efter 10 minutter.
+  const getTicketScreenshotUrl = async (path) => {
+    const data = await apiCall(`${SUPABASE_URL}/storage/v1/object/sign/feedback-screenshots/${String(path).split("/").map(encodeURIComponent).join("/")}`, {
+      method: "POST", headers: makeHeaders(accessToken),
+      body: JSON.stringify({ expiresIn: 600 }),
+    });
+    const signed = data?.signedURL || data?.signedUrl;
+    if (!signed) throw new Error("Intet link");
+    return signed.startsWith("http") ? signed : `${SUPABASE_URL}/storage/v1${signed}`;
   };
 
   // ── Ændringshistorik (revision_log) — read-only viewer ─────────────────────
@@ -743,8 +764,12 @@ export function useAdmin(accessToken, userId, clearAuth) {
                   reparsed_at: new Date().toISOString(),
                 }),
               });
+              if (!method.includes("claude")) showToast("Godkendt, men AI-tjekket fejlede. Tjek produktets allergener under Produkter.", "error");
             }
-          } catch (e) { console.warn("Reparse fejl efter godkendelse:", e); }
+          } catch (e) {
+            console.warn("Reparse fejl efter godkendelse:", e);
+            showToast("Godkendt, men AI-tjekket fejlede. Tjek produktets allergener under Produkter.", "error");
+          }
         }
       }
 
@@ -758,7 +783,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       // loadSubmissions henter listen frisk igen, så den dukker op igen,
       // men admin skal vide at godkendelsen reelt fejlede.
       console.error("updateSubmissionAndApprove:", e);
-      showToast("Godkendelse fejlede: " + e.message + " — indsendelsen er ikke godkendt, listen er opdateret", "error");
+      showToast(e.status === 409 ? e.message : "Godkendelse fejlede: " + e.message + " — indsendelsen er ikke godkendt, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
   };
@@ -812,11 +837,21 @@ export function useAdmin(accessToken, userId, clearAuth) {
   // springer push-notifikationer over for at holde en bulk-handling hurtig —
   // AI-reparse'en efter hver godkendelse sikrer stadig korrekte
   // allergen_flags uden manuel gennemgang.
+  // G16: kun komplette indsendelser godkendes i bulk, efter en bekræftelse med antal; et fejlet AI-tjek tælles for sig.
   const bulkApproveSubmissions = async () => {
-    const ids = [...selectedSubmissionIds];
-    if (ids.length === 0) return;
+    const chosen = submissions.filter(s => selectedSubmissionIds.includes(s.id));
+    if (chosen.length === 0) return;
+    const ids = chosen.filter(s => submissionMissingFields(s).length === 0).map(s => s.id);
+    const skipped = chosen.length - ids.length;
+    if (ids.length === 0) {
+      showToast(`Ingen af de ${chosen.length} valgte er komplette (navn, stregkode og ingrediensliste). Gennemgå dem enkeltvis.`, "error");
+      return;
+    }
+    const question = `Godkend ${ids.length} indsendelse${ids.length === 1 ? "" : "r"}? De bliver synlige for alle brugere.`
+      + (skipped > 0 ? `\n\n${skipped} mangler oplysninger og springes over (gennemgå dem enkeltvis).` : "");
+    if (!window.confirm(question)) return;
     setBulkActionLoading(true);
-    let succeeded = 0, failed = 0;
+    let succeeded = 0, failed = 0, aiFailed = 0;
     for (const id of ids) {
       const submission = submissions.find(s => s.id === id);
       if (!submission) continue;
@@ -856,8 +891,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
                   reparsed_at: new Date().toISOString(),
                 }),
               });
+              if (!method.includes("claude")) aiFailed++;
             }
-          } catch (e) { console.warn("Bulk-reparse fejl:", e); }
+            else aiFailed++;
+          } catch (e) { console.warn("Bulk-reparse fejl:", e); aiFailed++; }
         }
         succeeded++;
       } catch (e) {
@@ -868,7 +905,10 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setSubmissions(s => s.filter(x => !ids.includes(x.id)));
     setSelectedSubmissionIds([]);
     setBulkActionLoading(false);
-    showToast(failed > 0 ? `${succeeded} af ${ids.length} godkendt — ${failed} fejlede` : `${succeeded} indsendelser godkendt`, failed > 0 ? "error" : "success");
+    const parts = [failed > 0 ? `${succeeded} af ${ids.length} godkendt, ${failed} fejlede` : `${succeeded} indsendelser godkendt`];
+    if (aiFailed > 0) parts.push(`${aiFailed} uden AI-tjek (tjek dem under Produkter)`);
+    if (skipped > 0) parts.push(`${skipped} sprunget over`);
+    showToast(parts.join(". "), failed > 0 || aiFailed > 0 ? "error" : "success");
     if (failed > 0) loadSubmissions(submissionFilter);
   };
 
@@ -938,15 +978,11 @@ export function useAdmin(accessToken, userId, clearAuth) {
         // der rent faktisk blev godkendt — stille forkert data uden nogen
         // synlig fejl (samme feltnavne-mismatch-mønster som customAllerg-
         // fundet, se CLAUDE.md afsnit 5).
-        setEditingSubmission(s => ({ ...s, allergen_flags: { ...s.allergen_flags, ...data.allergen_flags } }));
+        // Kun opadgående: indsenderens ja/spor må ikke sænkes af AI'en.
+        setEditingSubmission(s => ({ ...s, allergen_flags: mergeFlagsUpward(s.allergen_flags || {}, data.allergen_flags) }));
       }
-      // Rens teksten: fjern næringsindhold, labels, og behold kun ingredienser
-      const lines = text.split(/\n/).map(l => l.trim()).filter(l => l.length > 3);
-      const ingLines = lines.filter(l =>
-        !/^(energi|fedt|protein|salt|kulhydrat|næringsindhold|opbevaring|bedst|pr\.?\s*100|kj|kcal)/i.test(l) &&
-        !/^\d+[\s]*(g|mg|kj|kcal|%)/i.test(l)
-      );
-      const cleaned = ingLines.join(", ").replace(/,\s*,/g, ",").replace(/^[,\s]+|[,\s]+$/g, "");
+      // Rens teksten: fjern kun næringstabellens linjer (tal og enhed); alle andre linjer kan være ingredienser (G12)
+      const cleaned = cleanIngredientText(text);
       setCleanedOcrText(cleaned || text);
       // ingredients_text er feltet godkendelsen rent faktisk sender videre
       // (se updateSubmissionAndApprove) — sæt det med det samme, så rensningen
@@ -1011,7 +1047,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     loadTickets,
     openTicketById,
     loadAdminUsers,
-    updateUserRole,
+    updateUserRole, logAdminExport, getTicketScreenshotUrl,
     deleteUser,
     updateSubmissionAndApprove,
     rejectSubmission,

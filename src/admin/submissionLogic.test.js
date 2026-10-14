@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { submissionAllergenFlags, allergenSummary, allergenLine, nameAllergenMismatch, SUBMISSION_ACTION_LABELS } from "./submissionLogic.js";
+import { submissionAllergenFlags, allergenSummary, allergenLine, nameAllergenMismatch, SUBMISSION_ACTION_LABELS, cleanIngredientText, isNutritionLine, submissionMissingFields } from "./submissionLogic.js";
 
 const base = { status: "pending", type: "new_product", ai_parsed_data: {} };
 
@@ -43,5 +43,34 @@ describe("allergener i indsendelser", () => {
   });
   it("knapteksterne følger status", () => {
     expect(SUBMISSION_ACTION_LABELS).toEqual({ pending: "Gennemgå", approved: "Se detaljer", rejected: "Se detaljer" });
+  });
+});
+
+describe("rens af OCR-tekst (G12)", () => {
+  it("bevarer ingredienslinjer, der starter med næringsord", () => {
+    expect(cleanIngredientText("Salt, selleri, sennep\nFedt 12 g")).toBe("Salt, selleri, sennep");
+    expect(cleanIngredientText("Protein fra soja (20%), hvedemel")).toBe("Protein fra soja (20%), hvedemel");
+  });
+  it("bevarer opbevaring og sporadvarsler", () => {
+    expect(cleanIngredientText("Mel, sukker\nOpbevaring: kan indeholde spor af nødder")).toBe("Mel, sukker, Opbevaring: kan indeholde spor af nødder");
+  });
+  it("fjerner næringstabellen", () => {
+    const text = "Ingredienser: hvedemel, æg\nNæringsindhold pr. 100 g\nEnergi 1500 kJ / 360 kcal\nFedt 12 g\nheraf mættede fedtsyrer 3,5 g\nSalt 0,8 g\n100 g";
+    expect(cleanIngredientText(text)).toBe("Ingredienser: hvedemel, æg");
+  });
+  it("bevarer korte linjer som Æg", () => {
+    expect(cleanIngredientText("Mel\nÆg")).toBe("Mel, Æg");
+    expect(isNutritionLine("Æg")).toBe(false);
+  });
+});
+
+describe("komplette indsendelser til massegodkendelse (G16)", () => {
+  it("nyt produkt kræver stregkode, navn og ingrediensliste", () => {
+    expect(submissionMissingFields({ type: "new_product", ean: "1", ai_parsed_data: { name: "x" }, ocr_raw_text: "mel" })).toEqual([]);
+    expect(submissionMissingFields({ type: "new_product", ean: "1", ai_parsed_data: {}, ocr_raw_text: "" })).toEqual(["navn", "ingrediensliste"]);
+  });
+  it("rettelse kræver et produkt", () => {
+    expect(submissionMissingFields({ type: "edit", ean: "1", product_id: "p" })).toEqual([]);
+    expect(submissionMissingFields({ type: "edit", ean: "1" })).toEqual(["produkt"]);
   });
 });
