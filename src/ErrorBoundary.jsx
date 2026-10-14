@@ -3,6 +3,7 @@ import React from "react";
 import { Icon } from "./SharedComponents.jsx";
 import { reportError } from "./errorReporter.js";
 import { appCss } from "./theme.jsx";
+import { reloadOnceForChunkError } from "./chunkReload.js";
 
 // ── ErrorBoundary ─────────────────────────────────────────────────────────────
 // Wrap enhver skærm for at fange crashes og vise en brugervenlig fejlside
@@ -28,6 +29,8 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
+    // Manglende kodefil efter en opdatering: genindlæs én gang (ellers vises fejlsiden).
+    if (reloadOnceForChunkError(error)) return;
     console.error(`[ErrorBoundary:${this.props.screen || "?"}]`, error, info);
     reportError(error, {
       screen: this.props.screen,
