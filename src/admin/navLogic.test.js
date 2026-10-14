@@ -10,8 +10,8 @@ describe("menuens navne og ruter", () => {
     expect(label.onboarding).toBe("Onboardingfrafald");
     expect(label.history).toBe("Ændringshistorik");
     for (const keep of [["dashboard", "Dashboard"], ["submissions", "Indsendelser"], ["recalls", "Tilbagekald"], ["tickets", "Tickets"], ["products", "Produkter"], ["knowledge", "Leksikon"], ["import", "Import"], ["users", "Brugere"], ["family", "Familie"], ["notifications", "Notifikationer"], ["errors", "Fejl"], ["ai-usage", "AI-forbrug"], ["audit", "Aktivitetslog"]]) expect(label[keep[0]]).toBe(keep[1]);
-    // "Manglende EAN'er" viser stregkoder, som ikke er fundet; "Produkter uden EAN" ville være en forkert beskrivelse
-    expect(label.missing).toBe("Manglende EAN'er");
+    // Siden viser stregkoder, som brugerne har scannet uden at finde produktet (ikke produkter uden EAN)
+    expect(label.missing).toBe("Ukendte stregkoder");
   });
   it("de fem kategorier og unikke id'er", () => {
     expect(NAV_GROUPS.map((g) => g.label)).toEqual(["Overblik", "Til behandling", "Indhold & data", "Brugere & kommunikation", "Drift"]);

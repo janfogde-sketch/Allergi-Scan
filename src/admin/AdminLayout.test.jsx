@@ -58,7 +58,7 @@ describe("kategorier", () => {
     const setSection = vi.fn();
     mount({ setSection });
     for (const g of ["Overblik", "Indhold & data", "Brugere & kommunikation", "Drift"]) fireEvent.click(groupHead(g));
-    const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Manglende EAN'er": "missing", Import: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", Onboardingfrafald: "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
+    const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Ukendte stregkoder": "missing", Import: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", Onboardingfrafald: "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
     for (const [label, id] of Object.entries(expected)) {
       setSection.mockClear();
       const btn = [...document.querySelectorAll(".admin-nav-item")].find((b) => b.querySelector(".admin-nav-label").textContent === label);

@@ -21,8 +21,8 @@ export const NAV_GROUPS = [
   { id: "content", label: "Indhold & data", items: [
     { id: "products",    icon: "tag",      label: "Produkter" },
     { id: "knowledge",   icon: "book",     label: "Leksikon" },
-    // Siden viser stregkoder, brugerne har scannet uden at finde produktet; "Produkter uden EAN" ville være en forkert beskrivelse.
-    { id: "missing",     icon: "barcode",  label: "Manglende EAN'er" },
+    // Siden viser stregkoder, brugerne har scannet uden at finde produktet (ikke produkter uden EAN).
+    { id: "missing",     icon: "barcode",  label: "Ukendte stregkoder" },
     { id: "import",      icon: "download", label: "Import" },
     { id: "history",     icon: "edit",     label: "Ændringshistorik" },
   ] },
