@@ -14,7 +14,7 @@ import { UI } from "./styleUtils.js";
 import { STATUS_COLOR, STATUS_ICON, HISTORY_FILTERS } from "./historyStatus.js";
 
 // "for 51 min. siden" (Bjørn, 9. okt. 2026); "Lige nu" står uændret.
-const agoText = ts => { const t = timeAgo(ts); return t === "Lige nu" ? "lige nu" : `for ${t.replace(" min siden", " min. siden")}`; };
+const agoText = ts => { const t = timeAgo(ts); if (t === "Lige nu") return "lige nu"; if (!t.endsWith("siden")) return `den ${t}`; return `for ${t.replace(" min siden", " min. siden")}`; };
 
 // Vandret filterrække: diskret fade i højre side, når der er flere chips, og det aktive filter rulles altid helt ind i billedet.
 function HistoryFilters({ filters, value, onChange }) {

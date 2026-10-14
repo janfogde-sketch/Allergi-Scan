@@ -10,7 +10,18 @@ export { matchCustomAllergens };
 
 export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).join("").toUpperCase().slice(0,2)||"?";
 
-export const timeAgo = ts => { const d=Date.now()-new Date(ts).getTime(); if(d<60000)return"Lige nu"; if(d<3600000)return`${Math.floor(d/60000)} min siden`; if(d<86400000)return`${Math.floor(d/3600000)} t siden`; return`${Math.floor(d/86400000)} d siden`; };
+// Relativ tid: minutter, timer og dage op til 7 dage; derefter selve datoen ("3. maj 2026"), så "143 d siden" aldrig vises (F5-16).
+const TIME_AGO_MONTHS = ["jan.","feb.","mar.","apr.","maj","jun.","jul.","aug.","sep.","okt.","nov.","dec."];
+export const timeAgo = (ts, now = Date.now()) => {
+  const t = new Date(ts).getTime(); const d = now - t;
+  if (d < 60000) return "Lige nu";
+  if (d < 3600000) return `${Math.floor(d/60000)} min siden`;
+  if (d < 86400000) { const h = Math.floor(d/3600000); return `${h} ${h === 1 ? "time" : "timer"} siden`; }
+  const days = Math.floor(d/86400000);
+  if (days <= 7) return `${days} ${days === 1 ? "dag" : "dage"} siden`;
+  const dt = new Date(t);
+  return `${dt.getDate()}. ${TIME_AGO_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+};
 
 // Returnerer objekter, ikke færdig-sammensatte tekststrenge (ændret 29.
 // sept. 2026, "Laktose"-ikon-opgaven) — de fleste allergener vises stadig
