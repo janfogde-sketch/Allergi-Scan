@@ -51,7 +51,7 @@ export default function ImportSection({ importLog, importLoading, runImport, rep
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 800 }}>Allergen reparsing</div>
-            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>Kører allergen-engine (keyword + Claude Haiku) på produkter med lav kvalitet. Kører automatisk hver nat kl. 03:00 UTC.</div>
+            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>Kører allergen-engine (keyword + Claude Haiku) på produkter med lav kvalitet. Kører automatisk hver nat kl. 03:00 UTC. "Kør nu" tager højst 25 produkter pr. tryk, fordi hvert ét koster et AI-kald; tryk igen for flere.</div>
           </div>
           <button className="admin-btn admin-btn-primary" disabled={reparseLoading} onClick={() => runReparse(true)}>
             {reparseLoading ? "Reparserer…" : "Kør nu"}

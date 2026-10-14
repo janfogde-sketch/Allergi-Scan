@@ -7,6 +7,13 @@ import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.js";
 
+const USERS_PAGE = 200;
+const SUBMISSIONS_PAGE = 100;
+const TICKETS_PAGE = 100;
+const TICKETS_PAGE_ALL = 200;
+// Hver AI-reparse koster et AI-kald; loftet holder "Kør nu" til et overskueligt antal pr. tryk.
+const MANUAL_REPARSE_LIMIT = 25;
+
 export function useAdmin(accessToken, userId, clearAuth) {
   // State
   const [submissions, setSubmissions] = useState([]);
@@ -15,6 +22,11 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const [adminSection, setAdminSection] = useState("dashboard");
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  // Listerne henter en side ad gangen og beder om én række mere end vist,
+  // så admin kan se, at der er flere (ellers skjuler listen rækker uden besked).
+  const [adminUsersHasMore, setAdminUsersHasMore] = useState(false);
+  const [submissionsHasMore, setSubmissionsHasMore] = useState(false);
+  const [ticketsHasMore, setTicketsHasMore] = useState(false);
   // Standard: kun aktive tickets (åbne og i gang). Løste hentes først, når nogen beder om det.
   const [adminTicketFilter, setAdminTicketFilter] = useState("active");
   const [ticketsIncludeDone, setTicketsIncludeDone] = useState(false);
@@ -77,10 +89,12 @@ export function useAdmin(accessToken, userId, clearAuth) {
     const myToken = ++submissionsLoadToken.current;
     setSubmissionsLoading(true);
     try {
-      const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=100`;
+      const url = `${SUPABASE_URL}/rest/v1/submissions?status=eq.${f}&order=created_at.desc&limit=${SUBMISSIONS_PAGE + 1}`;
       const data = await apiCall(url, { headers: makeHeaders(accessToken) });
       if (submissionsLoadToken.current !== myToken) return;
-      setSubmissions(Array.isArray(data) ? data : []);
+      const rows = Array.isArray(data) ? data : [];
+      setSubmissionsHasMore(rows.length > SUBMISSIONS_PAGE);
+      setSubmissions(rows.slice(0, SUBMISSIONS_PAGE));
     } catch (e) {
       if (submissionsLoadToken.current !== myToken) return;
       console.error("loadSubmissions:", e.status || "", e.message); setSubmissions([]);
@@ -168,10 +182,13 @@ export function useAdmin(accessToken, userId, clearAuth) {
     setTicketsLoading(true);
     try {
       const filter = withDone ? "" : "status=in.(open,in_progress)&";
-      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?${filter}order=created_at.desc&limit=${withDone ? 200 : 100}`, {
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/feedback_tickets?${filter}order=created_at.desc&limit=${(withDone ? TICKETS_PAGE_ALL : TICKETS_PAGE) + 1}`, {
         headers: makeHeaders(accessToken),
       });
-      setAdminTickets(Array.isArray(data) ? data : []);
+      const rows = Array.isArray(data) ? data : [];
+      const pageSize = withDone ? TICKETS_PAGE_ALL : TICKETS_PAGE;
+      setTicketsHasMore(rows.length > pageSize);
+      setAdminTickets(rows.slice(0, pageSize));
     } catch (e) {
       setAdminTickets([]);
       showToast("Kunne ikke hente tickets: " + e.message, "error");
@@ -196,13 +213,19 @@ export function useAdmin(accessToken, userId, clearAuth) {
     }
   };
 
-  const loadAdminUsers = async () => {
+  // more=true henter næste side og lægger den bagved den viste liste.
+  const loadAdminUsers = async ({ more = false } = {}) => {
+    const offset = more ? adminUsers.length : 0;
     try {
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,birth_year,phone&order=created_at.desc&limit=200`,
+        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,birth_year,phone&order=created_at.desc&limit=${USERS_PAGE + 1}&offset=${offset}`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
-      if (Array.isArray(data)) setAdminUsers(data);
+      if (Array.isArray(data)) {
+        setAdminUsersHasMore(data.length > USERS_PAGE);
+        const page = data.slice(0, USERS_PAGE);
+        setAdminUsers(more ? (prev) => [...prev, ...page.filter(r => !prev.some(x => x.id === r.id))] : page);
+      }
     } catch (e) {
       console.error("loadAdminUsers:", e);
       showToast("Kunne ikke hente brugere: " + e.message, "error");
@@ -1003,7 +1026,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/auto-reparse`, {
         method: "POST",
         headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-        body: JSON.stringify({ manual, limit: manual ? 100 : 50 }),
+        body: JSON.stringify({ manual, limit: manual ? MANUAL_REPARSE_LIMIT : 50 }),
       });
       const data = await res.json();
       setReparseLog(data);
@@ -1020,7 +1043,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
     submissionsLoading,
     adminStats,
     adminSection, setAdminSection,
-    adminUsers, setAdminUsers,
+    adminUsers, setAdminUsers, adminUsersHasMore, submissionsHasMore, ticketsHasMore,
     adminUsersLoading,
     adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone,
     showDeleteAccount, setShowDeleteAccount,

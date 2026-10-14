@@ -195,7 +195,7 @@ export default function AdminApp() {
       )}
       {section === "users" && (
         <UsersSection
-          adminUsers={admin.adminUsers} adminUsersLoading={admin.adminUsersLoading}
+          adminUsers={admin.adminUsers} adminUsersHasMore={admin.adminUsersHasMore} loadAdminUsers={admin.loadAdminUsers} adminUsersLoading={admin.adminUsersLoading}
           userSearch={admin.userSearch} setUserSearch={admin.setUserSearch}
           currentUserId={userId} updateUserRole={admin.updateUserRole} deleteUser={admin.deleteUser} logAdminExport={admin.logAdminExport}
           openAdminUser={admin.openAdminUser} setOpenAdminUser={admin.setOpenAdminUser}
@@ -206,7 +206,7 @@ export default function AdminApp() {
       )}
       {section === "submissions" && (
         <SubmissionsSection
-          submissions={admin.submissions} submissionsLoading={admin.submissionsLoading}
+          submissions={admin.submissions} submissionsHasMore={admin.submissionsHasMore} submissionsLoading={admin.submissionsLoading}
           submissionFilter={admin.submissionFilter} setSubmissionFilter={admin.setSubmissionFilter}
           loadSubmissions={admin.loadSubmissions}
           openSubmission={admin.openSubmission} setOpenSubmission={admin.setOpenSubmission}
@@ -222,7 +222,7 @@ export default function AdminApp() {
       )}
       {section === "tickets" && (
         <TicketsSection
-          adminTickets={admin.adminTickets} ticketsLoading={admin.ticketsLoading}
+          adminTickets={admin.adminTickets} ticketsHasMore={admin.ticketsHasMore} ticketsLoading={admin.ticketsLoading}
           adminTicketFilter={admin.adminTicketFilter} setAdminTicketFilter={admin.setAdminTicketFilter}
           ticketsIncludeDone={admin.ticketsIncludeDone} loadTickets={admin.loadTickets}
           openTicket={admin.openTicket} setOpenTicket={admin.setOpenTicket}
