@@ -66,6 +66,7 @@ mod brugerens (og familiens) profil og viser sikkert/farligt/usikkert med begrun
 
 - React 18 + Vite 5, almindelig JSX (`// @ts-nocheck` øverst i `.jsx`). Supabase (Postgres, Edge Functions i Deno, Auth; Realtime kun til indkøbslisten).
   Claude Haiku som allergen-fallback og OCR (`ANTHROPIC_API_KEY`). Open Food Facts og TheMealDB.
+- Klik-tests (Playwright, `e2e/`): `npm run build && npm run test:e2e`; kører i CI som eget tjek "Klik-tests", der kun viser fejl og ikke stopper merge. Detaljer: `docs/arbejdsgang.md`.
 - Test: `npx vitest run` (alle skal være grønne). Lint: `npm run lint`. Typetjek: `npm run typecheck` (kører i CI; filerne i `tsconfig.check.json`
   har `// @ts-check`, udvid listen gradvist).
 - Styling: ingen CSS-filer. Al CSS er én streng i `src/theme.jsx` (`appCss`). Kun CSS-variabler i komponenter, ingen hardkodede farver.
