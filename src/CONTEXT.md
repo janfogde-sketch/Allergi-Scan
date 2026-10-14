@@ -60,8 +60,7 @@ kun læsning for egen bruger/admin, slettes sammen med kontoen). **Fornyelse (8.
 læser den nyeste række. App: `HEALTH_CONSENT_VERSION` (`constants.jsx`, hæves ved væsentlig tekstændring), `useHealthConsent.js`, ren logik i `healthConsent.js` (test), afkrydsningen `HealthConsentBox.jsx` (onboarding trin 2, Rediger præferencer, `MemberForm`;
 Bjørn finpudser designet) og Indstillinger → Privatliv & data (status og tilbagetrækning). Eksisterende brugere uden samtykke bliver bedt om det, første gang de gemmer allergier.
 
-**Backup-tabeller:** `*_backup_20260930` i `public` og skemaet `qa_backup` er rester fra datarettelser (ingen kode bruger dem, Free-planen har
-ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188223c`), derefter skal denne note fjernes.
+**Backup-tabeller:** de gamle backups fra 30. sept./2. okt. er slettet (14. okt. 2026). Beholdt: `removed_image_backup_20261005`, `products_allergen_backup_20261006/20261007/20261007b`, `products_unknown_flags_backup_20261007`, `base64_image_backup_20261006`, nyere backups (13.-14. okt.) og diæt-backups (slettes senest 12. nov. 2026). Alle har RLS slået til uden adgang for appens roller.
 
 **Varer uden ingrediensliste (8. okt. 2026):** triggeren `trg_products_unknown_without_ingredients` på `products` sætter alle 16 allergen-flag til `unknown` (kvalitet `low`) ved oprettelse/ændring uden ingrediensliste; `yes`/`traces` bevares, producent-verificerede varer røres ikke. Test `supabase/tests/unknown_without_ingredients.sql`.
 
