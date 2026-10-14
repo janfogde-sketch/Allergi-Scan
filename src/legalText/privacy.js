@@ -349,7 +349,7 @@ export default {
     ],
     [
       "p",
-      "Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv. Bruger du ikke din konto i 36 måneder, sender vi dig en mail og sletter kontoen og alle oplysninger på den efter 30 dage, medmindre du logger ind igen inden da."
+      "Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv. Bruger du ikke din konto i 36 måneder, sender vi dig en mail og sletter kontoen og alle oplysninger på den efter 30 dage, medmindre du logger ind igen inden da. Bliver en konto aldrig oprettet færdigt, så der ikke findes en profil til den, slettes loginkontoen automatisk efter 30 dage."
     ],
     [
       "p",
