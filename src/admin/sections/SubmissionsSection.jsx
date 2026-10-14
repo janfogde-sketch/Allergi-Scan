@@ -89,7 +89,7 @@ const NUTRITION_FIELDS = [
 ];
 
 export default function SubmissionsSection({
-  submissions, submissionsLoading, submissionFilter, setSubmissionFilter, loadSubmissions,
+  submissions, submissionsHasMore, submissionsLoading, submissionFilter, setSubmissionFilter, loadSubmissions,
   openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission,
   cleanedOcrText, setCleanedOcrText, cleaningOcr, cleanOcrWithAI,
   updateSubmissionAndApprove, rejectSubmission, accessToken,
@@ -193,6 +193,9 @@ export default function SubmissionsSection({
           <input type="checkbox" style={{ width: 20, height: 20 }} checked={allSelected} onChange={e => selectAllSubmissions(e.target.checked ? submissions.map(s => s.id) : [])} />
           Vælg alle ({submissions.length})
         </label>
+      )}
+      {submissionsHasMore && !submissionsLoading && (
+        <div className="admin-info-note">Der er flere indsendelser end de {submissions.length}, der vises. Behandl dem her, og opdatér listen for at se resten.</div>
       )}
       {submissionsLoading ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter indsendelser…</div>
