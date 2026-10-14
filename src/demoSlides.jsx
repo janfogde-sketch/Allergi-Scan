@@ -114,29 +114,6 @@ export const DEMO_SLIDES = [
     ),
   },
   {
-    title: "Opskrifter I faktisk kan spise",
-    sub: "Kun dem der passer til hele familiens allergier.",
-    bg: "var(--surface2)", accent: "var(--green)",
-    mockup: (
-      <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:12 }}>
-        {[
-          ["🍝","Spaghetti Bolognese","Glutenfri · Mælkefri · Nøddefri","✅ Sikker for alle"],
-          ["🥗","Nikkei Ceviche","Glutenfri · Laktosefri","✅ Sikker for alle"],
-          ["🍛","Chicken Tikka Masala","Nøddefri · Sesamfri","⚠ Tjek: mælk i sauce"],
-        ].map(([e,name,tags,status]) => (
-          <div key={name} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--surface)", borderRadius:10, padding:"10px 12px", border:"1px solid var(--border)" }}>
-            <div style={UI.ufs22}>{e}</div>
-            <div style={UI.flex1}>
-              <div style={UI.boldInk12}>{name}</div>
-              <div style={UI.ufs9_cmuted2}>{tags}</div>
-            </div>
-            <div style={{ fontSize:10, fontWeight:700, color: status.startsWith("✅") ? "var(--green)" : "var(--amber)", textAlign:"right", maxWidth:70 }}>{status}</div>
-          </div>
-        ))}
-      </div>
-    ),
-  },
-  {
     title: "Forstå hvad der står på varen",
     sub: "Tap en ingrediens, og få svaret med det samme.",
     bg: "var(--surface2)", accent: "var(--green)",
