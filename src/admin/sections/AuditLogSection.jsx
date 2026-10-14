@@ -1,4 +1,5 @@
 // @ts-nocheck
+import RefreshButton from "../RefreshButton.jsx";
 import React from "react";
 import { auditActionLabel, auditChangeText, auditActorText, auditTargetText } from "../auditLogic.js";
 
@@ -11,7 +12,7 @@ export default function AuditLogSection({ rows, names, loading, load }) {
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
           Hvem der har ændret eller slettet noget følsomt (roller, produkter, brugeres profiler og allergier, familie, indsendelser, push-tekster, eksport), og hvornår. De seneste 200 handlinger; loggen slettes efter 12 måneder.
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>Opdater</button>
+        <RefreshButton onClick={load} />
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
