@@ -13,6 +13,7 @@ import { forgetPushTokenForDevice } from "./usePush.js";
 import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, restoreSession, endSession } from "./sessionStore.js";
 import { reportError } from "./errorReporter.js";
 import { clearOfflineCache } from "./useOffline.js";
+import { isNativeApp, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_RETURN } from "./nativeShell.js";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
 // PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
@@ -196,6 +197,9 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     // App.jsx rydder family/history/shopping via useEffect på accessToken
     setScreen(SCREENS.WELCOME);
   }, [setScreen, setUser, setAllergens, setCustomAllerg]);
+
+  // ── Retur fra login i systembrowseren (kun iPhone-rammen): send hashen videre til modtagelsen nedenfor ──
+  useEffect(() => listenForAuthReturn((target) => { window.location.replace(target); }), []);
 
   // ── OAuth callback — fang access_token fra URL hash ──────────────────────
   useEffect(() => {
@@ -695,11 +699,20 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const handleOAuth = useCallback(async (provider) => {
     setAuthLoading(true); setAuthError("");
     try {
+      // I iPhone-rammen åbner login i telefonens egen browser og vender tilbage til appen via NATIVE_AUTH_RETURN.
+      const native = isNativeApp();
       const params = new URLSearchParams({
-        provider, redirect_to: window.location.origin + "/",
+        provider, redirect_to: native ? NATIVE_AUTH_RETURN : window.location.origin + "/",
         ...(provider === "google" ? { prompt: "select_account" } : {}),
       });
-      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
+      const authUrl = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
+      if (native) {
+        const opened = await openInSystemBrowser(authUrl);
+        if (!opened) throw new Error("native-browser-unavailable");
+        setAuthLoading(false);
+        return;
+      }
+      window.location.href = authUrl;
     } catch (e) {
       reportError(e, { source: "oauth-start" });
       setAuthError(`Login med ${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : provider === "apple" ? "Apple" : provider} mislykkedes. Prøv igen.`);

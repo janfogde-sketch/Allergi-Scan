@@ -18,3 +18,10 @@ Plan: `/mnt/project-files/eatsafe/ios-skal-plan-2026-10-14.md`. iOS-rammen er en
 | Associated Domains (retur fra login, trin 2) | `applinks:www.eatsafe.dk` + fil `apple-app-site-association` på eatsafe.dk | App ID |
 | Sign in with Apple | `docs/apple-login-opsaetning.md` | Services ID |
 | Bygning | Mac/Xcode eller bygge-tjeneste; ikke valgt endnu | |
+
+## Login i systembrowseren (trin 2)
+- I iPhone-rammen åbner Google/Facebook (og senere Apple) i telefonens browser (`src/nativeShell.js`, `handleOAuth` i `src/useAuth.js`) og
+  vender tilbage via adressen `dk.eatsafe.app://auth` (URL-skema i `Info.plist`).
+- **Skal sættes i Supabase (Authentication → URL Configuration → Redirect URLs): `dk.eatsafe.app://auth`.** Uden den afvises login i iPhone-appen.
+  Browseren og Android er upåvirket.
+- Retur-adressen er et eget URL-skema, så det virker uden Apple-konto. Universal Links (`applinks:`) kan skiftes til senere.

@@ -23,3 +23,9 @@ describe("iPhone-ramme (Capacitor)", () => {
     expect(read("../ios/App/App/Info.plist")).toMatch(/NSCameraUsageDescription[\s\S]*?scanne stregkoder/);
   });
 });
+
+describe("iPhone-ramme: retur fra login", () => {
+  it("har URL-skemaet dk.eatsafe.app i iOS-filerne", () => {
+    expect(read("../ios/App/App/Info.plist")).toMatch(/CFBundleURLSchemes[\s\S]*?<string>dk\.eatsafe\.app<\/string>/);
+  });
+});
