@@ -11,9 +11,9 @@ export default function ActionsMenu({ items, label = "Flere handlinger", compact
     if (!open) return undefined;
     const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open]);
   const visible = (items || []).filter(Boolean);
   if (visible.length === 0) return null;
@@ -25,7 +25,7 @@ export default function ActionsMenu({ items, label = "Flere handlinger", compact
       {open && (
         <div role="menu" className="admin-menu">
           {visible.map((it) => (
-            <button key={it.label} type="button" role="menuitem" className="admin-menu-item" disabled={it.disabled} style={it.danger ? { color: "var(--red)" } : undefined}
+            <button key={it.label} type="button" role="menuitem" className={`admin-menu-item${it.icon ? " has-icon" : ""}`} disabled={it.disabled} style={it.danger ? { color: "var(--red)" } : undefined}
               onClick={() => { setOpen(false); it.onClick(); }}>
               {it.icon && <Icon name={it.icon} size={16} color={it.danger ? "var(--red)" : "var(--ink2)"} />}{it.label}{it.hint ? <span className="admin-menu-hint">{it.hint}</span> : null}
             </button>

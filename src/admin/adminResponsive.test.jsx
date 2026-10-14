@@ -29,7 +29,7 @@ describe("opgaver: mobilkort og desktoptabel", () => {
     expect(screen.getByText(/Byg Android-app som TWA/)).toBeTruthy();
     expect(screen.getByText("Høj prioritet")).toBeTruthy();
     expect(screen.getByText("Backend")).toBeTruthy();
-    expect(screen.getByText("Skal laves")).toBeTruthy();
+    expect(screen.queryByText("Skal laves")).toBeNull(); // alle viste opgaver har standardstatussen, så badgen udelades
     expect(screen.getByText("Jan")).toBeTruthy();
     expect(container.querySelector(".todo-meta-line").textContent).not.toContain("Frist"); // uden frist vises ingen fristtekst
     expect(screen.queryByText("Åbn opgave")).toBeNull(); // hele kortet åbner opgaven
