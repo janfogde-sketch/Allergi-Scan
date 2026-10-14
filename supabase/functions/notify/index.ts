@@ -215,48 +215,86 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
       const { data: rc } = await db.from("recalls").select("id, source_url, reason, affected, action, eans, status").eq("id", p.recall_id).maybeSingle();
       // Kun bekræftede (status ready) tilbagekaldelser med gyldige EAN'er sendes; annulleret/arkiveret → ingen besked.
       if (!rc || rc.status !== "ready" || !rc.eans?.length) return [];
-      const variants = [...new Set((rc.eans as string[]).flatMap((e) => eanVariants(e)))];
-      const { data: prods } = await db.from("products").select("id, ean, name, brand").in("ean", variants);
-      const prodByEan = new Map<string, { id: string; ean: string; name: string; brand: string }>();
-      for (const pr of prods ?? []) prodByEan.set(pr.ean, pr);
-      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
-
-      // bruger → første matchede EAN (som den står i databasen)
-      const hit = new Map<string, string>();
-      const mark = (userId: string | null | undefined, ean: string | null | undefined) => {
-        if (userId && ean && !hit.has(userId)) hit.set(userId, ean);
-      };
-      const { data: fav } = await db.from("favorites").select("user_id, ean").in("ean", variants);
-      for (const r of fav ?? []) mark(r.user_id, r.ean);
-      const { data: scans } = await db.from("scan_history").select("user_id, ean_scanned").in("ean_scanned", variants).gte("scanned_at", since).not("user_id", "is", null);
-      for (const r of scans ?? []) mark(r.user_id, r.ean_scanned);
-      const { data: items } = await db.from("shopping_list_items").select("list_id, ean").in("ean", variants);
-      const listEan = new Map<string, string>();
-      for (const i of items ?? []) if (i.list_id && i.ean && !listEan.has(i.list_id)) listEan.set(i.list_id, i.ean);
-      if (listEan.size) {
-        const listIds = [...listEan.keys()];
-        const { data: lists } = await db.from("shopping_lists").select("id, owner_id").in("id", listIds);
-        for (const l of lists ?? []) mark(l.owner_id, listEan.get(l.id));
-        const { data: acc } = await db.from("shopping_list_access").select("list_id, user_id").in("list_id", listIds);
-        for (const a of acc ?? []) mark(a.user_id, listEan.get(a.list_id));
-      }
-
-      const plans: Planned[] = [];
-      for (const [userId, ean] of hit) {
-        const prod = prodByEan.get(ean);
-        plans.push({
-          userId, templateKey: "P6:default",
-          data: {
-            productName: prod ? productLabel({ brand: prod.brand, name: prod.name }) : "", ean: prod?.ean ?? ean,
-            recallReason: rc.reason, affectedBatches: rc.affected, recallAction: rc.action, recallUrl: rc.source_url, recallId: rc.id,
-          },
-        });
-      }
-      return plans;
+      return await recallPlans(db, rc, "P6:default", await recallMatches(db, rc.eans as string[]));
+    }
+    case "recall_cancelled": {
+      // Den oprindelige tilbagekaldelse er markeret annulleret; beskeden går kun til dem, der fik den første besked (P6), med annulleringssidens link.
+      const { data: orig } = await db.from("recalls").select("id, source_url, reason, affected, action, eans, status").eq("id", p.recall_id).maybeSingle();
+      const { data: canc } = await db.from("recalls").select("source_url").eq("id", p.cancel_recall_id).maybeSingle();
+      if (!orig || orig.status !== "cancelled") return [];
+      return await recallPlans(db, { ...orig, source_url: canc?.source_url ?? orig.source_url }, "P6:cancelled", await recallNotified(db, orig.id));
+    }
+    case "recall_updated": {
+      // Ændret tekst: de, der fik den første besked, plus brugere der nu matcher (fx nye EAN'er på siden).
+      const { data: rc } = await db.from("recalls").select("id, source_url, reason, affected, action, eans, status").eq("id", p.recall_id).maybeSingle();
+      if (!rc || rc.status !== "ready") return [];
+      const hit = await recallNotified(db, rc.id);
+      for (const [userId, ean] of await recallMatches(db, (rc.eans ?? []) as string[])) if (!hit.has(userId)) hit.set(userId, ean);
+      return await recallPlans(db, rc, "P6:updated", hit);
     }
     default:
       throw new Error(`Ukendt hændelsestype: ${ev.kind}`);
   }
+}
+
+type RecallRow = { id: string; source_url: string; reason: string; affected: string; action: string };
+
+/** bruger → første matchede EAN (favorit, scanning de sidste 90 dage eller indkøbsliste), som den står i databasen. */
+async function recallMatches(db: Db, eans: string[]): Promise<Map<string, string>> {
+  const hit = new Map<string, string>();
+  const variants = [...new Set(eans.flatMap((e) => eanVariants(e)))];
+  if (variants.length === 0) return hit;
+  const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+  const mark = (userId: string | null | undefined, ean: string | null | undefined) => {
+    if (userId && ean && !hit.has(userId)) hit.set(userId, ean);
+  };
+  const { data: fav } = await db.from("favorites").select("user_id, ean").in("ean", variants);
+  for (const r of fav ?? []) mark(r.user_id, r.ean);
+  const { data: scans } = await db.from("scan_history").select("user_id, ean_scanned").in("ean_scanned", variants).gte("scanned_at", since).not("user_id", "is", null);
+  for (const r of scans ?? []) mark(r.user_id, r.ean_scanned);
+  const { data: items } = await db.from("shopping_list_items").select("list_id, ean").in("ean", variants);
+  const listEan = new Map<string, string>();
+  for (const i of items ?? []) if (i.list_id && i.ean && !listEan.has(i.list_id)) listEan.set(i.list_id, i.ean);
+  if (listEan.size) {
+    const listIds = [...listEan.keys()];
+    const { data: lists } = await db.from("shopping_lists").select("id, owner_id").in("id", listIds);
+    for (const l of lists ?? []) mark(l.owner_id, listEan.get(l.id));
+    const { data: acc } = await db.from("shopping_list_access").select("list_id, user_id").in("list_id", listIds);
+    for (const a of acc ?? []) mark(a.user_id, listEan.get(a.list_id));
+  }
+  return hit;
+}
+
+/** bruger → EAN for dem, der allerede har fået den første besked (P6:default) om tilbagekaldelsen. */
+async function recallNotified(db: Db, recallId: string): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const { data } = await db.from("notifications").select("user_id, primary_action").eq("type", "P6").eq("variant", "default").eq("entity_type", "recall").eq("entity_id", recallId);
+  for (const n of data ?? []) {
+    const ean = (n.primary_action as { params?: { ean?: string } } | null)?.params?.ean;
+    if (n.user_id && !out.has(n.user_id)) out.set(n.user_id, ean ?? "");
+  }
+  return out;
+}
+
+async function recallPlans(db: Db, rc: RecallRow, templateKey: string, hit: Map<string, string>): Promise<Planned[]> {
+  const eans = [...new Set([...hit.values()].filter(Boolean).flatMap((e) => eanVariants(e)))];
+  const prodByEan = new Map<string, { id: string; ean: string; name: string; brand: string }>();
+  if (eans.length) {
+    const { data: prods } = await db.from("products").select("id, ean, name, brand").in("ean", eans);
+    for (const pr of prods ?? []) prodByEan.set(pr.ean, pr);
+  }
+  const plans: Planned[] = [];
+  for (const [userId, ean] of hit) {
+    const prod = prodByEan.get(ean);
+    plans.push({
+      userId, templateKey,
+      data: {
+        productName: prod ? productLabel({ brand: prod.brand, name: prod.name }) : "", ean: prod?.ean ?? ean,
+        recallReason: rc.reason, affectedBatches: rc.affected, recallAction: rc.action, recallUrl: rc.source_url, recallId: rc.id,
+      },
+    });
+  }
+  return plans;
 }
 
 async function productNameFor(db: Db, s: { product_id?: string | null; ean?: string; ai_parsed_data?: Record<string, unknown> | null }) {

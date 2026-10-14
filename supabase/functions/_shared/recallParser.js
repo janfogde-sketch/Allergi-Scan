@@ -119,3 +119,29 @@ export function parseRecallPage(html, { title = "" } = {}) {
     cancelled: /^\s*ANNULLERET/i.test(title),
   };
 }
+
+/**
+ * "ANNULLERET: Tilbagekald – X" → "Tilbagekald – X" (den oprindelige titel), ellers null.
+ * Bruges til at koble en annulleringsside til den tilbagekaldelse, den ophæver.
+ */
+export function originalTitleOfCancelled(title) {
+  const m = String(title ?? "").match(/^\s*ANNULLERET\s*[:\-–—]?\s*(.+)$/i);
+  return m ? m[1].trim() : null;
+}
+
+/** Titler sammenlignes uden forskel på store/små bogstaver, mellemrum og tankestreger. */
+export function normalizeRecallTitle(title) {
+  return String(title ?? "").toLowerCase().replace(/[‐-―−-]/g, "-").replace(/\s+/g, " ").trim();
+}
+
+/** Teksten, der afgør, om en tilbagekaldelse er ændret (kun de felter, brugerne får at se). */
+export function recallFingerprintText({ reason, affected, action } = {}) {
+  return JSON.stringify([reason ?? "", affected ?? "", action ?? ""].map((t) => String(t).replace(/\s+/g, " ").trim()));
+}
+
+/** Samme EAN'er uanset rækkefølge. */
+export function sameEanSet(a, b) {
+  const x = new Set(a ?? []);
+  const y = new Set(b ?? []);
+  return x.size === y.size && [...x].every((e) => y.has(e));
+}
