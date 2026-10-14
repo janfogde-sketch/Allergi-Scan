@@ -11,7 +11,7 @@ import { LEGAL_LINK_STYLE } from "./OnboardingParts.jsx";
 export function renderLogin(c) {
   const { authError, authInfo, authLoading, authTab, emailError, emailTakenError, handleForgotPassword, handleLogin, handleOAuth, handleSignup, hasPendingJoinList, loginEmail, loginPassword, oauthProviders, openLegal, passwordError, setAuthError, setAuthTab, setEmailError, setEmailTakenError, setLoginEmail, setLoginPassword, setOnboardStep, setPasswordError, setScreen, setShowPassword, showPassword } = c;
   return (
-          <div className="login-wrap fade-in">
+          <div className="login-wrap fade-in" id="main-content">
 
             {/* Logo — genbruger PRÆCIS samme markup/klasse som velkomst-
                 skærmen (welcome-logo-wrap), og samme faste logo-asset

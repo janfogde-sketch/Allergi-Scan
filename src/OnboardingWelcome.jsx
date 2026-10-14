@@ -7,7 +7,7 @@ import { WelcomeIntro, WELCOME_BENEFITS } from "./OnboardingParts.jsx";
 export function renderWelcome(c) {
   const { hasPendingJoinList, onActivatePreview, setAuthTab, setOnboardStep, setScreen } = c;
   return (
-          <div className="welcome-screen fade-in">
+          <div className="welcome-screen fade-in" id="main-content">
             {/* Usynlig spacer med ulige flex-grow-vægt (28. sept. 2026,
                 "FINAL POLISH") — se .welcome-vspace-top/-bottom i theme.jsx
                 for hvorfor: flytter kompositionens lodrette tyngdepunkt en
