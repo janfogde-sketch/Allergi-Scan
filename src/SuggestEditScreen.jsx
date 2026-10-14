@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { makeHeaders, apiCall, compressImageToBase64 } from "./helpers.js";
+import { makeHeaders, apiCall, compressImageToBase64, submissionErrorText } from "./helpers.js";
 import { Icon, ProductImage, Loader, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -137,7 +137,7 @@ export default function SuggestEditScreen({
       });
       setEditStep("done");
     } catch (e) {
-      showToast("Kunne ikke sende forslaget. Prøv igen.", "error");
+      showToast(submissionErrorText(e, "Kunne ikke sende forslaget. Prøv igen."), "error");
       setEditStep("review");
     }
   };

@@ -166,6 +166,16 @@ Deno.serve(async (req) => {
       // Udtræk billeder fra ai_parsed_data
       const parsedData = { ...(ai_parsed_data ?? {}) };
       const productImageBase64 = parsedData.product_image_base64 ?? null;
+
+      // Appen skalerer billeder ned før afsendelse; for store billeder afvises her.
+      const tooBig = (v: unknown) => typeof v === "string" && v.length > MAX_IMAGE_BASE64_LENGTH;
+      const extraList = Array.isArray(images) ? images.slice(0, MAX_EXTRA_IMAGES) : [];
+      if (tooBig(raw_label_image) || tooBig(productImageBase64) || extraList.some((i: { base64?: string }) => tooBig(i?.base64))) {
+        return new Response(
+          JSON.stringify({ error: "Billedet er for stort. Tag et nyt billede og prøv igen.", code: "image_too_large" }),
+          { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       delete parsedData.product_image_base64;
 
       // Upload billeder til Storage i stedet for base64 i DB

@@ -98,6 +98,14 @@ export function compressImageToBase64(file, maxDim = 1600, quality = 0.82) {
   });
 }
 
+// Venlig tekst når en indsendelse afvises: dagsloftet (429) eller et for stort billede (413).
+// Alle andre fejl får den tekst, kalderen selv har.
+export function submissionErrorText(e, fallback) {
+  if (e?.status === 429) return "Du har sendt mange forslag i dag. Prøv igen i morgen.";
+  if (e?.status === 413) return "Billedet er for stort. Tag et nyt billede og prøv igen.";
+  return fallback;
+}
+
 // Tjek GTIN/EAN-kontrolcifferet (standard mod-10, skiftevis vægt 3/1 fra højre).
 // Bruges til at afvise en åbenlyst forkert manuelt indtastet stregkode (typo)
 // FØR den sendes til serveren — ellers spilder vi en tur til backend på noget
