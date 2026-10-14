@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect } from "react";
 import { SUPABASE_URL, SCREENS } from "./constants.jsx";
 import { initials, getAllergenLabels, makeHeaders, apiCall } from "./helpers.js";
@@ -144,11 +145,11 @@ export default function FamilyScreen({ household, setHousehold, loadHousehold })
   const bottomPad = navH ? `${navH + 40}px` : "calc(110px + env(safe-area-inset-bottom))";
   const openInvite = () => {
     setFamilyAddMode("invite");
-    setTimeout(() => document.getElementById("family-invite-panel")?.scrollIntoView({ behavior:"smooth", block:"start" }), 60);
+    setTimeout(() => document.getElementById("family-invite-panel")?.scrollIntoView({ behavior: scrollBehavior(), block:"start" }), 60);
   };
   const openChildForm = () => {
     setFamilyAddMode("form");
-    setTimeout(() => document.getElementById("family-member-form")?.scrollIntoView({ behavior:"smooth", block:"start" }), 60);
+    setTimeout(() => document.getElementById("family-member-form")?.scrollIntoView({ behavior: scrollBehavior(), block:"start" }), 60);
   };
   return (
     <div className="screen fade-in" style={{ paddingBottom: bottomPad }}>

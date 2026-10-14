@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
+import { hasVoiceFor, noVoiceMessage } from "./useMadpas.js";
 import { MADPAS_LANGUAGES } from "./constants.jsx";
 import { MADPAS_COELIAC_T, ALLERGEN_T, MADPAS_SAFETY_NOTE_T, MADPAS_SPEECH_INTRO_T, MADPAS_SPEECH_CANNOT_T, MADPAS_SPEECH_OUTRO_T } from "./madpasText.js";
 import { madpasSafetyNote, madpasCrossContactNote, madpasAllergyStatement, madpasAllergenExamples } from "./madpasText.js";
@@ -68,5 +69,18 @@ describe("Madpas-sætninger", () => {
   // F5-4: "Φιστίκια" alene kan læses som pistacie.
   it("kalder jordnødder 'Αραχίδες' på græsk", () => {
     expect(ALLERGEN_T.jordnoedder.el.n).toBe("Αραχίδες");
+  });
+});
+
+describe("Oplæsning uden stemme", () => {
+  it("regner en tom stemmeliste som ukendt, ikke som manglende", () => {
+    expect(hasVoiceFor("da-DK", [])).toBe(true);
+  });
+  it("finder en stemme på sprogkoden, uanset land og skrivemåde", () => {
+    expect(hasVoiceFor("da-DK", [{ lang: "en-US" }, { lang: "da_DK" }])).toBe(true);
+    expect(hasVoiceFor("th-TH", [{ lang: "en-US" }, { lang: "da-DK" }])).toBe(false);
+  });
+  it("siger tydeligt, hvilket sprog der mangler", () => {
+    expect(noVoiceMessage("Thai")).toContain("ingen stemme til Thai");
   });
 });

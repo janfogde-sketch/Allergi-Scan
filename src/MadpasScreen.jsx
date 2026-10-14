@@ -71,6 +71,8 @@ export default function MadpasScreen({
   const { scanFamily: family } = useProfileContext();
   const { screen } = useNavigationContext();
   const [showCrossContactInfo, setShowCrossContactInfo] = React.useState(false);
+  // Oplæsningen stopper, når man forlader Madpas (skærmskift), så den ikke taler videre andre steder.
+  React.useEffect(() => () => { window.speechSynthesis?.cancel(); setMadpasSpeaking(false); }, []);
 
   // ── Grupperede oplysninger efter type — fælles for preview og fremvis-
   // ningsskærmen, så begge altid viser præcis det samme. ALLERGENS.type

@@ -30,6 +30,8 @@ const NOTIFICATION_NAMES = {
   "P3:one": "Delt indkøbsliste: én vare",
   "P3:many": "Delt indkøbsliste: flere varer",
   "P6:default": "Tilbagekaldelse",
+  "P6:cancelled": "Tilbagekaldelse annulleret",
+  "P6:updated": "Tilbagekaldelse ændret",
 };
 
 export const CATEGORY_LABELS = {

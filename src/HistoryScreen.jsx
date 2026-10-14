@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { setProductReturn } from "./searchReturn.js";
@@ -26,7 +27,7 @@ function HistoryFilters({ filters, value, onChange }) {
   useEffect(() => {
     update();
     const el = ref.current;
-    el?.querySelector(".filter-chip.active")?.scrollIntoView({ inline:"nearest", block:"nearest", behavior:"smooth" });
+    el?.querySelector(".filter-chip.active")?.scrollIntoView({ inline:"nearest", block:"nearest", behavior: scrollBehavior() });
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, [value, update]);

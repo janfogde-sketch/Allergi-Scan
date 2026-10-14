@@ -16,7 +16,7 @@ Workflowet `apply-migrations.yml` anvender nye filer ved merge til main (Jans "p
 bruger ikke `apply_migration`/`execute_sql` til skrivning, fordi Supabase-forbindelsens bekræftelsesdialog ikke
 er synlig for Jan.
 
-1. Gem SQL som `<ÅÅÅÅMMDDTTMMSS>_<navn>.sql` (version nyere end alle eksisterende).
+1. Gem SQL som `<ÅÅÅÅMMDDTTMMSS>_<navn>.sql` (version nyere end alle eksisterende). Hent `origin/main` lige før merge: tjekket "Migrationsnumre" fejler, hvis versionen allerede er brugt eller er ældre end den nyeste på main; omdøb da filen med et nyt tidsstempel.
 2. Skriv i PR-teksten tydeligt, hvis filen sletter eller ændrer data.
 3. Filen køres i én transaktion og registreres i `schema_migrations`; fejler den, stopper workflowet.
 4. Test uden at ændre noget: kør SQL'en i en transaktion, der rulles tilbage (`begin; ...; rollback;`), eller start

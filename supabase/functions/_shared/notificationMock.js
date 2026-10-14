@@ -36,6 +36,15 @@ export const MOCK_DATA = {
     recallUrl: "https://foedevarestyrelsen.dk/nyheder/tilbagekaldte-produkter",
     recallId: "mock",
   },
+  "P6:cancelled": { ...PRODUCT, recallUrl: "https://foedevarestyrelsen.dk/nyheder/tilbagekaldte-produkter", recallId: "mock" },
+  "P6:updated": {
+    ...PRODUCT,
+    recallReason: "Produktet kan indeholde spor af nødder, som ikke er angivet på emballagen.",
+    affectedBatches: "Partinummer 12345 og 12346, bedst før 15.11.2026",
+    recallAction: "Returnér produktet til butikken mod fuld refusion.",
+    recallUrl: "https://foedevarestyrelsen.dk/nyheder/tilbagekaldte-produkter",
+    recallId: "mock",
+  },
 };
 
 export function mockDataFor(key) {
