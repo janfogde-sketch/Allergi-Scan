@@ -17,6 +17,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
+import { parseApnsToken, apnsConfigFromEnv, sendApns } from "../_shared/apns.ts";
 import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, retryDelayMinutes, RETRY_DELAYS_MIN } from "../_shared/notifyHelpers.js";
 import { eanVariants } from "../_shared/recallParser.js";
 import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail, sendHtmlMail } from "../_shared/mailSend.ts";
@@ -348,6 +349,7 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
 async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typeof renderNotification>, notificationId: string): Promise<boolean> {
   const { data: tokens } = await db.from("push_tokens").select("token").eq("user_id", plan.userId);
   let retry = false;
+  const apnsCfg = apnsConfigFromEnv((k) => Deno.env.get(k));
   const payload = {
     title: r.pushTitle, body: r.pushBody, icon: "/icon-192.png", lang: "da",
     url: `${APP_URL}/?notification=${notificationId}`, notificationId, eventId: ev.id,
@@ -356,20 +358,27 @@ async function sendPushes(db: Db, ev: EventRow, plan: Planned, r: ReturnType<typ
   };
 
   for (const { token } of tokens ?? []) {
+    // iPhone-appen: token fra Apples push (trin 3 af iPhone-planen). Uden APNs-nøgler springes den over uden spor.
+    const apnsToken = parseApnsToken(token);
+    if (apnsToken && !apnsCfg) continue;
     let sub;
-    try { sub = JSON.parse(token); } catch { continue; }
-    if (!sub?.endpoint || !sub?.keys) continue;
-    const hash = await endpointHash(sub.endpoint);
+    if (!apnsToken) {
+      try { sub = JSON.parse(token); } catch { continue; }
+      if (!sub?.endpoint || !sub?.keys) continue;
+    }
+    const hash = await endpointHash(apnsToken ? apnsToken.apns : sub.endpoint);
 
     const { data: prev } = await db.from("notification_deliveries").select("id, status, attempts")
       .eq("notification_id", notificationId).eq("channel", "push").eq("endpoint", hash).maybeSingle();
     if (prev?.status === "sent" || prev?.status === "skipped") continue;
 
-    const res = await sendWebPush(sub, payload, {
-      vapidPublicKey: Deno.env.get("VAPID_PUBLIC_KEY")!, vapidPrivateKey: Deno.env.get("VAPID_PRIVATE_KEY")!,
-      vapidSubject: Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.dk",
-      ttlSeconds: plan.ttlSeconds ?? r.ttlSeconds,
-    });
+    const res = apnsToken
+      ? await sendApns(apnsToken, payload, apnsCfg!, { ttlSeconds: plan.ttlSeconds ?? r.ttlSeconds })
+      : await sendWebPush(sub, payload, {
+        vapidPublicKey: Deno.env.get("VAPID_PUBLIC_KEY")!, vapidPrivateKey: Deno.env.get("VAPID_PRIVATE_KEY")!,
+        vapidSubject: Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.dk",
+        ttlSeconds: plan.ttlSeconds ?? r.ttlSeconds,
+      });
     const status = res.ok ? "sent" : res.gone ? "skipped" : "failed";
     await db.from("notification_deliveries").upsert({
       notification_id: notificationId, channel: "push", endpoint: hash, status,

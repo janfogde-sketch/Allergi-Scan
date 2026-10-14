@@ -42,6 +42,7 @@ import { useShoppingList } from './useShoppingList.js';
 import { useFamily } from './useFamily.js';
 import { useHousehold } from './useHousehold.js';
 import { syncPushToken } from './usePush.js';
+import { listenForPushTap } from './nativePush.js';
 import { useHistory } from './useHistory.js';
 import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from './useAuth.js';
 const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
@@ -437,6 +438,9 @@ export default function EatSafe() {
     if (accessToken && userId) syncPushToken(accessToken);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: push-abonnementet synkes ved kontoskifte; accessToken og userId sættes samtidig, og token-fornyelse skal ikke gentage det
   }, [userId]);
+
+  // iPhone-rammen: et tryk på en push-besked åbner den side, beskeden peger på (kun appens egen adresse).
+  React.useEffect(() => listenForPushTap((target) => { window.location.href = target; }), []);
 
   // Skifter enheden push-adresse, opretter service workeren et nyt abonnement og melder det hertil; vi gemmer det straks.
   const accessTokenRef = React.useRef(accessToken);

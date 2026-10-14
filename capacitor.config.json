@@ -4,12 +4,23 @@
   "webDir": "dist",
   "server": {
     "url": "https://www.eatsafe.dk/?src=store",
-    "allowNavigation": ["www.eatsafe.dk"],
+    "allowNavigation": [
+      "www.eatsafe.dk"
+    ],
     "cleartext": false
   },
   "ios": {
     "contentInset": "never",
     "backgroundColor": "#FBFAF7",
     "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    }
   }
 }
