@@ -1,10 +1,10 @@
 name: Migrationsnumre
 
+# Kører på alle PR'er (så det kan gøres påkrævet i GitHub); uden nye migrationsfiler består det med det samme.
 # Stopper en PR, hvis en ny migrationsfil har en version, der allerede er brugt paa main, bruges to gange i PR'en,
 # eller er aeldre end den nyeste paa main (Supabase springer dem over uden fejl). Rører ikke databasen.
 on:
   pull_request:
-    paths: ["supabase/migrations/**", ".github/scripts/check-migration-versions.sh", ".github/workflows/migration-versions.yml"]
 
 jobs:
   check:
