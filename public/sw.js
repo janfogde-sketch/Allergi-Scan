@@ -48,6 +48,8 @@ self.addEventListener("fetch", (event) => {
 // tvungen vibration — enheden bestemmer selv.
 const APP_ORIGINS = ["https://www.eatsafe.dk", "https://www.eatsafe.dk"];
 const APP_HOME = "https://www.eatsafe.dk/";
+// Samme offentlige VAPID-nøgle som i src/usePush.js (bruges kun hvis det gamle abonnement ikke kan oplyse den).
+const VAPID_PUBLIC_KEY = "BJYPtJFzv1T3iPhd4V9EvRfsvn5mvreXeaTjL8BviWt1nMi7TlyXP83vsplYPFsWaC8byu3-KnCABVW1XMWdVgM";
 
 function safeAppUrl(raw) {
   try {
@@ -88,6 +90,23 @@ self.addEventListener("push", (event) => {
   if (data.badge) options.badge = data.badge;
   if (data.tag) options.tag = data.tag; // samme tag erstatter en tidligere besked om samme sag
   event.waitUntil(self.registration.showNotification(data.title ?? "EatSafe", options));
+});
+
+// Skifter telefonen eller browseren push-adresse (abonnementet udløber eller fornyes), skal der oprettes et nyt,
+// ellers forsvinder beskederne stille. Her oprettes det nye med samme nøgle; appen gemmer det på kontoen
+// (straks hvis den er åben, ellers ved næste start via syncPushToken).
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil((async () => {
+    try {
+      let key = event.oldSubscription?.options?.applicationServerKey;
+      if (!key) key = (await self.registration.pushManager.getSubscription())?.options?.applicationServerKey;
+      if (!key) key = VAPID_PUBLIC_KEY;
+      const sub = event.newSubscription || (await self.registration.pushManager.getSubscription())
+        || (await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
+      const list = await clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of list) c.postMessage({ type: "push-subscription-changed", endpoint: sub?.endpoint || null });
+    } catch { /* appen prøver igen ved næste start (syncPushToken) */ }
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {

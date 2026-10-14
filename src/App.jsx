@@ -458,6 +458,18 @@ export default function EatSafe() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: push-abonnementet synkes ved kontoskifte; accessToken og userId sættes samtidig, og token-fornyelse skal ikke gentage det
   }, [userId]);
 
+  // Skifter enheden push-adresse, opretter service workeren et nyt abonnement og melder det hertil; vi gemmer det straks.
+  const accessTokenRef = React.useRef(accessToken);
+  accessTokenRef.current = accessToken;
+  React.useEffect(() => {
+    if (!("serviceWorker" in navigator)) return undefined;
+    const onMsg = (e) => {
+      if (e.data?.type === "push-subscription-changed" && accessTokenRef.current) syncPushToken(accessTokenRef.current);
+    };
+    navigator.serviceWorker.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+  }, []);
+
   // ── Router — browser back-knap support ──────────────────────────────────
   const isOffline = useOffline();
 
