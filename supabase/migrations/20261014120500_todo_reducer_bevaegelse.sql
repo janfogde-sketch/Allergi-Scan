@@ -1,12 +1,14 @@
 -- To do F4-13 "Global Reducér bevægelse" lukkes, og iPhone-testen lægges hos Bjørn (14. okt. 2026). Kun skrivning til to do-listen.
 update public.admin_todos
    set status = 'done', completed_at = now(), updated_at = now()
- where id = '839ddcac-884a-4e6e-97b5-673ac57f7e33' and status <> 'done';
+ where title like '[Efter beta] F4-13:%' and status <> 'done';
 
 insert into public.admin_todo_comments (todo_id, body)
-select '839ddcac-884a-4e6e-97b5-673ac57f7e33',
+select t.id,
        E'Lukket 14. okt. 2026. Appen og admin-panelet følger nu telefonens indstilling "Reducér bevægelse" overalt: én global regel slår alle animationer og overgange fra (tidligere kun to), og rulning, der styres fra koden (til toppen, til felt ved tastatur, til panel), springer i stedet for at glide (src/motion.js). Intet ændrer sig, når indstillingen er slået fra. iPhone-test ligger hos Bjørn.'
- where not exists (select 1 from public.admin_todo_comments where todo_id = '839ddcac-884a-4e6e-97b5-673ac57f7e33' and body like 'Lukket 14. okt. 2026.%');
+ from public.admin_todos t
+ where t.title like '[Efter beta] F4-13:%'
+   and not exists (select 1 from public.admin_todo_comments c where c.todo_id = t.id and c.body like 'Lukket 14. okt. 2026.%');
 
 insert into public.admin_todos (title, description, status, priority, track, assignee_id)
 select
