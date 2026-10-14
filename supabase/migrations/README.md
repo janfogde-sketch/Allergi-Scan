@@ -22,6 +22,8 @@ er synlig for Jan.
 4. Test uden at ændre noget: kør SQL'en i en transaktion, der rulles tilbage (`begin; ...; rollback;`), eller start
    workflowet manuelt med `dry_run`. Læsning (`execute_sql` med select) er stadig fint.
 
+**To do-listen er undtaget:** opgaver oprettes, kommenteres og lukkes ikke her, men med workflowet "Skriv til to do" (`docs/todo-skrivning.md`). Ældre `*_todo_*`-migrationer ligger der stadig som historik.
+
 ## Hvis Supabase CLI skal bruge mappen (`supabase db push`)
 
 CLI'en forventer, at hver version i databasens historik har en fil her. Før
