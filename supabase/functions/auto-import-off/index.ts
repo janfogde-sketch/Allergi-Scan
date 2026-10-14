@@ -14,6 +14,7 @@ const OFF_API              = "https://world.openfoodfacts.org/api/v2/product";
 const OFF_FIELDS           = "code,product_name,product_name_da,brands,categories_tags,image_url,ingredients_text,allergens_tags,nutriments";
 const LIMIT                = 50;
 const DELAY_MS             = 500; // rate limiting mod OFF
+const RECHECK_DAYS         = 30;  // koder, der ikke findes på OFF, slås først op igen efter så mange dage
 
 // ── Allergen-mapping ──────────────────────────────────────────────────────────
 const ALLERGEN_MAP: Record<string, string> = {
@@ -151,10 +152,12 @@ Deno.serve(async (req) => {
   const log: string[] = [];
 
   try {
-    // 1. Hent top-50 manglende EAN'er
+    // 1. Hent top-50 manglende EAN'er (spring koder over, som er tjekket for nylig)
+    const recheckBefore = new Date(Date.now() - RECHECK_DAYS * 86400000).toISOString();
     const { data: missing, error: fetchErr } = await supabase
       .from("missing_ean_log")
       .select("ean, count")
+      .or(`last_checked.is.null,last_checked.lt.${recheckBefore}`)
       .order("count", { ascending: false })
       .limit(LIMIT);
 
@@ -199,6 +202,7 @@ Deno.serve(async (req) => {
 
       if (!product) {
         stats.not_on_off++;
+        await supabase.from("missing_ean_log").update({ last_checked: new Date().toISOString() }).eq("ean", ean);
         continue;
       }
 
@@ -211,6 +215,7 @@ Deno.serve(async (req) => {
 
       if (!name) {
         stats.error++;
+        await supabase.from("missing_ean_log").update({ last_checked: new Date().toISOString() }).eq("ean", ean);
         continue;
       }
 

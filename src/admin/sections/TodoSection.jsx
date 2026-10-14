@@ -54,7 +54,7 @@ function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket, showStatus
   );
 }
 
-export default function TodoSection({ onOpenTicket, preset, todos, admins, loading, loadError, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
+export default function TodoSection({ onOpenTicket, preset, todos, admins, loading, loadError, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, activity, loadComments, closeComments, addComment, deleteComment }) {
   const isMobile = useIsMobile();
   const [view, setView] = useState("open");
   const [track, setTrack] = useState("");
@@ -311,7 +311,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
       {openTodo && (
         <TodoModal
           key={openTodo.id} todo={openTodo} admins={admins} userId={userId}
-          comments={comments} commentsLoading={commentsLoading}
+          comments={comments} commentsLoading={commentsLoading} activity={activity}
           onSave={(patch) => update(openTodo.id, patch)}
           onDelete={() => remove(openTodo.id)}
           onClose={() => setOpenId(null)}

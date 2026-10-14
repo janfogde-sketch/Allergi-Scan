@@ -14,7 +14,7 @@ const TICKETS_PAGE_ALL = 200;
 // Hver AI-reparse koster et AI-kald; loftet holder "Kør nu" til et overskueligt antal pr. tryk.
 const MANUAL_REPARSE_LIMIT = 25;
 
-export function useAdmin(accessToken, userId, clearAuth) {
+export function useAdmin(accessToken, userId) {
   // State
   const [submissions, setSubmissions] = useState([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
@@ -30,9 +30,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
   // Standard: kun aktive tickets (åbne og i gang). Løste hentes først, når nogen beder om det.
   const [adminTicketFilter, setAdminTicketFilter] = useState("active");
   const [ticketsIncludeDone, setTicketsIncludeDone] = useState(false);
-  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [deletingAccount, setDeletingAccount] = useState(false);
   const [openAdminUser, setOpenAdminUser] = useState(null);
   const [editingAdminUser, setEditingAdminUser] = useState(null);
   const [adminUserActionLoading, setAdminUserActionLoading] = useState(false);
@@ -101,28 +98,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
       showToast("Kunne ikke hente indsendelser: " + e.message, "error");
     }
     if (submissionsLoadToken.current === myToken) setSubmissionsLoading(false);
-  };
-
-  const deleteOwnAccount = async () => {
-    if (deleteConfirmText.toLowerCase() !== "slet") return;
-    setDeletingAccount(true);
-    try {
-      // Går via delete-user Edge Function i stedet for at slette tabel for
-      // tabel herfra — den er den eneste der også sletter selve
-      // auth.users-identiteten, så en "slettet" konto ikke stadig kan logge ind.
-      const res = await apiCall(`${SUPABASE_URL}/functions/v1/delete-user`, {
-        method: "POST",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({ uid: userId }),
-      });
-      if (res?.error) throw new Error(res.error);
-      clearAuth();
-      setShowDeleteAccount(false);
-    } catch (e) {
-      console.error("deleteOwnAccount:", e);
-      showToast("Kontoen kunne ikke slettes helt. Prøv igen, eller kontakt support@eatsafe.dk.", "error");
-    }
-    setDeletingAccount(false);
   };
 
   // Dashboard-tal (13. okt. 2026): døgn i dansk tid (statsLogic.js), scanninger = found_via 'scan', og trendrækker hentes side for side, så PostgREST's
@@ -1045,9 +1020,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
     adminUsers, setAdminUsers, adminUsersHasMore, submissionsHasMore, ticketsHasMore,
     adminUsersLoading,
     adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone,
-    showDeleteAccount, setShowDeleteAccount,
-    deleteConfirmText, setDeleteConfirmText,
-    deletingAccount,
     openAdminUser, setOpenAdminUser,
     editingAdminUser, setEditingAdminUser, adminUserActionLoading,
     openAdminUserForEdit, saveAdminUserEdit,
@@ -1064,7 +1036,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
     ocrImagePreview, setOcrImagePreview,
     // Functions
     loadSubmissions,
-    deleteOwnAccount,
     loadAdminStats,
     loadTickets,
     openTicketById,

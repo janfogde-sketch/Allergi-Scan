@@ -42,7 +42,7 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 | `shopping_lists` | id, owner_id, name, family_id | Realtime aktiveret |
 | `shopping_list_items` | id, list_id, name, checked, added_by, added_at | Realtime aktiveret |
 | `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, status_label (faglig status, fx "Fødevareallergi"), risk_level (ikke længere brugt, alle null siden 30. sept. 2026), tips (text[], godkendte korte fakta til "Vidste du, at …"-kortet på scanner-forsiden, migration `20261004180850`; 25 tips på 23 opslag; hvert tip skal kunne findes i opslagets egen tekst) | 768 opslag. Kategorier: allergen (EU's 14 + hvede), ingredient (kun ting der kan stå i en ingrediensliste), dish (retter/produkter, kun via søgning), e_number, diet, cross_reaction, faq, fun_fact. |
-| `missing_ean_log` | ean, count, first_seen, last_seen | Auto-logget + auto-importeret |
+| `missing_ean_log` | ean, count, first_seen, last_seen, last_checked | Auto-logget + auto-importeret |
 | `recipes` | id, title, instructions, image_url | tom (opskrifter på pause, slettet 30. sept. 2026) |
 | `client_errors` | id, fingerprint, source, message, stack, screen, occurrences, first_seen, last_seen, status | Fejl fra appen/edge/DB-triggere (30. sept. 2026, A3). Skrives kun via RPC `log_client_error` (også anon; samme fejl inden for 1 time lægges sammen, loft 300 nye rækker/10 min). Kun admin kan læse (RLS). Vises i admin-panelet under "Fejl" |
 
@@ -317,6 +317,11 @@ tællere, filtre på spor og ansvarlig, fritekstsøgning, afkrydsning direkte i 
 "Kopiér som prompt" til en Claude Code-session, og automatisk genindlæsning hvert 30. sekund, mens fanen er åben.
 Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. **Claude læser den med SQL og skriver til den med workflowet "Skriv til to do"** (`todo_apply`, kun `admin_todos`/kommentarer, ingen sletning; se `docs/todo-skrivning.md`, ikke migrationsfiler); hold den opdateret,
 når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
+
+**Historik (14. okt. 2026, migration `20261015003000_todo_historik.sql`):** `admin_todo_activity` logger hver ændring af status, prioritet,
+ansvarlig og frist (trigger på `admin_todos`): hvem (`changed_by`), hvordan (`via`: admin, ticket = fulgte ticketstatus, workflow = "Skriv til to do",
+system) og fra/til. Kun admins kan læse; ingen kan skrive, rette eller slette (kun triggeren skriver). Slettes med opgaven og efter 12 mdr.
+(`cleanup_notifications`). Vises i opgavens vindue under kommentarerne (de seneste 5, "Vis alle"). Test `supabase/tests/todo_activity.sql`.
 
 **Tickets og to do er flettet sammen (1. okt. 2026, migration `20261001092359_tickets_todos_sync.sql`).** `admin_todos.ticket_id`
 (unik, sletter opgaven, hvis tickets slettes) peger på `feedback_tickets`. Triggere: en ny ticket giver en opgave
