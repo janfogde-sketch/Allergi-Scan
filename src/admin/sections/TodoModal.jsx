@@ -7,7 +7,7 @@ import { showToast, Icon } from "../../SharedComponents.jsx";
 import ActionsMenu from "../ActionsMenu.jsx";
 import { useIsMobile } from "../useIsMobile.js";
 import {
-  STATUS_LABELS, PRIORITY_LABELS, TRACK_LABELS, personName, authorName, fmtDanishDateTime, fmtDanishDate, isLongComment, buildTodoPrompt,
+  STATUS_LABELS, PRIORITY_LABELS, TRACK_LABELS, ACTIVITY_FIELD_LABELS, activityValue, activityActor, personName, authorName, fmtDanishDateTime, fmtDanishDate, isLongComment, buildTodoPrompt,
 } from "../todoLogic.js";
 
 export const isHttpUrl = (s) => /^https?:\/\/\S+$/i.test(s);
@@ -47,6 +47,35 @@ function CommentBody({ body }) {
   );
 }
 
+// Historik: hvem ændrede status, prioritet, ansvarlig eller frist og hvornår (nyeste først). Adskilt fra kommentarerne;
+// de seneste 5 vises, resten foldes ud med "Vis alle".
+const ACTIVITY_SHOWN = 5;
+function ActivityList({ activity, admins }) {
+  const [all, setAll] = useState(false);
+  const rows = [...activity].reverse();
+  const shown = all ? rows : rows.slice(0, ACTIVITY_SHOWN);
+  return (
+    <>
+      <div className="admin-label" style={{ marginTop: 14 }}>Historik</div>
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Ingen ændringer endnu.</div>
+      ) : (
+        <ul className="todo-activity" aria-label="Historik">
+          {shown.map((a) => (
+            <li key={a.id}>
+              <span style={{ color: "var(--ink2)" }}>{ACTIVITY_FIELD_LABELS[a.field] ?? a.field}: {activityValue(admins, a.field, a.old_value)} → {activityValue(admins, a.field, a.new_value)}</span>
+              <span style={{ color: "var(--muted)" }}> · {activityActor(admins, a)} · {fmtDanishDateTime(a.created_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {rows.length > ACTIVITY_SHOWN && (
+        <button type="button" className="todo-link-btn" style={{ minHeight: 32, marginTop: 2 }} aria-expanded={all} onClick={() => setAll((v) => !v)}>{all ? "Vis færre" : `Vis alle (${rows.length})`}</button>
+      )}
+    </>
+  );
+}
+
 // Højden af det synlige område (uden iPhone-tastaturet), så Gem og kommentarfeltet aldrig ligger bag tastaturet.
 function useVisibleHeight(enabled) {
   const [h, setH] = useState(null);
@@ -62,7 +91,7 @@ function useVisibleHeight(enabled) {
   return h;
 }
 
-export default function TodoModal({ todo, isNew = false, admins, userId, comments = [], commentsLoading = false, onSave, onDelete, onClose, onAddComment, onDeleteComment, onOpenTicket }) {
+export default function TodoModal({ todo, isNew = false, admins, userId, comments = [], commentsLoading = false, activity = [], onSave, onDelete, onClose, onAddComment, onDeleteComment, onOpenTicket }) {
   const isMobile = useIsMobile();
   const [draft, setDraft] = useState({
     title: todo.title, description: todo.description ?? "", status: todo.status, priority: todo.priority, track: todo.track,
@@ -271,6 +300,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
               <button type="submit" className="admin-btn admin-btn-ghost admin-touch" disabled={sending || !commentText.trim()}>{sending ? "Sender…" : "Send"}</button>
             </form>
             <div ref={commentEnd} />
+            {!commentsLoading && <ActivityList activity={activity} admins={admins} />}
           </>}
         </div>
 

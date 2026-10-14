@@ -169,6 +169,29 @@ export function authorName(admins, id) {
   return a ? (a.name || a.email || "Tidligere administrator") : "Tidligere administrator";
 }
 
+/** Felter, som opgavens historik viser (admin_todo_activity). */
+export const ACTIVITY_FIELD_LABELS = { status: "Status", priority: "Prioritet", assignee_id: "Ansvarlig", due_date: "Frist" };
+
+/** Én værdi i historikken som læsbar tekst: "Skal laves", "Høj", et navn eller "14. okt. 2026"; tom værdi = "Ingen". */
+export function activityValue(admins, field, value) {
+  if (value === null || value === undefined || value === "") return "Ingen";
+  if (field === "status") return STATUS_LABELS[value] ?? value;
+  if (field === "priority") return PRIORITY_LABELS[value] ?? value;
+  if (field === "assignee_id") return authorName(admins, value);
+  if (field === "due_date") return fmtDanishDate(value);
+  return String(value);
+}
+
+/**
+ * Hvem der stod for en ændring i historikken. via: admin = i admin-panelet, ticket = ticketten skiftede status,
+ * workflow = Claude via workflowet "Skriv til to do", system = alt andet (fx databasen selv).
+ */
+export function activityActor(admins, row) {
+  if (row.via === "workflow") return "Claude (to do-workflow)";
+  const who = row.changed_by ? authorName(admins, row.changed_by) : "Systemet";
+  return row.via === "ticket" ? `${who} via ticket` : who;
+}
+
 /** "14. okt. 2026, 08:15" i dansk tid. */
 export function fmtDanishDateTime(value) {
   if (!value) return "";

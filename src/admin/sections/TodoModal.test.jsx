@@ -168,4 +168,17 @@ describe("TodoModal", () => {
     expect(props.onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("alertdialog")).toBeTruthy();
   });
+  it("viser historikken adskilt fra kommentarerne, nyeste først, og folder lange historikker sammen", () => {
+    const activity = Array.from({ length: 7 }, (_, i) => ({ id: i + 1, created_at: `2026-10-0${i + 1}T10:00:00Z`, changed_by: "a1", via: "admin", field: "priority", old_value: "normal", new_value: i === 6 ? "high" : "low" }));
+    setup({ activity });
+    const list = screen.getByRole("list", { name: "Historik" });
+    expect(list.querySelectorAll("li").length).toBe(5);
+    expect(list.querySelector("li").textContent).toMatch(/Prioritet: Normal → Høj · Jan/);
+    fireEvent.click(screen.getByRole("button", { name: "Vis alle (7)" }));
+    expect(list.querySelectorAll("li").length).toBe(7);
+  });
+  it("uden historik står der, at intet er ændret", () => {
+    setup();
+    expect(screen.getByText("Ingen ændringer endnu.")).toBeTruthy();
+  });
 });

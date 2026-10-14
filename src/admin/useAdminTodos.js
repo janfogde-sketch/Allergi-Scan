@@ -23,6 +23,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
   const doneLoadedRef = useRef(false);
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [activity, setActivity] = useState([]); // historik for den åbne opgave (admin_todo_activity), ældste først
   const loadedOnce = useRef(false);
   const [loaded, setLoaded] = useState(false); // første indlæsning er lykkedes (adskiller 0 opgaver fra ikke indlæst)
   const openCommentsFor = useRef(null);
@@ -163,17 +164,24 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
 
   const loadComments = useCallback(async (todoId, { quiet = false } = {}) => {
     openCommentsFor.current = todoId;
-    if (!quiet) { setCommentsLoading(true); setComments([]); }
+    if (!quiet) { setCommentsLoading(true); setComments([]); setActivity([]); }
     try {
-      const data = await apiCall(`${SUPABASE_URL}/rest/v1/admin_todo_comments?todo_id=eq.${todoId}&select=id,todo_id,author_id,body,created_at&order=created_at.asc&limit=500`, { headers: headers() });
-      if (openCommentsFor.current === todoId) setComments(Array.isArray(data) ? data : []);
+      const [data, hist] = await Promise.all([
+        apiCall(`${SUPABASE_URL}/rest/v1/admin_todo_comments?todo_id=eq.${todoId}&select=id,todo_id,author_id,body,created_at&order=created_at.asc&limit=500`, { headers: headers() }),
+        // Historikken er en bekvemmelighed: fejler den, vises kommentarerne stadig
+        apiCall(`${SUPABASE_URL}/rest/v1/admin_todo_activity?todo_id=eq.${todoId}&select=id,created_at,changed_by,via,field,old_value,new_value&order=created_at.asc,id.asc&limit=500`, { headers: headers() }).catch(() => null),
+      ]);
+      if (openCommentsFor.current === todoId) {
+        setComments(Array.isArray(data) ? data : []);
+        if (Array.isArray(hist)) setActivity(hist);
+      }
     } catch (e) {
       if (!quiet) showToast("Kunne ikke hente kommentarer: " + e.message, "error");
     }
     if (!quiet) setCommentsLoading(false);
   }, [headers]);
 
-  const closeComments = useCallback(() => { openCommentsFor.current = null; setComments([]); }, []);
+  const closeComments = useCallback(() => { openCommentsFor.current = null; setComments([]); setActivity([]); }, []);
 
   const addComment = async (todoId, body) => {
     const text = String(body ?? "").trim();
@@ -201,5 +209,5 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     }
   };
 
-  return { todos, admins, loading, loadError, loaded, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
+  return { todos, admins, loading, loadError, loaded, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, activity, loadComments, closeComments, addComment, deleteComment };
 }

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, hasValidDue, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName } from "./todoLogic.js";
+import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, hasValidDue, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName, activityValue, activityActor } from "./todoLogic.js";
 
 const T = (o) => ({ id: "x", title: "t", description: "", status: "todo", priority: "normal", track: "backend", assignee_id: null, due_date: null, created_at: "2026-10-01T08:00:00Z", completed_at: null, ...o });
 const TODAY = "2026-10-01";
@@ -210,5 +210,23 @@ describe("frister: gyldige og ugyldige", () => {
     expect(betaOverview(before, []).noDue).toBe(1);
     expect(betaOverview([{ ...before[0], due_date: "2026-11-01" }], []).noDue).toBe(0);
     expect(betaOverview([{ ...before[0], due_date: "2026-11-01" }].map((t) => ({ ...t, due_date: null })), []).noDue).toBe(1);
+  });
+});
+
+describe("historik", () => {
+  const admins = [{ id: "a1", name: "Jan", email: "j@x.dk" }];
+  it("viser værdier som læsbar tekst", () => {
+    expect(activityValue(admins, "status", "doing")).toBe("I gang");
+    expect(activityValue(admins, "priority", "high")).toBe("Høj");
+    expect(activityValue(admins, "assignee_id", "a1")).toBe("Jan");
+    expect(activityValue(admins, "assignee_id", "slettet")).toBe("Tidligere administrator");
+    expect(activityValue(admins, "due_date", "2026-12-01")).toMatch(/1\. dec/);
+    expect(activityValue(admins, "due_date", null)).toBe("Ingen");
+  });
+  it("viser hvem og hvordan", () => {
+    expect(activityActor(admins, { via: "admin", changed_by: "a1" })).toBe("Jan");
+    expect(activityActor(admins, { via: "ticket", changed_by: "a1" })).toBe("Jan via ticket");
+    expect(activityActor(admins, { via: "workflow", changed_by: null })).toBe("Claude (to do-workflow)");
+    expect(activityActor(admins, { via: "system", changed_by: null })).toBe("Systemet");
   });
 });
