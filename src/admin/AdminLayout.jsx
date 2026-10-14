@@ -134,9 +134,9 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
           })}
         </nav>
         <div className="admin-sidebar-footer">
-          <div className="admin-sidebar-user" title={userEmail}>{userEmail}</div>
+          <div className="admin-sidebar-user" title={userEmail}><Icon name="profile" size={14} color="var(--muted)" /><span>{userEmail}</span></div>
           <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} />
-          <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={logout}>Log ud</button>
+          <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm admin-btn-quiet" onClick={logout}><Icon name="logout" size={14} color="var(--muted)" />Log ud</button>
         </div>
       </aside>
       <div className="admin-main" {...(drawerOpen ? { inert: "" } : {})}>

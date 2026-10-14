@@ -10,7 +10,7 @@
 import React, { useState } from "react";
 import { submitFeedback } from "../submitFeedback.js";
 import { compressImageToBase64 } from "../helpers.js";
-import { showToast } from "../SharedComponents.jsx";
+import { showToast, Icon } from "../SharedComponents.jsx";
 
 const TYPES = [
   { id: "bug", label: "Fejl / bug" },
@@ -65,7 +65,7 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
   return (
     <>
       <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)} style={{ marginBottom: 6 }}>
-        Send feedback
+        <Icon name="message" size={14} color="var(--ink2)" />Send feedback
       </button>
       {open && (
         <div className="admin-modal-overlay" onClick={close}>
