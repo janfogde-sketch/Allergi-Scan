@@ -751,3 +751,12 @@ describe("timeAgo (F5-16)", () => {
     expect(timeAgo(ago(8 * D), now)).toMatch(/^\d+\. okt\. 2026$/);
   });
 });
+
+describe("submissionErrorText", () => {
+  it("giver venlige tekster for dagsloft og for stort billede", async () => {
+    const { submissionErrorText } = await import("./helpers.js");
+    expect(submissionErrorText({ status: 429 }, "x")).toMatch(/i morgen/);
+    expect(submissionErrorText({ status: 413 }, "x")).toMatch(/for stort/);
+    expect(submissionErrorText({ status: 500 }, "x")).toBe("x");
+  });
+});

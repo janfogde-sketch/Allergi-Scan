@@ -6,7 +6,7 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, matchCustomAllergens, normalizeProductFlags, STATUS_TEXT } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, submissionErrorText, matchCustomAllergens, normalizeProductFlags, STATUS_TEXT } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 
 // Lægger et fritekst-match af brugerens EGNE, selv-tilføjede allergier
@@ -594,7 +594,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
       setScreen(SCREENS.SUBMITTED);
     } catch (e) {
       traceLog(tid, "submit:error", { error: e.message });
-      setScanError_("Indsendelse fejlede. Prøv igen.");
+      setScanError_(submissionErrorText(e, "Indsendelse fejlede. Prøv igen."));
     }
     setSubmitting(false);
   };
