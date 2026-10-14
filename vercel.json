@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)supabase/migrations' ':(exclude)supabase/tests' ':(exclude)supabase/todo' ':(exclude)docs' ':(exclude).claude' ':(exclude).github' ':(exclude,glob)**/*.md'",
+  "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ] && [ \"$VERCEL_GIT_COMMIT_REF\" != \"dev\" ] && exit 0; git diff --quiet HEAD^ HEAD -- . ':(exclude)supabase/migrations' ':(exclude)supabase/tests' ':(exclude)supabase/todo' ':(exclude)docs' ':(exclude).claude' ':(exclude).github' ':(exclude,glob)**/*.md'",
   "headers": [
     {
       "source": "/(.*)",
@@ -23,6 +23,16 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(self), geolocation=(self), microphone=(), payment=(), usb=()"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "dev.eatsafe.dk" }],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     },
