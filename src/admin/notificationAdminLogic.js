@@ -1,3 +1,4 @@
+// @ts-check
 // Ren logik til admin → Notifikationer: navne, gruppering og forhåndsvisning af push.
 import { DEFINITIONS, renderNotification, validatePushOverride, pushVariablesFor, PUSH_TITLE_MAX, PUSH_BODY_MAX } from "../../supabase/functions/_shared/notificationContent.js";
 import { mockDataFor } from "../../supabase/functions/_shared/notificationMock.js";

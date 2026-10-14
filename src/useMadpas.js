@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { useState, useEffect } from "react";
 import { MADPAS_LANGUAGES } from "./constants.jsx";
 import { showToast } from "./ToastAndMisc.jsx";

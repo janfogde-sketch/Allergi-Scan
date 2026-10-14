@@ -1,3 +1,4 @@
+// @ts-check
 // Fælles mini-markup for politiktekster: **fed**, \n = linjeskift, {mail}, [tekst](url).
 export const LEGAL_MAIL = "hej@eatsafe.dk";
 

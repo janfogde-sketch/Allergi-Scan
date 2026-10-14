@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter tilbagekaldelser (public.recalls, kun læsbar for admin) og afgør dem via
 // admin-RPC'erne admin_resolve_recall / admin_recall_affected_count.
 import { useState, useEffect, useCallback } from "react";
