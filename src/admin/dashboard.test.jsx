@@ -27,13 +27,21 @@ describe("dashboard", () => {
     render(<DashboardSection adminStats={stats()} setSection={setSection} />);
     fireEvent.click(screen.getByRole("button", { name: /Produkter: 20.182/ }));
     expect(setSection).toHaveBeenCalledWith("products");
-    fireEvent.click(screen.getByRole("button", { name: /Åbne tickets: 2/ }));
-    expect(setSection).toHaveBeenCalledWith("tickets");
   });
-  it("Åbne tickets åbner ticketsiden med filteret Åbne, og Afventende indsendelser med Afventer", () => {
+  it("Overblik har otte ens kort, og åbne tickets står kun under Kræver opmærksomhed (ikke også som kort)", () => {
+    render(<DashboardSection adminStats={stats()} setSection={() => {}} />);
+    const grid = document.querySelector(".dash-stat-grid");
+    expect(grid.children.length).toBe(8);
+    expect([...grid.querySelectorAll(".admin-stat-label")].map((e) => e.textContent)).toEqual([
+      "Brugere i alt", "Nye brugere i dag", "Produkter", "Familiemedlemmer", "Scanninger i alt", "Scanninger i dag", "Søgninger i alt", "Afventende indsendelser",
+    ]);
+    expect(screen.queryByRole("button", { name: /Åbne tickets: 2/ })).toBeNull();
+    expect(screen.getAllByText(/åbne tickets/i).length).toBe(1);
+  });
+  it("Åbne tickets åbner ticketsiden med filteret Åbne (fra Kræver opmærksomhed), og Afventende indsendelser med Afventer", () => {
     const openTickets = vi.fn(), openSubmissions = vi.fn(), setSection = vi.fn();
     render(<DashboardSection adminStats={stats()} setSection={setSection} openTickets={openTickets} openSubmissions={openSubmissions} />);
-    fireEvent.click(screen.getByRole("button", { name: /Åbne tickets: 2/ }));
+    fireEvent.click(screen.getByRole("button", { name: /2 åbne tickets/ }));
     fireEvent.click(screen.getByRole("button", { name: /Afventende indsendelser: 4/ }));
     expect(openTickets).toHaveBeenCalledTimes(1);
     expect(openSubmissions).toHaveBeenCalledTimes(1);
@@ -55,7 +63,7 @@ describe("dashboard", () => {
     render(<DashboardSection adminStats={stats()} setSection={() => {}} todos={todos} admins={[{ id: "a1", name: "Jan" }]} openTodos={openTodos} />);
     const cell = (label) => screen.getByText(label, { selector: ".beta-cell span" }).closest("button");
     expect(screen.queryByText("Uden frist", { selector: ".beta-cell span" })).toBeNull(); // skjult, til området foldes ud
-    fireEvent.click(screen.getByRole("button", { name: /Flere/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Vis flere oplysninger" }));
     expect(cell("Uden frist").querySelector("b").textContent).toBe("4");
     expect(cell("Åbne opgaver").querySelector("b").textContent).toBe("7");
     const expected = { "Åbne opgaver": {}, "Høj prioritet": { priority: "high" }, "Venter": { status: "blocked" }, "Frist overskredet": { due: "overdue" }, "Uden ansvarlig": { assigneeId: "none" }, "Uden frist": { due: "none" } };
@@ -123,11 +131,79 @@ describe("dashboard", () => {
     expect(screen.queryByText(/Tryk på en søjle/)).toBeNull();
     expect(document.querySelector(".dash-tip")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /12\. oktober: 1 scanning$/ }), { detail: 0 });
-    expect(document.querySelector(".dash-tip").textContent).toMatch(/mandag 12\. oktober: 1 scanning$/);
+    expect(document.querySelector(".dash-tip").textContent).toMatch(/12\. okt.*1 scanning$/);
     fireEvent.click(screen.getByRole("button", { name: /13\. oktober: 0 scanninger$/ }), { detail: 0 });
-    expect(document.querySelector(".dash-tip").textContent).toMatch(/tirsdag 13\. oktober: 0 scanninger$/);
+    expect(document.querySelector(".dash-tip").textContent).toMatch(/13\. okt.*0 scanninger$/);
+    expect(document.querySelectorAll(".dash-tip").length).toBe(1);
     fireEvent.pointerDown(document.body);
     expect(document.querySelector(".dash-tip")).toBeNull();
+  });
+  it("tooltippen er den samme på begge grafer, holdes inden for diagrammet og kan flyttes med piletaster", () => {
+    render(<DashboardSection adminStats={{ ...stats(), user_trend: bucketByDkDay([{ t: "2026-10-12T10:00:00Z" }, { t: "2026-10-13T08:00:00Z" }], "t", 30, new Date("2026-10-13T10:00:00Z")) }} setSection={() => {}} />);
+    for (const name of [/Scanninger pr\. dag/, /Nye brugere pr\. dag/]) {
+      const plot = screen.getByRole("group", { name });
+      const btns = plot.querySelectorAll("button");
+      for (const i of [0, 7, btns.length - 1]) {
+        fireEvent.click(btns[i], { detail: 0 });
+        const tip = document.querySelector(".dash-tip");
+        expect(tip.getAttribute("role")).toBe("status");
+        expect(tip.style.left || tip.style.right).toBeTruthy();
+      }
+      fireEvent.keyDown(plot, { key: "ArrowLeft" });
+      expect(document.querySelectorAll(".dash-tip").length).toBe(1);
+      fireEvent.pointerDown(document.body);
+    }
+    const plot = screen.getAllByRole("group", { name: /pr\. dag/ })[0];
+    const btns = plot.querySelectorAll("button");
+    btns[10].focus();
+    fireEvent.keyDown(plot, { key: "ArrowRight" });
+    expect(btns[11].getAttribute("aria-pressed")).toBe("true");
+  });
+  it("ikonerne har betydning: ur til overskredet frist, flag til høj prioritet, og opgaver uden frist fremhæves aldrig", () => {
+    const T = (o) => ({ id: Math.random().toString(), status: "todo", priority: "normal", assignee_id: "a1", due_date: null, ...o });
+    const todos = [T({}), T({ due_date: "" }), T({ due_date: "2020-01-01" }), T({ priority: "high" })];
+    render(<DashboardSection adminStats={{ ...stats(), open_tickets: 0, pending_submissions: 0 }} setSection={() => {}} todos={todos} admins={[]} openTodos={() => {}} />);
+    const region = screen.getByRole("region", { name: "Kræver opmærksomhed" });
+    const rows = [...region.querySelectorAll(".dash-attn-row")];
+    expect(rows.map((r) => r.querySelector(".dash-attn-text").textContent)).toEqual(["1 opgave med overskredet frist", "1 opgave med høj prioritet"]);
+    const iconOf = (row) => row.querySelector(".dash-attn-icon svg").innerHTML;
+    expect(rows[0].querySelector(".dash-attn-icon").className).toContain("late");
+    expect(rows[1].querySelector(".dash-attn-icon").className).toContain("warn");
+    expect(iconOf(rows[0])).toContain("circle"); // ur
+    expect(iconOf(rows[1])).not.toContain("circle"); // flag
+    expect(iconOf(rows[0])).not.toBe(iconOf(rows[1]));
+  });
+  it("Vis flere oplysninger / Vis færre oplysninger folder Uden ansvarlig og Uden frist ud og ind", () => {
+    render(<DashboardSection adminStats={stats()} setSection={() => {}} todos={[{ id: "1", status: "todo", priority: "normal", assignee_id: null, due_date: null }]} admins={[]} openTodos={() => {}} />);
+    const btn = () => screen.getByRole("button", { name: /Vis (flere|færre) oplysninger/ });
+    expect(btn().textContent.trim()).toBe("Vis flere oplysninger");
+    expect(btn().getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(btn());
+    expect(btn().textContent.trim()).toBe("Vis færre oplysninger");
+    expect(btn().getAttribute("aria-expanded")).toBe("true");
+    expect(btn().querySelector(".dash-chev").className).toContain("open");
+    expect(screen.getByText("Uden ansvarlig", { selector: ".beta-cell span" })).toBeTruthy();
+    expect(screen.getByText("Uden frist", { selector: ".beta-cell span" })).toBeTruthy();
+    fireEvent.click(btn());
+    expect(screen.queryByText("Uden frist", { selector: ".beta-cell span" })).toBeNull();
+  });
+  it("ansvarlige vises med deres registrerede visningsnavn (fallback e-mail), aldrig et gættet navn, på én fælles skala", () => {
+    const T = (o) => ({ id: Math.random().toString(), status: "todo", priority: "normal", due_date: null, ...o });
+    const todos = [T({ assignee_id: "a1" }), T({ assignee_id: "a1" }), T({ assignee_id: "a1" }), T({ assignee_id: "a1" }), T({ assignee_id: "a2" }), T({ assignee_id: "a3" })];
+    render(<DashboardSection adminStats={stats()} setSection={() => {}} todos={todos} admins={[{ id: "a1", name: "Bjørn Holst", email: "b@x.dk" }, { id: "a2", name: "jafo", email: "j@x.dk" }, { id: "a3", name: "  ", email: "uden@navn.dk" }]} openTodos={() => {}} />);
+    const names = [...document.querySelectorAll(".dash-dist-name")].map((e) => e.textContent);
+    expect(names).toEqual(["Bjørn Holst", "jafo", "uden@navn.dk"]);
+    const widths = [...document.querySelectorAll(".dash-dist-bar > span")].map((e) => parseFloat(e.style.width));
+    expect(widths[0]).toBeCloseTo((4 / 6) * 100, 1);
+    expect(widths[1]).toBeCloseTo((1 / 6) * 100, 1);
+    expect(widths[0] / widths[1]).toBeCloseTo(4, 1);
+  });
+  it("periodevælgeren står på sin egen linje på smalle skærme (CSS) og knapperne ombrydes ikke", async () => {
+    const { adminCss } = await import("./adminTheme.js");
+    expect(adminCss).toMatch(/@media\(max-width:559px\)\{\.dash-head\.stack\{flex-direction:column/);
+    expect(adminCss).toMatch(/\.dash-period button\{[^}]*white-space:nowrap/);
+    render(<DashboardSection adminStats={stats()} setSection={() => {}} />);
+    expect(screen.getByRole("group", { name: "Periode for graferne" }).closest(".dash-head").className).toContain("stack");
   });
   it("definitionerne ligger bag et diskret infoikon (ikke en tekstknap), og loading viser skelet", () => {
     const { rerender } = render(<DashboardSection adminStats={null} setSection={() => {}} />);
