@@ -132,7 +132,7 @@ Supabase-dialoger er usynlige: brug kun læsning dér.
 **Vercel (Free, 100 deploys/dag): push/merge KUN ved funktions- og dataændringer.** Rene design- og dokumentændringer committes, men pushes
 med næste funktionsændring eller på bestilling. Udebliver et deploy, aldrig en tom commit (`docs/arbejdsgang.md`).
 
-**Dev-gren (aktiv først når Jan siger "slå dev til"):** arbejde går til PR mod `dev`; Jans "udgiv" = én PR `dev` → `main`.
+**Dev-gren (slået til 14. okt. 2026, testadresse dev.eatsafe.dk):** frontend (skærme, knapper) går som PR mod `dev`; migrationer, edge-funktioner, workflows, admin og hotfix direkte mod `main` (bagudkompatible; derefter merges `main` ind i `dev`). Dev deler database med produktion. Jans "udgiv" = én PR `dev` → `main`.
 
 **Design** verificeres i en Artifact-preview i stedet for deploy (`docs/arbejdsgang.md`).
 
