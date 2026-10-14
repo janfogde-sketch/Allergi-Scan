@@ -117,7 +117,7 @@ standardvalg, sig hvilket, og fortsæt. Ved åbne spørgsmål: kort anbefaling (
 - Når godkendt: én PR (dansk body, PR-template, footer + session-link) → squash-merge → resync branch (`.claude/commands/resync-branch.md`).
 - **Godkendt plan:** Har Jan sagt ja til en plan i tråden, og er den bygget præcis efter planen (ingen ændringer, fejl eller uforudset), og er CI grøn,
   så pushes og merges uden at spørge igen. Kort status til koordinatoren bagefter. Afviger noget, spørg Jan først.
-- **Merge uden ventetid (Jan, 14. okt. 2026):** auto-merge sættes, tråden venter ikke på CI, og lukketråden følger op. Detaljer: `docs/arbejdsgang.md`.
+- **Merge uden ventetid (Jan, 14. okt. 2026):** auto-merge sættes, tråden venter ikke på CI, og lukketråden følger op. En workflow (`opdater-pr.yml`) opdaterer selv PR'er med auto-merge, der er bagud; ved konflikt flettes main ind i hånden. Detaljer: `docs/arbejdsgang.md`.
 - **Grøn før merge:** PR'er merges kun, når CI og DB-tests er grønne i PR'en. Tjek DB-tests på main bagefter. Hovedgrenen kræver opdateret branch.
   Kun én session retter en rød `main`; de andre venter.
 - **Kritiske produktionsfejl** (fx en crashende skærm) rettes straks som isoleret hotfix uden at vente på godkendelse.

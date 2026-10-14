@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+  workflow_dispatch: # startes af opdater-pr.yml efter en automatisk opdatering af PR'en
   push:
     branches: [main, dev]
 
