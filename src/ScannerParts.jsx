@@ -263,14 +263,14 @@ export function CamCtrlBtn({ icon, label, onClick, active, ariaLabel, ariaPresse
       }}>
       <div style={{
         width:38, height:38, borderRadius:"50%",
-        background: active ? "#fff" : "rgba(0,0,0,.45)",
+        background: active ? "var(--paper)" : "rgba(0,0,0,.45)",
         backdropFilter:"blur(6px)", WebkitBackdropFilter:"blur(6px)",
         border:"1px solid rgba(255,255,255,.2)",
         display:"flex", alignItems:"center", justifyContent:"center",
       }}>
-        <Icon name={icon} size={17} color={active ? "var(--ink)" : "#fff"} />
+        <Icon name={icon} size={17} color={active ? "var(--ink)" : "var(--on-green)"} />
       </div>
-      <span style={{ fontSize:10.5, fontWeight:600, color:"#fff", textShadow:"0 1px 2px rgba(0,0,0,.7)", whiteSpace:"nowrap" }}>{label}</span>
+      <span style={{ fontSize:10.5, fontWeight:600, color:"var(--on-green)", textShadow:"0 1px 2px rgba(0,0,0,.7)", whiteSpace:"nowrap" }}>{label}</span>
     </button>
   );
 }
