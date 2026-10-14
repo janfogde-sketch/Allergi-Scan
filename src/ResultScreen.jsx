@@ -66,7 +66,7 @@ export default function ResultScreen({
   // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
   // vurdere imod, og en tom profil ville give et grønt "Ingen match med dine valg". Vis i
   // stedet, at profilen mangler, og vurdér først, når den er hentet (siden regner selv om).
-  if (profileLoadStatus === "loading" || profileLoadStatus === "error") {
+  if (profileLoadStatus !== "ok" && !scanResult.isDemo) {
     const failed = profileLoadStatus === "error";
     return (
       <div className="screen fade-in">

@@ -11,12 +11,13 @@ import EditPreferencesScreen from "./EditPreferencesScreen.jsx";
 
 afterEach(cleanup);
 
-function Harness() {
+function Harness({ onShared } = {}) {
   const [user, setUser] = useState({ name: "Bjørn", allergenLevels: {}, diets: [] });
   const [allergens, setAllergens] = useState(["maelkeallergi", "jordnoedder"]);
   const [customAllerg, setCustomAllerg] = useState([]);
   const [customInput, setCustomInput] = useState("");
   const [selectedENumbers, setSelectedENumbers] = useState([]);
+  onShared?.(allergens);
   return (
     <AuthProvider value={{ user, setUser, userId: "u1", accessToken: "x" }}>
       <ProfileProvider value={{ allergens, setAllergens, customAllerg, setCustomAllerg }}>
@@ -39,6 +40,15 @@ describe("Rediger præferencer: Gem ændringer vises kun ved ugemte ændringer",
     expect(screen.getByText("Gem ændringer")).toBeTruthy();
     fireEvent.click(milk.querySelectorAll("button")[0]); // tilbage til "Advar ved spor"
     expect(screen.queryByText("Gem ændringer")).toBeNull();
+  });
+
+  it("ændringer gælder først ved Gem: de rører ikke appens delte profil (G3)", () => {
+    let shared;
+    render(<Harness onShared={(a) => { shared = a; }} />);
+    expect(shared).toEqual(["maelkeallergi", "jordnoedder"]);
+    fireEvent.click(screen.getByRole("button", { name: /Jordnødder/ }));
+    expect(screen.getByText("Gem ændringer")).toBeTruthy();
+    expect(shared).toEqual(["maelkeallergi", "jordnoedder"]);
   });
 
   it("tekst i 'Skriv selv'-feltet tæller som en ændring, og plus-knappen hedder 'Tilføj'", () => {

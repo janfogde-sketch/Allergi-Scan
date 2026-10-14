@@ -248,3 +248,20 @@ describe("sammensatte ost- og bygord (2. okt. 2026)", () => {
     expect(analyzeIngredients("vand, byggryn").gluten).toBe("yes");
   });
 });
+
+import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.js";
+describe("mergeFlagsUpward (G4): en ny beregning sænker aldrig et gammelt flag", () => {
+  it("beholder håndrettet/deklareret ja, selv om den nye beregning siger nej", () => {
+    expect(mergeFlagsUpward({ sesam: "yes", mælk: "no" }, { sesam: "no", mælk: "no" })).toEqual({ sesam: "yes", mælk: "no" });
+  });
+  it("hæver nej → spor → ja, og tilføjer nye nøgler", () => {
+    expect(mergeFlagsUpward({ aeg: "no", soja: "traces" }, { aeg: "traces", soja: "yes", fisk: "no" })).toEqual({ aeg: "traces", soja: "yes", fisk: "no" });
+  });
+  it("sænker aldrig spor til nej, og unknown sænkes ikke af no", () => {
+    expect(mergeFlagsUpward({ aeg: "traces", soja: "unknown" }, { aeg: "no", soja: "no" })).toEqual({ aeg: "traces", soja: "unknown" });
+  });
+  it("tåler tomme værdier", () => {
+    expect(mergeFlagsUpward(null, { aeg: "yes" })).toEqual({ aeg: "yes" });
+    expect(mergeFlagsUpward({ aeg: "yes" }, null)).toEqual({ aeg: "yes" });
+  });
+});

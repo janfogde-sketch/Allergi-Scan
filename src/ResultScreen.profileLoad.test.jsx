@@ -45,6 +45,12 @@ describe("ResultScreen uden hentet profil", () => {
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 
+  it("viser ingen vurdering, når hentningen endnu ikke er startet (idle)", () => {
+    renderWith("idle");
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
+    expect(screen.getByText("Henter din profil …")).toBeTruthy();
+  });
+
   it("vurderer som før, når profilen er hentet", () => {
     renderWith("ok");
     expect(screen.queryByText("Din profil kunne ikke hentes")).toBeNull();
