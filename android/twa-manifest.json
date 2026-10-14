@@ -8,7 +8,7 @@
   "themeColor": "#FFFFFF",
   "navigationColor": "#FFFFFF",
   "backgroundColor": "#FBFAF7",
-  "startUrl": "/",
+  "startUrl": "/?src=store",
   "iconUrl": "https://www.eatsafe.dk/icon-512.png",
   "maskableIconUrl": "https://www.eatsafe.dk/icon-512-maskable.png",
   "webManifestUrl": "https://www.eatsafe.dk/manifest.json",

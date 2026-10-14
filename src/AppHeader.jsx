@@ -41,6 +41,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
 import { EatSafeWordmark } from "./SharedComponents.jsx";
+import { isStoreBuild } from "./storeBuild.js";
 
 // Den grønne prik på hamburgerknappen betyder én ting: der er ulæste beskeder
 // (1. okt. 2026, brugerrapport — den tidligere "du er inde i en menudestination"-
@@ -53,7 +54,7 @@ export default function AppHeader({ onFeedback, onMenu, unread = 0 }) {
     <header className="topbar">
       <div className="topbar-logo">
         <EatSafeWordmark />
-        <div className="topbar-beta">BETA</div>
+        {!isStoreBuild() && <div className="topbar-beta">BETA</div>}
       </div>
       <div style={{ display:"flex", gap:8, alignItems:"center" }}>
         {/* Feedback-knap */}
