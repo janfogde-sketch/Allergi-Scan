@@ -199,7 +199,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
   const loadAdminUsers = async () => {
     try {
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,birth_year,phone&order=created_at.desc&limit=200`,
+        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,birth_year&order=created_at.desc&limit=200`,
         { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
       );
       if (Array.isArray(data)) setAdminUsers(data);
@@ -243,7 +243,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
       ).catch(() => []);
       const rowsArr = Array.isArray(allergenRows) ? allergenRows : [];
       setEditingAdminUser({
-        name: full.name || "", email: full.email || "", phone: full.phone || "",
+        name: full.name || "", email: full.email || "",
         role: full.role || "user", birth_year: full.birth_year || "", gender: full.gender || "",
         e_numbers: (full.e_numbers || []).join(", "),
         allergen_levels: full.allergen_levels || {},
@@ -268,7 +268,6 @@ export function useAdmin(accessToken, userId, clearAuth) {
         body: JSON.stringify({
           name: editingAdminUser.name || null,
           email: editingAdminUser.email || null,
-          phone: editingAdminUser.phone || null,
           role: editingAdminUser.role,
           birth_year: editingAdminUser.birth_year ? +editingAdminUser.birth_year : null,
           gender: editingAdminUser.gender || null,
@@ -297,7 +296,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         });
       }
 
-      setAdminUsers(us => us.map(x => x.id === openAdminUser.id ? { ...x, name: editingAdminUser.name, email: editingAdminUser.email, phone: editingAdminUser.phone, role: editingAdminUser.role, birth_year: editingAdminUser.birth_year, onboarding_completed: editingAdminUser.onboarding_completed } : x));
+      setAdminUsers(us => us.map(x => x.id === openAdminUser.id ? { ...x, name: editingAdminUser.name, email: editingAdminUser.email, role: editingAdminUser.role, birth_year: editingAdminUser.birth_year, onboarding_completed: editingAdminUser.onboarding_completed } : x));
       showToast("Bruger opdateret");
       setOpenAdminUser(null); setEditingAdminUser(null);
     } catch (e) {

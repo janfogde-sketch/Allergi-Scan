@@ -24,7 +24,7 @@
   admin-rolle: opret den kun efter Jans ja. Testmail/push sendes kun til Jans/Bjørns egne konti.
 - **Login/mail:** egen SMTP via Resend (`noreply@eatsafe.dk`), "Confirm email" er slået til, og Send Email Hook (`auth-send-email`)
   sender alle auth-mails med skabelonerne i `supabase/templates/auth/` (se `src/CONTEXT.md` §11). Der findes kun én velkomstmail
-  (`supabase/templates/resend/N1-velkomst.html`, type `welcome_onboarded`, sendt efter onboarding). Alle 29 mailskabeloner (inkl. N9 familieinvitation, sendt direkte af `family-invite`) deler
+  (`supabase/templates/resend/N1-velkomst.html`, type `welcome_onboarded`, sendt efter onboarding). Alle 24 mailskabeloner (inkl. N9 familieinvitation, sendt direkte af `family-invite`) deler
   mørk palette (`supabase/templates/resend/README.md`, test `src/mailDarkMode.test.js`); ændr den i alle samtidig.
   `deploy-auth-templates.yml` kører kun manuelt (tilbagerulning). `RESEND_API_KEY` findes kun som edge-secret, ikke i Vault.
 - **Adgangskode:** mindst 10 tegn plus lille bogstav, stort bogstav og tal (`passwordErrorText()`/`PASSWORD_REQUIREMENTS_TEXT` i

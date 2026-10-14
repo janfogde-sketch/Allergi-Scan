@@ -7,7 +7,6 @@ import { downloadCsv } from "../csvExport.js";
 const CSV_COLUMNS = [
   { key: "name", label: "Navn" },
   { key: "email", label: "Email" },
-  { key: "phone", label: "Telefon" },
   { key: "role", label: "Rolle" },
   { key: "birth_year", label: "Fødselsår" },
   { key: "onboarding_completed", label: "Onboarding færdig" },
@@ -147,15 +146,9 @@ export default function UsersSection({
               <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Navn</label>
-                <input value={editingAdminUser.name} onChange={e => setEditingAdminUser(s => ({ ...s, name: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Telefon</label>
-                <input value={editingAdminUser.phone} onChange={e => setEditingAdminUser(s => ({ ...s, phone: e.target.value }))} />
-              </div>
+            <div className="admin-field">
+              <label className="admin-label">Navn</label>
+              <input value={editingAdminUser.name} onChange={e => setEditingAdminUser(s => ({ ...s, name: e.target.value }))} />
             </div>
 
             <div className="admin-field">
