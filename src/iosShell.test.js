@@ -29,3 +29,14 @@ describe("iPhone-ramme: retur fra login", () => {
     expect(read("../ios/App/App/Info.plist")).toMatch(/CFBundleURLSchemes[\s\S]*?<string>dk\.eatsafe\.app<\/string>/);
   });
 });
+
+describe("iPhone-ramme: Apples push", () => {
+  it("giver push-adressen videre til Capacitor", () => {
+    const d = read("../ios/App/App/AppDelegate.swift");
+    expect(d).toContain("capacitorDidRegisterForRemoteNotifications");
+    expect(d).toContain("capacitorDidFailToRegisterForRemoteNotifications");
+  });
+  it("viser beskeder også med appen åben", () => {
+    expect(cfg.plugins.PushNotifications.presentationOptions).toEqual(["badge", "sound", "alert"]);
+  });
+});

@@ -12,6 +12,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { renderNotification, DEFINITIONS } from "../_shared/notificationContent.js";
 import { mockDataFor } from "../_shared/notificationMock.js";
 import { sendWebPush } from "../_shared/webpush.ts";
+import { parseApnsToken, apnsConfigFromEnv, sendApns } from "../_shared/apns.ts";
 import { RESEND_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
@@ -74,17 +75,26 @@ Deno.serve(async (req) => {
     const { data: tokens } = await db.from("push_tokens").select("token").eq("user_id", userId);
     let sent = 0, failed = 0;
     const errors: string[] = [];
+    const apnsCfg = apnsConfigFromEnv((k) => Deno.env.get(k));
     for (const { token } of tokens ?? []) {
-      let sub;
-      try { sub = JSON.parse(token); } catch { continue; }
-      if (!sub?.endpoint || !sub?.keys) continue;
-      const res = await sendWebPush(sub, {
+      const testPayload = {
         title: `[TEST] ${r.pushTitle}`, body: r.pushBody, icon: "/icon-192.png", lang: "da",
         url: `${APP_URL}/`, tag: `test:${key}`,
-      }, {
-        vapidPublicKey: Deno.env.get("VAPID_PUBLIC_KEY")!, vapidPrivateKey: Deno.env.get("VAPID_PRIVATE_KEY")!,
-        vapidSubject: Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.dk", ttlSeconds: 300,
-      });
+      };
+      const apnsToken = parseApnsToken(token);
+      let sub;
+      if (apnsToken) {
+        if (!apnsCfg) { failed++; errors.push("iPhone-push er ikke sat op endnu (APNs-nøgler mangler)"); continue; }
+      } else {
+        try { sub = JSON.parse(token); } catch { continue; }
+        if (!sub?.endpoint || !sub?.keys) continue;
+      }
+      const res = apnsToken
+        ? await sendApns(apnsToken, testPayload, apnsCfg!, { ttlSeconds: 300 })
+        : await sendWebPush(sub, testPayload, {
+          vapidPublicKey: Deno.env.get("VAPID_PUBLIC_KEY")!, vapidPrivateKey: Deno.env.get("VAPID_PRIVATE_KEY")!,
+          vapidSubject: Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.dk", ttlSeconds: 300,
+        });
       if (res.ok) sent++;
       else {
         failed++;

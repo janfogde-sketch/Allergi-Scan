@@ -25,3 +25,15 @@ Plan: `/mnt/project-files/eatsafe/ios-skal-plan-2026-10-14.md`. iOS-rammen er en
 - **Skal sættes i Supabase (Authentication → URL Configuration → Redirect URLs): `dk.eatsafe.app://auth`.** Uden den afvises login i iPhone-appen.
   Browseren og Android er upåvirket.
 - Retur-adressen er et eget URL-skema, så det virker uden Apple-konto. Universal Links (`applinks:`) kan skiftes til senere.
+
+## Apples push (trin 3)
+- Appen (`src/nativePush.js`, `src/usePush.js`) beder om tilladelse, får Apples push-adresse og gemmer den i `push_tokens.token` som
+  `{"platform":"ios","apns":"<hex>"}` (samme tabel og `claim_push_token` som web-push; ingen databaseændring). Tryk på en besked åbner
+  `url` i beskeden, kun hvis den peger på www.eatsafe.dk.
+- Serveren (`supabase/functions/_shared/apns.ts`, brugt af `notify` og `notify-test`) sender til Apple. **Uden secrets nedenfor springes
+  iPhone-tokens over uden spor, og web-push er uændret.** Sæt i Supabase → Edge Functions → Secrets, når Apple-kontoen findes:
+  `APNS_KEY_P8` (hele .p8-filen), `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID=dk.eatsafe.app`. `APNS_SANDBOX=true` kun til bygninger direkte
+  fra Xcode (TestFlight og App Store bruger produktion). Redeploy `notify` og `notify-test` er ikke nødvendigt, secrets læses ved hvert kald.
+- **I Xcode:** Signing & Capabilities → + Capability → Push Notifications (opretter `App.entitlements`; kræver Apple-kontoen).
+- Privatlivspolitikken dækker allerede Apples push-tjeneste (afsnit 9, "Push-tjenester"), så teksterne er uændrede.
+- Test fra admin-panelet (notify-test) virker til iPhone-tokens, så snart nøglerne er sat; kun til admin-konti som i dag.
