@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Madpas-tekster (oversættelser og sætningsbyggere). Ligger i en egen fil, så de
 // store tabeller ikke ligger i startpakken: kun Madpas-skærmen og oplæsningen
 // indlæser dem (to do a5dc1790, Hurtigere opstart).

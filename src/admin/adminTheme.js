@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // adminTheme.js — Desktop admin-panelets CSS.
 // Bevidst adskilt fra src/theme.jsx (den mobile PWA's store, skærm-specifikke

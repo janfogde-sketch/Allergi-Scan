@@ -1,3 +1,4 @@
+// @ts-check
 // Privatlivspolitik-teksten: ÉN kilde til appens skærm og den offentlige side.
 // Skærmen (PrivacyScreen.jsx) og public/privacy.html (genereres af
 // scripts/build-legal-pages.mjs) læser begge herfra. Ret KUN her; kør derefter

@@ -1,3 +1,4 @@
+// @ts-check
 // Brugsvilkår-teksten: ÉN kilde til appens skærm og den offentlige side.
 // Skærmen (TermsScreen.jsx) og public/terms.html (genereres af
 // scripts/build-legal-pages.mjs) læser begge herfra. Ret KUN her; kør derefter
