@@ -28,7 +28,8 @@ async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-type Db = ReturnType<typeof createClient>;
+// deno-lint-ignore no-explicit-any
+type Db = any;
 
 async function logError(db: Db, e: unknown, ctx: Record<string, unknown>) {
   try { await db.rpc("log_client_error", { p_message: String((e as Error)?.message ?? e), p_source: "edge:recalls-sync", p_context: ctx }); } catch { /* aldrig blokere */ }
