@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { submissionAllergenFlags, cleanIngredientText, submissionMissingFields } from "./admin/submissionLogic.js";
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS } from "./constants.jsx";
@@ -117,7 +117,7 @@ export function useAdmin(accessToken, userId) {
     }
   };
 
-  const loadTickets = async ({ includeDone } = {}) => {
+  const loadTickets = async (/** @type {{ includeDone?: boolean }} */ { includeDone } = {}) => {
     const withDone = includeDone ?? ticketsIncludeDone;
     setTicketsIncludeDone(withDone);
     setTicketsLoading(true);

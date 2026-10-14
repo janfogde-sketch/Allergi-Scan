@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useScanner.js
 // Al kamera- og scan-logik: start/stop kamera, gallery-scan, foto-fallback,
@@ -118,7 +118,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     let detector = null;
     try {
       if ("BarcodeDetector" in window) {
-        detector = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"] });
+        detector = new (/** @type {any} */ (window)).BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"] });
       }
     } catch { detector = null; }
     const frame = document.createElement("canvas");
@@ -135,7 +135,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       lastScannedRef.current = { code, time: now };
       if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();
         const osc = ctx.createOscillator(); const gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
         osc.frequency.value = 1800; gain.gain.setValueAtTime(0.25, ctx.currentTime);
@@ -183,6 +183,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     }
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    /** @type {any} */
     const constraints = isIOS
       ? { video: { facingMode: { exact: "environment" } } }
       : { video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 },
@@ -242,13 +243,14 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       setScanReady(true);
 
       await new Promise(r => setTimeout(r, 500));
-      const videoEl = document.querySelector("#qr-reader-home video");
+      const videoEl = /** @type {HTMLVideoElement | null} */ (document.querySelector("#qr-reader-home video"));
       if (videoEl?.srcObject) {
-        const track = videoEl.srcObject.getVideoTracks()[0];
+        const track = /** @type {MediaStream} */ (videoEl.srcObject).getVideoTracks()[0];
         if (track) {
           torchTrackRef.current = track;
           try {
-            const caps = track.getCapabilities?.() || {};
+            const caps = /** @type {any} */ (track.getCapabilities?.() || {});
+            /** @type {any[]} */
             const adv = [];
             if (caps.focusMode?.includes("continuous"))       adv.push({ focusMode: "continuous" });
             if (caps.exposureMode?.includes("continuous"))    adv.push({ exposureMode: "continuous" });
@@ -260,7 +262,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           // 2× til og fra med toggleZoom. Knappen vises kun, hvis kameraet
           // understøtter zoom på mindst 2×.
           try {
-            const caps = track.getCapabilities?.() || {};
+            const caps = /** @type {any} */ (track.getCapabilities?.() || {});
             setZoomSupported(!!(caps.zoom && caps.zoom.max >= 2));
           } catch { setZoomSupported(false); }
 
@@ -271,13 +273,13 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           // Tap-to-focus
           videoEl.onclick = async (ev) => {
             try {
-              const caps = track.getCapabilities?.() || {};
+              const caps = /** @type {any} */ (track.getCapabilities?.() || {});
               if (caps.focusMode?.includes("manual") && caps.pointsOfInterest !== undefined) {
                 const rect = videoEl.getBoundingClientRect();
                 const x = (ev.clientX - rect.left) / rect.width;
                 const y = (ev.clientY - rect.top) / rect.height;
-                await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }], focusMode: "single-shot" }] });
-                setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}), 1500);
+                await track.applyConstraints(/** @type {any} */ ({ advanced: [{ pointsOfInterest: [{ x, y }], focusMode: "single-shot" }] }));
+                setTimeout(() => track.applyConstraints(/** @type {any} */ ({ advanced: [{ focusMode: "continuous" }] })).catch(() => {}), 1500);
               }
             } catch {}
           };
@@ -339,8 +341,8 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   // ── toggleTorch ────────────────────────────────────────────────────────────
   const toggleTorch = useCallback(async () => {
     try {
-      const videoEl = document.querySelector("#qr-reader-home video");
-      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
+      const videoEl = /** @type {HTMLVideoElement | null} */ (document.querySelector("#qr-reader-home video"));
+      const track = /** @type {MediaStream | null} */ (videoEl?.srcObject)?.getVideoTracks?.()?.[0] || torchTrackRef.current;
       if (!track) return;
       const capabilities = track.getCapabilities?.();
       if (!capabilities?.torch) { setScanError("Lygte ikke understøttet på denne enhed."); return; }
@@ -355,20 +357,20 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const pauseCamera = useCallback(() => {
     if (!cameraRef.current) return;
     scanPausedRef.current = true;
-    try { document.querySelector("#qr-reader-home video")?.pause(); } catch { /* ignoreres */ }
+    try { /** @type {HTMLVideoElement | null} */ (document.querySelector("#qr-reader-home video"))?.pause(); } catch { /* ignoreres */ }
   }, []);
   const resumeCamera = useCallback(() => {
     if (!scanPausedRef.current) return;
     scanPausedRef.current = false;
-    try { document.querySelector("#qr-reader-home video")?.play()?.catch?.(() => {}); } catch { /* ignoreres */ }
+    try { /** @type {HTMLVideoElement | null} */ (document.querySelector("#qr-reader-home video"))?.play()?.catch?.(() => {}); } catch { /* ignoreres */ }
   }, []);
 
   const toggleZoom = useCallback(async () => {
     try {
-      const videoEl = document.querySelector("#qr-reader-home video");
-      const track = videoEl?.srcObject?.getVideoTracks?.()?.[0] || torchTrackRef.current;
+      const videoEl = /** @type {HTMLVideoElement | null} */ (document.querySelector("#qr-reader-home video"));
+      const track = /** @type {MediaStream | null} */ (videoEl?.srcObject)?.getVideoTracks?.()?.[0] || torchTrackRef.current;
       if (!track) return;
-      const caps = track.getCapabilities?.() || {};
+      const caps = /** @type {any} */ (track.getCapabilities?.() || {});
       if (!caps.zoom || caps.zoom.max < 2) return;
       const next = scanZoomRef.current >= 2 ? Math.max(1, caps.zoom.min || 1) : 2;
       await track.applyConstraints({ advanced: [{ zoom: next }] });
