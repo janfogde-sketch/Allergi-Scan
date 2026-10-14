@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // F2-2 (6. okt. 2026): gemmer brugerens egne allergier (faste og egne valg) i én transaktion
 // via RPC'en save_my_allergens. Kaster videre ved fejl, så kalderen kan vise en fast tekst.
 // Findes RPC'en ikke endnu i databasen (404, Jan kører SQL'en), bruges den gamle vej:

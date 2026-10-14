@@ -1,3 +1,4 @@
+// @ts-check
 import { SCREENS } from "./constants.jsx";
 
 // Skærme en bruger med ufuldført onboarding ALTID må kunne se/blive på (29.

@@ -1,3 +1,4 @@
+// @ts-check
 // Delte stile for resultatsiden.
 export const S = {
   flex1:    { flex:1 },

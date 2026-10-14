@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useScreenFocus.js (F4-6, 6. okt. 2026)
 // Ved skærmskift flyttes fokus til den nye skærms overskrift (første h1 eller
@@ -12,7 +12,7 @@ export function focusScreenHeading(doc = document) {
   const target = doc.querySelector(".screen h1, .screen .screen-title") || doc.querySelector(".screen");
   if (!target) return false;
   if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
-  target.focus({ preventScroll: true });
+  /** @type {HTMLElement} */ (target).focus({ preventScroll: true });
   return true;
 }
 

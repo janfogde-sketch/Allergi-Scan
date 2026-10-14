@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Læsning af egne beskeder (tabellen `notifications`, RLS: kun modtageren),
 // markering som læst via RPC'en mark_notification_read og sletning via
 // delete_notification (begge kun for egne rækker). Oprettelse af beskeder

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { useState, useLayoutEffect } from "react";
 
 // Højden på en fast placeret bjælke (bundnavigationen eller "Gem ændringer"-bjælken), målt løbende (2. okt. 2026, Bjørn). Bruges af

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Feedbacktyper (id'erne er gemt i feedback_tickets.type og bruges af admin). Alle ikoner er line-ikoner fra samme `Icon`-bibliotek.
 // "crash" hedder "Appen lukker ned" i appen; id'et er uændret, så eksisterende tickets og admin virker som før.
 export const FEEDBACK_TYPES = [

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Samler familie-invitationer til sheetet: dem der matcher kontoens bekræftede e-mail, og den, brugeren kom fra via linket i mailen
 // (uanset loginmetode og adresse, fx Facebook). En invitation, der findes begge steder, vises kun én gang. Testet i familyInviteInbox.test.js.
 

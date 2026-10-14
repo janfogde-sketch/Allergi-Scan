@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 
 // ── Historik/Favoritter: status-sprog, kompakt filter ───────────────────────
 // Samme grøn/rød/orange-farvesprog og ikon+tekst+farve-mønster som

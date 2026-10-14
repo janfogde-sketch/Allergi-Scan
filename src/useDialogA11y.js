@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useDialogA11y.js (F4-7, 6. okt. 2026)
 // Fælles adfærd for ark og dialoger: fokus flyttes ind ved åbning, Tab bliver
@@ -22,7 +22,7 @@ export function useDialogA11y(ref, onClose, { active = true } = {}) {
 
   useEffect(() => {
     if (!active) return undefined;
-    const opener = document.activeElement;
+    const opener = /** @type {HTMLElement | null} */ (document.activeElement);
     const token = {};
     stack.push(token);
     const root = ref.current;

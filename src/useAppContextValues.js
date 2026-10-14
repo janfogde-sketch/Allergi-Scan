@@ -1,3 +1,4 @@
+// @ts-check
 import { useMemo } from "react";
 
 // Samler appens context-værdier (flyttet ud af App.jsx, ren omflytning).

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Diagnostik, der sendes med en feedback. ÉN kilde: den samme kontekst bruges både til afsendelsen og til oversigten, brugeren kan
 // folde ud i feedback-modalen, så der aldrig sendes noget, som ikke vises.
 //
@@ -103,7 +103,7 @@ export function buildFeedbackContext({ type, env, app, state, traces = [], recen
 export const NO_CRASH_TEXT = "Ingen nylig fejl fundet";
 
 // Rækker til oversigten. Alt det, der sendes, står her (undtagen de rå trace-linjer, som vises for sig).
-export function diagnosticGroups(ctx, { type, formatBuild } = {}) {
+export function diagnosticGroups(ctx, { type, formatBuild } = /** @type {any} */ ({})) {
   const tech = [
     ["Skærm",       `${ctx.screen_label} (${ctx.page_id})`],
     ["Enhed",       ctx.os],

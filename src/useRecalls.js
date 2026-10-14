@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // F1-1 (6. okt. 2026): slår den scannede vare op blandt Fødevarestyrelsens tilbagekaldelser
 // (RPC active_recalls_for_ean, kun offentlige felter, sidste 60 dage). Et fejlet opslag
 // blokerer aldrig resultatet: det logges, og siden vises som før.

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Admin-værktøjer i den mobile app: manglende EAN'er og OFF-import.
 // Flyttet uændret fra App.jsx 30. sept. 2026 (arkitektur-audit A8).
 import { useState } from "react";

@@ -1,3 +1,4 @@
+// @ts-check
 import { useCallback } from "react";
 import { SCREENS, AVATAR_COLORS } from "./constants.jsx";
 import { PREVIEW_MOCK_PRODUCTS } from "./previewMockData.js";
@@ -22,10 +23,10 @@ export function useArtifactPreview({ setUserId, setUser, setAllergens, productCa
     setUser(u => ({ ...u, name: "Mille Nielsen", email: "preview@eatsafe.dk", birth_year: "1991", gender: "Kvinde" }));
     setAllergens(PREVIEW_MOCK_ALLERGENS);
     for (const product of PREVIEW_MOCK_PRODUCTS) {
-      productCacheRef.current[product.ean] = buildScanResultFromProductData({
+      productCacheRef.current[product.ean] = buildScanResultFromProductData(/** @type {any} */ ({
         product, data: {}, ean: product.ean,
         activeIds: PREVIEW_MOCK_ALLERGENS, activeENumbers: [], family: [], activeProfiles: [],
-      });
+      }));
     }
     loadShoppingList();
 

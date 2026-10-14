@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Links, som åbner appen med en handling: familie-invitation (?invite=, kun routing til oprettelse/login)
 // og deling af indkøbsliste (?join-list=). Flyttet uændret fra App.jsx
 // 30. sept. 2026 (arkitektur-audit A8).

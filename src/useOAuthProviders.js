@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Hvilke sociale logins er slået til i Supabase (8. okt. 2026). "Fortsæt med Apple" vises først, når Apple-udbyderen
 // er aktiveret i Supabase (Authentication → Providers), så knappen kan kobles på uden en ny app-version.
 // Google og Facebook er altid slået til og vises uanset svaret.

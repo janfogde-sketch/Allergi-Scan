@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter og ændrer brugerens samtykke til helbredsoplysninger (2. okt. 2026).
 // Uden session (artifact-preview) behandles samtykke som givet, da intet gemmes.
 import { useState, useEffect, useCallback } from "react";
