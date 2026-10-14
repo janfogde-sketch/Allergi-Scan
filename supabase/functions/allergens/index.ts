@@ -1,6 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
-import { reportLimitHit, withinGlobalLimit, withinUserLimit } from "../_shared/apiUsage.ts";
+import { reportLimitHit, withinGlobalLimit, withinTotalAiLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
 import {
   ALL_ALLERGENS,
@@ -135,16 +135,28 @@ Deno.serve(async (req) => {
     // 2. Claude-fallback hvis usikker ELLER eksplicit anmodet (force_ai)
     // Dagligt loft mod misbrug: pr. bruger for loggede kald, globalt for interne/anonyme kald.
     // Over loftet springes kun Claude over; nøgleordsmotoren kører som normalt.
+    // Admins kald tæller i en fælles adminpulje (claude_admin) i stedet for admins personlige loft. Oven i alt gælder det samlede dagsloft.
+    // ai_skipped fortæller kalderen, at AI blev sprunget over pga. et loft, så admin-panelet kan sige det i stedet for at gemme stille.
     let claudeAllowed = false;
+    let aiSkipped: string | null = null;
     if (force_ai || shouldUseClaudeFallback(text, allergenFlags)) {
       const usageClient = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+      let callerIsAdmin = false;
+      if (!isInternalCall) {
+        const { data: roleRow } = await usageClient.from("users").select("role").eq("id", caller!.id).single();
+        callerIsAdmin = roleRow?.role === "admin";
+      }
       claudeAllowed = isInternalCall
         ? await withinGlobalLimit(usageClient, "claude_internal")
-        : await withinUserLimit(usageClient, caller!.id, "claude_analysis");
-      if (!claudeAllowed && !isInternalCall) await reportLimitHit(usageClient, caller!.id, "claude_analysis", "Claude-analyse");
+        : callerIsAdmin
+          ? await withinGlobalLimit(usageClient, "claude_admin")
+          : await withinUserLimit(usageClient, caller!.id, "claude_analysis");
+      if (!claudeAllowed && !isInternalCall && !callerIsAdmin) await reportLimitHit(usageClient, caller!.id, "claude_analysis", "Claude-analyse");
+      if (claudeAllowed) claudeAllowed = await withinTotalAiLimit(usageClient);
+      if (!claudeAllowed) aiSkipped = "daily_limit";
     }
     if (claudeAllowed) {
       const claudeFlags = await analyzeWithClaude(text);
@@ -217,6 +229,7 @@ Deno.serve(async (req) => {
         allergen_flags: allergenFlags,
         method,
         saved: !!(save && product_id),
+        ...(aiSkipped ? { ai_skipped: aiSkipped } : {}),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
