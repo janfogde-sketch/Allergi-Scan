@@ -53,3 +53,29 @@ describe("nativeShell", () => {
     expect(() => listenForAuthReturn(() => {})()).not.toThrow();
   });
 });
+
+describe("haptic", () => {
+  it("bruger navigator.vibrate uden for iPhone-rammen (uændret opførsel)", async () => {
+    const { haptic } = await import("./nativeShell.js");
+    const vibrate = vi.fn();
+    stubWindow({});
+    vi.stubGlobal("navigator", { vibrate });
+    haptic("warning", [1, 2]);
+    expect(vibrate).toHaveBeenCalledWith([1, 2]);
+  });
+  it("bruger telefonens haptik i iPhone-rammen", async () => {
+    const { haptic } = await import("./nativeShell.js");
+    const impact = vi.fn(), notification = vi.fn(), vibrate = vi.fn();
+    stubWindow({ Capacitor: { isNativePlatform: () => true, Plugins: { Haptics: { impact, notification } } } });
+    vi.stubGlobal("navigator", { vibrate });
+    haptic("medium", 40); haptic("light", 40); haptic("warning", 40);
+    expect(impact.mock.calls).toEqual([[{ style: "MEDIUM" }], [{ style: "LIGHT" }]]);
+    expect(notification).toHaveBeenCalledWith({ type: "WARNING" });
+    expect(vibrate).not.toHaveBeenCalled();
+  });
+  it("kaster aldrig", async () => {
+    const { haptic } = await import("./nativeShell.js");
+    stubWindow({ Capacitor: { isNativePlatform: () => true, Plugins: { Haptics: { impact: () => { throw new Error("x"); } } } } });
+    expect(() => haptic("light", 1)).not.toThrow();
+  });
+});

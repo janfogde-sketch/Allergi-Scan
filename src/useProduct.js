@@ -8,6 +8,7 @@ import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
 import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, submissionErrorText, matchCustomAllergens, normalizeProductFlags, STATUS_TEXT } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
+import { haptic } from "./nativeShell.js";
 
 // Lægger et fritekst-match af brugerens EGNE, selv-tilføjede allergier
 // (`activeCustom` — fx "Fructose") oven på et allerede-bygget scan-resultat.
@@ -178,7 +179,7 @@ export function buildDemoScanResult({ activeIds, activeLevels, activeCustom, act
 // TIL (ctx-værdien er kun `false` når brugeren selv har slået den fra i
 // Indstillinger — `undefined`, fx fra eksisterende tests, tæller som TIL).
 function fireWarningAlert(vibrateOn, soundOn) {
-  if (vibrateOn !== false && navigator.vibrate) navigator.vibrate([50, 60, 50, 60, 90]);
+  if (vibrateOn !== false) haptic("warning", [50, 60, 50, 60, 90]);
   if (soundOn !== false) {
     try {
       const AudioCtx = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
@@ -211,7 +212,7 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
   } = ctx;
 
   if (!ean?.trim()) return;
-  if (navigator.vibrate) navigator.vibrate(40);
+  haptic("light", 40);
   const tid = traceId("scan");
   traceLog(tid, "scan:start", { ean: ean.trim() });
 
@@ -248,7 +249,7 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     // ændringsbeskeder også rammer den (useHistory fanger selv fejl, fx offline).
     setHistory(h => pushLocalHistory(h, cachedResult));
     logHistory(ean.trim(), cachedResult.id, cachedResult.status, cachedResult.allergen_flags, activeProfiles);
-    if (navigator.vibrate) navigator.vibrate(25);
+    haptic("light", 25);
     // Alternativer er IKKE en del af det cachede result-objekt — uden dette
     // genbruger et cache-hit bare hvad end alternatives-state tilfældigvis
     // stod på fra en tidligere scanning i samme session (eller intet, hvis

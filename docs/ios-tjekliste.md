@@ -37,3 +37,7 @@ Plan: `/mnt/project-files/eatsafe/ios-skal-plan-2026-10-14.md`. iOS-rammen er en
 - **I Xcode:** Signing & Capabilities → + Capability → Push Notifications (opretter `App.entitlements`; kræver Apple-kontoen).
 - Privatlivspolitikken dækker allerede Apples push-tjeneste (afsnit 9, "Push-tjenester"), så teksterne er uændrede.
 - Test fra admin-panelet (notify-test) virker til iPhone-tokens, så snart nøglerne er sat; kun til admin-konti som i dag.
+
+## Native detaljer (trin 4)
+- Vibration ved scanning og advarsler går via `haptic()` i `src/nativeShell.js`: telefonens egen haptik i iPhone-rammen (iOS' browser kan ikke
+  vibrere), ellers `navigator.vibrate` som før. Kameratekst står i `Info.plist`. Indstillingen "Vibration" under Indstillinger gælder stadig.
