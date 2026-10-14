@@ -60,8 +60,7 @@ kun læsning for egen bruger/admin, slettes sammen med kontoen). **Fornyelse (8.
 læser den nyeste række. App: `HEALTH_CONSENT_VERSION` (`constants.jsx`, hæves ved væsentlig tekstændring), `useHealthConsent.js`, ren logik i `healthConsent.js` (test), afkrydsningen `HealthConsentBox.jsx` (onboarding trin 2, Rediger præferencer, `MemberForm`;
 Bjørn finpudser designet) og Indstillinger → Privatliv & data (status og tilbagetrækning). Eksisterende brugere uden samtykke bliver bedt om det, første gang de gemmer allergier.
 
-**Backup-tabeller:** `*_backup_20260930` i `public` og skemaet `qa_backup` er rester fra datarettelser (ingen kode bruger dem, Free-planen har
-ingen automatiske backups). De slettes samlet tæt på 1. nov. 2026 (to do `c188223c`), derefter skal denne note fjernes.
+**Backup-tabeller:** de gamle backups fra 30. sept./2. okt. er slettet (14. okt. 2026). Beholdt: `removed_image_backup_20261005`, `products_allergen_backup_20261006/20261007/20261007b`, `products_unknown_flags_backup_20261007`, `base64_image_backup_20261006`, nyere backups (13.-14. okt.) og diæt-backups (slettes senest 12. nov. 2026). Alle har RLS slået til uden adgang for appens roller.
 
 **Varer uden ingrediensliste (8. okt. 2026):** triggeren `trg_products_unknown_without_ingredients` på `products` sætter alle 16 allergen-flag til `unknown` (kvalitet `low`) ved oprettelse/ændring uden ingrediensliste; `yes`/`traces` bevares, producent-verificerede varer røres ikke. Test `supabase/tests/unknown_without_ingredients.sql`.
 
@@ -284,6 +283,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   findes i `products`; `link` sætter `ready` og lægger `p6:<id>` i outboxen) og `admin_recall_affected_count(eans)`
   (brugere via favorit, scan de seneste 90 dage eller indkøbsliste, vist før afsendelse) er kun for admin. Hjælpefunktionerne
   `ean_variants()` og `is_valid_gtin()` spejler `recallParser.js`. Migration `20261001081752`.
+  **Annulleret/ændret tilbagekaldelse (F1-17, 14. okt. 2026):** `recalls-sync` kobler en side med titel "ANNULLERET: …" til den oprindelige (samme titel uden præfikset, ellers samme EAN), sætter den oprindelige til `cancelled` (`cancelled_at`, `cancelled_by_url`) og lægger `p6c:<id>` (`recall_cancelled`) i outboxen. Hver kørsel genlæser også op til 40 `ready`-sider fra de seneste 14 dage; ændres årsag, partier, anvisning eller EAN'er (SHA-256 i `content_hash`, `revision` tælles op), gemmes teksten og `p6u:<id>:<revision>` (`recall_updated`) lægges i outboxen. `notify` sender `P6:cancelled` / `P6:updated` (kategori `recalls`, kun push og besked i appen, `mail: null`) til dem, der fik `P6:default` (slås op i `notifications` på `entity_id`); ved ændring også til brugere, der nu matcher via EAN. Migration `20261014103000`; ingen nye personoplysninger.
 
 **Push er per enhed, ikke per konto (1. okt. 2026):** telefonens tilladelse gælder for enheden. Tidligere blev abonnementet
 (`push_tokens`, unik på `user_id` + `token`) kun gemt, når tilladelsen blev givet; en konto, der loggede ind på en enhed med

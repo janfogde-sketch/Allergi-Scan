@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { parseRecallFeed, parseRecallPage, isValidGtin, isOfficialRecallUrl, eanVariants } from "../supabase/functions/_shared/recallParser.js";
+import { parseRecallFeed, parseRecallPage, isValidGtin, isOfficialRecallUrl, eanVariants, originalTitleOfCancelled, normalizeRecallTitle, recallFingerprintText, sameEanSet } from "../supabase/functions/_shared/recallParser.js";
 
 const FEED = `<?xml version="1.0"?><rss><channel><item><title>Tilbagekald: For h&#248;jt indhold af glycerol (E422)</title><link>https://foedevarestyrelsen.dk/nyheder/tilbagekaldte-produkter/2026/sep/a</link><description>Kort tekst..</description><pubDate>Wed, 23 Sep 2026 14:36:00 GMT</pubDate></item><item><title>Falsk</title><link>https://evil.example.com/x</link><pubDate>Wed, 23 Sep 2026 14:36:00 GMT</pubDate></item></channel></rss>`;
 
@@ -48,5 +48,25 @@ describe("recallParser", () => {
     expect(isValidGtin("8435660200768")).toBe(false);
     expect(eanVariants("08435660200767")).toContain("8435660200767");
     expect(eanVariants("8435660200767")).toContain("08435660200767");
+  });
+});
+
+describe("annulleret og ændret tilbagekaldelse", () => {
+  it("udleder den oprindelige titel fra en annulleringsside", () => {
+    expect(originalTitleOfCancelled("ANNULLERET: Tilbagekald – Pesticidrester i kidneybønner")).toBe("Tilbagekald – Pesticidrester i kidneybønner");
+    expect(originalTitleOfCancelled("Annulleret - Tilbagekald: X")).toBe("Tilbagekald: X");
+    expect(originalTitleOfCancelled("Tilbagekald: X")).toBeNull();
+  });
+  it("sammenligner titler uden forskel på store/små bogstaver, mellemrum og tankestreger", () => {
+    expect(normalizeRecallTitle("Tilbagekald –  Kidneybønner")).toBe(normalizeRecallTitle("tilbagekald - kidneybønner"));
+  });
+  it("fingeraftrykket ændres kun, når årsag, partier eller anvisning ændres", () => {
+    const a = { reason: "Salmonella", affected: "L1", action: "Kassér", intro: "x" };
+    expect(recallFingerprintText(a)).toBe(recallFingerprintText({ ...a, intro: "ændret intro", reason: "Salmonella  " }));
+    expect(recallFingerprintText(a)).not.toBe(recallFingerprintText({ ...a, affected: "L1, L2" }));
+  });
+  it("sammenligner EAN-lister uanset rækkefølge", () => {
+    expect(sameEanSet(["1", "2"], ["2", "1"])).toBe(true);
+    expect(sameEanSet(["1"], ["1", "2"])).toBe(false);
   });
 });

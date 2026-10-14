@@ -363,6 +363,48 @@ export const DEFINITIONS = {
     action: PRODUCT_ACTION, entity: { type: "recall", idFrom: "recallId" },
   },
 
+  // ── P6: annulleret eller ændret tilbagekaldelse (14. okt. 2026). Går til dem, der fik den første besked.
+  // Kun push og besked i appen (ingen ny mailskabelon), samme opbygning og tone som P6:default.
+  "P6:cancelled": {
+    type: "P6", variant: "cancelled", category: "recalls", version: 1, ttl: 86400,
+    push: { title: "Tilbagekaldelsen er annulleret", body: "Fødevarestyrelsen har annulleret tilbagekaldelsen for {{productName}}." },
+    mail: null,
+    vars: { ...PRODUCT_VARS, recallUrl: { fallback: "" } },
+    required: ["recallUrl"],
+    blocks: [
+      H("Tilbagekaldelsen er annulleret"),
+      P("Fødevarestyrelsen har annulleret en tilbagekaldelse, som kunne vedrøre **{{productName}}**, du har scannet eller gemt i EatSafe."),
+      P("Læs Fødevarestyrelsens side for den præcise forklaring, og følg altid deres seneste anvisninger."),
+      LINK("Læs den officielle meddelelse", "{{recallUrl}}"),
+      DISC,
+    ],
+    action: PRODUCT_ACTION, entity: { type: "recall", idFrom: "recallId" },
+  },
+  "P6:updated": {
+    type: "P6", variant: "updated", category: "recalls", version: 1, ttl: 86400,
+    push: { title: "Tilbagekaldelsen er ændret", body: "Fødevarestyrelsen har ændret tilbagekaldelsen for {{productName}}. Læs den igen." },
+    mail: null,
+    vars: {
+      ...PRODUCT_VARS,
+      recallReason: { fallback: "Se den officielle tilbagekaldelse for årsagen.", multiline: true },
+      affectedBatches: { fallback: "Se den officielle tilbagekaldelse for berørte varer og partier.", multiline: true },
+      recallAction: { fallback: "Følg Fødevarestyrelsens anvisninger i tilbagekaldelsen." },
+      recallUrl: { fallback: "" },
+    },
+    required: ["recallUrl"],
+    blocks: [
+      H("Tilbagekaldelsen er ændret"),
+      P("Fødevarestyrelsen har ændret en tilbagekaldelse, som kan vedrøre **{{productName}}**, du har scannet eller gemt i EatSafe."),
+      PANEL("Årsag til tilbagekaldelsen", [P("{{recallReason}}", { multiline: true })]),
+      PANEL("Berørte varer og partier", [P("{{affectedBatches}}", { multiline: true })]),
+      P("{{recallAction}}"),
+      P("Sammenlign oplysningerne med emballagen på dit produkt. Ændringen kan gælde partier, datoer eller anvisninger."),
+      LINK("Læs den opdaterede tilbagekaldelse", "{{recallUrl}}"),
+      DISC,
+    ],
+    action: PRODUCT_ACTION, entity: { type: "recall", idFrom: "recallId" },
+  },
+
   // ── P3: nye varer på en delt indkøbsliste (aggregeret; varenavne står ikke i pushen) ──
   "P3:one": {
     type: "P3", variant: "one", category: "shared_lists", version: 2, ttl: 7200,
