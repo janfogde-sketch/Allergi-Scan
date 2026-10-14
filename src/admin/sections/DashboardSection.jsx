@@ -15,8 +15,8 @@ const STATS = [
   { key: "scans_today", label: "Scanninger i dag" },
   { key: "search_opens", label: "Søgninger i alt" },
   { key: "pending_submissions", label: "Afventende indsendelser", to: "submissions" },
-  { key: "open_tickets", label: "Åbne tickets", to: "tickets" },
 ];
+// Åbne tickets vises kun under "Kræver opmærksomhed" (ikke også som nøgletal), så samme oplysning ikke står to steder.
 
 // Opgaveoverblik: fire primære målinger, to mere i det udvidelige område. `preset` er det filter, To do åbner med.
 const OVERVIEW = [
@@ -38,6 +38,8 @@ const savePeriod = (p) => { try { sessionStorage.setItem(PERIOD_KEY, String(p));
 
 const longDate = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("da-DK", { weekday: "long", day: "numeric", month: "long" });
 const shortDate = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("da-DK", { day: "numeric", month: "short" });
+const tipDate = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("da-DK", { weekday: "short", day: "numeric", month: "short" });
+const PLOT_H = 64, TIP_W = 104, TIP_H = 34; // skal passe til .dash-plot og .dash-tip i adminTheme.js
 const unitFor = (unit, n) => (n === 1 ? unit[0] : unit[1]);
 
 // Søjlediagram for én tidsserie. Tryk eller træk over søjlerne viser dato og antal i en lille tooltip, som holdes inden for diagrammet; tryk udenfor (eller Escape) fjerner den.
@@ -79,17 +81,32 @@ function TrendChart({ title, unit, data, color, narrow }) {
     const i = Math.min(data.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * data.length)));
     setPicked(data[i].date);
   };
-  const pct = idx >= 0 ? ((idx + 0.5) / data.length) * 100 : 0;
-  // Tooltippen ligger over kortets overskrift, vandret ud for søjlen, og holdes inden for kortet ved kanterne
-  const tipPos = pct < 22 ? { left: 12 } : pct > 78 ? { right: 12 } : { left: `calc(46px + (100% - 62px) * ${(pct / 100).toFixed(4)})`, transform: "translateX(-50%)" };
+  // Tooltippen er en lille lys boks (104 px) inde i selve diagrammet, så den aldrig dækker overskriften eller falder uden for kortet:
+  // over søjlen, hvis der er plads, ellers ved siden af den (på den side, der har mest plads).
+  let tipStyle = null;
+  if (sel) {
+    const h = sel.count > 0 ? Math.max(6, (sel.count / top) * 100) : 3;
+    const barTop = PLOT_H * (1 - h / 100);
+    const cx = ((idx + 0.5) / data.length) * 100;
+    tipStyle = barTop >= TIP_H + 4
+      ? { top: Math.round(barTop - TIP_H - 3), left: `clamp(0px, calc(${cx.toFixed(3)}% - ${TIP_W / 2}px), calc(100% - ${TIP_W}px))` }
+      : idx < data.length / 2
+        ? { top: 0, left: `calc(${(((idx + 1) / data.length) * 100).toFixed(3)}% + 6px)` }
+        : { top: 0, right: `calc(${(((data.length - idx) / data.length) * 100).toFixed(3)}% + 6px)` };
+  }
+  // Piletaster flytter valget mellem søjlerne
+  const onKeyDown = (e) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const btns = [...plotRef.current.querySelectorAll("button")];
+    const cur = btns.indexOf(document.activeElement);
+    const next = Math.min(btns.length - 1, Math.max(0, (cur < 0 ? (idx >= 0 ? idx : 0) : cur) + (e.key === "ArrowRight" ? 1 : -1)));
+    e.preventDefault();
+    btns[next].focus();
+    setPicked(data[next].date);
+  };
 
   return (
     <figure className="admin-card dash-chart" style={{ margin: 0 }} ref={wrapRef}>
-      {sel && (
-        <div className="dash-tip" role="status" style={tipPos}>
-          {longDate(sel.date)}: {fmtNum(sel.count)} {unitFor(unit, sel.count)}
-        </div>
-      )}
       <div className="dash-chart-head">
         <div className="dash-chart-title">{title}</div>
         <div className="dash-chart-total">{fmtNum(total)} i alt, seneste {data.length} dage</div>
@@ -99,8 +116,14 @@ function TrendChart({ title, unit, data, color, narrow }) {
           {ticks.map((t) => <span key={t}>{fmtNum(t)}</span>)}
         </div>
         <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+          {sel && (
+            <div className="dash-tip" role="status" style={tipStyle}>
+              <b>{tipDate(sel.date)}</b>
+              <span>{fmtNum(sel.count)} {unitFor(unit, sel.count)}</span>
+            </div>
+          )}
           <div ref={plotRef} className="dash-plot" style={{ gap }} role="group" aria-label={`${title}, seneste ${data.length} dage`}
-            onPointerDown={pickAt} onPointerMove={(e) => { if (e.buttons) pickAt(e); }}>
+            onPointerDown={pickAt} onPointerMove={(e) => { if (e.buttons) pickAt(e); }} onKeyDown={onKeyDown}>
             {data.map((d) => (
               <button key={d.date} type="button" className={`admin-bar${picked === d.date ? " sel" : ""}`} aria-pressed={picked === d.date}
                 aria-label={`${longDate(d.date)}: ${fmtNum(d.count)} ${unitFor(unit, d.count)}`}
@@ -184,16 +207,16 @@ export default function DashboardSection({ adminStats, setSection, todos = [], t
     );
   }
 
-  const goStat = (s) => (s.key === "open_tickets" && openTickets ? openTickets() : s.key === "pending_submissions" && openSubmissions ? openSubmissions() : setSection(s.to));
+  const goStat = (s) => (s.key === "pending_submissions" && openSubmissions ? openSubmissions() : setSection(s.to));
 
-  // Kræver opmærksomhed: kun forhold, hvor handling er relevant (tal over nul). Farve har betydning: rød = frist overskredet, gul = bør prioriteres, neutral = afventer behandling.
+  // Kræver opmærksomhed: kun forhold, hvor handling er relevant (tal over nul). Ikon og farve har betydning: ur + rød = frist overskredet, flag + gul = høj prioritet, neutral = afventer behandling. Opgaver uden frist tæller aldrig som forsinkede og fremhæves ikke her.
   const attention = [];
   if (adminStats.open_tickets > 0) attention.push({ key: "t", tone: "info", icon: "info", text: `${fmtNum(adminStats.open_tickets)} ${adminStats.open_tickets === 1 ? "åben ticket" : "åbne tickets"}`, go: () => (openTickets ? openTickets() : setSection("tickets")) });
   if (adminStats.pending_submissions > 0) attention.push({ key: "s", tone: "info", icon: "file", text: `${fmtNum(adminStats.pending_submissions)} ${adminStats.pending_submissions === 1 ? "afventende indsendelse" : "afventende indsendelser"}`, go: () => (openSubmissions ? openSubmissions() : setSection("submissions")) });
   if (openTodos && todosLoaded) {
-    if (beta.overdue > 0) attention.push({ key: "o", tone: "late", icon: "warning", text: `${fmtNum(beta.overdue)} ${beta.overdue === 1 ? "opgave" : "opgaver"} med overskredet frist`, go: () => openTodos({ due: "overdue" }) });
-    if (beta.highUnassigned > 0) attention.push({ key: "hu", tone: "warn", icon: "warning", text: `${fmtNum(beta.highUnassigned)} ${beta.highUnassigned === 1 ? "opgave" : "opgaver"} med høj prioritet uden ansvarlig`, go: () => openTodos({ priority: "high", assigneeId: "none" }) });
-    if (beta.high > 0) attention.push({ key: "h", tone: "warn", icon: "clock", text: `${fmtNum(beta.high)} ${beta.high === 1 ? "opgave" : "opgaver"} med høj prioritet`, go: () => openTodos({ priority: "high" }) });
+    if (beta.overdue > 0) attention.push({ key: "o", tone: "late", icon: "clock", text: `${fmtNum(beta.overdue)} ${beta.overdue === 1 ? "opgave" : "opgaver"} med overskredet frist`, go: () => openTodos({ due: "overdue" }) });
+    if (beta.highUnassigned > 0) attention.push({ key: "hu", tone: "warn", icon: "flag", text: `${fmtNum(beta.highUnassigned)} ${beta.highUnassigned === 1 ? "opgave" : "opgaver"} med høj prioritet uden ansvarlig`, go: () => openTodos({ priority: "high", assigneeId: "none" }) });
+    if (beta.high > 0) attention.push({ key: "h", tone: "warn", icon: "flag", text: `${fmtNum(beta.high)} ${beta.high === 1 ? "opgave" : "opgaver"} med høj prioritet`, go: () => openTodos({ priority: "high" }) });
   }
 
   return (
@@ -240,7 +263,7 @@ export default function DashboardSection({ adminStats, setSection, todos = [], t
       </div>
 
       <section aria-labelledby="dash-h-activity">
-        <div className="dash-head">
+        <div className="dash-head stack">
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
             <h2 id="dash-h-activity" className="dash-h">Aktivitet</h2>
             <InfoButton onClick={() => setShowInfo(true)} label="Hvordan aktiviteten opgøres" />
@@ -272,11 +295,11 @@ export default function DashboardSection({ adminStats, setSection, todos = [], t
                     </button>
                   ))}
                 </div>
-                <button type="button" className="dash-more" aria-expanded={showMore} onClick={() => setShowMore((v) => !v)}>
-                  {showMore ? "Skjul" : "Flere"} <Icon name={showMore ? "chevronUp" : "chevronDown"} size={12} />
+                <button type="button" className="dash-more" aria-expanded={showMore} aria-controls="dash-more-grid" onClick={() => setShowMore((v) => !v)}>
+                  {showMore ? "Vis færre oplysninger" : "Vis flere oplysninger"} <span className={`dash-chev${showMore ? " open" : ""}`} aria-hidden="true"><Icon name="chevronDown" size={14} /></span>
                 </button>
                 {showMore && (
-                  <div className="beta-grid" style={{ marginTop: 8 }}>
+                  <div id="dash-more-grid" className="beta-grid" style={{ marginTop: 8 }}>
                     {OVERVIEW_MORE.map((c) => (
                       <button key={c.key} type="button" className="beta-cell" onClick={() => openTodos(c.preset)}>
                         <b>{fmtNum(beta[c.key])}</b><span>{c.label}</span>

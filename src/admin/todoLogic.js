@@ -143,7 +143,7 @@ export function attentionCount(list, today = todayKey()) {
 export function personName(admins, id) {
   if (!id) return "";
   const a = admins.find((x) => x.id === id);
-  return a ? (a.name || a.email || "Ukendt") : "Ukendt";
+  return a ? (String(a.name || "").trim() || a.email || "Ukendt") : "Ukendt";
 }
 
 /** "14. okt. 2026" af en lagret dato (YYYY-MM-DD) uden tidszoneforskydning; tom streng uden dato. */
