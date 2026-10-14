@@ -315,7 +315,7 @@ ren logik `todoLogic.js` med tests). Tabeller (migration `20261001062300_admin_t
 Funktioner: hurtig tilføjelse (titel + Enter, spor, prioritet, ansvarlig), visninger Åbne/Mine/Uden ansvarlig/Færdige/Alle med
 tællere, filtre på spor og ansvarlig, fritekstsøgning, afkrydsning direkte i listen, redigering og kommentarer i et vindue,
 "Kopiér som prompt" til en Claude Code-session, og automatisk genindlæsning hvert 30. sekund, mens fanen er åben.
-Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. **Claude kan læse og skrive den med SQL** (`admin_todos`); hold den opdateret,
+Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. **Claude læser den med SQL og skriver til den med workflowet "Skriv til to do"** (`todo_apply`, kun `admin_todos`/kommentarer, ingen sletning; se `docs/todo-skrivning.md`, ikke migrationsfiler); hold den opdateret,
 når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
 
 **Tickets og to do er flettet sammen (1. okt. 2026, migration `20261001092359_tickets_todos_sync.sql`).** `admin_todos.ticket_id`

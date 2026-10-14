@@ -1,0 +1,32 @@
+# Skriv til to do-listen (admin_todos og admin_todo_comments) uden migrationsfil, PR og udrulning (Jan, 14. okt. 2026).
+# Køres af tråde med GitHub-værktøjet "actions_run_trigger" (eller manuelt: Actions > Skriv til to do > Run workflow).
+# Databasefunktionen public.todo_apply kan kun oprette/rette opgaver og oprette kommentarer, intet andet.
+# Hele ændringen står i kørslens log. Format og eksempler: docs/todo-skrivning.md
+name: Skriv til to do
+
+on:
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: 'JSON: {"ops":[{"op":"create|update|comment", ...}]}'
+        required: true
+        type: string
+
+concurrency:
+  group: todo-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: jegrpcflyguadyxialkm
+      TODO_PAYLOAD: ${{ inputs.payload }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Skriv til to do-listen
+        run: .github/scripts/todo-write.sh
