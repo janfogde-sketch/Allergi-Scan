@@ -54,7 +54,7 @@ export function useLoadUserData({
       try {
         // Brugerprofil
         const profile = await apiCall(
-          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,e_numbers,allergen_levels,created_at&limit=1`,
+          `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,birth_year,gender,role,onboarding_completed,onboarding_step,e_numbers,allergen_levels,created_at&limit=1`,
           { headers: { ...makeHeaders(tokenRef.current), "Accept": "application/json" } }
         );
         if (cancelled) return;
@@ -64,7 +64,6 @@ export function useLoadUserData({
             ...u,
             name: p.name || u.name || "",
             email: p.email || u.email || "",
-            phone: p.phone || "",
             age: p.birth_year ? String(new Date().getFullYear() - p.birth_year) : "",
             birth_year: p.birth_year || "",
             gender: p.gender || "",

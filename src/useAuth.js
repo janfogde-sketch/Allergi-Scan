@@ -187,7 +187,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     setAccessToken(null); setUserId(null);
     endSession();
     localStorage.removeItem("as_user_id"); sessionStorage.removeItem("as_user_id");
-    setUser({ name:"", age:"", email:"", phone:"", password:"", role:"" });
+    setUser({ name:"", age:"", email:"", password:"", role:"" });
     try { localStorage.removeItem(ONBOARDED_KEY); } catch { /* privat tilstand */ }
     clearOfflineCache();
     writePendingVerify(""); setVerifyEmail(""); setVerifyStatus("pending");

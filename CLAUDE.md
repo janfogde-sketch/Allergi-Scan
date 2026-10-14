@@ -20,7 +20,7 @@
   går live.** Testrunden på rigtige telefoner er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X). Opret tickets for `fail`.
 - **Netværk:** cloud-miljøet når eatsafe.dk, Supabase og world.openfoodfacts.org. Testkonto med admin-rolle: kun efter Jans ja.
   Test-mail og test-push sendes kun til Jans og Bjørns egne konti.
-- **Login og mail:** egen SMTP via Resend; auth-mails sendes af `auth-send-email` (`supabase/templates/`). Alle 29 mailskabeloner deler
+- **Login og mail:** egen SMTP via Resend; auth-mails sendes af `auth-send-email` (`supabase/templates/`). Alle 24 mailskabeloner deler
   mørk palette (test `src/mailDarkMode.test.js`); ændr alle samtidig. Detaljer: `docs/drift.md`.
 - **Adgangskode:** mindst 10 tegn, småt bogstav, stort bogstav og tal (`passwordErrorText()`/`PASSWORD_REQUIREMENTS_TEXT` i `helpers.js`).
   Ændres kravene i Supabase, ret `helpers.js` tilsvarende.
