@@ -283,6 +283,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
   findes i `products`; `link` sætter `ready` og lægger `p6:<id>` i outboxen) og `admin_recall_affected_count(eans)`
   (brugere via favorit, scan de seneste 90 dage eller indkøbsliste, vist før afsendelse) er kun for admin. Hjælpefunktionerne
   `ean_variants()` og `is_valid_gtin()` spejler `recallParser.js`. Migration `20261001081752`.
+  **Annulleret/ændret tilbagekaldelse (F1-17, 14. okt. 2026):** `recalls-sync` kobler en side med titel "ANNULLERET: …" til den oprindelige (samme titel uden præfikset, ellers samme EAN), sætter den oprindelige til `cancelled` (`cancelled_at`, `cancelled_by_url`) og lægger `p6c:<id>` (`recall_cancelled`) i outboxen. Hver kørsel genlæser også op til 40 `ready`-sider fra de seneste 14 dage; ændres årsag, partier, anvisning eller EAN'er (SHA-256 i `content_hash`, `revision` tælles op), gemmes teksten og `p6u:<id>:<revision>` (`recall_updated`) lægges i outboxen. `notify` sender `P6:cancelled` / `P6:updated` (kategori `recalls`, kun push og besked i appen, `mail: null`) til dem, der fik `P6:default` (slås op i `notifications` på `entity_id`); ved ændring også til brugere, der nu matcher via EAN. Migration `20261014103000`; ingen nye personoplysninger.
 
 **Push er per enhed, ikke per konto (1. okt. 2026):** telefonens tilladelse gælder for enheden. Tidligere blev abonnementet
 (`push_tokens`, unik på `user_id` + `token`) kun gemt, når tilladelsen blev givet; en konto, der loggede ind på en enhed med
