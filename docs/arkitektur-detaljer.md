@@ -31,3 +31,9 @@ Nøgleordslisten er én fælles fil: `supabase/functions/_shared/allergenKeyword
 - **Regressionsliste:** ændringer i motoren skal have en liste i `src/fixtures/allergenRegression.json` (test `src/allergenRegression.test.js`).
 - **Genanalyse:** `allergen-reanalyze` kører først som `dry_run` (diff-tabel), så `apply`. Kun opadgående: nej → spor → ja, aldrig nedgange, fordi motoren ikke kender fremmedsprog og fiskenavne. Backup i `products_allergen_backup_20261006`.
 - Usikkerheder: `docs/allergenlogik-usikkerheder.md`.
+
+
+## Flyttet fra CLAUDE.md (14. okt. 2026)
+
+8. **Indholdsspærre (CSP):** `vercel.json` sætter Content-Security-Policy. Kun egne scripts (`script-src 'self'`): intet inline `<script>` i HTML
+   (læg koden i `public/js/`), ingen `eval`. Nye eksterne adresser skal i spærren; `src/securityHeaders.test.js` vogter den.

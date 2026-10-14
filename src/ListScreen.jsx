@@ -529,7 +529,7 @@ export default function ListScreen({
             return (
             <div key={item.id} className="list-item done">
               <div className="list-check checked" role="checkbox" aria-checked="true" aria-label={`Fjern "${item.name}" fra købt`} tabIndex={0}
-                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}><Icon name="check" size={12} color="#fff" /></div>
+                onClick={() => toggleItem(item.id)} onKeyDown={e => e.key === "Enter" && toggleItem(item.id)}><Icon name="check" size={12} color="var(--on-green)" /></div>
               {item.ean && <ProductImage product={item} size={48} />}
               <div style={{ flex:1, minWidth:0 }}>
                 {item.ean

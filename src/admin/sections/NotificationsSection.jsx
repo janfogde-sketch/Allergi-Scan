@@ -164,7 +164,7 @@ export default function NotificationsSection({ admins, overrides, loading, load,
             <>
               <div className="admin-label">Sådan ser mailen ud (med eksempeldata{mailPreview.status && mailPreview.status !== "published" ? `, skabelonen er ${mailPreview.status}` : ""})</div>
               <iframe title={`Mail: ${selected.name}`} sandbox="" srcDoc={mailPreview.html}
-                style={{ width: "100%", height: 640, border: "1px solid var(--border)", borderRadius: 10, background: "#fff" }} />
+                style={{ width: "100%", height: 640, border: "1px solid var(--border)", borderRadius: 10, background:"var(--paper)" }} />
             </>
           )}
         </div>

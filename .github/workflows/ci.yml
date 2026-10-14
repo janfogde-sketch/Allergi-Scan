@@ -13,6 +13,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      # CLAUDE.md holdes under 15 KB (se CLAUDE.md, regel øverst). Tjekket kører også på dokumentændringer.
+      - name: CLAUDE.md er under 15 KB
+        run: |
+          size=$(wc -c < CLAUDE.md)
+          echo "CLAUDE.md er $size bytes"
+          if [ "$size" -ge 15000 ]; then
+            echo "CLAUDE.md er for stor ($size bytes, grænsen er 15000). Flyt detaljer til en fil i docs/."
+            exit 1
+          fi
+
       # Rene to do-/dokumentændringer (se changed-scope.sh) springer de tunge trin over; jobbet består stadig,
       # så det kan være påkrævet i GitHub. Ved tvivl kører alt som før.
       - name: Rører ændringen kun to do, dokumenter eller Claude-filer?

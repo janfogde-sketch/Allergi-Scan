@@ -59,3 +59,15 @@ I stedet for et deploy:
 - Skærmbilleder: sandboxen har ikke netadgang til eksterne billeder. Brug en håndskrevet HTML-fil med de rigtige klasser og `playwright-core` med `executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'` (ikke `npx playwright screenshot`).
 - Efter `git merge` med reelle konflikter: læs hele den mergede CLAUDE.md igennem, ikke kun konfliktlinjerne.
 - Åbne spørgsmål: kort anbefaling (2-3 sætninger) med den vigtigste trade-off, og vent på grønt lys.
+
+
+## Flyttet fra CLAUDE.md (14. okt. 2026)
+
+**Databaseændringer:** højst 3-4 sessioner, der ændrer databasen, ad gangen. Hent `origin/main` lige før merge, brug et unikt migrationsnummer,
+og tjek bagefter i databasen, at ændringen er der. Backup-tabeller får RLS i samme migration. Store migrationsfiler: del dem.
+Engangstest (testkonti, gensendt tilbagekaldelse) er et engangsscript eller en manuel kørsel, aldrig en migration.
+
+- **Merge uden ventetid (Jan, 14. okt. 2026):** Automatisk merge er slået til. Når merge er godkendt i tråden, sættes auto-merge (squash) på PR'en,
+  tråden sender status til koordinatoren (PR-nummer, to do-id'er, hvad der skal tjekkes efter merge) og afslutter. **Tråden venter ikke på CI.**
+  Lukketråden tjekker hvert kvarter, at PR'erne er merget, at main er grøn og at migrationer er i databasen. Er noget rødt, får den oprindelige
+  tråd besked om at rette det. Vent aldrig på planlagte genkontroller.

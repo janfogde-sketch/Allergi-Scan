@@ -121,8 +121,8 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
             {cancelLabel}
           </button>
           <button type="button" onClick={onConfirm}
-            style={{ flex:1, minHeight:44, padding:"12px", background: danger ? "var(--red)" : "var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-            {danger && <Icon name="trash" size={14} color="#fff" />}
+            style={{ flex:1, minHeight:44, padding:"12px", background: danger ? "var(--red)" : "var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"var(--on-green)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+            {danger && <Icon name="trash" size={14} color="var(--on-green)" />}
             {confirmLabel}
           </button>
         </div>
@@ -176,7 +176,7 @@ export function InfoSheet({ title, children, onClose, closeLabel = "Forstået" }
           </div>
         </div>
         <button type="button" onClick={onClose}
-          style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+          style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
           {closeLabel}
         </button>
       </div>
