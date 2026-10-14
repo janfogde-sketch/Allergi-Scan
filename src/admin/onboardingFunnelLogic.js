@@ -1,3 +1,4 @@
+// @ts-check
 // Frafald i første start: gør tallene fra admin_onboarding_funnel() klar til visning.
 export const STEP_LABELS = {
   1: "Profil (navn, alder, køn)",

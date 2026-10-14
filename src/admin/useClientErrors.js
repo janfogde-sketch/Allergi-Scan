@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter og opdaterer rækker i public.client_errors (fejl fra appen og edge
 // functions, A3 30. sept. 2026). Kun admins kan læse tabellen (RLS).
 import { useState } from "react";

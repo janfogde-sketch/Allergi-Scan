@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Ren logik til den fælles to do-liste i admin-panelet (admin_todos): etiketter, sortering,
 // filtre, frister og en færdig prompt til en Claude Code-session. Ingen React, så den kan testes.
 
@@ -34,7 +34,7 @@ export function dueInfo(todo, today = todayKey()) {
   if (!hasValidDue(todo)) return null;
   const d = new Date(`${todo.due_date}T12:00:00Z`);
   const t = new Date(`${today}T12:00:00Z`);
-  const diff = Math.round((d - t) / 86400_000);
+  const diff = Math.round((d.getTime() - t.getTime()) / 86400_000);
   let label;
   if (diff === 0) label = "I dag";
   else if (diff === 1) label = "I morgen";

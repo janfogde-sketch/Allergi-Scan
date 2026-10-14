@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // csvExport.js — delt CSV-eksport-helper for desktop admin-panelet. Ligger
 // under src/admin/ (ikke i det delte helpers.js) så den ikke bloater den

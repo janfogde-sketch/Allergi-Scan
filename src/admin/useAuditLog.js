@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter adminloggen (public.admin_audit_log). Kun administratorer kan læse tabellen (RLS); andre får tomt svar.
 import { useState } from "react";
 import { SUPABASE_URL } from "../constants.jsx";

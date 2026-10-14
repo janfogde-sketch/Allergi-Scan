@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter og ændrer den fælles to do-liste (public.admin_todos + admin_todo_comments).
 // Kun admins kan læse og skrive (RLS). Listen genindlæses automatisk hvert 30. sekund,
 // mens fanen er åben, så Jan og Bjørn ser hinandens ændringer uden at opdatere siden.
