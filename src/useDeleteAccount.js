@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Slet egen konto (Indstillinger → "Slet konto"). Flyttet uændret ud af useAdmin.js
 // 14. okt. 2026, så brugerappen ikke længere henter admin-panelets kode.
 import { useState } from "react";

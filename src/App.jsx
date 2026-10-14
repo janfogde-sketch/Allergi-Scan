@@ -22,6 +22,7 @@ const OnboardingScreen = React.lazy(() => import('./OnboardingScreen.jsx'));
 const MadpasScreen = React.lazy(() => import('./MadpasScreen.jsx'));
 const ProfileScreen = React.lazy(() => import('./ProfileScreen.jsx'));
 const SettingsScreen = React.lazy(() => import('./SettingsScreen.jsx'));
+const RecallsListScreen = React.lazy(() => import('./RecallsListScreen.jsx'));
 const NotificationsScreen = React.lazy(() => import('./NotificationsScreen.jsx'));
 const NotificationScreen = React.lazy(() => import('./NotificationScreen.jsx'));
 const TicketScreen = React.lazy(() => import('./TicketScreen.jsx'));
@@ -736,7 +737,7 @@ export default function EatSafe() {
             samme (1. okt. 2026, samme rolige udtryk som Favoritter), også en åbnet
             besked og "Se din feedback" (Jans feedback: brødteksten lå direkte oven
             på baggrundsbilledet og var svær at læse). */}
-        {(screen === SCREENS.NOTFOUND || screen === SCREENS.ADMIN || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || screen === SCREENS.RESULT || screen === SCREENS.SUGGEST_EDIT || screen === SCREENS.SETTINGS || screen === SCREENS.PROFILE || screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
+        {(screen === SCREENS.NOTFOUND || screen === SCREENS.ADMIN || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || screen === SCREENS.RESULT || screen === SCREENS.SUGGEST_EDIT || screen === SCREENS.SETTINGS || screen === SCREENS.RECALLS || screen === SCREENS.PROFILE || screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
         <a href="#main-content" className="skip-link">Spring til indhold</a>
@@ -1081,7 +1082,17 @@ export default function EatSafe() {
             soundOnWarning={soundOnWarning} setSoundOnWarning={setSoundOnWarning}
             onOpenFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
             onOpenSafetyInfo={openSafetyInfo}
+            onOpenRecalls={() => setScreen(SCREENS.RECALLS)}
           />
+          </ErrorBoundary>
+          </Suspense>
+        )}
+
+        {/* ══ AKTUELLE TILBAGEKALDELSER ══ (to do 0255840a) — nås fra Indstillinger */}
+        {screen === SCREENS.RECALLS && (
+          <Suspense fallback={LazyFallback}>
+          <ErrorBoundary screen="Tilbagekaldelser">
+          <RecallsListScreen onBack={() => setScreen(SCREENS.SETTINGS)} />
           </ErrorBoundary>
           </Suspense>
         )}

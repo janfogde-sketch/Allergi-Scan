@@ -132,6 +132,15 @@ describe("edge: submissions", () => {
     expect(h.writes().map((c) => c.table)).toEqual(["admin_todos"]);
   });
 
+  it("for stort billede afvises (413) uden at gemme noget", async () => {
+    const h = await loadHandler("submissions", { tokens, resolver: resolver() });
+    const big = "A".repeat(8_000_001);
+    const r = await h.call("POST", "/submissions", { token: "a", body: { ...body, raw_label_image: big } });
+    expect(r.status).toBe(413);
+    expect(r.json.code).toBe("image_too_large");
+    expect(h.writes()).toHaveLength(0);
+  });
+
   it("nyt produkt: 409 hvis stregkoden findes eller allerede har en afventende indsendelse", async () => {
     const exists = await loadHandler("submissions", { tokens, resolver: resolver({ existingProduct: { id: "p1" } }) });
     expect((await exists.call("POST", "/submissions", { token: "a", body })).status).toBe(409);

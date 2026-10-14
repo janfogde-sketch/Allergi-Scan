@@ -70,7 +70,7 @@ export const SCREENS = {
   ADMIN:"admin", FAVORITES:"favorites",
   MADPAS:"madpas", EDITPROFILE:"editprofile", EDITPREFERENCES:"editpreferences", SUGGEST_EDIT:"suggest_edit",
   KNOWLEDGE:"knowledge",
-  SETTINGS:"settings",
+  SETTINGS:"settings", RECALLS:"recalls",
   // Beskeder (30. sept. 2026): liste over egne notifikationer + den fulde besked,
   // som push åbner via ?notification={id}.
   NOTIFICATIONS:"notifications", NOTIFICATION:"notification", TICKET:"ticket",

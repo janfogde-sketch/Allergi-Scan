@@ -86,7 +86,9 @@
     "src/legalText/terms.js",
     "src/legalText/privacy.js",
     "src/madpasText.js",
-    "src/useShoppingList.js"
+    "src/useShoppingList.js",
+    "src/admin/navLogic.js",
+    "src/useDeleteAccount.js"
   ],
   "exclude": [
     "node_modules"
