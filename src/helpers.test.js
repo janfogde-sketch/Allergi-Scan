@@ -732,3 +732,22 @@ describe("ingredientsVerifiedText", () => {
     expect(ingredientsVerifiedText("ugyldig")).toBe("Ikke kontrolleret mod emballagen endnu");
   });
 });
+
+import { timeAgo } from "./helpers.js";
+describe("timeAgo (F5-16)", () => {
+  const now = new Date("2026-10-14T12:00:00Z").getTime();
+  const ago = ms => new Date(now - ms).toISOString();
+  const H = 3600000, D = 86400000;
+  it("minutter, timer og dage skrives ud", () => {
+    expect(timeAgo(ago(10000), now)).toBe("Lige nu");
+    expect(timeAgo(ago(5 * 60000), now)).toBe("5 min siden");
+    expect(timeAgo(ago(H), now)).toBe("1 time siden");
+    expect(timeAgo(ago(3 * H), now)).toBe("3 timer siden");
+    expect(timeAgo(ago(D), now)).toBe("1 dag siden");
+    expect(timeAgo(ago(7 * D), now)).toBe("7 dage siden");
+  });
+  it("viser datoen efter 7 dage", () => {
+    expect(timeAgo("2026-05-24T10:00:00Z", now)).toBe("24. maj 2026");
+    expect(timeAgo(ago(8 * D), now)).toMatch(/^\d+\. okt\. 2026$/);
+  });
+});
