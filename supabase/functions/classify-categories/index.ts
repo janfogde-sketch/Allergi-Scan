@@ -17,46 +17,11 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
 import { withinTotalAiLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
+import { TAXONOMY as SHARED_TAXONOMY } from "../_shared/categoryTaxonomy.js";
 
 const corsHeaders = corsFor();
 
-const TAXONOMY: Record<string, string[]> = {
-  "Drikkevarer": [
-    "Mælk & mælkealternativer", "Juice & saft", "Sodavand & læskedrikke", "Vand",
-    "Kaffe", "Te", "Øl", "Vin", "Spiritus & cocktails",
-    "Sportsdrikke & energidrikke", "Andre drikkevarer",
-  ],
-  "Kolonial": [
-    "Pasta & ris", "Konserves", "Krydderier & smagsgivere", "Olier & eddike",
-    "Sovs & dressing", "Bagetilbehør", "Morgenmad & müsli",
-    "Nødder & tørret frugt", "Færdiglavede saucer", "Andet kolonial",
-  ],
-  "Snacks & slik": [
-    "Chips & snacks", "Slik & bolsjer", "Chokolade", "Kiks & kager",
-    "Nødder (snack)", "Popcorn", "Andet snacks",
-  ],
-  "Mejeri & æg": [
-    "Mælk", "Yoghurt & skyr", "Ost", "Smør & margarine", "Fløde", "Æg",
-    "Plantebaserede mejerialternativer", "Andet mejeri",
-  ],
-  "Frugt & grønt": [
-    "Frisk frugt", "Frisk grønt", "Krydderurter", "Salater", "Andet frugt & grønt",
-  ],
-  "Frost": [
-    "Frostgrønt", "Frostfrugt", "Is", "Frosne færdigretter", "Frosne bagværk", "Andet frost",
-  ],
-  "Brød & bagværk": [
-    "Brød", "Rugbrød", "Boller & bagværk", "Kager & wienerbrød", "Knækbrød & kiks", "Andet brød",
-  ],
-  "Kød & fisk": [
-    "Oksekød", "Svinekød", "Lammekød & vildt", "Fjerkræ", "Fisk", "Skaldyr", "Pålæg & charcuteri",
-    "Plantebaseret kød-alternativ", "Andet kød & fisk",
-  ],
-  "Færdigretter": [
-    "Kølede færdigretter", "Salater & tilbehør", "Supper", "Sandwich & snackmåltider", "Andet færdigretter",
-  ],
-  "Andet": ["Andet"],
-};
+const TAXONOMY: Record<string, string[]> = SHARED_TAXONOMY;
 
 const VALID_CATEGORIES = Object.keys(TAXONOMY);
 

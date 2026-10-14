@@ -1,0 +1,34 @@
+# Natjob-tråden skriver sit resultat (Jan, 14. okt. 2026; docs/natjob-routine.md).
+# Motoren køres igen her på varernes egen tekst; trådens fund kan kun hæve flag. Databasefunktionen public.routine_apply
+# rører kun varer i køen og sænker aldrig et flag. Hele ændringen står i kørslens log og i tabellen routine_changes.
+name: Skriv natjob-resultat
+
+on:
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: 'JSON: {"note":"…","allergen":[{"id":"…","claude":{…}}],"category":[{"id":"…","category":"…","subcategory":"…"}]}'
+        required: true
+        type: string
+
+concurrency:
+  group: natjob
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  skriv:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: jegrpcflyguadyxialkm
+      NATJOB_PAYLOAD: ${{ inputs.payload }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Byg og skriv resultatet
+        run: .github/scripts/natjob.sh skriv
