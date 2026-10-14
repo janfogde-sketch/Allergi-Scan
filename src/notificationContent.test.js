@@ -67,9 +67,10 @@ describe("renderNotification — alle definitioner", () => {
     expect(preheader.length).toBeLessThanOrEqual(90);
   });
 
-  it("kun det delte invitationslink (N10, N11) er uden mail: push og besked i appen", () => {
-    expect(KEYS.filter((k) => !DEFINITIONS[k].mail).sort()).toEqual(["N10:default", "N11:approved", "N11:declined"]);
-    for (const key of ["N10:default", "N11:approved", "N11:declined"]) expect(renderNotification(key, SAMPLE).mail).toBeNull();
+  it("kun det delte invitationslink (N10, N11) og annulleret/ændret tilbagekaldelse (P6) er uden mail: push og besked i appen", () => {
+    const NO_MAIL = ["N10:default", "N11:approved", "N11:declined", "P6:cancelled", "P6:updated"];
+    expect(KEYS.filter((k) => !DEFINITIONS[k].mail).sort()).toEqual([...NO_MAIL].sort());
+    for (const key of NO_MAIL) expect(renderNotification(key, SAMPLE).mail).toBeNull();
   });
 
   it("N10 går til afsenderen og nævner den, der bad om forbindelse og at der skal godkendes", () => {
@@ -225,5 +226,19 @@ describe("P6: tilbagekaldelse", () => {
   });
   it("kan ikke oprettes uden kilde-adresse", () => {
     expect(() => renderNotification("P6:default", { ...data, recallUrl: "" })).toThrow(/recallUrl/);
+  });
+  it.each(["P6:cancelled", "P6:updated"])("%s: samme kategori, produkt og officielle link som den første besked", (key) => {
+    const r = renderNotification(key, { ...data, recallReason: "Salmonella", affectedBatches: "L1", recallAction: "Kassér" });
+    expect(r.category).toBe("recalls");
+    expect(r.entityType).toBe("recall");
+    expect(r.primaryAction).toMatchObject({ type: "open_product", params: { ean: "8435660200767" } });
+    expect(JSON.stringify(r.blocks)).toContain('"type":"link"');
+    expect(r.mail).toBeNull();
+    expect(() => renderNotification(key, { ...data, recallUrl: "" })).toThrow(/recallUrl/);
+  });
+  it("annulleret og ændret siger det tydeligt i push", () => {
+    expect(renderNotification("P6:cancelled", data).pushTitle).toBe("Tilbagekaldelsen er annulleret");
+    expect(renderNotification("P6:updated", data).pushTitle).toBe("Tilbagekaldelsen er ændret");
+    expect(renderNotification("P6:updated", data).pushBody).toContain("Frosty Pocket Lemon");
   });
 });

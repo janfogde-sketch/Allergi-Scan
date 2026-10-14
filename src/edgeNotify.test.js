@@ -148,6 +148,36 @@ describe("edge: notify", () => {
     expect(recipients).toEqual(["user-a", "user-b"]);
   });
 
+  it("annullering går kun til dem, der fik den første besked, med annulleringssidens link", async () => {
+    const ev = event({ kind: "recall_cancelled", payload: { recall_id: "r1", cancel_recall_id: "r2" } });
+    const h = await loadHandler("notify", {
+      env,
+      resolver: world({
+        events: [ev],
+        extra: (c) => {
+          if (c.table === "recalls") return { data: { id: "r1", source_url: "https://foedevarestyrelsen.dk/annulleret", reason: "x", affected: "L1", action: "y", eans: ["5701234567890"], status: "cancelled" }, error: null };
+          if (c.table === "notifications" && !c.writes) return { data: [{ user_id: "user-a", primary_action: { params: { ean: "5701234567890" } } }], error: null };
+          if (c.table === "products") return { data: [{ id: "p1", ean: "5701234567890", name: "Havregryn", brand: "Mark" }], error: null };
+        },
+      }),
+    });
+    await h.call("POST", "/notify", { headers: { Authorization: SVC }, body: {} });
+    const rows = h.writes().filter((c) => c.table === "notifications").map((c) => c.op("upsert")[0]);
+    expect(rows.map((r) => r.user_id)).toEqual(["user-a"]);
+    expect(rows[0].variant).toBe("cancelled");
+    expect(JSON.stringify(rows[0].content_blocks)).toContain("foedevarestyrelsen.dk/annulleret");
+  });
+
+  it("annullering sender ingenting, hvis tilbagekaldelsen ikke er markeret annulleret", async () => {
+    const ev = event({ kind: "recall_cancelled", payload: { recall_id: "r1", cancel_recall_id: "r2" } });
+    const h = await loadHandler("notify", {
+      env,
+      resolver: world({ events: [ev], extra: (c) => (c.table === "recalls" ? { data: { id: "r1", eans: ["5701234567890"], status: "ready", source_url: "https://foedevarestyrelsen.dk/a" }, error: null } : undefined) }),
+    });
+    await h.call("POST", "/notify", { headers: { Authorization: SVC }, body: {} });
+    expect(h.writes().some((c) => c.table === "notifications")).toBe(false);
+  });
+
   it("ikke-bekræftet tilbagekaldelse (kladde/annulleret) sender ingenting", async () => {
     const ev = event({ kind: "recall_published", payload: { recall_id: "r1" } });
     const h = await loadHandler("notify", {
