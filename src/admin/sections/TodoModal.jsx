@@ -17,16 +17,19 @@ function Select({ id, value, onChange, children }) {
 }
 
 // Tekstområde, der vokser med indholdet (ingen indlejret rulning). singleLine: titlen, hvor linjeskift ikke er tilladt.
-function GrowingText({ id, value, onChange, invalid, autoFocus, singleLine = false, className = "", ...rest }) {
+// maxHeight: over grænsen holder feltet op med at vokse og kan rulles (kommentarfeltet).
+function GrowingText({ id, value, onChange, invalid, autoFocus, singleLine = false, className = "", rows, maxHeight, ...rest }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
+    const h = el.scrollHeight;
+    el.style.height = `${maxHeight ? Math.min(h, maxHeight) : h}px`;
+    el.style.overflowY = maxHeight && h > maxHeight ? "auto" : "hidden";
+  }, [value, maxHeight]);
   return (
-    <textarea id={id} ref={ref} className={`admin-textarea todo-grow ${className}`} rows={singleLine ? 1 : 4} value={value} aria-invalid={invalid} autoFocus={autoFocus}
+    <textarea id={id} ref={ref} className={`admin-textarea todo-grow ${className}`} rows={rows ?? (singleLine ? 1 : 4)} value={value} aria-invalid={invalid} autoFocus={autoFocus}
       onKeyDown={singleLine ? (e) => { if (e.key === "Enter") e.preventDefault(); } : undefined}
       onChange={(e) => onChange(singleLine ? e.target.value.replace(/\s*\n+\s*/g, " ") : e.target.value)} {...rest} />
   );
@@ -123,7 +126,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
     justSent.current = true;
     const ok = await onAddComment(commentText);
     setSending(false);
-    if (ok) setCommentText(""); else justSent.current = false;
+    if (ok) { setCommentText(""); showToast("Kommentar tilføjet", "success"); } else justSent.current = false;
   };
 
   const copyPrompt = () => navigator.clipboard?.writeText(buildTodoPrompt({ ...todo, ...draft, assignee_id: draft.assignee_id || null }, admins, comments))
@@ -262,7 +265,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
               </div>
             )}
             <form onSubmit={submitComment} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-              <GrowingText id="todo-comment" className="todo-comment-input" maxLength={2000} placeholder="Skriv en kommentar…" aria-label="Ny kommentar" value={commentText}
+              <GrowingText id="todo-comment" className="todo-comment-input" rows={2} maxHeight={160} maxLength={2000} placeholder="Skriv en kommentar…" aria-label="Ny kommentar" value={commentText}
                 onFocus={(e) => { const el = e.target; setTimeout(() => el.scrollIntoView?.({ block: "center", behavior: scrollBehavior() }), 300); }}
                 onChange={setCommentText} />
               <button type="submit" className="admin-btn admin-btn-ghost admin-touch" disabled={sending || !commentText.trim()}>{sending ? "Sender…" : "Send"}</button>

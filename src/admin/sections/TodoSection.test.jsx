@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import TodoSection from "./TodoSection.jsx";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); delete window.matchMedia; });
 
 const base = {
   admins: [{ id: "a1", name: "Jan", email: "jafo@eatsafe.dk" }], loading: false, load: () => {}, doneLoaded: false, doneCount: 0, loadDone: () => {},
@@ -14,6 +14,17 @@ const base = {
 const todo = (over = {}) => ({
   id: "t1", title: "Ret fejl", description: "", status: "todo", priority: "normal", track: "backend", assignee_id: "a1",
   due_date: null, link: null, ticket_id: null, created_by: "a1", created_at: "2026-10-01T10:00:00Z", updated_at: "2026-10-01T10:00:00Z", ...over,
+});
+
+describe("Opgavekort: statusbadge", () => {
+  it("vises ikke, når alle viste opgaver er 'Skal laves', men på alle kort, når statusserne er blandede", () => {
+    window.matchMedia = vi.fn().mockImplementation((q) => ({ matches: true, media: q, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} }));
+    const { rerender } = render(<TodoSection {...base} todos={[todo({ id: "a" }), todo({ id: "b", title: "Anden" })]} />);
+    expect(screen.queryByText("Skal laves")).toBeNull();
+    rerender(<TodoSection {...base} todos={[todo({ id: "a" }), todo({ id: "b", title: "Anden", status: "doing" })]} />);
+    expect(screen.getByText("Skal laves")).toBeTruthy();
+    expect(screen.getByText("I gang")).toBeTruthy();
+  });
 });
 
 describe("To do: link til ticketten bag en opgave", () => {

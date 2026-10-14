@@ -22,7 +22,7 @@ function Select({ id, value, onChange, children, label }) {
   );
 }
 
-function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket }) {
+function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket, showStatus = true }) {
   const due = dueInfo(t, today);
   const done = t.status === "done";
   const assignee = personName(admins, t.assignee_id);
@@ -36,7 +36,7 @@ function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className={`admin-item-title todo-card-title${done ? " done" : ""}`} title={t.title}>{t.title}</div>
           <div className="todo-meta">
-            <span className={`admin-pill ${STATUS_PILL[t.status]}`}>{STATUS_LABELS[t.status]}</span>
+            {(showStatus || done) && <span className={`admin-pill ${STATUS_PILL[t.status]}`}>{STATUS_LABELS[t.status]}</span>}
             {!done && <span className={`admin-pill ${PRIORITY_PILL[t.priority]}`}>{PRIORITY_LABELS[t.priority]} prioritet</span>}
             <span className="admin-pill admin-pill-neutral">{TRACK_LABELS[t.track]}</span>
             {t.ticket_id && (onOpenTicket
@@ -78,6 +78,8 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
   const filters = { view, track, assigneeId, query, priority, status, due, admins };
   const visible = sortTodos(filterTodos(todos, filters, userId), sort, today);
   const activeFilters = activeFilterCount(filters);
+  // Statusbadget udelades kun, når alle viste opgaver har standardstatussen "Skal laves"; findes flere statusser, vises den på alle
+  const showStatus = visible.some((t) => t.status !== "todo");
   const openTodo = openId ? todos.find((t) => t.id === openId) : null;
   const resetFilters = () => { setTrack(""); setAssigneeId(""); setPriority(""); setStatus(""); setDue(""); };
   const resetAll = () => { resetFilters(); setQuery(""); }; // rører hverken fane eller sortering
@@ -250,7 +252,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
       ) : isMobile ? (
         <div className="admin-card-list">
           {visible.map((t) => (
-            <TodoCard key={t.id} t={t} admins={admins} today={today} onOpen={() => setOpenId(t.id)} onToggle={() => toggleDone(t)} onOpenTicket={onOpenTicket} />
+            <TodoCard key={t.id} t={t} admins={admins} today={today} onOpen={() => setOpenId(t.id)} onToggle={() => toggleDone(t)} onOpenTicket={onOpenTicket} showStatus={showStatus} />
           ))}
         </div>
       ) : (

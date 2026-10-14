@@ -85,6 +85,14 @@ describe("TodoModal", () => {
     expect(screen.getByLabelText("Beskrivelse").className).toContain("todo-grow");
     expect(screen.getByRole("link", { name: /Åbn linket/ }).getAttribute("href")).toBe("https://x.dk/pr/1");
   });
+  it("kommentarfeltet starter på to linjer, vokser op til en grænse, og Send er slået fra uden tekst", () => {
+    setup();
+    const field = screen.getByLabelText("Ny kommentar");
+    expect(field.getAttribute("rows")).toBe("2");
+    expect(screen.getByRole("button", { name: "Send" }).disabled).toBe(true);
+    fireEvent.change(field, { target: { value: "x" } });
+    expect(screen.getByRole("button", { name: "Send" }).disabled).toBe(false);
+  });
   it("kun én Luk (øverst) og Gem i bunden", () => {
     setup();
     expect(screen.getAllByRole("button", { name: "Luk" })).toHaveLength(1);
