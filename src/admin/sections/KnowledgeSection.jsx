@@ -89,10 +89,10 @@ export default function KnowledgeSection({
                 <tr key={k.id} style={{ cursor: "pointer" }} onClick={() => openKnowledgeEntryForEdit(k)}>
                   <td style={{ fontSize: 16 }}>{k.emoji || ""}</td>
                   <td>{k.title}</td>
-                  <td><span className="admin-pill admin-pill-neutral">{CATEGORY_LABELS[k.category] || k.category}</span></td>
-                  <td style={{ fontFamily: "var(--mono)", fontSize: 11 }}>{k.slug}</td>
-                  <td>{k.status_label ? <span className="admin-pill admin-pill-neutral">{k.status_label}</span> : <span style={{ color: "var(--muted)" }}>–</span>}</td>
-                  <td>{k.updated_at ? new Date(k.updated_at).toLocaleDateString("da-DK") : "–"}</td>
+                  <td data-label="Kategori"><span className="admin-pill admin-pill-neutral">{CATEGORY_LABELS[k.category] || k.category}</span></td>
+                  <td data-label="Slug" style={{ fontFamily: "var(--mono)", fontSize: 11 }}>{k.slug}</td>
+                  <td data-label="Faglig status">{k.status_label ? <span className="admin-pill admin-pill-neutral">{k.status_label}</span> : <span style={{ color: "var(--muted)" }}>–</span>}</td>
+                  <td data-label="Opdateret">{k.updated_at ? new Date(k.updated_at).toLocaleDateString("da-DK") : "–"}</td>
                   <td><button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={e => { e.stopPropagation(); openKnowledgeEntryForEdit(k); }}>Redigér</button></td>
                 </tr>
               ))}

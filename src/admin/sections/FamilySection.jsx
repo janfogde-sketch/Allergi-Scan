@@ -51,7 +51,7 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
                       {userLabel(g.owner)}
                       <div style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>{g.ownerId}</div>
                     </td>
-                    <td>
+                    <td data-label="Medlemmer">
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {g.members.map(m => (
                           <span key={m.id} className="admin-pill admin-pill-neutral" title={`Fødselsår: ${m.birth_year || "–"} · ${(m.allergens || []).length} allergener`}
@@ -65,7 +65,7 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
                         ))}
                       </div>
                     </td>
-                    <td>{g.members.length}</td>
+                    <td data-label="Antal">{g.members.length}</td>
                   </tr>
                 ))}
               </tbody>
@@ -85,11 +85,11 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
               <tbody>
                 {familyInvites.map(i => (
                   <tr key={i.id}>
-                    <td><span className={`admin-pill ${INVITE_STATUS_PILL[i.status] || "admin-pill-neutral"}`}>{INVITE_STATUS_LABELS[i.status] || i.status}</span></td>
-                    <td>{userLabel(i.inviter)}</td>
-                    <td>{i.accepted_by ? userLabel(i.accepter) : <span style={{ color: "var(--muted)" }}>–</span>}</td>
-                    <td>{new Date(i.created_at).toLocaleDateString("da-DK")}</td>
-                    <td>{i.accepted_at ? new Date(i.accepted_at).toLocaleDateString("da-DK") : i.expires_at ? new Date(i.expires_at).toLocaleDateString("da-DK") : "–"}</td>
+                    <td data-label="Status"><span className={`admin-pill ${INVITE_STATUS_PILL[i.status] || "admin-pill-neutral"}`}>{INVITE_STATUS_LABELS[i.status] || i.status}</span></td>
+                    <td data-label="Inviteret af">{userLabel(i.inviter)}</td>
+                    <td data-label="Accepteret af">{i.accepted_by ? userLabel(i.accepter) : <span style={{ color: "var(--muted)" }}>–</span>}</td>
+                    <td data-label="Oprettet">{new Date(i.created_at).toLocaleDateString("da-DK")}</td>
+                    <td data-label="Udløber/accepteret">{i.accepted_at ? new Date(i.accepted_at).toLocaleDateString("da-DK") : i.expires_at ? new Date(i.expires_at).toLocaleDateString("da-DK") : "–"}</td>
                     <td>
                       {i.status === "pending" && (
                         <button className="admin-btn admin-btn-danger admin-btn-sm" disabled={familyActionLoading} onClick={() => handleCancelInvite(i)}>

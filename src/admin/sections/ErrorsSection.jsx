@@ -63,10 +63,10 @@ export default function ErrorsSection({ errors, loading, filter, setFilter, load
                       <div style={{ fontWeight: 700, overflowWrap: "anywhere" }}>{e.message}</div>
                       <div style={{ fontSize: 11, color: "var(--muted)" }}>{SOURCE_LABELS[e.source] || e.source}{e.app_version ? ` · ${e.app_version}` : ""}</div>
                     </td>
-                    <td>{e.screen || "—"}</td>
-                    <td style={{ fontVariantNumeric: "tabular-nums" }}>{e.occurrences}×</td>
-                    <td style={{ whiteSpace: "nowrap" }}>{fmt(e.last_seen)}</td>
-                    <td><span className={`admin-pill ${STATUS_PILL[e.status]}`}>{STATUS_LABELS[e.status]}</span></td>
+                    <td data-label="Skærm">{e.screen || "—"}</td>
+                    <td data-label="Antal" style={{ fontVariantNumeric: "tabular-nums" }}>{e.occurrences}×</td>
+                    <td data-label="Seneste" style={{ whiteSpace: "nowrap" }}>{fmt(e.last_seen)}</td>
+                    <td data-label="Status"><span className={`admin-pill ${STATUS_PILL[e.status]}`}>{STATUS_LABELS[e.status]}</span></td>
                     <td style={{ display: "flex", gap: 6 }} onClick={(ev) => ev.stopPropagation()}>
                       {e.status !== "resolved" && <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setStatus(e.id, "resolved")}>Løst</button>}
                       {e.status === "open" && <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setStatus(e.id, "ignored")}>Ignorér</button>}

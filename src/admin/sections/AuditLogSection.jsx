@@ -21,11 +21,11 @@ export default function AuditLogSection({ rows, names, loading, load }) {
             {!loading && rows.length === 0 && <tr><td colSpan={5} style={{ color: "var(--muted)" }}>Ingen registrerede handlinger endnu.</td></tr>}
             {rows.map(r => (
               <tr key={r.id}>
-                <td>{fmt(r.created_at)}</td>
-                <td>{auditActionLabel(r.action)}</td>
-                <td>{auditActorText(r, names?.users)}</td>
-                <td>{auditTargetText(r, names || {})}</td>
-                <td>{auditChangeText(r)}</td>
+                <td data-label="Tidspunkt">{fmt(r.created_at)}</td>
+                <td data-label="Handling">{auditActionLabel(r.action)}</td>
+                <td data-label="Admin">{auditActorText(r, names?.users)}</td>
+                <td data-label="Mål">{auditTargetText(r, names || {})}</td>
+                <td data-label="Ændring">{auditChangeText(r)}</td>
               </tr>
             ))}
           </tbody>

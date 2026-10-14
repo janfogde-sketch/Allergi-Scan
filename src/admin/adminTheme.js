@@ -316,6 +316,9 @@ button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px sol
   table.admin-table:not([data-no-cards]) td::before{content:attr(data-label);flex:0 0 34%;max-width:40%;text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
   table.admin-table:not([data-no-cards]) td:not([data-label]){justify-content:flex-start;text-align:left;}
   table.admin-table:not([data-no-cards]) td:not([data-label])::before{content:none;}
+  table.admin-table:not([data-no-cards]) td:not([data-label]){flex-direction:column;align-items:flex-start;min-width:0;}
+  table.admin-table:not([data-no-cards]) td:not([data-label]):has(>.admin-btn){flex-direction:row;flex-wrap:wrap;align-items:center;}
+  table.admin-table:not([data-no-cards]) td[data-label]>*{min-width:0;}
   table.admin-table:not([data-no-cards]) tr:hover td{background:none;}
   table.admin-table[data-no-cards]{min-width:560px;}
   .admin-table-wrap:has(table.admin-table[data-no-cards]){overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--surface);border:1px solid var(--border);border-radius:12px;}

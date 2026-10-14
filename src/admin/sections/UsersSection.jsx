@@ -105,8 +105,8 @@ export default function UsersSection({
               {filtered.map(u => (
                 <tr key={u.id} style={{ cursor: "pointer" }} onClick={() => openAdminUserForEdit(u)}>
                   <td>{u.name || <span style={{ color: "var(--muted)" }}>Ingen navn</span>}{u.id === currentUserId && <span className="admin-pill admin-pill-green" style={{ marginLeft: 6 }}>Dig</span>}</td>
-                  <td>{u.email}</td>
-                  <td onClick={e => e.stopPropagation()}>
+                  <td data-label="Email">{u.email}</td>
+                  <td data-label="Rolle" onClick={e => e.stopPropagation()}>
                     <select value={u.role || "user"} onChange={e => handleRoleChange(u, e.target.value)} disabled={u.id === currentUserId}
                       aria-label={`Rolle for ${u.name || u.email}`} title={u.id === currentUserId ? "Du kan ikke ændre din egen rolle" : undefined}
                       style={{ fontFamily: "var(--f)", fontSize: 12, padding: "3px 6px", borderRadius: 6, border: "1px solid var(--border2)" }}>
@@ -114,8 +114,8 @@ export default function UsersSection({
                       <option value="admin">Admin</option>
                     </select>
                   </td>
-                  <td>{u.created_at ? new Date(u.created_at).toLocaleDateString("da-DK") : "–"}</td>
-                  <td>{u.onboarding_completed === false ? <span className="admin-pill admin-pill-amber">Ufærdig</span> : <span className="admin-pill admin-pill-neutral">Færdig</span>}</td>
+                  <td data-label="Oprettet">{u.created_at ? new Date(u.created_at).toLocaleDateString("da-DK") : "–"}</td>
+                  <td data-label="Onboarding">{u.onboarding_completed === false ? <span className="admin-pill admin-pill-amber">Ufærdig</span> : <span className="admin-pill admin-pill-neutral">Færdig</span>}</td>
                   <td onClick={e => e.stopPropagation()}>
                     <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => openAdminUserForEdit(u)} style={{ marginRight: 6 }}>Redigér</button>
                     <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleDelete(u)} disabled={u.id === currentUserId}>Slet</button>

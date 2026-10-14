@@ -198,9 +198,9 @@ export default function RecallsSection({ recalls, loading, load, searchProducts,
               {visible.map((r) => (
                 <tr key={r.id} style={{ cursor: "pointer" }} onClick={() => setOpenId(r.id)}>
                   <td style={{ maxWidth: 520 }}><div style={{ fontWeight: 700, overflowWrap: "anywhere" }}>{r.title}</div></td>
-                  <td style={{ whiteSpace: "nowrap" }}>{fmtDate(r.published_at)}</td>
-                  <td style={{ fontVariantNumeric: "tabular-nums" }}>{r.unverified_eans?.length || "—"}</td>
-                  <td><span className={`admin-pill ${RECALL_STATUS_PILL[r.status]}`}>{RECALL_STATUS_LABELS[r.status]}</span></td>
+                  <td data-label="Dato" style={{ whiteSpace: "nowrap" }}>{fmtDate(r.published_at)}</td>
+                  <td data-label="Tal på siden" style={{ fontVariantNumeric: "tabular-nums" }}>{r.unverified_eans?.length || "—"}</td>
+                  <td data-label="Status"><span className={`admin-pill ${RECALL_STATUS_PILL[r.status]}`}>{RECALL_STATUS_LABELS[r.status]}</span></td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setOpenId(r.id)}>
                       {r.status === "needs_review" ? "Gennemgå" : "Vis"}

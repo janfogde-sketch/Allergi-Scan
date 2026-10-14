@@ -30,14 +30,14 @@ export default function HistorySection({ revisionLog, revisionLogLoading, revisi
             <tbody>
               {revisionLog.map(r => (
                 <tr key={r.id}>
-                  <td style={{ whiteSpace: "nowrap" }}>{new Date(r.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
-                  <td><span className={`admin-pill ${TYPE_PILL[r.change_type] || "admin-pill-neutral"}`}>{TYPE_LABELS[r.change_type] || r.change_type}</span></td>
-                  <td>
+                  <td data-label="Tidspunkt" style={{ whiteSpace: "nowrap" }}>{new Date(r.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
+                  <td data-label="Type"><span className={`admin-pill ${TYPE_PILL[r.change_type] || "admin-pill-neutral"}`}>{TYPE_LABELS[r.change_type] || r.change_type}</span></td>
+                  <td data-label="Produkt">
                     {r.product ? `${r.product.name || "Ukendt"} (${r.product.ean})` : r.product_id ? <span style={{ color: "var(--muted)", fontFamily: "var(--mono)" }}>{r.product_id.slice(0, 8)}</span> : <span style={{ color: "var(--muted)" }}>–</span>}
                   </td>
-                  <td style={{ fontSize: 12 }}>{r.field_changed || "–"}</td>
-                  <td style={{ fontSize: 12, color: "var(--ink2)" }} title={r.new_value || ""}>{truncate(r.new_value)}</td>
-                  <td>{r.user ? (r.user.name || r.user.email) : r.changed_by ? <span style={{ color: "var(--muted)", fontFamily: "var(--mono)" }}>{r.changed_by.slice(0, 8)}</span> : <span style={{ color: "var(--muted)" }}>Ukendt</span>}</td>
+                  <td data-label="Felt(er) ændret" style={{ fontSize: 12 }}>{r.field_changed || "–"}</td>
+                  <td data-label="Ny værdi" style={{ fontSize: 12, color: "var(--ink2)" }} title={r.new_value || ""}>{truncate(r.new_value)}</td>
+                  <td data-label="Ændret af">{r.user ? (r.user.name || r.user.email) : r.changed_by ? <span style={{ color: "var(--muted)", fontFamily: "var(--mono)" }}>{r.changed_by.slice(0, 8)}</span> : <span style={{ color: "var(--muted)" }}>Ukendt</span>}</td>
                 </tr>
               ))}
             </tbody>
