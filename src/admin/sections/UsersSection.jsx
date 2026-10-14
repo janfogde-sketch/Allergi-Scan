@@ -16,7 +16,7 @@ const CSV_COLUMNS = [
 ];
 
 export default function UsersSection({
-  adminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser,
+  adminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser, logAdminExport,
   openAdminUser, setOpenAdminUser, editingAdminUser, setEditingAdminUser, adminUserActionLoading,
   openAdminUserForEdit, saveAdminUserEdit,
 }) {
@@ -33,6 +33,33 @@ export default function UsersSection({
   const handleDelete = (u) => {
     if (!window.confirm(`Slet ${u.name || u.email} permanent? Dette kan ikke fortrydes.`)) return;
     deleteUser(u.id);
+  };
+
+  // Rolleskift kræver bekræftelse; egen række er låst (G17). Databasen nægter desuden at fjerne den sidste admin.
+  const handleRoleChange = (u, role) => {
+    if (u.id === currentUserId || role === (u.role || "user")) return;
+    const who = u.name || u.email;
+    const question = role === "admin"
+      ? `Gør ${who} til admin? En admin kan se og ændre alle brugeres data.`
+      : `Fjern admin-rollen fra ${who}?`;
+    if (!window.confirm(question)) return;
+    updateUserRole(u.id, role);
+  };
+  const exportCsv = () => {
+    downloadCsv(`eatsafe-brugere-${new Date().toISOString().slice(0, 10)}.csv`, filtered, CSV_COLUMNS);
+    if (logAdminExport) logAdminExport("users", filtered.length);
+  };
+
+  const saveEdit = () => {
+    const before = openAdminUser?.role || "user";
+    if (editingAdminUser && editingAdminUser.role !== before) {
+      const who = openAdminUser.name || openAdminUser.email;
+      const question = editingAdminUser.role === "admin"
+        ? `Gør ${who} til admin? En admin kan se og ændre alle brugeres data.`
+        : `Fjern admin-rollen fra ${who}?`;
+      if (!window.confirm(question)) return;
+    }
+    saveAdminUserEdit();
   };
 
   const close = () => { setOpenAdminUser(null); setEditingAdminUser(null); };
@@ -57,7 +84,7 @@ export default function UsersSection({
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>{filtered.length} af {adminUsers.length}</span>
           <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={filtered.length === 0}
-            onClick={() => downloadCsv(`eatsafe-brugere-${new Date().toISOString().slice(0, 10)}.csv`, filtered, CSV_COLUMNS)}>
+            onClick={exportCsv}>
             Eksportér CSV
           </button>
         </div>
@@ -81,7 +108,8 @@ export default function UsersSection({
                   <td>{u.name || <span style={{ color: "var(--muted)" }}>Ingen navn</span>}{u.id === currentUserId && <span className="admin-pill admin-pill-green" style={{ marginLeft: 6 }}>Dig</span>}</td>
                   <td>{u.email}</td>
                   <td onClick={e => e.stopPropagation()}>
-                    <select value={u.role || "user"} onChange={e => updateUserRole(u.id, e.target.value)}
+                    <select value={u.role || "user"} onChange={e => handleRoleChange(u, e.target.value)} disabled={u.id === currentUserId}
+                      aria-label={`Rolle for ${u.name || u.email}`} title={u.id === currentUserId ? "Du kan ikke ændre din egen rolle" : undefined}
                       style={{ fontFamily: "var(--f)", fontSize: 12, padding: "3px 6px", borderRadius: 6, border: "1px solid var(--border2)" }}>
                       <option value="user">Bruger</option>
                       <option value="admin">Admin</option>
@@ -228,7 +256,7 @@ export default function UsersSection({
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="admin-btn admin-btn-primary" disabled={adminUserActionLoading} onClick={saveAdminUserEdit}>Gem ændringer</button>
+              <button className="admin-btn admin-btn-primary" disabled={adminUserActionLoading} onClick={saveEdit}>Gem ændringer</button>
               <button className="admin-btn admin-btn-danger" disabled={adminUserActionLoading || openAdminUser.id === currentUserId}
                 onClick={() => { if (window.confirm(`Slet ${editingAdminUser.name || editingAdminUser.email} permanent? Dette kan ikke fortrydes.`)) { deleteUser(openAdminUser.id); close(); } }}
                 style={{ marginLeft: "auto" }}>

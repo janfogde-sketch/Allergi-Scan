@@ -1,15 +1,15 @@
 // @ts-nocheck
 import React from "react";
-import { auditActionLabel, auditChangeText, shortId } from "../auditLogic.js";
+import { auditActionLabel, auditChangeText, auditActorText, auditTargetText } from "../auditLogic.js";
 
 const fmt = (d) => new Date(d).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Copenhagen" });
 
-export default function AuditLogSection({ rows, loading, load }) {
+export default function AuditLogSection({ rows, names, loading, load }) {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 12 }}>
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
-          Hvem der har ændret roller, statusser eller slettet noget, og hvornår. De seneste 200 handlinger; loggen slettes efter 12 måneder.
+          Hvem der har ændret eller slettet noget følsomt (roller, produkter, brugeres profiler og allergier, familie, indsendelser, push-tekster, eksport), og hvornår. De seneste 200 handlinger; loggen slettes efter 12 måneder.
         </div>
         <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>Opdater</button>
       </div>
@@ -23,8 +23,8 @@ export default function AuditLogSection({ rows, loading, load }) {
               <tr key={r.id}>
                 <td>{fmt(r.created_at)}</td>
                 <td>{auditActionLabel(r.action)}</td>
-                <td>{shortId(r.admin_id)}</td>
-                <td>{r.target_table} {shortId(r.target_id)}</td>
+                <td>{auditActorText(r, names?.users)}</td>
+                <td>{auditTargetText(r, names || {})}</td>
                 <td>{auditChangeText(r)}</td>
               </tr>
             ))}

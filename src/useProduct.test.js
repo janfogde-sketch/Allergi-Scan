@@ -234,3 +234,38 @@ describe("runLookupProduct — hvordan produktet blev fundet", () => {
     expect(saveHistoryEntry).not.toHaveBeenCalled();
   });
 });
+
+describe("runLookupProduct — dårlig forbindelse", () => {
+  it("bruger den gemte udgave, når opslaget fejler eller timer ud (aldrig uden scoring)", async () => {
+    const { saveToOfflineCache } = await import("./useOffline.js");
+    saveToOfflineCache("777", { code: "777", id: "p7", name: "Gemt", ingredients: "", status: "safe", allergen_flags: {} });
+    global.fetch = vi.fn().mockRejectedValue(new Error("network"));
+    const ctx = makeCtx();
+    await runLookupProduct("777", ctx);
+    expect(ctx.setScreen).toHaveBeenLastCalledWith(SCREENS.RESULT);
+    const shown = ctx.setScanResult.mock.calls.at(-1)[0];
+    expect(shown.offlineSavedAt).toBeTruthy();
+    expect(ctx.setScanError).not.toHaveBeenLastCalledWith(expect.stringContaining("Kunne ikke"));
+  });
+
+  it("viser en fejl, når der ingen gemt udgave er", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("network"));
+    const ctx = makeCtx();
+    await runLookupProduct("888", ctx);
+    expect(ctx.setScanError).toHaveBeenLastCalledWith(expect.stringContaining("Kunne ikke hente"));
+    expect(ctx.setLoading).toHaveBeenLastCalledWith(false);
+  });
+
+  it("Annuller gør opslaget forældet, så intet vises bagefter", async () => {
+    let rejectFetch;
+    global.fetch = vi.fn(() => new Promise((_, rej) => { rejectFetch = rej; }));
+    const ctx = makeCtx({ scanAbortRef: { current: null } });
+    const p = runLookupProduct("999", ctx);
+    ctx.scanTokenRef.current += 1; // som cancelLookup
+    ctx.scanAbortRef.current.abort();
+    rejectFetch(new Error("aborted"));
+    await p;
+    expect(ctx.setScreen).not.toHaveBeenCalled();
+    expect(ctx.setScanError).not.toHaveBeenLastCalledWith(expect.stringContaining("Kunne ikke"));
+  });
+});

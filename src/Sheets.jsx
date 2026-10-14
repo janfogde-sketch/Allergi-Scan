@@ -13,7 +13,7 @@ import { Icon } from "./Icons.jsx";
 // den statiske grønne tjek-streg (som ville signalere "godkendt" for tidligt).
 // Portal-baseret (samme mønster som ToastHost/ListPickerSheet), monteret i
 // App.jsx, styret af et rent boolean show-flag.
-export function ScanLoadingOverlay({ show, label = "Scanner produkt og tjekker dine allergener" }) {
+export function ScanLoadingOverlay({ show, onCancel, label = "Scanner produkt og tjekker dine allergener" }) {
   if (!show) return null;
   return createPortal(
     <div className="scan-loading-overlay" role="status" aria-live="polite" aria-label={label}>
@@ -33,6 +33,9 @@ export function ScanLoadingOverlay({ show, label = "Scanner produkt og tjekker d
           <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" strokeLinecap="round" />
         </g>
       </svg>
+      {onCancel && (
+        <button type="button" className="btn btn-outline" onClick={onCancel} style={{ marginTop: 24 }}>Annuller</button>
+      )}
     </div>,
     document.body
   );
