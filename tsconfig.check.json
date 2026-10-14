@@ -88,7 +88,9 @@
     "src/madpasText.js",
     "src/useShoppingList.js",
     "src/admin/navLogic.js",
-    "src/useDeleteAccount.js"
+    "src/useDeleteAccount.js",
+    "src/useScanner.js",
+    "src/useAdmin.js"
   ],
   "exclude": [
     "node_modules"
