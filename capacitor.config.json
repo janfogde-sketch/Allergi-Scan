@@ -1,0 +1,15 @@
+{
+  "appId": "dk.eatsafe.app",
+  "appName": "EatSafe",
+  "webDir": "dist",
+  "server": {
+    "url": "https://www.eatsafe.dk/?src=store",
+    "allowNavigation": ["www.eatsafe.dk"],
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#FBFAF7",
+    "limitsNavigationsToAppBoundDomains": false
+  }
+}

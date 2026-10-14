@@ -9,7 +9,7 @@ export default defineConfig([
   // supabase/functions/** er Deno Edge Functions (server-side, egne konventioner —
   // fx tilladt @ts-nocheck og any i hurtig JSON-parsing), ikke frontend-koden
   // denne config er skrevet til. Samme udelukkelse som tsconfig.app.json bruger.
-  globalIgnores(['dist', 'dist-preview', 'supabase/functions/**']),
+  globalIgnores(['dist', 'dist-preview', 'ios', 'supabase/functions/**']),
   {
     // Dækker al appens kode (appen er næsten udelukkende .js/.jsx).
     files: ['**/*.{js,jsx,ts,tsx}'],
