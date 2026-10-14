@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, ingredientsVerifiedText, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl } from "./helpers.js";
+import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, ingredientsVerifiedText, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl, displayImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -295,7 +295,7 @@ export function makeResultSections(c) {
         <div>
           {heroImg
             ? <div className="product-hero-imgwrap">
-                <img loading="lazy" src={heroImg} alt={scanResult.name} className="product-hero-img"
+                <img loading="lazy" src={displayImageUrl(heroImg)} alt={scanResult.name} className="product-hero-img"
                   onError={e => { const wrap = e.target.closest(".product-hero-imgwrap"); wrap.style.display="none"; wrap.nextSibling.style.display="flex"; }} />
               </div>
             : null}
