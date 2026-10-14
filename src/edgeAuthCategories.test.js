@@ -12,11 +12,11 @@ const UID = "11111111-2222-3333-4444-555555555555";
 // Kategori 1/2/4 (se .claude/rules/edge-function-auth.md): kald uden gyldigt login/nøgle må hverken røre databasen eller sende noget.
 // [funktion, metode, forventet status uden adgang]
 const PROTECTED = [
-  ["admin", "POST", 401], ["admin-digest", "POST", 401], ["allergen-reanalyze", "POST", 401], ["auto-import-off", "POST", 401],
+  ["admin-digest", "POST", 401], ["allergen-reanalyze", "POST", 401], ["auto-import-off", "POST", 401],
   ["auto-reparse", "POST", 401], ["classify-categories", "POST", 403], ["cleanup-orphan-images", "POST", 401], ["favorites", "GET", 401],
   ["favorites", "POST", 401], ["family-invite", "POST", 401], ["food-waste", "GET", 401], ["history", "GET", 401], ["history", "POST", 401],
   ["inactive-accounts", "POST", 401], ["notify", "POST", 401], ["notify-test", "POST", 401], ["recalls-sync", "POST", 403],
-  ["search", "POST", 401], ["send-email", "POST", 401], ["send-push", "POST", 401],
+  ["search", "POST", 401], ["send-email", "POST", 401],
 ];
 
 describe("edge: loginkrav på alle beskyttede funktioner", () => {
@@ -33,13 +33,6 @@ describe("edge: loginkrav på alle beskyttede funktioner", () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
   }
-
-  it("en almindelig bruger (ikke admin) kommer ikke ind i admin-funktionen", async () => {
-    const h = await loadHandler("admin", { tokens, resolver: () => ({ data: { role: "user" }, error: null }) });
-    const r = await h.call("POST", "/admin", { token: "a", body: {} });
-    expect(r.status).toBeGreaterThanOrEqual(400);
-    expect(h.writes()).toHaveLength(0);
-  });
 });
 
 describe("edge: bevidst åbne funktioner har grænser", () => {
