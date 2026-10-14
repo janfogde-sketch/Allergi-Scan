@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useShoppingList.js
 // Håndterer indkøbslister — flere lister pr. bruger, deling med hele

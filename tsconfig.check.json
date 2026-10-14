@@ -71,7 +71,23 @@
     "src/admin/submissionLogic.js",
     "src/admin/useAdminAuth.js",
     "src/admin/useAdminTodos.js",
-    "src/admin/todoLogic.js"
+    "src/admin/todoLogic.js",
+    "src/admin/auditLogic.js",
+    "src/admin/statsLogic.js",
+    "src/admin/statusTone.js",
+    "src/admin/tableCards.js",
+    "src/admin/useIsMobile.js",
+    "src/data/demoProducts.js",
+    "src/data/eNumbers.js",
+    "src/motion.js",
+    "src/searchReturn.js",
+    "src/sessionStore.js",
+    "src/storeBuild.js",
+    "src/admin/adminTheme.js",
+    "src/legalText/terms.js",
+    "src/legalText/privacy.js",
+    "src/madpasText.js",
+    "src/useShoppingList.js"
   ],
   "exclude": [
     "node_modules"
