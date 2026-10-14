@@ -125,6 +125,7 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 
 - **Auto-import:** edge-funktionen `auto-import-off`, pg_cron dagligt kl. 02:00 UTC (manuelt: Admin → Import → "Kør import nu"). Flow: `missing_ean_log` → OFF API →
   `products` → slet fra loggen. Ingen AI, pris $0. Lokalt script `import_missing_eans.py` (`--limit N` eller `--test-eans`).
+- **Natjob-tråden (15. okt. 2026):** en fast Claude-routine på Jans abonnement laver allergencheck af nye varer (pending/low) og underkategorier i stedet for cron-jobbene `auto-reparse` og `classify-categories-backlog`, via workflowene "Hent natjob-kø"/"Skriv natjob-resultat" og `routine_queue`/`routine_apply` (kun opad). Udebliver tråden i 36 timer, kører de gamle job igen (nødstart). Detaljer: `docs/natjob-routine.md`.
 
 **Familie-deling**
 
