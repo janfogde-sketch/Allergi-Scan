@@ -218,6 +218,7 @@
     <p>Supabases aktuelle DPA beskriver Supabase som databehandler og siger, at data, som kunden instruerer Supabase om at behandle i en bestemt geografisk region, lagres og primært behandles i den region, med visse forbehold. DPA’en indeholder desuden EU-standardkontraktbestemmelser for relevante internationale overførsler.</p>
     <p><strong>Vercel</strong><br>Anvendes til hosting og levering af EatSafes webbaserede infrastruktur.</p>
     <p>Vercels aktuelle DPA oplyser, at virksomhedens primære behandlingsfaciliteter er i USA, og at data kan behandles internationalt. DPA’en beskriver samtidig mekanismer for lovlige internationale overførsler.</p>
+    <p><strong>GitHub</strong> (USA)<br>Opbevarer vores krypterede sikkerhedskopier af databasen. GitHub kan ikke læse indholdet, fordi kun EatSafe har nøglen. Overførslen er omfattet af EU-U.S. Data Privacy Framework.</p>
     <p><strong>Anthropic</strong><br>Anvendes til automatisk analyse af produktbilleder og ingredienstekst.</p>
     <p><strong>Open Food Facts</strong><br>Anvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder kan hentes direkte fra Open Food Facts’ servere, hvorved din IP-adresse og tekniske enhedsoplysninger kan blive synlige for dem.</p>
     <p><strong>Resend</strong><br>Anvendes til at sende e-mails fra EatSafe, fx bekræftelse af e-mail, nulstilling af adgangskode, invitationer til familie og beskeder. Resend modtager din e-mailadresse, dit navn og beskedens indhold.</p>
@@ -254,7 +255,7 @@
       <li>adminlog (hvilken administrator der har ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår; kun hvilke felter der er ændret, ingen helbredsoplysninger): slettes automatisk efter 12 måneder</li>
       <li>sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder</li>
       <li>logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister</li>
-      <li>sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber.</li>
+      <li>sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Hver kopi slettes automatisk efter 7 dage, så oplysninger, du har slettet, også er væk fra kopierne senest 7 dage efter.</li>
     </ul>
 
     <h2>12. Cookies, lokal lagring og lignende teknologier</h2>
