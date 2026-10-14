@@ -16,8 +16,8 @@ function Select({ id, value, onChange, children }) {
   return <select id={id} className="admin-select" value={value} onChange={(e) => onChange(e.target.value)}>{children}</select>;
 }
 
-// Titlen er et tekstområde, der vokser med indholdet, så lange titler kan ses i sin helhed uden vandret rulning.
-function GrowingTitle({ id, value, onChange, invalid, autoFocus }) {
+// Tekstområde, der vokser med indholdet (ingen indlejret rulning). singleLine: titlen, hvor linjeskift ikke er tilladt.
+function GrowingText({ id, value, onChange, invalid, autoFocus, singleLine = false, className = "", ...rest }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
@@ -26,9 +26,9 @@ function GrowingTitle({ id, value, onChange, invalid, autoFocus }) {
     el.style.height = `${el.scrollHeight}px`;
   }, [value]);
   return (
-    <textarea id={id} ref={ref} className="admin-textarea todo-title-input" rows={1} value={value} maxLength={200} aria-invalid={invalid} autoFocus={autoFocus}
-      onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-      onChange={(e) => onChange(e.target.value.replace(/\s*\n+\s*/g, " "))} />
+    <textarea id={id} ref={ref} className={`admin-textarea todo-grow ${className}`} rows={singleLine ? 1 : 4} value={value} aria-invalid={invalid} autoFocus={autoFocus}
+      onKeyDown={singleLine ? (e) => { if (e.key === "Enter") e.preventDefault(); } : undefined}
+      onChange={(e) => onChange(singleLine ? e.target.value.replace(/\s*\n+\s*/g, " ") : e.target.value)} {...rest} />
   );
 }
 
@@ -130,9 +130,9 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
     .then(() => showToast("Prompt kopieret")).catch((e) => showToast("Kunne ikke kopiere: " + e.message, "error"));
 
   const menuItems = isNew ? [] : [
-    { label: "Kopiér som prompt", onClick: copyPrompt },
-    todo.ticket_id && onOpenTicket ? { label: "Åbn ticket", onClick: () => { onOpenTicket(todo.ticket_id); onClose(); } } : null,
-    { label: "Slet opgave", onClick: () => setConfirm("delete") },
+    { label: "Kopiér som prompt", icon: "file", onClick: copyPrompt },
+    todo.ticket_id && onOpenTicket ? { label: "Åbn ticket", icon: "link", onClick: () => { onOpenTicket(todo.ticket_id); onClose(); } } : null,
+    { label: "Slet opgave", icon: "trash", danger: true, onClick: () => setConfirm("delete") },
   ];
 
   return (
@@ -155,7 +155,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
             )}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-            <ActionsMenu items={menuItems} />
+            <ActionsMenu items={menuItems} compact={isMobile} />
             <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={requestClose} aria-label="Luk">Luk</button>
           </div>
         </div>
@@ -164,14 +164,16 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
           <div className="todo-confirm" style={{ margin: "12px 16px 0" }} role="alertdialog" aria-label="Ikke-gemte ændringer">
             <div style={{ fontWeight: 700, marginBottom: 8 }}>Du har ændringer, der ikke er gemt.</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" className="admin-btn admin-btn-primary admin-btn-sm admin-touch" onClick={() => setConfirm(null)}>Bliv og ret</button>
+              <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setConfirm(null)}>Bliv og ret</button>
+              {canSave && <button type="button" className="admin-btn admin-btn-primary admin-btn-sm admin-touch" onClick={() => { setConfirm(null); save(); }}>Gem og luk</button>}
               <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={onClose}>Kassér ændringer</button>
             </div>
           </div>
         )}
         {confirm === "delete" && (
           <div className="todo-confirm" style={{ margin: "12px 16px 0" }} role="alertdialog" aria-label="Slet opgaven">
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>Slet opgaven og dens kommentarer? Det kan ikke fortrydes.</div>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Slet “{todo.title}”?</div>
+            <div style={{ fontSize: 12.5, marginBottom: 8 }}>Opgaven og dens kommentarer slettes permanent og kan ikke gendannes.</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setConfirm(null)}>Annullér</button>
               <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={() => onDelete().then((ok) => ok && onClose())}>Ja, slet opgaven</button>
@@ -182,11 +184,11 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
         <div className="todo-panel-body">
           <div className="admin-field">
             <label htmlFor="todo-title">Titel</label>
-            <GrowingTitle id="todo-title" autoFocus={isNew} value={draft.title} invalid={!titleOk} onChange={set("title")} />
+            <GrowingText id="todo-title" singleLine className="todo-title-input" maxLength={200} autoFocus={isNew} value={draft.title} invalid={!titleOk} onChange={set("title")} />
           </div>
           <div className="admin-field">
             <label htmlFor="todo-desc">Beskrivelse</label>
-            <textarea id="todo-desc" className="admin-textarea" value={draft.description} maxLength={4000} onChange={(e) => set("description")(e.target.value)} />
+            <GrowingText id="todo-desc" className="todo-desc-input" maxLength={4000} value={draft.description} onChange={set("description")} />
           </div>
 
           <div className="todo-grid">
@@ -230,8 +232,11 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
           </div>
           <div className="admin-field">
             <label htmlFor="todo-link">Link (PR, ticket, side)</label>
-            <input id="todo-link" value={draft.link} maxLength={500} placeholder="https://…" inputMode="url" autoCapitalize="none" aria-invalid={!linkOk}
-              onChange={(e) => set("link")(e.target.value)} />
+            <div className="todo-date-row">
+              <input id="todo-link" value={draft.link} maxLength={500} placeholder="https://…" inputMode="url" autoCapitalize="none" aria-invalid={!linkOk}
+                onChange={(e) => set("link")(e.target.value)} />
+              {draft.link.trim() && linkOk && <a className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" href={draft.link.trim()} target="_blank" rel="noopener noreferrer" aria-label="Åbn linket i en ny fane">Åbn</a>}
+            </div>
             {!linkOk && <div style={{ color: "var(--red)", fontSize: 12, marginTop: 4 }}>Linket skal starte med http:// eller https://</div>}
           </div>
 
@@ -256,11 +261,10 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
                 ))}
               </div>
             )}
-            <form onSubmit={submitComment} style={{ display: "flex", gap: 8 }}>
-              <input className="admin-search" style={{ maxWidth: "none", flex: 1 }} value={commentText} maxLength={2000} placeholder="Skriv en kommentar…"
-                aria-label="Ny kommentar" enterKeyHint="send"
+            <form onSubmit={submitComment} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <GrowingText id="todo-comment" className="todo-comment-input" maxLength={2000} placeholder="Skriv en kommentar…" aria-label="Ny kommentar" value={commentText}
                 onFocus={(e) => { const el = e.target; setTimeout(() => el.scrollIntoView?.({ block: "center", behavior: scrollBehavior() }), 300); }}
-                onChange={(e) => setCommentText(e.target.value)} />
+                onChange={setCommentText} />
               <button type="submit" className="admin-btn admin-btn-ghost admin-touch" disabled={sending || !commentText.trim()}>{sending ? "Sender…" : "Send"}</button>
             </form>
             <div ref={commentEnd} />

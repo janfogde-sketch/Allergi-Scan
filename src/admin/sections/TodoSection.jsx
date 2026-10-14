@@ -34,7 +34,7 @@ function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket }) {
           onClick={(e) => { e.stopPropagation(); onToggle(); }}
           aria-label={done ? `Genåbn: ${t.title}` : `Markér som færdig: ${t.title}`}>{done ? "✓" : ""}</button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className={`admin-item-title${done ? " done" : ""}`}>{t.title}</div>
+          <div className={`admin-item-title todo-card-title${done ? " done" : ""}`} title={t.title}>{t.title}</div>
           <div className="todo-meta">
             <span className={`admin-pill ${STATUS_PILL[t.status]}`}>{STATUS_LABELS[t.status]}</span>
             {!done && <span className={`admin-pill ${PRIORITY_PILL[t.priority]}`}>{PRIORITY_LABELS[t.priority]} prioritet</span>}
@@ -54,7 +54,7 @@ function TodoCard({ t, admins, today, onOpen, onToggle, onOpenTicket }) {
   );
 }
 
-export default function TodoSection({ onOpenTicket, preset, todos, admins, loading, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
+export default function TodoSection({ onOpenTicket, preset, todos, admins, loading, loadError, load, doneLoaded, doneCount, loadDone, create, update, remove, userId, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment }) {
   const isMobile = useIsMobile();
   const [view, setView] = useState("open");
   const [track, setTrack] = useState("");
@@ -80,6 +80,8 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
   const activeFilters = activeFilterCount(filters);
   const openTodo = openId ? todos.find((t) => t.id === openId) : null;
   const resetFilters = () => { setTrack(""); setAssigneeId(""); setPriority(""); setStatus(""); setDue(""); };
+  const resetAll = () => { resetFilters(); setQuery(""); }; // rører hverken fane eller sortering
+  const searchRef = useRef(null);
 
   // Genvej fra Dashboard: åbner listen med et bestemt filter
   useEffect(() => {
@@ -114,6 +116,12 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
     return () => window.removeEventListener("resize", updateChipsMore);
   }, [view, todos.length]);
 
+  // Tastaturet lukkes, når listen rulles, så det ikke dækker resultaterne
+  useEffect(() => {
+    const onScroll = () => { if (document.activeElement === searchRef.current) searchRef.current.blur(); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   useEffect(() => () => clearTimeout(undoTimer.current), []);
   useEffect(() => {
     if (!showInfo) return undefined;
@@ -146,7 +154,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
   // Tællerne på chipsene viser opgaverne i den aktive fane, før chippen (og søgning og øvrige filtre) anvendes
   const chipCount = (f) => filterTodos(todos, { view, ...f }, userId).length;
   const emptyMessage = todos.length === 0 && !viewNeedsDone(view) ? "Ingen åbne opgaver. Tryk + Ny opgave for at oprette en."
-    : (activeFilters || query.trim()) ? "Ingen opgaver matcher søgningen og filtrene." : (view === "done" ? "Ingen færdige opgaver endnu." : "Ingen åbne opgaver.");
+    : query.trim() && !activeFilters ? "Ingen opgaver matcher din søgning." : (activeFilters || query.trim()) ? "Ingen opgaver matcher søgningen og filtrene." : (view === "done" ? "Ingen færdige opgaver endnu." : "Ingen åbne opgaver.");
 
   return (
     <>
@@ -170,12 +178,13 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
         ))}
       </div>
 
-      <div className="admin-toolbar">
-        <div style={{ position: "relative", flex: "1 1 180px", minWidth: 0 }}>
-          <input className="admin-search" style={{ width: "100%", maxWidth: "none", paddingRight: query ? 44 : undefined }} value={query} placeholder="Søg i opgaver…" aria-label="Søg i opgaver" onChange={(e) => setQuery(e.target.value)} />
+      <div className="admin-toolbar todo-toolbar">
+        <div className="todo-search">
+          <span className="todo-search-icon" aria-hidden="true"><Icon name="search" size={16} color="var(--muted)" /></span>
+          <input ref={searchRef} type="search" className="admin-search" value={query} placeholder="Søg i titel og beskrivelse…" aria-label="Søg i opgaver" enterKeyHint="search"
+            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} onChange={(e) => setQuery(e.target.value)} />
           {query && (
-            <button type="button" aria-label="Ryd søgning" onClick={() => setQuery("")}
-              style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 44, background: "none", border: "none", cursor: "pointer", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button type="button" className="todo-search-clear" aria-label="Ryd søgning" onClick={() => { setQuery(""); searchRef.current?.focus(); }}>
               <Icon name="x" size={16} />
             </button>
           )}
@@ -186,7 +195,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
         <button type="button" className={`admin-btn admin-btn-sm admin-touch ${activeFilters ? "admin-btn-primary" : "admin-btn-ghost"}`} aria-expanded={showFilters} onClick={() => setShowFilters((v) => !v)}>
           Filtre{activeFilters ? ` (${activeFilters})` : ""}
         </button>
-        {activeFilters > 0 && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={resetFilters}>Nulstil</button>}
+        {(activeFilters > 0 || query.trim()) && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={resetAll}>Nulstil</button>}
       </div>
 
       <div ref={chipsRef} className={`todo-chips${chipsMore ? " more" : ""}`} role="group" aria-label="Hurtige filtre" onScroll={updateChipsMore}>
@@ -226,11 +235,16 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
 
       {loading && todos.length === 0 ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
+      ) : loadError && todos.length === 0 ? (
+        <div className="admin-table-empty" role="alert">
+          Opgaverne kunne ikke hentes. Tjek forbindelsen, og prøv igen.
+          <div style={{ marginTop: 10 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => load()}>Prøv igen</button></div>
+        </div>
       ) : visible.length === 0 ? (
         <div className="admin-table-empty">
           {emptyMessage}
           {(activeFilters > 0 || query.trim()) && todos.length > 0 && (
-            <div style={{ marginTop: 10 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => { resetFilters(); setQuery(""); }}>Nulstil søgning og filtre</button></div>
+            <div style={{ marginTop: 10 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={resetAll}>Ryd filtre</button></div>
           )}
         </div>
       ) : isMobile ? (
@@ -271,7 +285,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
                     <td><span className="admin-pill admin-pill-neutral">{TRACK_LABELS[t.track]}</span></td>
                     <td>{!done && <span className={`admin-pill ${PRIORITY_PILL[t.priority]}`}>{PRIORITY_LABELS[t.priority]}</span>}</td>
                     <td style={{ whiteSpace: "nowrap" }}>{personName(admins, t.assignee_id) || <span style={{ color: "var(--muted2)" }}>—</span>}</td>
-                    <td style={{ whiteSpace: "nowrap", color: dueI?.overdue ? "var(--red)" : undefined, fontWeight: dueI?.overdue ? 800 : undefined }}>
+                    <td style={{ whiteSpace: "nowrap", color: dueI?.overdue ? "var(--amber)" : undefined, fontWeight: dueI?.overdue ? 800 : undefined }}>
                       {dueI ? dueI.label : <span style={{ color: "var(--muted2)" }}>—</span>}
                     </td>
                     <td><span className={`admin-pill ${STATUS_PILL[t.status]}`}>{STATUS_LABELS[t.status]}</span></td>
@@ -317,7 +331,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
               <li>Tickets lægges automatisk her med ansvarlig og prioritet ud fra indholdet, og status følger med begge veje.</li>
               <li>Færdige opgaver hentes først, når du åbner Færdige.</li>
               <li>Opgaver med høj prioritet, eller hvis frist er overskredet, tæller i menuen.</li>
-              <li>Standardsorteringen lægger høj prioritet, der er overskredet eller venter, øverst, derefter overskredne frister, høj prioritet og kommende frister.</li>
+              <li>Anbefalet sortering: høj prioritet, der er overskredet eller venter, øverst, derefter overskredne frister, høj prioritet og kommende frister. Ved ens placering bruges oprettelsesdato og til sidst id, så rækkefølgen er stabil.</li>
             </ul>
           </div>
         </div>

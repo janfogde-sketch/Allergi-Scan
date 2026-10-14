@@ -16,6 +16,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
   const [todos, setTodos] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false); // sidste indlæsning mislykkedes
   // Færdige opgaver hentes først, når nogen beder om det (visningerne Færdige/Alle).
   const [doneLoaded, setDoneLoaded] = useState(false);
   const [doneCount, setDoneCount] = useState(null);
@@ -58,8 +59,10 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
       setTodos([...(Array.isArray(open) ? open : []), ...done]);
       loadedOnce.current = true;
       setLoaded(true);
+      setLoadError(false);
       loadDoneCount();
     } catch (e) {
+      setLoadError(true);
       if (!quiet) showToast("Kunne ikke hente to do-listen: " + e.message, "error");
     }
     if (!quiet) setLoading(false);
@@ -116,6 +119,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
         method: "POST", headers: { ...headers(), Prefer: "return=representation" }, body: JSON.stringify(body),
       });
       if (Array.isArray(rows) && rows[0]) setTodos((prev) => [rows[0], ...prev]);
+      loadDoneCount();
       showToast("Opgave oprettet", "success");
       return true;
     } catch (e) {
@@ -147,6 +151,7 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     setTodos((prev) => prev.filter((t) => t.id !== id));
     try {
       await apiCall(`${SUPABASE_URL}/rest/v1/admin_todos?id=eq.${id}`, { method: "DELETE", headers: minimal() });
+      loadDoneCount();
       showToast("Opgave slettet", "success");
       return true;
     } catch (e) {
@@ -196,5 +201,5 @@ export function useAdminTodos(accessToken, { active = false } = {}) {
     }
   };
 
-  return { todos, admins, loading, loaded, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
+  return { todos, admins, loading, loadError, loaded, load, doneLoaded, doneCount, loadDone, create, update, remove, comments, commentsLoading, loadComments, closeComments, addComment, deleteComment };
 }

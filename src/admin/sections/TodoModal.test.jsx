@@ -67,6 +67,24 @@ describe("TodoModal", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Ja, slet opgaven" })); });
     expect(props.onDelete).toHaveBeenCalledTimes(1);
   });
+  it("lukning med ændringer kan gemme og lukke, og sletning nævner opgaven", async () => {
+    const props = setup();
+    fireEvent.change(screen.getByLabelText("Beskrivelse"), { target: { value: "ny tekst" } });
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Gem og luk" })); });
+    expect(props.onSave).toHaveBeenCalledTimes(1);
+    cleanup();
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: /Flere handlinger/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Slet opgave" }));
+    expect(screen.getByRole("alertdialog").textContent).toMatch(/Slet “.+”\?/);
+    expect(screen.getByRole("alertdialog").textContent).toContain("permanent");
+  });
+  it("beskrivelsen er et voksende felt uden eget rullefelt, og et gyldigt link kan åbnes", () => {
+    setup({ todo: { ...todo, link: "https://x.dk/pr/1" } });
+    expect(screen.getByLabelText("Beskrivelse").className).toContain("todo-grow");
+    expect(screen.getByRole("link", { name: /Åbn linket/ }).getAttribute("href")).toBe("https://x.dk/pr/1");
+  });
   it("kun én Luk (øverst) og Gem i bunden", () => {
     setup();
     expect(screen.getAllByRole("button", { name: "Luk" })).toHaveLength(1);

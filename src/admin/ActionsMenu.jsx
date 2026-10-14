@@ -1,9 +1,10 @@
 // @ts-nocheck
 // "Flere handlinger": sekundære handlinger (eksport, opdatér) samlet i én menu, så de ikke fylder i hovedindholdet.
 import React, { useState, useRef, useEffect } from "react";
+import { Icon } from "../SharedComponents.jsx";
 
-/** items: [{ label, onClick, disabled?, hint? }] */
-export default function ActionsMenu({ items, label = "Flere handlinger" }) {
+/** items: [{ label, onClick, disabled?, hint?, icon?, danger? }]. compact: kun tre prikker (til smalle headere). */
+export default function ActionsMenu({ items, label = "Flere handlinger", compact = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -18,15 +19,15 @@ export default function ActionsMenu({ items, label = "Flere handlinger" }) {
   if (visible.length === 0) return null;
   return (
     <div ref={ref} className="admin-menu-wrap">
-      <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
-        {label} <span aria-hidden="true">▾</span>
+      <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-haspopup="menu" aria-expanded={open} aria-label={compact ? label : undefined} title={compact ? label : undefined} onClick={() => setOpen(o => !o)}>
+        {compact ? <Icon name="more" size={18} /> : <>{label} <span aria-hidden="true">▾</span></>}
       </button>
       {open && (
         <div role="menu" className="admin-menu">
           {visible.map((it) => (
-            <button key={it.label} type="button" role="menuitem" className="admin-menu-item" disabled={it.disabled}
+            <button key={it.label} type="button" role="menuitem" className="admin-menu-item" disabled={it.disabled} style={it.danger ? { color: "var(--red)" } : undefined}
               onClick={() => { setOpen(false); it.onClick(); }}>
-              {it.label}{it.hint ? <span className="admin-menu-hint">{it.hint}</span> : null}
+              {it.icon && <Icon name={it.icon} size={16} color={it.danger ? "var(--red)" : "var(--ink2)"} />}{it.label}{it.hint ? <span className="admin-menu-hint">{it.hint}</span> : null}
             </button>
           ))}
         </div>

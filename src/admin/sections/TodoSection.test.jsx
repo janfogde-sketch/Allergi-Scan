@@ -67,7 +67,30 @@ describe("To do: tællere, sortering og færdige opgaver", () => {
   it("sorteringen hedder Anbefalet og har de øvrige valg", () => {
     render(<TodoSection {...base} todos={list} />);
     const sel = screen.getByLabelText("Sortering");
-    expect([...sel.options].map((o) => o.textContent)).toEqual(["Sortér: Anbefalet", "Sortér: Højeste prioritet", "Sortér: Nærmeste frist", "Sortér: Senest opdateret", "Sortér: Ældste først"]);
+    expect([...sel.options].map((o) => o.textContent)).toEqual(["Sortér: Anbefalet", "Sortér: Nyeste først", "Sortér: Ældste først", "Sortér: Højeste prioritet", "Sortér: Nærmeste frist"]);
+  });
+  it("Nulstil vises kun med søgning eller filtre, rydder begge og rører ikke sorteringen", () => {
+    render(<TodoSection {...base} todos={list} />);
+    expect(screen.queryByRole("button", { name: "Nulstil" })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Sortering"), { target: { value: "oldest" } });
+    fireEvent.change(screen.getByLabelText("Søg i opgaver"), { target: { value: "xyz-findes-ikke" } });
+    expect(screen.getByText("Ingen opgaver matcher din søgning.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ryd filtre" }));
+    expect(screen.getByLabelText("Søg i opgaver").value).toBe("");
+    expect(screen.getByLabelText("Sortering").value).toBe("oldest");
+    expect(screen.queryByRole("button", { name: "Nulstil" })).toBeNull();
+  });
+  it("søgning kan ryddes med ét tryk, og indlæsningsfejl får en egen tilstand med Prøv igen", () => {
+    const load = vi.fn();
+    const { unmount } = render(<TodoSection {...base} todos={list} />);
+    fireEvent.change(screen.getByLabelText("Søg i opgaver"), { target: { value: "a" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ryd søgning" }));
+    expect(screen.getByLabelText("Søg i opgaver").value).toBe("");
+    unmount();
+    render(<TodoSection {...base} todos={[]} loadError load={load} />);
+    expect(screen.getByRole("alert").textContent).toContain("kunne ikke hentes");
+    fireEvent.click(screen.getByRole("button", { name: "Prøv igen" }));
+    expect(load).toHaveBeenCalled();
   });
   it("færdige opgaver er ikke gennemstreget i CSS'en", async () => {
     const { adminCss } = await import("../adminTheme.js");
