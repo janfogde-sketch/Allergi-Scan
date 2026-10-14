@@ -24,6 +24,17 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>EatSafe bruger kameraet til at scanne stregkoder og læse ingredienslister.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dk.eatsafe.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>dk.eatsafe.app</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
