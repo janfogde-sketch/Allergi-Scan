@@ -1,0 +1,21 @@
+# Engangskørsel: sletter 4 ubrugte serverfunktioner. Merges ikke til main.
+name: Engang slet funktioner
+on:
+  push:
+    branches: [claude/project-thread-fhaxdy]
+    paths: [".github/workflows/engang-slet-funktioner.yml"]
+permissions:
+  contents: read
+jobs:
+  slet:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+        with:
+          version: 2.120.0
+      - run: |
+          for fn in admin send-push nutrition-backfill nutrition-backfill-nemlig; do
+            supabase functions delete "$fn" --project-ref jegrpcflyguadyxialkm || echo "FEJL $fn"
+          done
