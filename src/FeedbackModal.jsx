@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef } from "react";
 import { PAGE_IDS } from "./constants.jsx";
 import { submitFeedback } from "./submitFeedback.js";
@@ -193,7 +194,7 @@ export default function FeedbackModal({
               <div style={UI.mb16}>
                 <label htmlFor="feedback-text" style={UI.ufs12_fw700_cink_dblock_mb6}>Beskriv problemet</label>
                 <textarea id="feedback-text" value={text} onChange={e => setText(e.target.value)} rows={5}
-                  onFocus={e => { const t = e.target; setTimeout(() => t.scrollIntoView?.({ block:"center", behavior:"smooth" }), 300); }}
+                  onFocus={e => { const t = e.target; setTimeout(() => t.scrollIntoView?.({ block:"center", behavior: scrollBehavior() }), 300); }}
                   placeholder="Beskriv hvad der skete, og hvad du forventede."
                   style={{ width:"100%", padding:"12px 14px", border:"1.5px solid var(--border2)",
                     borderRadius:12, background:"var(--surface)", fontFamily:"var(--f)",
