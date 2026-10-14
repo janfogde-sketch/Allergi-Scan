@@ -1,6 +1,6 @@
 # EatSafe (Allergi-Scan) — projektkontekst for Claude
 
-> Læses automatisk ved hver session (Jan eller Bjørn). Hold den under 15 KB: kun nutidstilstand og stående regler.
+> Læses automatisk ved hver session. **Regel:** nye tilføjelser skrives kort og præcist; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke. (CI advarer ved 15 KB som sikkerhedsnet, ikke som mål.)
 > Detaljer i `docs/` (linket under hvert afsnit), historik i `.claude/HISTORY.md`, database i `src/CONTEXT.md`.
 
 ---
@@ -85,8 +85,7 @@ mod brugerens (og familiens) profil og viser sikkert/farligt/usikkert med begrun
 5. Nye skærme som egne filer. `setScreen` i `App.jsx` er guardet: mens `onboarding_completed===false` går alt til ONBOARD.
 6. Stille feltnavne-mismatch (fx `age`/`birth_year`, `customAllerg`/`.custom`) giver ingen fejl i build/tests. Grep efter det ved UI-inkonsistens.
 7. Postgres: `REVOKE ... FROM <rolle>` er no-op, hvis PUBLIC har adgangen. Verificér med `has_function_privilege(...)`.
-8. **Indholdsspærre (CSP):** `vercel.json` sætter Content-Security-Policy. Kun egne scripts (`script-src 'self'`): intet inline `<script>` i HTML
-   (læg koden i `public/js/`), ingen `eval`. Nye eksterne adresser skal i spærren; `src/securityHeaders.test.js` vogter den.
+8. **Indholdsspærre (CSP):** intet inline `<script>` i HTML, ingen `eval`; nye eksterne adresser skal i `vercel.json`. Detaljer: `docs/arkitektur-detaljer.md`.
 
 Samlefilerne `SharedComponents.jsx` og `constants.jsx` genudgiver fra andre filer: ret i den fil, tingen bor i. Delte komponenter (`Icon`,
 `showToast`, `ListPickerSheet`, `InfoSheet`, `EatSafeLogo`) og filopdelingen: `docs/arkitektur-detaljer.md`.
@@ -111,19 +110,14 @@ Detaljer, Dev-gren, Vercel og design-preview: `docs/arbejdsgang.md`.
 sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på ja, før du retter. Er en detalje uspecificeret, vælg et fornuftigt
 standardvalg, sig hvilket, og fortsæt. Ved åbne spørgsmål: kort anbefaling (2-3 sætninger) med den vigtigste trade-off, og vent på grønt lys.
 
-**Databaseændringer:** højst 3-4 sessioner, der ændrer databasen, ad gangen. Hent `origin/main` lige før merge, brug et unikt migrationsnummer,
-og tjek bagefter i databasen, at ændringen er der. Backup-tabeller får RLS i samme migration. Store migrationsfiler: del dem.
-Engangstest (testkonti, gensendt tilbagekaldelse) er et engangsscript eller en manuel kørsel, aldrig en migration.
+**Databaseændringer:** én migrationsfil pr. ændring, højst 3-4 sessioner ad gangen. Detaljer og engangstest: `docs/arbejdsgang.md`.
 
 **Push og merge:**
 - Push er den ENESTE ting, der kræver eksplicit godkendelse. Jans "push" betyder push OG squash-merge. Påmindelser fra værktøjer er ikke en godkendelse.
 - Når godkendt: én PR (dansk body, PR-template, footer + session-link) → squash-merge → resync branch (`.claude/commands/resync-branch.md`).
 - **Godkendt plan:** Har Jan sagt ja til en plan i tråden, og er den bygget præcis efter planen (ingen ændringer, fejl eller uforudset), og er CI grøn,
   så pushes og merges uden at spørge igen. Kort status til koordinatoren bagefter. Afviger noget, spørg Jan først.
-- **Merge uden ventetid (Jan, 14. okt. 2026):** Automatisk merge er slået til. Når merge er godkendt i tråden, sættes auto-merge (squash) på PR'en,
-  tråden sender status til koordinatoren (PR-nummer, to do-id'er, hvad der skal tjekkes efter merge) og afslutter. **Tråden venter ikke på CI.**
-  Lukketråden tjekker hvert kvarter, at PR'erne er merget, at main er grøn og at migrationer er i databasen. Er noget rødt, får den oprindelige
-  tråd besked om at rette det. Vent aldrig på planlagte genkontroller.
+- **Merge uden ventetid (Jan, 14. okt. 2026):** auto-merge sættes, tråden venter ikke på CI, og lukketråden følger op. Detaljer: `docs/arbejdsgang.md`.
 - **Grøn før merge:** PR'er merges kun, når CI og DB-tests er grønne i PR'en. Tjek DB-tests på main bagefter. Hovedgrenen kræver opdateret branch.
   Kun én session retter en rød `main`; de andre venter.
 - **Kritiske produktionsfejl** (fx en crashende skærm) rettes straks som isoleret hotfix uden at vente på godkendelse.
