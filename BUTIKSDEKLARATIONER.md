@@ -6,7 +6,7 @@ Tjek mod koden før hver indsendelse. Ændres data, leverandører eller opbevari
 **Grundfakta (verificeret i koden)**
 - Ingen analytics-, tracking- eller reklame-SDK'er. Ingen reklame, ingen deling af data til reklameformål, ingen salg af data.
 - Skrifttyper hostes selv (ingen Google Fonts-kald).
-- Al data ligger i Supabase (EU). Mail sendes via Resend. Anthropic (Claude) modtager kun et emballagebillede (aflæsning) eller ingredienstekst (allergenvurdering), aldrig konto-, profil- eller helbredsdata.
+- Al data ligger i Supabase (EU). Mail sendes via Resend. Krypterede natlige sikkerhedskopier af databasen ligger 7 dage i et privat GitHub-arkiv (GitHub kan ikke læse dem). Anthropic (Claude) modtager kun et emballagebillede (aflæsning) eller ingredienstekst (allergenvurdering), aldrig konto-, profil- eller helbredsdata.
 - Kontosletning findes i appen (Indstillinger → Slet konto) og på `https://www.eatsafe.dk/slet-konto`.
 - Alt sendes krypteret (HTTPS). Privatlivspolitik: `https://www.eatsafe.dk/privacy.html`.
 - Målgruppe: forældre og voksne; børneprofiler er administreret af en voksen. Appen søges **ikke** i Kids-kategorien / Designed for Families.
