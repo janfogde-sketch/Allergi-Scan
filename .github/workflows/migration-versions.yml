@@ -1,0 +1,17 @@
+name: Migrationsnumre
+
+# Stopper en PR, hvis en ny migrationsfil har en version, der allerede er brugt paa main, bruges to gange i PR'en,
+# eller er aeldre end den nyeste paa main (Supabase springer dem over uden fejl). Rører ikke databasen.
+on:
+  pull_request:
+    paths: ["supabase/migrations/**", ".github/scripts/check-migration-versions.sh", ".github/workflows/migration-versions.yml"]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Tjek versioner mod basegrenen
+        run: .github/scripts/check-migration-versions.sh "origin/${{ github.base_ref }}"
