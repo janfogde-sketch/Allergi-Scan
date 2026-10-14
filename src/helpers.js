@@ -533,9 +533,9 @@ export function buildActiveProfileList({ user, family, allergens, customAllerg, 
     ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], levels: m.levels || {}, eNumbers: m.eNumbers || [], color: m.color })),
   ];
   const picked = all.filter(p => (activeProfiles || []).includes(p.id));
-  // Ukendte profil-id'er (fx et slettet barn) sorteres fra; er ingen tilbage, tjekkes der for brugeren selv,
-  // aldrig mod en tom liste (som ville give et falsk grønt).
-  return picked.length > 0 ? picked : all.slice(0, 1);
+  // Ukendte profil-id'er (fx et slettet barn) sorteres fra. Er ingen kendt profil tilbage, returneres en tom liste, og
+  // vurderingen bliver "Kan ikke vurderes": at falde tilbage til forælderens profil kunne ligne barnets vurdering (falsk grønt).
+  return picked;
 }
 
 // Ser ingredienslisten ud til at mangle dele af produktet? (10. okt. 2026) En kageblanding, en topping eller en delliste dækker ikke det

@@ -58,3 +58,12 @@ describe("ResultScreen uden hentet profil", () => {
     expect(screen.getAllByText(/Ingen registrerede konflikter/).length).toBeGreaterThan(0);
   });
 });
+
+describe("ResultScreen uden kendt valgt profil", () => {
+  it("viser ingen vurdering, når den valgte profil er ukendt (fx slettet barn)", () => {
+    profileCtx = { scanFamily: [], allergens: [], customAllerg: [], activeProfiles: ["slettet-barn"], profileLoadStatus: "ok", retryProfileLoad: () => {} };
+    render(<ResultScreen scanResult={scanResult} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
+    expect(screen.getByText(/Ingen profil er valgt/)).toBeTruthy();
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
+  });
+});

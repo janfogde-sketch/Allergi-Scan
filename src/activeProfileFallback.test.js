@@ -5,9 +5,9 @@ import { buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js
 describe("tomt profilvalg giver aldrig grønt", () => {
   const base = { user: { name: "Anna" }, family: [], allergens: ["noedder"], customAllerg: [], selectedENumbers: [] };
 
-  it("ukendte profil-id'er sorteres fra, og brugeren selv er reserve", () => {
-    const list = buildActiveProfileList({ ...base, activeProfiles: ["slettet-barn"] });
-    expect(list.map(p => p.id)).toEqual(["me"]);
+  it("ukendte profil-id'er sorteres fra, og ingen kendt profil giver tom liste (ikke forælderens profil)", () => {
+    expect(buildActiveProfileList({ ...base, activeProfiles: ["slettet-barn"] })).toEqual([]);
+    expect(buildActiveProfileList({ ...base, activeProfiles: ["slettet-barn", "me"] }).map(p => p.id)).toEqual(["me"]);
   });
 
   it("kendte profiler vælges som før", () => {
