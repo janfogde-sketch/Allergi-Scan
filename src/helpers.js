@@ -528,10 +528,14 @@ export function syncLinkedActiveProfiles(activeProfiles, linkedIds, knownIds) {
 
 
 export function buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles }) {
-  return [
+  const all = [
     { id:"me", name: user?.name || "Dig", allergens: allergens || [], custom: customAllerg || [], levels: user?.allergenLevels || {}, eNumbers: selectedENumbers || [], color: null },
     ...(family || []).map(m => ({ id:m.id, name:m.name, allergens: m.allergens || [], custom: m.custom || [], levels: m.levels || {}, eNumbers: m.eNumbers || [], color: m.color })),
-  ].filter(p => (activeProfiles || []).includes(p.id));
+  ];
+  const picked = all.filter(p => (activeProfiles || []).includes(p.id));
+  // Ukendte profil-id'er (fx et slettet barn) sorteres fra. Er ingen kendt profil tilbage, returneres en tom liste, og
+  // vurderingen bliver "Kan ikke vurderes": at falde tilbage til forælderens profil kunne ligne barnets vurdering (falsk grønt).
+  return picked;
 }
 
 // Ser ingredienslisten ud til at mangle dele af produktet? (10. okt. 2026) En kageblanding, en topping eller en delliste dækker ikke det
@@ -666,13 +670,16 @@ export function evaluateProductForProfiles(profiles, product) {
     ...(r.insufficient || []),
   ]))];
   const hasAnyData = !!product && ((product.allergen_flags && Object.keys(product.allergen_flags).length > 0) || ingredientsText.trim().length > 0);
-  const nothingToCheck = (profiles || []).every(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) === 0);
+  const noProfiles = (profiles || []).length === 0;
+  const nothingToCheck = !noProfiles && (profiles || []).every(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) === 0);
   let level = "safe";
   if (conflict) level = "danger";
   else if (traceReasons.length > 0) level = "warn";
-  else if (missing.length > 0 || (!hasAnyData && !nothingToCheck)) level = "unknown";
+  else if (noProfiles || missing.length > 0 || (!hasAnyData && !nothingToCheck)) level = "unknown";
   const label = level === "danger" ? conflict : STATUS_TEXT[level];
   const reasons = level === "danger" ? [...dangerReasons, ...traceReasons] : level === "warn" ? traceReasons : [];
+  // Ingen profil at vurdere imod er aldrig "sikkert": manglende oplysninger er ikke sikkerhed.
+  if (noProfiles && !missing.length) missing.push("Ingen profil valgt");
   return { level, label, reasons, missing, results };
 }
 

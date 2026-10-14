@@ -66,7 +66,7 @@ export default function ResultScreen({
   // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
   // vurdere imod, og en tom profil ville give et grønt "Ingen match med dine valg". Vis i
   // stedet, at profilen mangler, og vurdér først, når den er hentet (siden regner selv om).
-  if (profileLoadStatus === "loading" || profileLoadStatus === "error") {
+  if (profileLoadStatus !== "ok" && !scanResult.isDemo) {
     const failed = profileLoadStatus === "error";
     return (
       <div className="screen fade-in">
@@ -106,6 +106,25 @@ export default function ResultScreen({
   // computeProfileResults) er delt med ListScreen.jsx's per-vare-status —
   // se helpers.js for hvorfor.
   const resultProfilesRaw = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
+  // Ingen kendt profil valgt (fx en slettet profil stod som valgt): aldrig en vurdering, for den kunne ligne en andens (falsk grønt).
+  if (resultProfilesRaw.length === 0 && !scanResult.isDemo) {
+    return (
+      <div className="screen fade-in">
+        <div className="card" role="status" style={{ marginTop:8 }}>
+          <div style={{ fontSize:15, fontWeight:800, color:"var(--ink)", marginBottom:4 }}>
+            {productDisplayName({ name: scanResult.name, brand: scanResult.brand }) || "Produktet"}
+          </div>
+          <div style={{ display:"flex", alignItems:"flex-start", gap:10, marginTop:12 }}>
+            <span style={{ flexShrink:0, marginTop:2 }}><Icon name="info" size={18} color="var(--neutral)" /></span>
+            <div>
+              <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>{STATUS_TEXT.unknown}</div>
+              <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.5 }}>Ingen profil er valgt. Vælg, hvem der tjekkes for, under "Tjekker for" på scanneren.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const incompleteReason = ingredientsLookIncomplete({ name: scanResult.name, ingredients: scanResult.ingredients });
   const profileResults = computeProfileResults(resultProfilesRaw, {
     allergen_flags: scanResult.allergen_flags,

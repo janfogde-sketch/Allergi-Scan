@@ -45,10 +45,25 @@ describe("ResultScreen uden hentet profil", () => {
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 
+  it("viser ingen vurdering, når hentningen endnu ikke er startet (idle)", () => {
+    renderWith("idle");
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
+    expect(screen.getByText("Henter din profil …")).toBeTruthy();
+  });
+
   it("vurderer som før, når profilen er hentet", () => {
     renderWith("ok");
     expect(screen.queryByText("Din profil kunne ikke hentes")).toBeNull();
     expect(screen.queryByText("Henter din profil …")).toBeNull();
     expect(screen.getAllByText(/Ingen registrerede konflikter/).length).toBeGreaterThan(0);
+  });
+});
+
+describe("ResultScreen uden kendt valgt profil", () => {
+  it("viser ingen vurdering, når den valgte profil er ukendt (fx slettet barn)", () => {
+    profileCtx = { scanFamily: [], allergens: [], customAllerg: [], activeProfiles: ["slettet-barn"], profileLoadStatus: "ok", retryProfileLoad: () => {} };
+    render(<ResultScreen scanResult={scanResult} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
+    expect(screen.getByText(/Ingen profil er valgt/)).toBeTruthy();
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 });

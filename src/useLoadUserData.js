@@ -35,9 +35,15 @@ export function useLoadUserData({
     };
   }, [profileLoadStatus, retryProfileLoad]);
 
+  // Login fornyes cirka hver time; profilen må ikke hentes forfra af den grund (G3, 14. okt. 2026): det kunne vise "henter"
+  // midt i en redigering og overskrive ugemte valg. Effekten afhænger derfor kun af, OM der er et login, ikke af selve nøglen.
+  const tokenRef = React.useRef(accessToken);
+  tokenRef.current = accessToken;
+  const hasToken = !!accessToken;
+
   // ── Load brugerdata ved login ─────────────────────────────────────────────
   React.useEffect(() => {
-    if (!accessToken || !userId) return;
+    if (!tokenRef.current || !userId) return;
     // Skifter login midt i indlæsningen (fx en ny bruger fra
     // bekræftelsesmailen i en browser, hvor en anden konto var logget ind),
     // må den gamle kontos svar ikke overskrive den nye kontos data.
@@ -49,7 +55,7 @@ export function useLoadUserData({
         // Brugerprofil
         const profile = await apiCall(
           `${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=name,email,phone,birth_year,gender,role,onboarding_completed,onboarding_step,e_numbers,allergen_levels,created_at&limit=1`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+          { headers: { ...makeHeaders(tokenRef.current), "Accept": "application/json" } }
         );
         if (cancelled) return;
         if (Array.isArray(profile) && profile[0]) {
@@ -79,7 +85,7 @@ export function useLoadUserData({
         // Allergener
         const allergenData = await apiCall(
           `${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${userId}&select=allergen,type`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+          { headers: { ...makeHeaders(tokenRef.current), "Accept": "application/json" } }
         );
         if (cancelled) return;
         if (Array.isArray(allergenData)) {
@@ -103,7 +109,7 @@ export function useLoadUserData({
 
     loadAll();
     return () => { cancelled = true; };
-  }, [accessToken, userId, reloadKey]);
+  }, [hasToken, userId, reloadKey]);
 
   return { profileLoadStatus, retryProfileLoad };
 }

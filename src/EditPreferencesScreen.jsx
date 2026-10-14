@@ -40,9 +40,17 @@ const prefsSnapshot = ({ allergens, customAllerg, levels, eNumbers }) => JSON.st
 // skærmene er åbne — ikke kun på denne skærm.
 export default function EditPreferencesScreen({ customInput, setCustomInput }) {
   const { user, setUser, userId, accessToken } = useAuthContext();
-  const { allergens, setAllergens, customAllerg, setCustomAllerg } = useProfileContext();
+  const { allergens: savedAllergens, setAllergens, customAllerg: savedCustom, setCustomAllerg } = useProfileContext();
   const { setScreen, openLegal } = useNavigationContext();
-  const { selectedENumbers, setSelectedENumbers } = useAllergenPrefsContext();
+  const { selectedENumbers: savedENumbers, setSelectedENumbers } = useAllergenPrefsContext();
+  // Kladde (14. okt. 2026, G3): redigeringen rører aldrig appens delte profil, før Gem er lykkedes. Ellers ville en fortrudt
+  // eller fejlet ændring (fx fjernet "Nødder") stadig styre scanning, liste og historik, indtil appen genstartes (falsk grønt).
+  // Kladden følger den gemte profil, indtil brugeren selv rører ved noget (data kan nå at blive hentet efter skærmen er åbnet).
+  const [draftAllergens, setAllergensDraft] = useState(savedAllergens);
+  const [draftCustom, setCustomDraft] = useState(savedCustom);
+  const [draftENumbers, setENumbersDraft] = useState(savedENumbers);
+  const [draftLevels, setLevelsDraft] = useState(user.allergenLevels || {});
+  const allergens = draftAllergens, customAllerg = draftCustom, selectedENumbers = draftENumbers;
   const [savingProfile, setSavingProfile] = useState(false);
   // Samtykke til helbredsoplysninger (2. okt. 2026): kræves, før allergier gemmes.
   const consent = useHealthConsent();
@@ -55,8 +63,12 @@ export default function EditPreferencesScreen({ customInput, setCustomInput }) {
   // Ugemte ændringer (2. okt. 2026): "Gem ændringer" vises kun, når brugeren har ændret noget. Grundlinjen følger med, indtil brugeren
   // selv rører ved noget (data kan nå at blive indlæst efter skærmen er åbnet), og fryses derefter. Skrives der i "Skriv selv"-feltet,
   // tæller det også som en ændring, fordi teksten tilføjes ved gem.
-  const snapshot = prefsSnapshot({ allergens, customAllerg, levels: user.allergenLevels, eNumbers: selectedENumbers });
+  const snapshot = prefsSnapshot({ allergens, customAllerg, levels: draftLevels, eNumbers: selectedENumbers });
   const [touched, setTouched] = useState(false);
+  useEffect(() => {
+    if (touched) return;
+    setAllergensDraft(savedAllergens); setCustomDraft(savedCustom); setENumbersDraft(savedENumbers); setLevelsDraft(user.allergenLevels || {});
+  }, [touched, savedAllergens, savedCustom, savedENumbers, user.allergenLevels]);
   const [baseline, setBaseline] = useState(snapshot);
   useEffect(() => { if (!touched) setBaseline(snapshot); }, [snapshot, touched]);
   const touch = (fn) => (...args) => { setTouched(true); return fn(...args); };
@@ -75,14 +87,17 @@ export default function EditPreferencesScreen({ customInput, setCustomInput }) {
       // Flush en evt. ikke-tilføjet tekst i "Skriv selv"-feltet, så den ikke går tabt
       const pendingCustom = customInput.trim();
       const allCustom = pendingCustom ? addUniqueCustom(customAllerg, pendingCustom) : customAllerg;
-      if (pendingCustom) { setCustomAllerg(allCustom); setCustomInput(""); }
+      if (pendingCustom) { setCustomDraft(allCustom); setCustomInput(""); }
 
       // Én transaktion (RPC save_my_allergens, F2-2): fejler gemningen, er profilen uændret
       await saveMyAllergens({
         accessToken, userId, allergens, custom: allCustom,
         eNumbers: selectedENumbers || [],
-        allergenLevels: pruneAllergenLevels(user.allergenLevels, allergens),
+        allergenLevels: pruneAllergenLevels(draftLevels, allergens),
       });
+      // Først nu, hvor gemningen er lykkedes, gælder ændringen i resten af appen.
+      setAllergens(allergens); setCustomAllerg(allCustom); setSelectedENumbers(selectedENumbers || []);
+      setUser(u => ({ ...u, allergenLevels: pruneAllergenLevels(draftLevels, allergens) }));
       setScreen(SCREENS.PROFILE);
     } catch (e) {
       reportError(e, { source: "edit-preferences" });
@@ -101,14 +116,14 @@ export default function EditPreferencesScreen({ customInput, setCustomInput }) {
       <div className="card" style={UI.mb10}>
         <div className="card-lbl" style={UI.mb8}>Allergier / intolerancer</div>
         <AllergenChipPicker selected={allergens} onChange={touch(arr => {
-          setAllergens(arr);
+          setAllergensDraft(arr);
           // Fjernes et allergen, fjernes dets sporvalg også (ingen skjulte værdier)
-          setUser(u => ({ ...u, allergenLevels: pruneAllergenLevels(u.allergenLevels, arr) }));
+          setLevelsDraft(lv => pruneAllergenLevels(lv, arr));
         })} />
-        <AllergenSensitivity selected={allergens} levels={user.allergenLevels}
-          onChange={touch(lv => setUser(u => ({ ...u, allergenLevels: lv })))} />
+        <AllergenSensitivity selected={allergens} levels={draftLevels}
+          onChange={touch(lv => setLevelsDraft(lv))} />
 
-        <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomAllerg} customInput={customInput} setCustomInput={setCustomInput}
+        <CustomAllergenField customAllerg={customAllerg} setCustomAllerg={setCustomDraft} customInput={customInput} setCustomInput={setCustomInput}
           onChange={() => setTouched(true)} />
       </div>
 
@@ -116,7 +131,7 @@ export default function EditPreferencesScreen({ customInput, setCustomInput }) {
         <Accordion label="Overvåg specifikke E-numre" count={selectedENumbers.length}
           open={showENumre} onToggle={() => setShowENumre(s => !s)}>
           <div style={UI.mt8}>
-            <ENumberPicker selected={selectedENumbers} onChange={touch(setSelectedENumbers)} />
+            <ENumberPicker selected={selectedENumbers} onChange={touch(setENumbersDraft)} />
           </div>
         </Accordion>
       </div>

@@ -28,6 +28,7 @@
 // færdigt, hvilket gav en misvisende timeout-fejl i net._http_response
 // selvom arbejdet faktisk blev udført server-side.
 
+import { mergeFlagsUpward } from "../_shared/allergenEngine.js";
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 
 const CORS = {
@@ -133,7 +134,8 @@ Deno.serve(async (req) => {
         const { error: updateError } = await supabase
           .from("products")
           .update({
-            allergen_flags: allergenData.allergen_flags,
+            // Kun opadgående (G4): en håndrettet eller deklareret værdi må aldrig sænkes af en ny beregning.
+            allergen_flags: mergeFlagsUpward(product.allergen_flags, allergenData.allergen_flags),
             allergen_quality: quality,
             // Herkomst — se kolonnekommentaren for den fulde betydning af
             // hver værdi (forslag F fra allergen-detektions-gennemgangen,

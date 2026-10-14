@@ -105,7 +105,7 @@ describe("ingen falske grønne", () => {
 function setup({ scan, allergens, shoppingList = [], toggleItem = vi.fn(), setNewItemName = vi.fn(), setScreen = vi.fn() }) {
   return render(
     <AuthProvider value={{ user: { name: "Jan", diets: [], allergenLevels: {} }, accessToken: "t" }}>
-      <ProfileProvider value={{ scanFamily: [], allergens, customAllerg: [], activeProfiles: ["me"] }}>
+      <ProfileProvider value={{ scanFamily: [], allergens, customAllerg: [], activeProfiles: ["me"], profileLoadStatus: "ok" }}>
         <NavigationProvider value={{ setScreen }}>
           <HistoryProvider value={{ isFavorite: () => false, toggleFavorite: vi.fn() }}>
             <ShoppingProvider value={{ lists: [{ id: "l1", name: "Min liste" }], activeList: { id: "l1", name: "Min liste" }, activeListId: "l1", addToList: vi.fn(), shoppingList, toggleItem, setNewItemName }}>
