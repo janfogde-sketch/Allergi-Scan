@@ -59,7 +59,7 @@ describe("sortTodos", () => {
     ];
     expect(sortTodos(list, "priority").map((t) => t.id)).toEqual(["b", "c", "a"]);
     expect(sortTodos(list, "due").map((t) => t.id)).toEqual(["a", "c", "b"]);
-    expect(sortTodos(list, "updated").map((t) => t.id)).toEqual(["a", "c", "b"]);
+    expect(sortTodos(list.map((t, i) => ({ ...t, created_at: `2026-10-0${i + 1}T00:00:00Z` })), "newest").map((t) => t.id)).toEqual(["c", "b", "a"]);
   });
   it("ændrer ikke den oprindelige liste", () => {
     const list = [T({ id: "b", priority: "low" }), T({ id: "a", priority: "high" })];
@@ -112,14 +112,23 @@ describe("filtre og tællere", () => {
   });
 });
 
+describe("stabil sortering", () => {
+  it("opgaver med ens nøgler får samme rækkefølge hver gang (id som sidste nøgle)", () => {
+    const list = ["c", "a", "b"].map((id) => T({ id, priority: "normal" }));
+    for (const mode of ["smart", "newest", "oldest", "priority", "due"]) {
+      expect(sortTodos(list, mode).map((t) => t.id)).toEqual(["a", "b", "c"]);
+      expect(sortTodos([...list].reverse(), mode).map((t) => t.id)).toEqual(["a", "b", "c"]);
+    }
+  });
+});
+
 describe("buildTodoPrompt", () => {
   it("indeholder titel, ansvarlig, beskrivelse og kommentarer", () => {
     const admins = [{ id: "u1", name: "Jan", email: "j@x.dk" }];
     const p = buildTodoPrompt(T({ id: "abc", title: "Ryd testdata", description: "Se liste", assignee_id: "u1", due_date: "2026-11-01", link: "https://x.dk" }), admins, [{ author_id: "u1", body: "Tager den i morgen" }]);
-    expect(p).toContain("id abc");
-    expect(p).toContain("Titel: Ryd testdata");
-    expect(p).toContain("Ansvarlig: Jan");
-    expect(p).toContain("Frist: 2026-11-01");
+    expect(p).toContain("Opgave: Ryd testdata");
+    expect(p).toContain("Se liste");
+    expect(p).not.toMatch(/Ansvarlig|Frist|Prioritet|Status|id abc/); // ingen intern metadata
     expect(p).toContain("Link: https://x.dk");
     expect(p).toContain("- Jan: Tager den i morgen");
   });

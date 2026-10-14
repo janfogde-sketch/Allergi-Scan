@@ -43,7 +43,7 @@ export function dueInfo(todo, today = todayKey()) {
   return { label, overdue: isOverdue(todo, today) };
 }
 
-export const SORT_MODES = { smart: "Anbefalet", priority: "Højeste prioritet", due: "Nærmeste frist", updated: "Senest opdateret", oldest: "Ældste først" };
+export const SORT_MODES = { smart: "Anbefalet", newest: "Nyeste først", oldest: "Ældste først", priority: "Højeste prioritet", due: "Nærmeste frist" };
 
 const cmpDue = (a, b) => {
   if (a.due_date === b.due_date) return 0;
@@ -66,21 +66,25 @@ export function urgencyTier(t, today = todayKey()) {
 /**
  * Åbne opgaver først, færdige nederst (senest afsluttet først). Åbne sorteres efter mode:
  * smart ("Anbefalet", standard): urgencyTier, derefter i gang → skal laves → venter, frist og nyeste;
- * priority: prioritet, derefter frist; due: frist (uden frist sidst); updated: senest ændret først; oldest: ældst oprettet først.
+ * priority: prioritet, derefter frist; due: frist (uden frist sidst); newest: senest oprettet først; oldest: ældst oprettet først. Alle har id som sidste nøgle, så rækkefølgen er stabil.
  */
 export function sortTodos(list, mode = "smart", today = todayKey()) {
-  return [...list].sort((a, b) => {
+  return [...list].sort((a, b) => cmpModes(a, b, mode, today) || String(a.id ?? "").localeCompare(String(b.id ?? "")));
+}
+
+function cmpModes(a, b, mode, today) {
+  {
     const ad = a.status === "done", bd = b.status === "done";
     if (ad !== bd) return ad ? 1 : -1;
     if (ad && bd) return String(b.completed_at ?? "").localeCompare(String(a.completed_at ?? ""));
     if (mode === "oldest") return String(a.created_at ?? "").localeCompare(String(b.created_at ?? ""));
-    if (mode === "updated") return String(b.updated_at ?? b.created_at ?? "").localeCompare(String(a.updated_at ?? a.created_at ?? ""));
+    if (mode === "newest") return cmpCreated(a, b);
     if (mode === "due") return cmpDue(a, b) || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpCreated(a, b);
     if (mode === "priority") return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpDue(a, b) || cmpCreated(a, b);
     const tier = urgencyTier(a, today) - urgencyTier(b, today);
     if (tier) return tier;
     return STATUS_RANK[a.status] - STATUS_RANK[b.status] || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || cmpDue(a, b) || cmpCreated(a, b);
-  });
+  }
 }
 
 const isOpen = (t) => t.status !== "done";
@@ -191,21 +195,16 @@ export function betaOverview(list, admins = [], today = todayKey()) {
   };
 }
 
-/** Færdig, indsætbar prompt til en Claude Code-session. */
+/** Indsætbar prompt til en Claude Code-session: kun det, der hjælper med at løse opgaven (titel, beskrivelse, link, kommentarer), ingen intern metadata. */
 export function buildTodoPrompt(todo, admins = [], comments = []) {
-  const due = todo.due_date ? `Frist: ${todo.due_date}` : "Ingen frist";
   return [
-    `Tag dette punkt fra EatSafes fælles to do-liste (tabellen admin_todos, id ${todo.id}) op i Allergi-Scan-kodebasen.`,
-    ``,
-    `Titel: ${todo.title}`,
-    `Spor: ${TRACK_LABELS[todo.track] || todo.track} · Prioritet: ${PRIORITY_LABELS[todo.priority] || todo.priority} · Status: ${STATUS_LABELS[todo.status] || todo.status}`,
-    `Ansvarlig: ${personName(admins, todo.assignee_id) || "ingen"} · ${due}`,
-    ...(todo.link ? [`Link: ${todo.link}`] : []),
+    `Opgave: ${todo.title}`,
     ``,
     `Beskrivelse:`,
     todo.description || "(ingen)",
+    ...(todo.link ? [``, `Link: ${todo.link}`] : []),
     ...(comments.length ? [``, `Kommentarer:`, ...comments.map((c) => `- ${authorName(admins, c.author_id)}: ${c.body}`)] : []),
     ``,
-    `Læs CLAUDE.md, og løs opgaven. Er den stor eller risikabel (database, sikkerhed, politikker, flere skærme eller filer), så foreslå først en plan, og vent på min bekræftelse, før du retter. Push først efter mit ja.`,
+    `Læs CLAUDE.md, og løs opgaven i Allergi-Scan-kodebasen. Er den stor eller risikabel (database, sikkerhed, politikker, flere skærme eller filer), så foreslå først en plan, og vent på min bekræftelse, før du retter. Push først efter mit ja.`,
   ].join("\n");
 }
