@@ -18,7 +18,15 @@ Tjek mod koden før hver indsendelse. Ændres data, leverandører eller opbevari
 | Navn, e-mail | Konto, mails | Nej | Ja | Ved kontosletning |
 | Fødselsår, køn | Tilpasning af tjenesten | Nej (obligatorisk i onboarding) | Ja | Ved kontosletning |
 | Allergier, intolerancer, E-numre, spor-valg (også på børneprofiler) | Personlige resultater | Ja (kræver særskilt samtykke) | Ja | Ved tilbagetrækning af samtykke eller kontosletning |
-| Scanningshistorik, favoritter, søgevalg, indkøbslister | Funktioner i appen | Ja | Ja | Scanningshistorik 24 mdr., søgehistorik 12 mdr.; alt ved kontosletning |
+| Scanningshistorik, favoritter, søgehistorik | Funktioner i appen | Nej (ingen kontakt til at slå historik fra, og ingen sletning af enkelt scanning) | Ja | Scanningshistorik 24 mdr., søgehistorik 12 mdr.; alt ved kontosletning eller tilbagetrækning af helbredssamtykke |
+| Indkøbslister | Funktioner i appen | Ja | Ja | Ved kontosletning |
+| Beskeder i appen | Besked om ændrede allergener og andet i appen | Nej | Ja | 12 mdr. |
+| Notifikationsvalg | Notifikationer | Ja | Ja | Ved kontosletning |
+| Dagstællere for forbrug | Beskyttelse mod misbrug | Nej | Ja | 30 dage |
+| Sikkerhedsindberetninger | Sikkerhed | Nej | Ja | 12 mdr. |
+| E-mail på en inviteret voksen | Familieinvitation | Ja | Ja | Ved svar eller udløb (højst ca. 48 t) |
+| Saltet hash af IP-adresse (anonym feedback) | Beskyttelse mod misbrug | Nej | Nej (IP-adressen gemmes ikke) | Se politikken |
+| Adminlog (kun administratorer) | Sikkerhed og ansvarlighed | Nej | Ja | 12 mdr. |
 | Produktindsendelser (billeder, ingredienstekst) | Forbedre produktdata | Ja | Ja | Ved kontosletning, undtagen godkendte (indgår i produktdatabasen) |
 | Feedback (fritekst, tekniske felter) | Support | Ja | Ja (anonyme kan forekomme) | Se politikken |
 | Push-token (Web Push) | Notifikationer | Ja | Ja | Ved kontosletning |
@@ -37,12 +45,12 @@ Alle typer nedenfor er **"Data Linked to You"**, bruges **ikke** til Tracking, o
 | Contact Info | Name, Email Address | App Functionality |
 | Health & Fitness | Health (allergier og intolerancer) | App Functionality |
 | Sensitive Info | (ikke relevant; allergier angives som Health) | — |
-| User Content | Photos or Videos (indsendte produktbilleder), Customer Support (feedback), Other User Content (indkøbslister, indsendt ingredienstekst) | App Functionality |
-| Identifiers | User ID | App Functionality |
+| User Content | Photos or Videos (emballagebilleder, som brugeren selv indsender, og valgfrit skærmbillede i feedback), Customer Support (feedback og fejlmeldinger), Other User Content (indkøbslister, indsendt ingredienstekst, navne og allergier på børneprofiler, e-mail på en inviteret voksen) | App Functionality |
+| Identifiers | User ID, Device ID (push-token fra iOS-skallen) | App Functionality |
 | Usage Data | Product Interaction (scanninger, favoritter) | App Functionality |
 | Search History | Search History (søgeord og valgt produkt, 12 mdr.) | App Functionality |
-| Diagnostics | Crash Data / Other Diagnostic Data (fejllogs) | App Functionality |
-| Demographics | Alder (fødselsår) og køn: vælg "Other Data Types" | App Functionality, Analytics ikke valgt |
+| Diagnostics | Crash Data, Other Diagnostic Data (fejllogs; feedbackdiagnostik: sidens adresse uden søgeord, skærm- og vinduesstørrelse, sprog, browser, internt bruger-id og rolle; aldrig navn, e-mail eller allergier) | App Functionality |
+| Other Data | Other Data Types (fødselsår og køn) | App Functionality |
 
 Ikke indsamlet: Financial Info, Location, Contacts, Browsing History, Purchases, Audio, Advertising Data.
 
@@ -62,8 +70,10 @@ Kamera: bruges til stregkodescanning og billede af emballage; billeder forlader 
 | Personal info | Name, Email address, User IDs | Ja | Nej | Nej | App functionality, Account management |
 | Personal info | Other info (fødselsår, køn) | Ja | Nej | Nej | App functionality |
 | Health and fitness | Health info (allergier og intolerancer) | Ja | Nej | Ja | App functionality |
-| Photos and videos | Photos (indsendte produktbilleder) | Ja | Nej | Ja | App functionality |
-| App activity | App interactions (scanninger, favoritter), In-app search history, Other user-generated content (feedback, lister) | Ja | Nej | Ja | App functionality |
+| Photos and videos | Photos (emballagebilleder, som brugeren selv indsender, og skærmbillede i feedback) | Ja | Nej | Ja | App functionality |
+| App activity | App interactions (scanninger, favoritter) | Ja | Nej | Nej | App functionality |
+| App activity | In-app search history | Ja | Nej | Nej | App functionality |
+| App activity | Other user-generated content (feedback, lister, indsendt ingredienstekst) | Ja | Nej | Ja | App functionality |
 | App info and performance | Crash logs, Diagnostics | Ja | Nej | Nej | Analytics (fejlfinding), App functionality |
 | Device or other IDs | Push-token | Ja | Nej | Ja | App functionality |
 
