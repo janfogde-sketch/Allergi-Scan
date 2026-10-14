@@ -24,6 +24,7 @@ Frister står i privatlivspolitikkens afsnit 11 og i `src/CONTEXT.md` §3, og da
 - Sikkerhedsindberetninger: 12 mdr.
 - Invitationens `invitee_email` slettes ved svar eller udløb (højst ca. 48 t).
 - Backup-tabeller: se `docs/drift.md`.
+- Natlige sikkerhedskopier af databasen (krypteret, privat GitHub-arkiv): 7 dage, derefter sletter GitHub dem automatisk. Se `docs/natlig-backup.md`.
 
 Ny tabel/kolonne med personoplysninger: definér frist, sørg for sletning ved kontosletning (`delete-user` eller cascade) og automatisk oprydning, og opdatér politikken. DB-testen `supabase/tests/account_deletion.sql` (workflow `db-tests.yml`) fejler, hvis en kolonne med brugerdata ikke står på dens "dækket"-liste. Tilføj sletning/oprydning først, derefter listen.
 
