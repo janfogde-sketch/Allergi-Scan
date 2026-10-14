@@ -40,7 +40,7 @@ export default function AdminApp() {
           loginEmail, setLoginEmail, loginPassword, setLoginPassword,
           authError, authLoading, handleLogin, logout } = auth;
 
-  const admin = useAdmin(accessToken, userId, logout);
+  const admin = useAdmin(accessToken, userId);
   const [section, setSection] = useState("dashboard");
   const clientErrors = useClientErrors(accessToken);
   const auditLog = useAuditLog(accessToken);

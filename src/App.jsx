@@ -46,7 +46,7 @@ import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from
 const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
 const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen.jsx'));
 import { useOnboarding } from './useOnboarding.js';
-import { useAdmin } from './useAdmin.js';
+import { useDeleteAccount } from './useDeleteAccount.js';
 import { useScanner } from './useScanner.js';
 import { useProduct, runLookupProduct } from './useProduct.js';
 
@@ -59,7 +59,6 @@ import SafetyInfoModal from "./SafetyInfoModal.jsx";
 import BootScreen from "./BootScreen.jsx";
 import ConsentRenewalModal from "./ConsentRenewalModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
-import { useAdminTools } from "./useAdminTools.js";
 import { useIncomingLinks } from "./useIncomingLinks.js";
 import { JoinListSheet, FamilyInviteSheet, FamilyRequestSheet } from "./ListSheets.jsx";
 import { useFamilyInviteInbox } from "./useFamilyInviteInbox.js";
@@ -256,14 +255,12 @@ export default function EatSafe() {
   const [safetyEndsOnboarding, setSafetyEndsOnboarding] = useState(false);
   const [safetyBusy, setSafetyBusy] = useState(false);
 
-  // (adminTickets, openTicket, ticketsLoading, ocrImagePreview → useAdmin hook)
 
   // ── TOKEN HELPERS ──────────────────────────────────────────────────────────
 
 
 
 
-  // ── ADMIN → useAdmin hook ──
 
     // ── KAMERA + SCANNING ──────────────────────────────────────────────────────
 
@@ -278,7 +275,6 @@ export default function EatSafe() {
 
 
 
-  // ── ADMIN FUNKTIONER → useAdmin hook ──
 
 
     // loadShoppingList → useShoppingList
@@ -407,29 +403,11 @@ export default function EatSafe() {
     finally { setSafetyEndsOnboarding(false); setShowSafetyInfo(false); setSafetyBusy(false); }
   };
 
-  // Admin → useAdmin hook
+  // Slet egen konto → useDeleteAccount (admin-panelet bor i admin.html, se src/admin/)
   const {
-    submissions, setSubmissions, submissionsLoading, adminStats,
-    adminSection, setAdminSection, adminUsers, setAdminUsers, adminUsersLoading,
-    adminTicketFilter, setAdminTicketFilter, showDeleteAccount, setShowDeleteAccount,
-    deleteConfirmText, setDeleteConfirmText, deletingAccount,
-    openAdminUser, setOpenAdminUser, userSearch, setUserSearch,
-    userSearchParam, setUserSearchParam, openSubmission, setOpenSubmission,
-    submissionFilter, setSubmissionFilter, editingSubmission, setEditingSubmission,
-    cleaningOcr, cleanedOcrText, setCleanedOcrText,
-    adminTickets, openTicket, setOpenTicket, ticketsLoading,
-    ocrImagePreview, setOcrImagePreview,
-    loadSubmissions, deleteOwnAccount, loadAdminStats, loadTickets,
-    loadAdminUsers, updateUserRole, deleteUser,
-    updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI,
-    reparseLog, reparseLoading, runReparse,
-  } = useAdmin(accessToken, userId, clearAuth);
-
-  // ── Manglende EAN'er + OFF-import (admin) → useAdminTools ──
-  const {
-    missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-    importLog, importLoading, runImport,
-  } = useAdminTools(accessToken);
+    showDeleteAccount, setShowDeleteAccount, deleteConfirmText, setDeleteConfirmText,
+    deletingAccount, deleteOwnAccount,
+  } = useDeleteAccount(accessToken, userId, clearAuth);
 
   // ── Familie-invitation og delt indkøbsliste via link → useIncomingLinks ──
   const { pendingJoinList, joinPreview, joining, confirmJoin, declineJoin } = useIncomingLinks({
@@ -515,7 +493,7 @@ export default function EatSafe() {
   // (accessToken → null) — sikkerhedsnet for AL logout, ikke kun det
   // eksplicitte "Log ud"-tryk i ProfileMenu.jsx (som lukker menuen synkront
   // selv, se dens handleItemClick): dækker også session-udløb/tvungen
-  // logout (useAuth.js) og admin-401-logout (useAdmin.js), hvor menuen
+  // logout (useAuth.js) og slet konto (useDeleteAccount.js), hvor menuen
   // teoretisk kan stå åben når auth-state ændres i baggrunden. Uden dette
   // blev showProfileMenu aldrig nulstillet af selve auth-state-ændringen —
   // kun af et eksplicit onClose-kald — så hamburgermenuen kunne blive
@@ -689,13 +667,6 @@ export default function EatSafe() {
   useAndroidBack({ screen, setScreen, helpOpen, setHelpOpen, feedbackOpen, setFeedbackOpen, profilePopup, setProfilePopup, showProfileMenu, setShowProfileMenu, cameraActive, closeCameraFully });
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
-  // Load admin stats when entering admin screen
-  React.useEffect(() => {
-    if (screen === SCREENS.ADMIN && user?.role === "admin") {
-      loadAdminStats();
-    }
-  }, [screen, user?.role]);
-
   const activatePreviewMode = useArtifactPreview({ setUserId, setUser, setAllergens, productCacheRef, loadShoppingList, setFamily, setHistory, setFavorites, setScreen });
 
   const contextValues = useAppContextValues({
@@ -706,13 +677,7 @@ export default function EatSafe() {
     verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError,
     resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset, allergens, setAllergens, customAllerg,
     setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles, scanFamily, household, setHousehold,
-    householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad, adminSection, setAdminSection, adminStats, adminUsers,
-    adminUsersLoading, adminTickets, adminTicketFilter, setAdminTicketFilter, submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
-    openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission, openAdminUser, setOpenAdminUser, openTicket, setOpenTicket,
-    cleanedOcrText, cleaningOcr, loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets, updateUserRole, deleteUser,
-    updateSubmissionAndApprove, rejectSubmission, updateTicketStatus, cleanOcrWithAI, ticketsLoading, userSearch, setUserSearch, userSearchParam,
-    setUserSearchParam, missingEans, missingEansLoading, loadMissingEans, deleteMissingEan, importLog, importLoading, runImport,
-    reparseLog, reparseLoading, runReparse, screen, setScreen, openLegal, legalReturnScreen, history,
+    householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad, screen, setScreen, openLegal, legalReturnScreen, history,
     setHistory, historyLoading, historyScope, historyError, favoritesError, favorites, favoritesScope, loadHistory,
     clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite, lists, activeList, activeListId,
     setActiveListId, shoppingList, setShoppingList, shoppingListId, setShoppingListId, newItemName, setNewItemName, loadShoppingList,

@@ -33,7 +33,7 @@ export default defineConfig({
           groups: [
             { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
             // Kode som både appen og admin-panelet bruger.
-            { name: 'shared', test: /src[\\/](constants|helpers|SharedComponents|styleUtils|useAdmin|allergenKeywords)\.(js|jsx)$|_shared[\\/]/, minShareCount: 2 },
+            { name: 'shared', test: /src[\\/](constants|helpers|SharedComponents|styleUtils|allergenKeywords)\.(js|jsx)$|_shared[\\/]/, minShareCount: 2 },
           ],
         },
       },
