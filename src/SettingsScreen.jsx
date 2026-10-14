@@ -426,11 +426,11 @@ export default function SettingsScreen({
           altid kan scrolles helt fri af den faste bundnavigation. */}
       <div style={{ marginBottom:"calc(96px + env(safe-area-inset-bottom))" }}>
         <button className="btn btn-full" onClick={clearAuth}
-          style={{ background:"var(--ink)", color:"#fff", marginBottom:10 }}>
+          style={{ background:"var(--ink)", color:"var(--on-green)", marginBottom:10 }}>
           Log ud
         </button>
         <button className="btn btn-full" onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
-          style={{ background:"var(--red)", color:"#fff" }}>
+          style={{ background:"var(--red)", color:"var(--on-green)" }}>
           Slet konto
         </button>
       </div>
