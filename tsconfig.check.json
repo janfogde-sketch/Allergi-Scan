@@ -36,7 +36,6 @@
     "src/useArtifactPreview.js",
     "src/useDialogA11y.js",
     "src/usePwaInstall.js",
-    "src/useAdminTools.js",
     "src/useFamilyLinkRequests.js",
     "src/familyInviteInbox.js",
     "src/useOffline.js",
