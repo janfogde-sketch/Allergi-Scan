@@ -210,7 +210,7 @@ indholdet ét sted (`_shared/notificationContent.js`, skabelonerne), og lad push
 - **Delt kode i `supabase/functions/_shared/`:** `notificationContent.js` (definitioner,
   `renderNotification`, testet i `src/notificationContent.test.js`) og `webpush.ts` (VAPID
   med `aud` pr. push-tjeneste, aes128gcm, `sendWebPush`; testet i `src/webpush.test.js`).
-  `send-push` bruger nu den delte afsender.
+  `notify` bruger den delte afsender.
 - **Regel:** er både push og mail fravalgt for en kategori, oprettes ingen besked (udviklerpakken).
 - **App-visning:** `SCREENS.NOTIFICATIONS` (oversigt, tid, læst/ulæst) og `SCREENS.NOTIFICATION`
   (den fulde besked, tegnet af `NotificationBlocks.jsx` fra de gemte blokke). Ruten `?notification={id}`

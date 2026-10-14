@@ -15,7 +15,7 @@ kategorier — ikke bare "virke":
    læses/skrives (personoplysninger, allergidata, indkøbslister).
 2. **Kræver admin-rolle:** login-tjek OVEN I et rolle-opslag
    (`users.role === "admin"`) for handlinger kun admins må udføre — samme
-   mønster som `admin`/`delete-user`.
+   mønster som `delete-user`/`notify-test`.
 3. **Legitimt offentligt/anonymt:** `verify_jwt:false` er en bevidst,
    dokumenteret beslutning (fx `search`, `allergens`-læsning — anonym
    scanning/søgning skal virke uden login), med fornuftige grænser
@@ -44,7 +44,7 @@ mutationens `.eq()`/`.match()` til det samme id som blev autoriseret.
 funktionen (`grep -rn "<function-navn>" src supabase`) — et tjek der kun
 dækker ét legitimt kald-mønster kan utilsigtet bryde et andet (fundet i
 praksis: `auto-reparse` kaldes både fra cron OG fra AdminScreens
-"reparse nu"-knap; `send-push` sender både til sig selv OG til andre
+"reparse nu"-knap; `notify` sender både til sig selv OG til andre
 familiemedlemmer ved invitation).
 
 Se `.claude/skills/security-check/SKILL.md` for den fulde gennemgangs-
