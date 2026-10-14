@@ -113,7 +113,7 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
         </div>
         {closeLabel ? (
           <button type="button" onClick={onClose}
-            style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"#fff", cursor:"pointer" }}>
+            style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             {closeLabel}
           </button>
         ) : (

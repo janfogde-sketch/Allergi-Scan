@@ -46,7 +46,7 @@ export const DEMO_SLIDES = [
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:10 }}>
           {[["Jan","var(--green)","Laktose · Gluten"],["Anna","#2E8F53","Laktose"],["Sofie","#f59e0b","Nødder · Sesam"],["Mads","var(--green-dark)","Ingen"]].map(([n,c,a]) => (
             <div key={n} style={{ background:"var(--surface)", borderRadius:10, padding:"10px 10px", textAlign:"center", border:"1px solid var(--border)", flex:1 }}>
-              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 6px" }}>{n[0]}</div>
+              <div style={{ width:30, height:30, borderRadius:"50%", background:c, color:"var(--on-green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, margin:"0 auto 6px" }}>{n[0]}</div>
               <div style={{ fontSize:9, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>{n}</div>
               <div style={{ fontSize:8, color:"var(--muted)", lineHeight:1.3 }}>{a}</div>
             </div>
@@ -102,7 +102,7 @@ export const DEMO_SLIDES = [
         ].map(([name, done, sub]) => (
           <div key={name} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:8, marginBottom:6, background:"var(--surface)", border:"1px solid var(--border)", opacity: done ? 0.5 : 1 }}>
             <div style={{ width:18, height:18, borderRadius:4, border:`2px solid ${done?"var(--green)":"var(--border2)"}`, background: done?"var(--green)":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-              {done && <span style={{ fontSize:11, color:"#fff", fontWeight:800 }}>✓</span>}
+              {done && <span style={{ fontSize:11, color:"var(--on-green)", fontWeight:800 }}>✓</span>}
             </div>
             <div style={UI.flex1}>
               <div style={{ fontSize:12, fontWeight:700, color:"var(--ink)", textDecoration: done?"line-through":"none" }}>{name}</div>

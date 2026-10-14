@@ -90,7 +90,7 @@ export function renderScannerHome(c) {
                       </div>
                     )}
                   </div>
-                  <div style={{ position:"absolute", bottom:48, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"#fff", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
+                  <div style={{ position:"absolute", bottom:48, left:16, right:16, textAlign:"center", fontSize:13, fontWeight:600, color:"var(--on-green)", textShadow:"0 1px 3px rgba(0,0,0,.7)" }}>
                     Placér stregkoden inden for rammen
                   </div>
                   {/* Hjælpeteksten har en fast plads under instruktionen og toner
@@ -110,8 +110,8 @@ export function renderScannerHome(c) {
                       position:"absolute", top:38, left:"50%", transform:"translateX(-50%)", zIndex:2,
                       width:44, height:28, padding:0, borderRadius:999,
                       fontFamily:"var(--f)", fontSize:12, fontWeight:700, cursor:"pointer",
-                      background: scanZoom >= 2 ? "#fff" : "rgba(0,0,0,.45)",
-                      color: scanZoom >= 2 ? "var(--ink)" : "#fff",
+                      background: scanZoom >= 2 ? "var(--paper)" : "rgba(0,0,0,.45)",
+                      color: scanZoom >= 2 ? "var(--ink)" : "var(--on-green)",
                       border:"1px solid rgba(255,255,255,.3)",
                     }}>
                     {scanZoom >= 2 ? "2×" : "1×"}
@@ -312,8 +312,8 @@ export function renderScannerHome(c) {
                             proportioner mellem indhold og knap, i stedet for
                             at ikon/tekst pludselig fylder relativt mere i en
                             mindre cirkel. */}
-                        <Icon name="scanframe" size="clamp(26px, 5.7cqh, 39px)" color="#fff" />
-                        <div style={{ fontSize:"clamp(12px, 2.2cqh, 14px)", fontWeight:800, color:"#fff", letterSpacing:"-.2px" }}>Scan produkt</div>
+                        <Icon name="scanframe" size="clamp(26px, 5.7cqh, 39px)" color="var(--on-green)" />
+                        <div style={{ fontSize:"clamp(12px, 2.2cqh, 14px)", fontWeight:800, color:"var(--on-green)", letterSpacing:"-.2px" }}>Scan produkt</div>
                       </button>
                     </div>
                   )}

@@ -234,10 +234,10 @@ export function makeResultSections(c) {
             strimmel når der undtagelsesvist ingen headline er), i stedet for
             absolut positioneret hen over en højde vi gættede på. Banneret er
             gjort lidt højere, så de større knapper har plads til at sidde pænt. */}
-        <div style={{ padding:"12px 14px", background: headlineText ? verdictColor : "var(--surface2)", color: headlineText ? "#fff" : "var(--ink)" }}>
+        <div style={{ padding:"12px 14px", background: headlineText ? verdictColor : "var(--surface2)", color: headlineText ? "var(--on-green)" : "var(--ink)" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
-              {headlineText && <><Icon name={verdictIcon} size={13} color="#fff" />
+              {headlineText && <><Icon name={verdictIcon} size={13} color="var(--on-green)" />
               <h1 ref={verdictHeadingRef} tabIndex={-1} style={{ ...UI.ufs12_fw800_ls01em_ttuppercas, margin:0 }}>
                 {headlineText}<span className="sr-only">: {productDisplayName({ name: scanResult.name, brand: scanResult.brand }) || "Produktet"}</span>
               </h1></>}
@@ -259,12 +259,12 @@ export function makeResultSections(c) {
           {topNames && (
             <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:6 }}>
               {(reasonsOpen ? topNames : topNames.slice(0, MAX_REASON_CHIPS)).map((n, i) => (
-                <span key={i} style={{ fontSize:12, fontWeight:700, color:"#fff", background:"rgba(255,255,255,.22)", borderRadius:20, padding:"3px 10px" }}>{n}</span>
+                <span key={i} style={{ fontSize:12, fontWeight:700, color:"var(--on-green)", background:"rgba(255,255,255,.22)", borderRadius:20, padding:"3px 10px" }}>{n}</span>
               ))}
               {/* Ved mange konflikter vises højst tre mærker; resten ligger bag "+N flere" (alle står stadig i "Dine valg"). */}
               {topNames.length > MAX_REASON_CHIPS && (
                 <button type="button" onClick={() => setReasonsOpen(o => !o)} aria-expanded={reasonsOpen}
-                  style={{ fontSize:12, fontWeight:700, color:"#fff", background:"transparent", border:"1px solid rgba(255,255,255,.55)", borderRadius:20, padding:"2px 10px", cursor:"pointer", fontFamily:"var(--f)" }}>
+                  style={{ fontSize:12, fontWeight:700, color:"var(--on-green)", background:"transparent", border:"1px solid rgba(255,255,255,.55)", borderRadius:20, padding:"2px 10px", cursor:"pointer", fontFamily:"var(--f)" }}>
                   {reasonsOpen ? "Vis færre" : `+${topNames.length - MAX_REASON_CHIPS} flere`}
                 </button>
               )}
