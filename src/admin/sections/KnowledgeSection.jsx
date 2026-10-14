@@ -3,7 +3,7 @@ import React from "react";
 import { ALLERGENS } from "../../constants.jsx";
 import { AllergenGlyph } from "../../SharedComponents.jsx";
 
-const CATEGORIES = ["allergen", "e_number", "ingredient", "dish", "diet", "cross_reaction", "faq", "fun_fact"];
+const CATEGORIES = ["allergen", "e_number", "ingredient", "dish", "cross_reaction", "faq", "fun_fact"];
 const CATEGORY_LABELS = {
   allergen: "Allergen", e_number: "E-nummer", ingredient: "Ingrediens", dish: "Ret/produkt", diet: "Kost",
   cross_reaction: "Krydsreaktion", faq: "FAQ", fun_fact: "Sjov viden",

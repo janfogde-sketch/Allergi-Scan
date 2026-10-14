@@ -91,7 +91,7 @@ export default function EatSafe() {
   const [screen, setScreenRaw] = useState(initialScreen);
 
   // User data
-  const [user, setUser] = useState({ name:"", age:"", email:"", phone:"", password:"", role:"", onboarding_completed: undefined, onboarding_step: 1 });
+  const [user, setUser] = useState({ name:"", age:"", email:"", password:"", role:"", onboarding_completed: undefined, onboarding_step: 1 });
   const [allergens, setAllergens] = useState([]);
   const [customAllerg, setCustomAllerg] = useState([]);
 
