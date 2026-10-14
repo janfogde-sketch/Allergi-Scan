@@ -22,31 +22,30 @@ describe("kategorier", () => {
     expect(hasItem(/Tickets/)).toBe(true);
     expect(hasItem("Dashboard")).toBe(false);
   });
-  it("kategorier åbnes og lukkes individuelt, flere kan være åbne, og manuelle valg lukkes ikke af en anden", () => {
+  it("harmonika: kun én kategori ad gangen, og alle kan lukkes", () => {
     setMobile(false);
     mount({ section: "tickets" });
     fireEvent.click(groupHead("Indhold & data"));
-    fireEvent.click(groupHead("Drift"));
     expect(hasItem("Produkter")).toBe(true);
+    expect(hasItem(/Tickets/)).toBe(false); // den forrige lukkes
+    fireEvent.click(groupHead("Drift"));
     expect(hasItem("Fejl")).toBe(true);
-    expect(hasItem(/Tickets/)).toBe(true); // den første består
-    fireEvent.click(groupHead("Indhold & data"));
     expect(hasItem("Produkter")).toBe(false);
-    expect(hasItem("Fejl")).toBe(true);
+    fireEvent.click(groupHead("Drift"));
+    for (const g of ["Overblik", "Til behandling", "Indhold & data", "Brugere & kommunikation", "Drift"]) expect(groupHead(g).getAttribute("aria-expanded")).toBe("false");
   });
-  it("navigation til en ny side føjer dens kategori til uden at lukke manuelt åbne", () => {
+  it("navigation til en ny side folder dens kategori ud og lukker de øvrige", () => {
     setMobile(false);
     const { rerender } = mount({ section: "tickets" });
     fireEvent.click(groupHead("Drift"));
     rerender(<AdminLayout {...base} section="users"><div /></AdminLayout>);
     expect(groupHead("Brugere & kommunikation").getAttribute("aria-expanded")).toBe("true");
-    expect(groupHead("Drift").getAttribute("aria-expanded")).toBe("true");
-    expect(groupHead("Til behandling").getAttribute("aria-expanded")).toBe("true");
+    expect(groupHead("Drift").getAttribute("aria-expanded")).toBe("false");
+    expect(groupHead("Til behandling").getAttribute("aria-expanded")).toBe("false");
   });
   it("kun den aktive side er markeret, og kategorioverskrifter er aldrig markeret som aktive", () => {
     setMobile(false);
     mount({ section: "tickets" });
-    for (const g of ["Overblik", "Indhold & data", "Brugere & kommunikation", "Drift"]) fireEvent.click(groupHead(g));
     const current = [...document.querySelectorAll("[aria-current='page']")];
     expect(current.length).toBe(1);
     expect(current[0].textContent).toContain("Tickets");
@@ -57,11 +56,12 @@ describe("kategorier", () => {
     setMobile(false);
     const setSection = vi.fn();
     mount({ setSection });
-    for (const g of ["Overblik", "Indhold & data", "Brugere & kommunikation", "Drift"]) fireEvent.click(groupHead(g));
     const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Ukendte stregkoder": "missing", Import: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", Onboardingfrafald: "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
     for (const [label, id] of Object.entries(expected)) {
       setSection.mockClear();
-      const btn = [...document.querySelectorAll(".admin-nav-item")].find((b) => b.querySelector(".admin-nav-label").textContent === label);
+      const find = () => [...document.querySelectorAll(".admin-nav-item")].find((b) => b.querySelector(".admin-nav-label").textContent === label);
+      for (const g of ["Overblik", "Til behandling", "Indhold & data", "Brugere & kommunikation", "Drift"]) { if (find()) break; fireEvent.click(groupHead(g)); }
+      const btn = find();
       fireEvent.click(btn);
       expect(setSection).toHaveBeenCalledWith(id);
     }
@@ -77,15 +77,15 @@ describe("antalsmarkeringer i menuen", () => {
   it("vises kun ved tal over nul, med tone efter betydning, og 99+ over 99", () => {
     setMobile(false);
     mount({ section: "tickets", pendingSubmissions: 0, openTickets: 3, pendingRecalls: undefined, todoAttention: 2, todoOverdue: 0 });
-    fireEvent.click(groupHead("Overblik"));
     const tickets = within(nav()).getByRole("button", { name: /Tickets/ });
     expect(tickets.querySelector(".badge").textContent).toBe("3");
     expect(tickets.querySelector(".badge").className).toContain("neutral");
     expect(tickets.getAttribute("aria-label")).toBe("Tickets, 3 åbne");
     expect(within(nav()).getByRole("button", { name: /^Indsendelser$/ }).querySelector(".badge")).toBeNull(); // 0
     expect(within(nav()).getByRole("button", { name: /^Tilbagekald$/ }).querySelector(".badge")).toBeNull(); // ikke indlæst
+    fireEvent.click(groupHead("Overblik"));
     const todo = within(nav()).getByRole("button", { name: /Opgaver/ });
-    expect(todo.querySelector(".badge").className).toContain("warn"); // gul, ikke rød
+    expect(todo.querySelector(".badge").className).toContain("neutral"); // almindelig tæller, ikke farvet
   });
   it("rød kun når der er overskredne frister, og 99+ ved store tal", () => {
     setMobile(false);
