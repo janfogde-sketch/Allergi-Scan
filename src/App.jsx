@@ -308,7 +308,7 @@ export default function EatSafe() {
 
   const {
     lists, activeList, activeListId, setActiveListId,
-    shoppingList, setShoppingList,
+    shoppingList, setShoppingList, clearLists,
     shoppingListId, setShoppingListId,
     newItemName, setNewItemName,
     familyMembers, loadFamilyMembers,
@@ -476,7 +476,7 @@ export default function EatSafe() {
   const [notFoundEan, setNotFoundEan] = useState("");
   const {
     productCacheRef,
-    scanTokenRef,
+    scanTokenRef, scanAbortRef, cancelLookup,
     scanResult, setScanResult,
     loading, setLoading,
     scanError, setScanError,
@@ -524,7 +524,10 @@ export default function EatSafe() {
     if (!accessToken) {
       setFamily([]);
       setHistory([]);
-      setShoppingList([]);
+      clearLists();
+      setFavorites([]);
+      setSelectedENumbers([]);
+      productCacheRef.current = {};
       setShowProfileMenu(false);
     }
   }, [accessToken]);
@@ -649,13 +652,13 @@ export default function EatSafe() {
   // ufuldstændig deps-liste.
   const lookupProduct = useCallback((ean, opts) => runLookupProduct(ean, {
     accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family: scanFamily, activeProfiles,
-    productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+    productCacheRef, scanTokenRef, scanAbortRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
     vibrateOnWarning, soundOnWarning,
   }, opts), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles,
-       productCacheRef, scanTokenRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
+       productCacheRef, scanTokenRef, scanAbortRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
        setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
@@ -777,7 +780,7 @@ export default function EatSafe() {
 
         {/* Scan-loading — vist mens et scannet/søgt produkt slås op (fra
             runLookupProduct's setLoading(true) til resultatet er klart) */}
-        <ScanLoadingOverlay show={loading} />
+        <ScanLoadingOverlay show={loading} onCancel={cancelLookup} />
 
         {/* ══ BEKRÆFT E-MAIL ══ */}
         {screen === SCREENS.VERIFYEMAIL && (

@@ -47,6 +47,23 @@ beforeEach(() => {
   wsInstances = [];
 });
 
+describe("addToList uden hentede lister", () => {
+  it("giver en fejlbesked og prøver at hente listerne igen", async () => {
+    global.fetch.mockResolvedValue(jsonResponse({ success: true, lists: [] }));
+    const { result } = renderHook(() => useShoppingList({ accessToken: "t", userId: "u" }));
+    let ok;
+    await act(async () => { ok = await result.current.addToList({ name: "Cola", ean: "1" }, null); });
+    expect(ok).toBe(false);
+    expect(global.fetch).toHaveBeenCalled();
+  });
+  it("clearLists rydder alle lister", async () => {
+    const { result } = renderHook(() => useShoppingList({ accessToken: "t", userId: "u" }));
+    await seedList(result, [{ id: "i1", name: "Mælk" }]);
+    act(() => { result.current.clearLists(); });
+    expect(result.current.lists).toEqual([]);
+  });
+});
+
 describe("addToList", () => {
   it("does not create a duplicate row when the product (same EAN) is already on the list", async () => {
     const { result } = renderHook(() => useShoppingList({ accessToken: "tok", userId: "u1" }));

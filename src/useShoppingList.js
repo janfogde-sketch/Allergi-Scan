@@ -35,6 +35,9 @@ export function useShoppingList({ accessToken, userId }) {
     try { if (id) localStorage.setItem(ACTIVE_LIST_KEY, id); } catch {}
   }, []);
 
+  // Ved log ud: ryd alle lister fra hukommelsen, så næste bruger ikke ser forrige brugers varer.
+  const clearLists = () => { updateLists([]); setListsError(false); setNewItemName(""); };
+
   const activeList = useMemo(() => lists.find(l => l.id === activeListId) || null, [lists, activeListId]);
   const shoppingList = activeList?.shopping_list_items || [];
 
@@ -381,7 +384,13 @@ export function useShoppingList({ accessToken, userId }) {
     const productId = isProduct ? (nameOrProduct.id || nameOrProduct.product_id || null) : null;
     const imageUrl = isProduct ? (nameOrProduct.image_url || null) : null;
     const listId = targetListId || activeListId;
-    if (!name?.trim() || !listId) return false;
+    if (!name?.trim()) return false;
+    if (!listId) {
+      // Listerne er ikke hentet (fx dårlig forbindelse): sig det, og prøv at hente dem igen i stedet for at gøre ingenting.
+      showToast("Indkøbslisten er ikke hentet endnu. Tjek forbindelsen, og prøv igen om lidt.", "error");
+      loadShoppingList();
+      return false;
+    }
     // Produktet står allerede på listen (samme EAN/produkt-id): opret ikke en identisk række.
     if (isProduct) {
       const target = listsRef.current.find(l => l.id === listId);
@@ -428,7 +437,7 @@ export function useShoppingList({ accessToken, userId }) {
       showToast(`"${name.trim()}" ${SAVE_FAILED}`, "error");
       return false;
     }
-  }, [activeListId, accessToken, userId]);
+  }, [activeListId, accessToken, userId, loadShoppingList]);
 
   // ── Toggle ──────────────────────────────────────────────────────────────────
   const toggleItem = useCallback(async (rawId) => {
@@ -484,7 +493,8 @@ export function useShoppingList({ accessToken, userId }) {
 
   return {
     lists, activeList, activeListId, setActiveListId,
-    shoppingList, setShoppingList: () => {}, // bagudkompatibel no-op — items styres nu via lists
+    shoppingList, setShoppingList: () => {}, // bagudkompatibel no-op — items styres nu via lists; ryd via clearLists
+    clearLists,
     shoppingListId: activeListId, setShoppingListId: setActiveListId,
     newItemName, setNewItemName,
     familyMembers, loadFamilyMembers,

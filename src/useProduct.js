@@ -195,6 +195,8 @@ function fireWarningAlert(vibrateOn, soundOn) {
 
 // opts.via: "scan" (kamera/indtastet kode, standard), "search" (åbnet fra søgning, favoritter, alternativer, beskeder) eller "none"
 // (åbnet fra Historik selv: produktet står der allerede, så der oprettes ingen ny række).
+const LOOKUP_TIMEOUT_MS = 10000;
+
 export async function runLookupProduct(ean, ctx, opts = {}) {
   const via = opts.via === "search" || opts.via === "none" ? opts.via : "scan";
   const logHistory = (...a) => (via === "none" ? Promise.resolve() : ctx.saveHistoryEntry(...a, via));
@@ -280,10 +282,19 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     setLoading(false); return;
   }
   setLoading(true); setScanResult(null); setScanError(""); setShowIng(false);
+  // Tidsgrænse (ca. 10 s) og Annuller: ved svag forbindelse må opslaget ikke hænge for evigt.
+  const controller = new AbortController();
+  if (ctx.scanAbortRef) ctx.scanAbortRef.current = controller;
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, LOOKUP_TIMEOUT_MS);
   try {
-    const data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
-      headers: makeHeaders(accessToken),
-    });
+    let data;
+    try {
+      data = await apiCall(`${SUPABASE_URL}/functions/v1/products/${ean.trim()}`, {
+        headers: makeHeaders(accessToken),
+        signal: controller.signal,
+      });
+    } finally { clearTimeout(timer); }
     traceLog(tid, "scan:product-response", { found: data.found, name: data.product?.name });
     if (isStale()) return;
     if (!data.found) {
@@ -307,7 +318,7 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
       try {
         const canonicalData = await apiCall(
           `${SUPABASE_URL}/rest/v1/products?ean=eq.${product.canonical_ean}&select=allergen_flags,ingredients_text,nutrition,verified_status,source,allergen_source_method,allergen_quality&limit=1`,
-          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+          { headers: { ...makeHeaders(accessToken), "Accept": "application/json" }, signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(LOOKUP_TIMEOUT_MS) : undefined }
         );
         if (Array.isArray(canonicalData) && canonicalData[0]) {
           const c = canonicalData[0];
@@ -336,7 +347,8 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     const finalResult = withCustomAllergenMatch(result, activeCustom);
     setScanResult(finalResult);
     setHistory(h => pushLocalHistory(h, finalResult));
-    await logHistory(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles);
+    // Historikken gemmes i baggrunden, så et langsomt kald ikke holder resultatet tilbage.
+    Promise.resolve(logHistory(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles)).catch(() => {});
     // Hent alternativer hvis produktet er farligt eller har spor
     if (finalResult.status === "danger" || finalResult.status === "warn") {
       fireWarningAlert(vibrateOnWarning, soundOnWarning);
@@ -348,7 +360,17 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     if (isStale()) return;
     setScreen(SCREENS.RESULT);
     if (navigator.vibrate) navigator.vibrate(25);
-  } catch (e) { traceLog(tid, "scan:error", { error: e.message }); setScanError("Kunne ikke hente produktet. Kontrollér forbindelsen og prøv igen."); }
+  } catch (e) {
+    traceLog(tid, "scan:error", { error: e.message });
+    if (isStale()) return; // Annulleret af brugeren eller afløst af et nyere opslag
+    // Den gemte udgave bruges kun, hvis den findes; den vurderes på ny ud fra de profiler, der er valgt nu,
+    // og vises med "gemt på din telefon"-beskeden (aldrig grøn uden dækning, det afgør scoreScanResult).
+    const fallback = getFromOfflineCache(ean.trim());
+    if (fallback) { showCachedResult(fallback, fallback._cached_at || null); return; }
+    setScanError(timedOut
+      ? "Det tog for lang tid at hente produktet. Prøv igen, når du har bedre forbindelse."
+      : "Kunne ikke hente produktet. Kontrollér forbindelsen og prøv igen.");
+  }
   if (!isStale()) setLoading(false);
 }
 
@@ -359,6 +381,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
   // Scan-resultat state
   const productCacheRef = useRef({}); // Cache af seneste 50 scannede produkter
   const scanTokenRef = useRef(0); // Værn mod overlappende runLookupProduct-kald
+  const scanAbortRef = useRef(null); // Afbryder det opslag, der kører nu
   const [scanResult, setScanResult]           = useState(null);
   const [loading, setLoading]                 = useState(false);
   const [scanError_, setScanError_]           = useState("");
@@ -576,9 +599,18 @@ export function useProduct({ accessToken, userId, activeProfiles,
     setSubmitting(false);
   };
 
+  // Annuller-knappen på indlæsningen: gør det kørende opslag forældet og lukker indlæsningen.
+  const cancelLookup = () => {
+    scanTokenRef.current = (scanTokenRef.current || 0) + 1;
+    try { scanAbortRef.current?.abort(); } catch { /* intet at afbryde */ }
+    setLoading(false);
+  };
+
   return {
     productCacheRef,
     scanTokenRef,
+    scanAbortRef,
+    cancelLookup,
     scanResult, setScanResult,
     loading, setLoading,
     scanError: scanError_, setScanError: setScanError_,

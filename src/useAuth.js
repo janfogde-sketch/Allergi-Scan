@@ -187,6 +187,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     clearOfflineCache();
     writePendingVerify(""); setVerifyEmail(""); setVerifyStatus("pending");
     setAllergens([]); setCustomAllerg([]);
+    setLoginEmail(""); setLoginPassword(""); setAuthError(""); setEmailError(""); setPasswordError("");
     // App.jsx rydder family/history/shopping via useEffect på accessToken
     setScreen(SCREENS.WELCOME);
   }, [setScreen, setUser, setAllergens, setCustomAllerg]);
