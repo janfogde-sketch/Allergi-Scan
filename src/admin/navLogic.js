@@ -42,7 +42,7 @@ export const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 
 /** Hvad hver tæller betyder (bruges til skærmlæsertekst): `noun` følger tallet, `tone` er markeringens farve. */
 export const BADGE_INFO = {
-  todoAttention: { noun: "kræver opmærksomhed", tone: "warn" },       // høj prioritet eller overskredet frist (ikke Venter)
+  todoAttention: { noun: "kræver opmærksomhed", tone: "neutral" },       // høj prioritet eller overskredet frist (ikke Venter)
   pendingSubmissions: { noun: "afventende", tone: "neutral" },
   pendingRecalls: { noun: "afventer gennemgang", tone: "warn" },
   openTickets: { noun: "åbne", tone: "neutral" },
