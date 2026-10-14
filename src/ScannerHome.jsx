@@ -18,7 +18,10 @@ import ManualBarcodeSheet from "./ManualBarcodeSheet.jsx";
 
 
 import { getGreeting } from "./utils.jsx";
-import { S, ScanProfilePickerSheet, GuideSheet, CameraPrimer, CamCtrlBtn } from "./ScannerParts.jsx";
+import { S, ScanProfilePickerSheet, CameraPrimer, CamCtrlBtn } from "./ScannerParts.jsx";
+
+// App-guiden hentes først, når den åbnes (holder demoSlides ude af startpakken).
+const GuideSheet = React.lazy(() => import("./GuideSheet.jsx"));
 
 export function renderScannerHome(c) {
   const { activeProfiles, cameraActive, cameraPermissionDenied, closeManualEan, dailyTip, dismissCameraPrimer, family, galleryInputRef, handleCloseCamera, handleScanButtonClick, manualSubmitting, manualTried, openManualEan, photoFallbackRef, scanError, scanFromGallery, scanPhotoForEan, scanProfilePickerAvailable, scanReady, scanTarget, scanZoom, setActiveProfiles, setKnowledgeSlug, setScreen, setShowGuide, setShowScanProfilePicker, showCameraPrimer, showGuide, showManualEan, showPhotoHint, showScanProfilePicker, startCamera, submitManualEan, toggleTorch, toggleZoom, torchOn, user, userId, zoomSupported } = c;
@@ -26,7 +29,7 @@ export function renderScannerHome(c) {
           <div className="screen fade-in" id="main-content" style={{ display:"flex", flexDirection:"column", minHeight:"calc(100vh - 130px)", paddingBottom:0 }}>
 
             {/* Guide modal — vises ved klik på "App-guide" */}
-            {showGuide && <GuideSheet onClose={() => setShowGuide(false)} />}
+            {showGuide && <React.Suspense fallback={null}><GuideSheet onClose={() => setShowGuide(false)} /></React.Suspense>}
 
             {/* Kamera-permission-primer — vises KUN første gang, lige før
                 browserens egen kamera-tilladelses-dialog (28. sept. 2026,

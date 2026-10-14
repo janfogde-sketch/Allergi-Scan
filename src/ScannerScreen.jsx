@@ -14,15 +14,21 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
 
 
-import ResultScreen from "./ResultScreen.jsx";
 import { renderScannerHome } from "./ScannerHome.jsx";
 
 
 
 // Lazy: skærme brugeren ikke nødvendigvis besøger hver session, holdes ude af hoved-bundlet.
-// ResultScreen er IKKE med her — den vises efter stort set hvert scan (hoved-flowet),
-// så at lazy-loade den ville tilføje en indlæsnings-forsinkelse lige der hvor brugeren
-// forventer et øjeblikkeligt svar. NotFoundScreen/SubmittedScreen rammes langt sjældnere.
+// ResultScreen vises efter stort set hvert scan, så den hentes allerede i baggrunden, når appen er
+// startet og browseren har ledig tid (prefetchResult) — den er klar længe før første scan er slået op.
+const loadResultScreen = () => import("./ResultScreen.jsx");
+const ResultScreen = React.lazy(loadResultScreen);
+const prefetchResult = () => { loadResultScreen().catch(() => {}); };
+if (typeof window !== "undefined" && typeof document !== "undefined" && import.meta.env.MODE !== "test") {
+  const idle = () => (window.requestIdleCallback ? window.requestIdleCallback(prefetchResult, { timeout: 4000 }) : setTimeout(prefetchResult, 1500));
+  if (document.readyState === "complete") idle(); else window.addEventListener("load", idle, { once: true });
+}
+// NotFoundScreen/SubmittedScreen rammes langt sjældnere.
 const NotFoundScreen = React.lazy(() => import("./NotFoundScreen.jsx"));
 const SubmittedScreen = React.lazy(() => import("./SubmittedScreen.jsx"));
 const ListScreen = React.lazy(() => import("./ListScreen.jsx"));
@@ -238,6 +244,7 @@ export default function ScannerScreen({
         )}
 
         {screen === SCREENS.RESULT && scanResult && (
+          <Suspense fallback={LazyFallback}>
           <ResultScreen
             scanResult={scanResult}
             activeENumbers={activeENumbers}
@@ -251,6 +258,7 @@ export default function ScannerScreen({
             altLoading={altLoading}
             lookupProduct={lookupProduct}
           />
+          </Suspense>
         )}
 
         {screen === SCREENS.SUGGEST_EDIT && scanResult && (
