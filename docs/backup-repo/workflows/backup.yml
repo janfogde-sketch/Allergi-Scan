@@ -1,0 +1,74 @@
+# Natlig krypteret sikkerhedskopi af EatSafes database (Jan, 14. okt. 2026; docs/natlig-backup.md).
+# Skabelon: skal ligge i det PRIVATE arkiv (.github/workflows/backup.yml), aldrig i det offentlige Allergi-Scan,
+# fordi kopierne ligger som Actions-filer og ville være synlige for alle i et offentligt arkiv.
+name: Natlig sikkerhedskopi
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # 01 UTC = 03 dansk sommertid (02 vintertid)
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Tjek at arkivet er privat og opsat
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Mangler secrets SUPABASE_DB_URL og/eller BACKUP_PASSPHRASE. Intet er gemt. Se docs/natlig-backup.md i Allergi-Scan."
+            exit 1
+          fi
+          private=$(gh api "repos/$GITHUB_REPOSITORY" --jq .private)
+          if [ "$private" != "true" ]; then
+            echo "::error::Arkivet er ikke privat. Stopper, så kopier aldrig lægges offentligt."
+            exit 1
+          fi
+
+      - name: Installer PostgreSQL-klient 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Tag kopi og lås den
+        run: |
+          set -euo pipefail
+          umask 077
+          day=$(date -u +%F)
+          pg_dump "$SUPABASE_DB_URL" --format=custom --no-owner --no-privileges \
+            --schema=public --schema=auth --schema=storage --file=dump.pgdump
+          size=$(stat -c %s dump.pgdump)
+          echo "Rå kopi: $size bytes"
+          if [ "$size" -lt 1000000 ]; then
+            echo "::error::Kopien er mistænkelig lille ($size bytes). Stopper."
+            exit 1
+          fi
+          pg_restore --list dump.pgdump > /dev/null
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --symmetric \
+            --cipher-algo AES256 --passphrase-fd 0 --output "eatsafe-$day.pgdump.gpg" dump.pgdump
+          shred -u dump.pgdump
+          ls -l "eatsafe-$day.pgdump.gpg"
+          echo "DAY=$day" >> "$GITHUB_ENV"
+
+      - name: Gem kun den låste fil i 7 dage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: eatsafe-backup-${{ env.DAY }}
+          path: eatsafe-${{ env.DAY }}.pgdump.gpg
+          retention-days: 7
+          if-no-files-found: error

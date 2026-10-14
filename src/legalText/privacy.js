@@ -296,11 +296,15 @@ export default {
     ],
     [
       "p",
+      "**GitHub** (USA)\nOpbevarer vores krypterede sikkerhedskopier af databasen. GitHub kan ikke læse indholdet, fordi kun EatSafe har nøglen. Overførslen er omfattet af EU-U.S. Data Privacy Framework."
+    ],
+    [
+      "p",
       "**Anthropic**\nAnvendes til automatisk analyse af produktbilleder og ingredienstekst."
     ],
     [
       "p",
-      "**Open Food Facts**\nAnvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder kan hentes direkte fra Open Food Facts’ servere, hvorved din IP-adresse og tekniske enhedsoplysninger kan blive synlige for dem."
+      "**Open Food Facts**\nAnvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder fra Open Food Facts hentes af EatSafes server og vises fra EatSafes egen adresse, så Open Food Facts ikke modtager oplysninger om dig eller din enhed."
     ],
     [
       "p",
@@ -381,7 +385,7 @@ export default {
         "adminlog (hvilken administrator der har ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår; kun hvilke felter der er ændret, ingen helbredsoplysninger): slettes automatisk efter 12 måneder",
         "sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder",
         "logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister",
-        "sikkerhedskopier: hvis EatSafe tager sikkerhedskopier, udfases slettede oplysninger, når kopierne udløber."
+        "sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Hver kopi slettes automatisk efter 7 dage, så oplysninger, du har slettet, også er væk fra kopierne senest 7 dage efter."
       ]
     ],
     [

@@ -6,7 +6,7 @@ Tjek mod koden før hver indsendelse. Ændres data, leverandører eller opbevari
 **Grundfakta (verificeret i koden)**
 - Ingen analytics-, tracking- eller reklame-SDK'er. Ingen reklame, ingen deling af data til reklameformål, ingen salg af data.
 - Skrifttyper hostes selv (ingen Google Fonts-kald).
-- Al data ligger i Supabase (EU). Mail sendes via Resend. Anthropic (Claude) modtager kun et emballagebillede (aflæsning) eller ingredienstekst (allergenvurdering), aldrig konto-, profil- eller helbredsdata.
+- Al data ligger i Supabase (EU). Mail sendes via Resend. Krypterede natlige sikkerhedskopier af databasen ligger 7 dage i et privat GitHub-arkiv (GitHub kan ikke læse dem). Anthropic (Claude) modtager kun et emballagebillede (aflæsning) eller ingredienstekst (allergenvurdering), aldrig konto-, profil- eller helbredsdata.
 - Kontosletning findes i appen (Indstillinger → Slet konto) og på `https://www.eatsafe.dk/slet-konto`.
 - Alt sendes krypteret (HTTPS). Privatlivspolitik: `https://www.eatsafe.dk/privacy.html`.
 - Målgruppe: forældre og voksne; børneprofiler er administreret af en voksen. Appen søges **ikke** i Kids-kategorien / Designed for Families.
@@ -76,6 +76,8 @@ Kamera: bruges til stregkodescanning og billede af emballage; billeder forlader 
 | App activity | Other user-generated content (feedback, lister, indsendt ingredienstekst) | Ja | Nej | Ja | App functionality |
 | App info and performance | Crash logs, Diagnostics | Ja | Nej | Nej | Analytics (fejlfinding), App functionality |
 | Device or other IDs | Push-token | Ja | Nej | Ja | App functionality |
+
+Open Food Facts-billeder hentes af EatSafes egen server (`/api/off-image`) uden brugerens IP eller enhedsoplysninger; derfor er alle rækker ovenfor "Delt: Nej" (14. okt. 2026).
 
 Ikke indsamlet: Location, Financial info, Contacts, Calendar, Messages, Audio, Files, Web browsing, Advertising ID.
 
