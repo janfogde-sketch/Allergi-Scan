@@ -299,7 +299,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     } finally {
       startingRef.current = false;
     }
-  }, [cameraActive, setScanError, stopCamera, startDecodeLoop]);
+  }, [cameraActive, setScanError, startDecodeLoop]);
 
   // ── scanFromGallery ────────────────────────────────────────────────────────
   const scanFromGallery = useCallback(async (file) => {
