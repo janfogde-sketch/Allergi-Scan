@@ -197,7 +197,7 @@ export default function AdminApp() {
         <UsersSection
           adminUsers={admin.adminUsers} adminUsersLoading={admin.adminUsersLoading}
           userSearch={admin.userSearch} setUserSearch={admin.setUserSearch}
-          currentUserId={userId} updateUserRole={admin.updateUserRole} deleteUser={admin.deleteUser}
+          currentUserId={userId} updateUserRole={admin.updateUserRole} deleteUser={admin.deleteUser} logAdminExport={admin.logAdminExport}
           openAdminUser={admin.openAdminUser} setOpenAdminUser={admin.setOpenAdminUser}
           editingAdminUser={admin.editingAdminUser} setEditingAdminUser={admin.setEditingAdminUser}
           adminUserActionLoading={admin.adminUserActionLoading}
@@ -211,7 +211,7 @@ export default function AdminApp() {
           loadSubmissions={admin.loadSubmissions}
           openSubmission={admin.openSubmission} setOpenSubmission={admin.setOpenSubmission}
           editingSubmission={admin.editingSubmission} setEditingSubmission={admin.setEditingSubmission}
-          cleanedOcrText={admin.cleanedOcrText} cleaningOcr={admin.cleaningOcr} cleanOcrWithAI={admin.cleanOcrWithAI}
+          cleanedOcrText={admin.cleanedOcrText} setCleanedOcrText={admin.setCleanedOcrText} cleaningOcr={admin.cleaningOcr} cleanOcrWithAI={admin.cleanOcrWithAI}
           updateSubmissionAndApprove={admin.updateSubmissionAndApprove} rejectSubmission={admin.rejectSubmission}
           accessToken={accessToken}
           selectedSubmissionIds={admin.selectedSubmissionIds} toggleSubmissionSelection={admin.toggleSubmissionSelection}
@@ -226,6 +226,7 @@ export default function AdminApp() {
           adminTicketFilter={admin.adminTicketFilter} setAdminTicketFilter={admin.setAdminTicketFilter}
           ticketsIncludeDone={admin.ticketsIncludeDone} loadTickets={admin.loadTickets}
           openTicket={admin.openTicket} setOpenTicket={admin.setOpenTicket}
+          getTicketScreenshotUrl={admin.getTicketScreenshotUrl}
           updateTicketStatus={async (id, status, note) => { await admin.updateTicketStatus(id, status, note); todos.load({ quiet: true }); }}
         />
       )}

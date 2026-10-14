@@ -91,7 +91,7 @@ const NUTRITION_FIELDS = [
 export default function SubmissionsSection({
   submissions, submissionsLoading, submissionFilter, setSubmissionFilter, loadSubmissions,
   openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission,
-  cleanedOcrText, cleaningOcr, cleanOcrWithAI,
+  cleanedOcrText, setCleanedOcrText, cleaningOcr, cleanOcrWithAI,
   updateSubmissionAndApprove, rejectSubmission, accessToken,
   selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
   bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
@@ -115,6 +115,7 @@ export default function SubmissionsSection({
   const openForReview = async (s) => {
     setOpenSubmission(s);
     setSubmitterInfo(null);
+    if (setCleanedOcrText) setCleanedOcrText(null);
     if (s.type === "edit" && s.product_id) {
       try {
         const rows = await apiCall(
@@ -139,6 +140,8 @@ export default function SubmissionsSection({
         name: s.ai_parsed_data?.name || s.product_name || "",
         brand: s.ai_parsed_data?.brand || s.brand || "",
         allergen_flags: submissionAllergenFlags(s),
+        // OCR-teksten vises som den er; rens og AI-tjek kun på knappen "Renskriv med AI" (G12)
+        ingredients_text: s.ocr_raw_text || "",
         nutrition: Object.fromEntries(NUTRITION_FIELDS.map(([k]) => [k, String(s.ai_parsed_data?.nutrition?.[k] ?? "")])),
       });
     }
@@ -155,7 +158,6 @@ export default function SubmissionsSection({
       }
       setSubmitterLoading(false);
     }
-    if (s.ocr_raw_text) cleanOcrWithAI(s.ocr_raw_text);
   };
 
   const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };

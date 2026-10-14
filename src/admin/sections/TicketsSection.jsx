@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 import { ticketReporter, ticketDevice } from "../../ticketReporter.js";
 import { useIsMobile } from "../useIsMobile.js";
@@ -37,7 +37,7 @@ function buildTicketPrompt(t) {
     ...(ctx.scan_result_ean ? [`Relateret produkt: ${ctx.scan_result_name || "—"} [EAN ${ctx.scan_result_ean}]`] : []),
     ...(ctx.allergens?.length ? [`Brugerens allergener: ${ctx.allergens.join(", ")}`] : []),
     ...(ctx.debug_trace?.length ? [``, `## Seneste debug-trace (${ctx.debug_trace.length} entries)`, JSON.stringify(ctx.debug_trace.slice(-15), null, 2)] : []),
-    (t.image_path || t.image_base64) ? `\n(Der er vedhæftet et skærmbillede til denne ticket i EatSafe-admin — se ticket-id ${t.id} i Supabase feedback_tickets-tabellen hvis det er relevant for fejlsøgningen.)` : ``,
+    (t.image_path || t.image_base64) ? `\n(Der er vedhæftet et skærmbillede til denne ticket i EatSafe-admin — det kan ses i ticketen i admin-panelet (ticket-id ${t.id}), hvis det er relevant for fejlsøgningen.)` : ``,
     ``,
     `## Opgave`,
     `1. Undersøg selv koden i repoet for at finde den sandsynlige rodårsag — gæt ikke, grep/læs de relevante filer først.`,
@@ -105,13 +105,38 @@ function TicketCard({ t, onOpen, onStatus }) {
   );
 }
 
+// Skærmbillede fra feedback (G15): hentes som tidsbegrænset link fra den lukkede bucket, når ticketen åbnes. Udseende: Bjørn.
+function TicketScreenshot({ path, getUrl }) {
+  const [url, setUrl] = useState(null);
+  const [failed, setFailed] = useState(false);
+  // getUrl skabes på ny ved hver gengivelse af admin-panelet; kun et nyt billede må hente et nyt link
+  const getUrlRef = useRef(getUrl);
+  getUrlRef.current = getUrl;
+  useEffect(() => {
+    let cancelled = false;
+    setUrl(null); setFailed(false);
+    getUrlRef.current(path).then((u) => { if (!cancelled) setUrl(u); }).catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; };
+  }, [path]);
+  if (failed) return <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>Skærmbilledet kunne ikke hentes.</div>;
+  if (!url) return <div className="admin-loading-row" style={{ marginBottom: 16 }}><div className="admin-spinner" /> Henter skærmbillede…</div>;
+  return (
+    <div className="admin-field">
+      <label className="admin-label">Skærmbillede</label>
+      <a href={url} target="_blank" rel="noreferrer">
+        <img src={url} alt="Skærmbillede fra brugeren" style={{ width: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 8, background: "var(--surface2)" }} />
+      </a>
+    </div>
+  );
+}
+
 // "Aktive" (standard) er åbne + i gang. Løst og Alle henter først de færdige tickets, når de åbnes.
 const TABS = ["active", "open", "in_progress", "resolved", "all"];
 const TAB_LABEL = { active: "Aktive", all: "Alle", ...STATUS_LABELS };
 const needsDone = (tab) => tab === "resolved" || tab === "all";
 const matchesTab = (t, tab) => tab === "all" || (tab === "active" ? t.status === "open" || t.status === "in_progress" : t.status === tab);
 
-export default function TicketsSection({ adminTickets, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus }) {
+export default function TicketsSection({ adminTickets, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus, getTicketScreenshotUrl }) {
   // "Løst" kræver en kort afsluttende kommentar, som vises i beskeden til brugeren.
   const [closing, setClosing] = useState(false);
   const [note, setNote] = useState("");
@@ -200,6 +225,7 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
             <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 16 }}>
               Skærm: {openTicket.context?.screen_label || openTicket.context?.screen || "–"}
             </div>
+            {openTicket.image_path && getTicketScreenshotUrl && <TicketScreenshot path={openTicket.image_path} getUrl={getTicketScreenshotUrl} />}
             {closing && (
               <div style={{ marginBottom: 16 }}>
                 <label htmlFor="ticket-closing-note" style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", marginBottom: 6 }}>Afsluttende kommentar til brugeren (vises i beskeden)</label>

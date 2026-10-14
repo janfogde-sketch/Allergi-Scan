@@ -111,3 +111,42 @@ export function nameAllergenMismatch(s) {
 export const SUBMISSION_STATUS_LABELS = { pending: "Afventer", approved: "Godkendt", rejected: "Afvist" };
 export const SUBMISSION_ACTION_LABELS = { pending: "Gennemgå", approved: "Se detaljer", rejected: "Se detaljer" };
 export const submissionTypeLabel = (s) => (s && s.type === "edit" ? "Rettelse" : "Nyt produkt");
+
+// Linjer fra en næringstabel: et næringsord efterfulgt af tal og enhed ("Fedt 12 g", "Energi 1500 kJ / 360 kcal"),
+// en linje med kun tal og enheder, eller overskriften "Næringsindhold pr. 100 g". Alt andet er mulige ingredienser
+// og bevares (G12): "Salt, selleri" eller "Opbevaring: kan indeholde spor af nødder" må aldrig forsvinde.
+const NUTRITION_WORD = /^(energi|energy|fedt|heraf|mættede|protein|salt|kulhydrat|kulhydrater|sukkerarter|kostfibre|fibre)\b/i;
+const NUMBER_WITH_UNIT = /\d+(?:[.,]\d+)?\s*(?:g|mg|kj|kcal)\b/i;
+const ONLY_NUMBERS = /^(?:\s*[<>~]?\s*\d+(?:[.,]\d+)?\s*(?:g|mg|kj|kcal|%)?\s*[/|;,]?\s*)+$/i;
+const NUTRITION_HEADER = /^(?:gennemsnitligt\s+)?(næringsindhold|næringsdeklaration|næringsværdi(?:er)?)\b[^,]*$/i;
+
+/** Er linjen en del af en næringstabel (og ikke en ingrediensliste)? */
+export function isNutritionLine(line) {
+  const l = String(line || "").trim();
+  if (!l) return false;
+  if (NUTRITION_HEADER.test(l)) return true;
+  if (ONLY_NUMBERS.test(l)) return true;
+  return NUTRITION_WORD.test(l) && NUMBER_WITH_UNIT.test(l);
+}
+
+/** OCR-tekst renset for næringstabellens linjer; ingredienslinjer samles med komma. Tom tekst giver tom streng. */
+export function cleanIngredientText(text) {
+  const lines = String(text || "").split(/\n/).map((l) => l.trim()).filter(Boolean);
+  return lines.filter((l) => !isNutritionLine(l)).join(", ").replace(/,\s*,/g, ",").replace(/^[,\s]+|[,\s]+$/g, "");
+}
+
+/**
+ * Kan indsendelsen godkendes i en massegodkendelse uden gennemsyn (G16)? Et nyt produkt skal have stregkode, navn og
+ * ingrediensliste; en rettelse skal pege på et produkt. Returnerer det, der mangler (tom liste = komplet).
+ */
+export function submissionMissingFields(s) {
+  const missing = [];
+  if (!s || !String(s.ean || "").trim()) missing.push("stregkode");
+  if (s && s.type === "edit") {
+    if (!s.product_id) missing.push("produkt");
+    return missing;
+  }
+  if (!String((s && s.ai_parsed_data && s.ai_parsed_data.name) || "").trim()) missing.push("navn");
+  if (!String((s && s.ocr_raw_text) || "").trim()) missing.push("ingrediensliste");
+  return missing;
+}

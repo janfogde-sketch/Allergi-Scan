@@ -268,8 +268,22 @@ Deno.serve(async (req) => {
         );
       }
 
+      if (status !== "approved" && status !== "rejected") {
+        return new Response(
+          JSON.stringify({ error: "status skal være approved eller rejected" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const { data: submission, error: fetchError } = await supabase.from("submissions").select("*").eq("id", identifier).single();
       if (fetchError || !submission) return new Response(JSON.stringify({ error: "Indsendelse ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      // Kun ventende indsendelser kan behandles (G11): et dobbeltklik eller en gammel fane må ikke godkende igen eller sende beskeden to gange.
+      const alreadyHandled = () => new Response(
+        JSON.stringify({ error: "Indsendelsen er allerede behandlet", code: "already_handled" }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+      if (submission.status !== "pending") return alreadyHandled();
 
       // Tjekkes FØR status ændres: ellers står forslaget som godkendt, selv om intet blev rettet.
       if (status === "approved" && submission.type === "edit" && !submission.product_id) {
@@ -279,24 +293,34 @@ Deno.serve(async (req) => {
         );
       }
 
-      await supabase.from("submissions").update({
-        status,
-        reviewed_by,
-        review_note: review_note ?? null,
-        reviewed_at: new Date(),
-      }).eq("id", identifier);
+      // Status skiftes først, når produktet er oprettet/rettet (G11), og kun fra "pending" (vagt mod to samtidige kald).
+      // Skiftet udløser beskeden til indsenderen (databasetrigger), så den kommer kun, når produktet findes.
+      // Adminloggen skrives her, fordi databasetriggeren ikke kan se adminen bag et kald med service-nøglen.
+      async function markHandled(productId: string | null) {
+        const { data: rows, error: statusError } = await supabase.from("submissions").update({
+          status,
+          reviewed_by,
+          review_note: review_note ?? null,
+          reviewed_at: new Date(),
+          ...(productId ? { product_id: productId } : {}),
+        }).eq("id", identifier).eq("status", "pending").select("id");
+        if (statusError) throw new Error(statusError.message);
+        if (!rows || rows.length === 0) return false;
+        const { error: auditError } = await supabase.from("admin_audit_log").insert({
+          admin_id: reviewed_by,
+          action: status === "approved" ? "indsendelse_godkendt" : "indsendelse_afvist",
+          target_table: "submissions",
+          target_id: identifier,
+          details: { ean: submission.ean, type: submission.type, ...(productId ? { product_id: productId } : {}) },
+        });
+        if (auditError) console.error(`submissions: adminlog fejlede: ${auditError.message}`);
+        return true;
+      }
 
       if (status === "approved" && submission.type === "edit") {
         // Et rettelsesforslag OPDATERER et eksisterende produkt i stedet for
         // at oprette et nyt — og kun de felter admin faktisk har udfyldt,
         // så vi ikke ved et uheld overskriver navn/brand med tomme værdier.
-        if (!submission.product_id) {
-          return new Response(
-            JSON.stringify({ error: "Rettelsesforslaget mangler product_id" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
         const updateFields: Record<string, unknown> = {};
         if (body.name?.trim()) updateFields.name = body.name.trim();
         if (body.brand?.trim()) updateFields.brand = body.brand.trim();
@@ -329,6 +353,8 @@ Deno.serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
+
+        if (!(await markHandled(null))) return alreadyHandled();
 
         await supabase.from("revision_log").insert({
           product_id:    product.id,
@@ -379,11 +405,18 @@ Deno.serve(async (req) => {
           .single();
 
         if (productError) {
+          // Typisk: stregkoden er imens kommet ind via import. Indsendelsen forbliver ventende, så admin kan afvise den med en forklaring.
+          const duplicate = (productError as { code?: string }).code === "23505";
           return new Response(
-            JSON.stringify({ error: productError.message }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({
+              error: duplicate ? "Produktet findes allerede (stregkoden er kommet ind på anden vis). Indsendelsen er ikke godkendt." : productError.message,
+              code: duplicate ? "product_exists" : undefined,
+            }),
+            { status: duplicate ? 409 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
+
+        if (!(await markHandled(product.id))) return alreadyHandled();
 
         await supabase.from("revision_log").insert({
           product_id:    product.id,
@@ -401,6 +434,7 @@ Deno.serve(async (req) => {
         );
       }
 
+      if (!(await markHandled(null))) return alreadyHandled();
       return new Response(
         JSON.stringify({ success: true, message: `Indsendelse ${status}` }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
