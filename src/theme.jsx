@@ -1081,7 +1081,7 @@ button.filter-chip{width:auto;}
 .state-page-text{font-size:14px;line-height:1.5;color:var(--ink2);margin-bottom:24px;max-width:300px;}
 .state-page-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;}
 .info-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--blue);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.save-bar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:99;padding:10px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border);box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);animation:saveBarIn .18s ease-out;}
+.save-bar{position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:99;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -8px 16px -12px rgba(21,32,26,.14);animation:saveBarIn .18s ease-out;}
 @keyframes saveBarIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @media (prefers-reduced-motion: reduce){.save-bar{animation:none;}}
 .trace-seg{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px;}
