@@ -15,14 +15,7 @@ export function useAppContextValues(v) {
     resetDone, setResetError, submitNewPassword, continueAfterReset, allergens, setAllergens,
     customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles,
     scanFamily, household, setHousehold, householdLoading, loadHousehold, profileLoadStatus,
-    retryProfileLoad, adminSection, setAdminSection, adminStats, adminUsers, adminUsersLoading,
-    adminTickets, adminTicketFilter, setAdminTicketFilter, submissions, submissionsLoading, submissionFilter,
-    setSubmissionFilter, openSubmission, setOpenSubmission, editingSubmission, setEditingSubmission, openAdminUser,
-    setOpenAdminUser, openTicket, setOpenTicket, cleanedOcrText, cleaningOcr, loadAdminUsers,
-    loadAdminStats, loadSubmissions, loadTickets, updateUserRole, deleteUser, updateSubmissionAndApprove,
-    rejectSubmission, updateTicketStatus, cleanOcrWithAI, ticketsLoading, userSearch, setUserSearch,
-    userSearchParam, setUserSearchParam, missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-    importLog, importLoading, runImport, reparseLog, reparseLoading, runReparse,
+    retryProfileLoad,
     screen, setScreen, openLegal, legalReturnScreen, history, setHistory,
     historyLoading, historyScope, historyError, favoritesError, favorites, favoritesScope,
     loadHistory, clearHistory, loadFavorites, toggleFavorite, setFavoriteCategory, isFavorite,
@@ -62,37 +55,6 @@ export function useAppContextValues(v) {
     scanFamily, household, setHousehold, householdLoading, loadHousehold,
     profileLoadStatus, retryProfileLoad,
   }), [allergens, customAllerg, family, activeProfiles, scanFamily, household, householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad]);
-
-  const adminContextValue = useMemo(() => ({
-    adminSection, setAdminSection, adminStats,
-    adminUsers, adminUsersLoading,
-    adminTickets, adminTicketFilter, setAdminTicketFilter,
-    submissions, submissionsLoading, submissionFilter, setSubmissionFilter,
-    openSubmission, setOpenSubmission,
-    editingSubmission, setEditingSubmission,
-    openAdminUser, setOpenAdminUser,
-    openTicket, setOpenTicket,
-    cleanedOcrText, cleaningOcr,
-    loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets,
-    updateUserRole, deleteUser,
-    updateSubmissionAndApprove, rejectSubmission,
-    updateTicketStatus, cleanOcrWithAI,
-    ticketsLoading,
-    userSearch, setUserSearch, userSearchParam, setUserSearchParam,
-    missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-    importLog, importLoading, runImport,
-    reparseLog, reparseLoading, runReparse,
-  }), [
-    adminSection, adminStats, adminUsers, adminUsersLoading,
-    adminTickets, adminTicketFilter, submissions, submissionsLoading, submissionFilter,
-    openSubmission, editingSubmission, openAdminUser, openTicket,
-    cleanedOcrText, cleaningOcr,
-    loadAdminUsers, loadAdminStats, loadSubmissions, loadTickets,
-    updateUserRole, deleteUser, updateSubmissionAndApprove, rejectSubmission,
-    updateTicketStatus, cleanOcrWithAI, ticketsLoading,
-    userSearch, userSearchParam, missingEans, missingEansLoading, loadMissingEans, deleteMissingEan,
-    importLog, importLoading, runImport, reparseLog, reparseLoading, runReparse,
-  ]);
 
   const navigationContextValue = useMemo(() => ({ screen, setScreen, openLegal, legalReturnScreen }), [screen, openLegal, legalReturnScreen]);
 
@@ -140,5 +102,5 @@ export function useAppContextValues(v) {
     activeSubtypeModal, setActiveSubtypeModal,
   }), [eSearch, eCategory, allergenSubtypes, selectedENumbers, activeSubtypeModal]);
 
-  return { authContextValue, profileContextValue, adminContextValue, navigationContextValue, historyContextValue, shoppingContextValue, familyFormContextValue, allergenPrefsContextValue };
+  return { authContextValue, profileContextValue, navigationContextValue, historyContextValue, shoppingContextValue, familyFormContextValue, allergenPrefsContextValue };
 }
