@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { useState, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, compareAllergens, normalizeProductFlagsFor, looksNonDanishIngredients } from "./helpers.js";

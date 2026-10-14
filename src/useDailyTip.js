@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // "Vidste du, at …"-kortet på scanner-forsiden (4. okt. 2026, Bjørn).
 // Henter de godkendte tips fra Allergileksikonet (knowledge_base.tips, offentlig læsning med anon-nøglen
 // som KnowledgeScreen) én gang pr. app-session og vælger dagens tip ud fra de allergener, der tjekkes for.

@@ -1,3 +1,4 @@
+// @ts-check
 import React from "react";
 import { SCREENS } from "./constants.jsx";
 import { AUTH_FLOW_SCREENS } from "./appScreens.js";

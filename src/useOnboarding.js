@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useOnboarding.js
 // Onboarding-flow state og gem-funktioner.

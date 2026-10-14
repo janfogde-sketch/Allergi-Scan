@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useOffline.js
 // Offline-detektion og persistent produkt-cache til EatSafe.

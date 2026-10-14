@@ -1,3 +1,4 @@
+// @ts-check
 // src/usePush.js
 // Håndterer push-notifikation tilladelse, service worker og token-opbevaring
 
@@ -111,7 +112,7 @@ export function usePush() {
   // Registrér SW og abonnér på push
   async function subscribe(accessToken) {
     if (!supported) return { ok: false, reason: "Ikke understøttet" };
-    if (VAPID_PUBLIC_KEY === "DIN_VAPID_PUBLIC_KEY_HER") {
+    if (/** @type {string} */ (VAPID_PUBLIC_KEY) === "DIN_VAPID_PUBLIC_KEY_HER") {
       console.warn("[usePush] VAPID_PUBLIC_KEY er ikke sat — se usePush.js");
       return { ok: false, reason: "VAPID ikke konfigureret" };
     }

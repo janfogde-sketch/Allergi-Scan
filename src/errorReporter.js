@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // errorReporter.js — sender fejl til EatSafes egen fejltabel
 // (public.client_errors via RPC'en log_client_error, se
@@ -93,7 +93,7 @@ async function post(body, token) {
 
 /**
  * Rapportér en fejl. Returnerer true hvis den blev sendt.
- * @param {unknown} error  Error-objekt eller tekst
+ * @param {any} error  Error-objekt eller tekst
  * @param {{ screen?: string, source?: string, context?: object }} [meta]
  */
 export async function reportError(error, meta = {}) {

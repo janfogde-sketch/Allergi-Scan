@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Afsenderens side af et delt invitationslink (3. okt. 2026): når en person har brugt linket og sagt ja, skal afsenderen selv godkende, før
 // de bliver forbundet (helbredsoplysninger deles). Hentes, når appen åbnes/kommer i forgrunden og med et let interval, mens den er åben.
 import { useState, useEffect, useCallback } from "react";

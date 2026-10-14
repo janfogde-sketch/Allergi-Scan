@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useHousehold.js (1. okt. 2026)
 // Husstandens rigtige EatSafe-konti (edge-funktionen family/group). Hentes her

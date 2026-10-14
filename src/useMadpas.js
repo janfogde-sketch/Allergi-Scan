@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 import { useState } from "react";
 import { MADPAS_LANGUAGES } from "./constants.jsx";
 

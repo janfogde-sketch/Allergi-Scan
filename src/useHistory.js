@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useHistory.js
 // Håndterer scanningshistorik og favoritter.

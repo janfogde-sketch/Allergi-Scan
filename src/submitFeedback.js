@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Sender feedback via edge-functionen "feedback" (arkitektur-audit A4,
 // 30. sept. 2026) i stedet for direkte INSERT i feedback_tickets. Bruges af
 // både FeedbackModal (appen) og admin/FeedbackButton.

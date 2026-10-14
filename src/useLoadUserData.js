@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter brugerens profil, allergener, familie, indkøbsliste og favoritter
 // ved login. Flyttet uændret fra App.jsx 30. sept. 2026 (arkitektur-audit A8).
 import React from "react";

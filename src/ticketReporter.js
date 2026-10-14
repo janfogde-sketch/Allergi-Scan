@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Hvem og hvad en ticket kommer fra, til admin. Nye tickets indeholder hverken navn eller e-mail (dataminimering); de kobles til en
 // konto via `submitted_by` (sat af serveren) og det interne bruger-ID i konteksten. Ældre tickets har stadig navn/e-mail og vises som før.
 export function ticketReporter(t) {

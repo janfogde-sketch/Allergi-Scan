@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useNotificationPrefs.js
 // Styrer brugerens per-kategori/per-kanal notifikationsindstillinger

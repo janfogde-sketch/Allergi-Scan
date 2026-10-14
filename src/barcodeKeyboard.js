@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // iOS åbner kun tastaturet, når et felt får fokus i selve trykket. Kaldes i "Indtast kode"-trykket: et usynligt felt får fokus
 // med det samme, og arket flytter fokus videre til sit eget felt, så tastaturet bliver oppe.
 export function primeBarcodeKeyboard() {

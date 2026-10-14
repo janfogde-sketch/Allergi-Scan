@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Familie-invitationer (3. okt. 2026). To veje ind til samme sheet, begge kræver et aktivt ja fra modtageren:
 //  1) e-mail-match: kontoens bekræftede e-mail er den, afsenderen skrev (virker uden token, i enhver browser og ved enhver loginmetode med e-mail);
 //  2) linket i mailen: tokenet gemmes i localStorage (`as_pending_invite`, sat af useIncomingLinks) og følger brugeren gennem oprettelse/login,

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // styleUtils.js
 // Delte style-objekter for de mest gentagne inline style={{...}}-mønstre på

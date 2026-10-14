@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // usePwaInstall.js — Fanger browserens "beforeinstallprompt" (Android/Chrome m.fl.)
 // så vi selv kan vise en knap der udløser den native installations-dialog med ét
 // tryk. Uden dette venter browseren typisk bare stille et sted i sit menu — den
@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from "react";
 export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(
-    () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true
+    () => window.matchMedia("(display-mode: standalone)").matches || /** @type {any} */ (window.navigator).standalone === true
   );
 
   useEffect(() => {

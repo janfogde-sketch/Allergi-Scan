@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Beskeder i appen (trin 2 af notifikations-redesignet, 30. sept. 2026):
 // liste + ulæst-tæller, og ruten ?notification={id}, som push-beskeder åbner.
 // Ruten bevares gennem login (localStorage) og ryddes først, når beskeden er
