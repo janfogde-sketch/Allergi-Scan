@@ -1,3 +1,4 @@
+// @ts-check
 // Ren logik til admin-fanen "Tilbagekald" (tilbagekaldelser fra Fødevarestyrelsen, P6).
 // Holdt adskilt fra React, så den kan testes.
 

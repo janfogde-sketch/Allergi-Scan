@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // useAdminAuth.js — login/session for det separate desktop-admin-panel.
 // Deler session med den mobile PWA (cookie + mærke, se sessionStore.js) — samme

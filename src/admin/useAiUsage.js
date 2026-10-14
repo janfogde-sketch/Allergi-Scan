@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter forbruget på Claude Haiku (public.ai_usage_daily; kun admins kan læse tabellen, RLS). De sidste 400 dage.
 import { useState } from "react";
 import { SUPABASE_URL } from "../constants.jsx";

@@ -1,3 +1,4 @@
+// @ts-check
 // Pris og opsummering for Claude Haiku-forbruget (tabellen ai_usage_daily).
 // Haiku 4.5: 1 dollar pr. million input-tokens og 5 dollar pr. million output-tokens (Anthropics prisliste, 7. okt. 2026).
 // Skifter prisen eller kursen, rettes de to konstanter her.

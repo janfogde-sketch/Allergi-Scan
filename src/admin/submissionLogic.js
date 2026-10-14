@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Ren logik til Indsendelser: hvor allergenoplysningerne ligger, og hvordan de må omtales. Manglende data er aldrig "Ingen".
 import { PRODUCT_ALLERGENS } from "../constants.jsx";
 

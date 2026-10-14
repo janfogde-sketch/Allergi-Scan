@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Admin → Notifikationer: henter admin-brugere og rettede push-tekster, gemmer ændringer
 // og sender testbeskeder via edge-funktionen notify-test.
 import { useState, useEffect, useCallback } from "react";
