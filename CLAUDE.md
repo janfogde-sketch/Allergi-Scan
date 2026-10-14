@@ -31,7 +31,7 @@
   `helpers.js`). Ændres kravene i Supabase, ret `helpers.js` tilsvarende.
 - **Notifikationer** er live (push og mail slået til via `app_flags`; beskeder i appen påvirkes ikke af flagene). Detaljer, test-
   plan og rollback i `src/CONTEXT.md` §9 og `docs/notifikationer-testplan.md`.
-- **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle; responsivt (kort på mobil, tabel på desktop; `useIsMobile`, `statusTone.js`). Adminrettigheder håndhæves i databasen (RLS med `is_admin`) og i edge-funktionerne, `admin.html` er kun en klientport. Ny følsom admin-handling: tilføj en audit-trigger (`admin_audit_log`, 12 mdr.). Admin-udseendet er frosset til efter beta (kun fejl rettes). Alle detaljer (To do, Dashboard, Indsendelser, aktivitetslog): `docs/produktbeslutninger.md` og `docs/admin-statusser.md`; reference i `src/CONTEXT.md` §2 og §10.
+- **Admin-panel:** `eatsafe.dk/admin.html`, eget Vite-entry (`src/admin/`), rører ikke den mobile PWA's bundle; responsivt (kort på mobil, tabel på desktop; `useIsMobile`, `statusTone.js`). Adminrettigheder håndhæves i databasen (RLS med `is_admin`) og i edge-funktionerne, `admin.html` er kun en klientport. Ny følsom admin-handling: tilføj en audit-trigger (`admin_audit_log`, 12 mdr.). Admin-udseendet er frosset til efter beta (kun fejl rettes). Alle detaljer (Opgaver [tidl. To do], Dashboard, Indsendelser, aktivitetslog, menu): `docs/produktbeslutninger.md` og `docs/admin-statusser.md`; reference i `src/CONTEXT.md` §2 og §10.
 ---
 
 ## 0b. Politikker og opbevaring (stående regler, Jan 2. okt. 2026)
