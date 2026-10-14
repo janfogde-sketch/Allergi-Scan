@@ -5,7 +5,7 @@
 // `category` er valgfri af hensyn til bagudkompatibilitet, men bør sendes
 // af enhver ny/ændret kalder — matcher en af notification_preferences'
 // tilladte kategorier ('submission_status', 'missing_product_found',
-// 'family', 'feedback', 'weekly_digest'). Uden den sendes push'en altid,
+// 'family', 'feedback' m.fl.). Uden den sendes push'en altid,
 // uanset brugerens indstillinger.
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
@@ -28,7 +28,7 @@ const VAPID_SUBJECT     = Deno.env.get("VAPID_SUBJECT") ?? "mailto:hej@eatsafe.d
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
-  // Kategori 4: kun interne kald (service-role-nøglen), fx weekly-digest.
+  // Kategori 4: kun interne kald (service-role-nøglen).
   // Almindelige brugere og admins kan IKKE sende push herfra: en indlogget
   // bruger kunne ellers sende selvvalgt tekst/link til et familiemedlem
   // (phishing). Appen bruger ikke længere denne vej; al push fra appens

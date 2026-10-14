@@ -51,14 +51,14 @@ describe("useNotificationPrefs", () => {
 
   it("overstyrer default med eksplicitte rækker fra serveren", async () => {
     global.fetch.mockResolvedValue(jsonResponse([
-      { category: "weekly_digest", channel: "push", enabled: false },
+      { category: "feedback", channel: "push", enabled: false },
     ]));
     const { result } = renderHook(() => useNotificationPrefs({ accessToken: "t", userId: "u1" }));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(result.current.prefs["weekly_digest:push"]).toBe(false);
-    expect(result.current.prefs["weekly_digest:email"]).toBe(true);
+    expect(result.current.prefs["feedback:push"]).toBe(false);
+    expect(result.current.prefs["feedback:email"]).toBe(true);
     expect(result.current.prefs["family:push"]).toBe(true);
   });
 
