@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // Henter samlede tal for frafald i onboarding (RPC admin_onboarding_funnel; kun admins, ingen data pr. bruger).
 import { useState } from "react";
 import { SUPABASE_URL } from "../constants.jsx";

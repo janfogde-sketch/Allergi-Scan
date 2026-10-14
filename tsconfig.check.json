@@ -54,7 +54,24 @@
     "src/useHistory.js",
     "src/usePush.js",
     "src/useAlternatives.js",
-    "src/styleUtils.js"
+    "src/styleUtils.js",
+    "src/admin/onboardingFunnelLogic.js",
+    "src/admin/useOnboardingFunnel.js",
+    "src/admin/useAuditLog.js",
+    "src/admin/useAiUsage.js",
+    "src/admin/csvExport.js",
+    "src/admin/useClientErrors.js",
+    "src/legalText/inline.js",
+    "src/admin/recallLogic.js",
+    "src/admin/aiUsageLogic.js",
+    "src/admin/useAdminRecalls.js",
+    "src/admin/notificationAdminLogic.js",
+    "src/admin/useAdminNotifications.js",
+    "src/useMadpas.js",
+    "src/admin/submissionLogic.js",
+    "src/admin/useAdminAuth.js",
+    "src/admin/useAdminTodos.js",
+    "src/admin/todoLogic.js"
   ],
   "exclude": [
     "node_modules"
