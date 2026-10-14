@@ -40,3 +40,9 @@ describe("iPhone-ramme: Apples push", () => {
     expect(cfg.plugins.PushNotifications.presentationOptions).toEqual(["badge", "sound", "alert"]);
   });
 });
+
+describe("iPhone-ramme: Fortsæt med Apple", () => {
+  it("bruger samme bundle-id som appen", () => {
+    expect(read("./nativeApple.js")).toContain(`BUNDLE_ID = "${cfg.appId}"`);
+  });
+});

@@ -14,6 +14,7 @@ import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, 
 import { reportError } from "./errorReporter.js";
 import { clearOfflineCache } from "./useOffline.js";
 import { isNativeApp, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_RETURN } from "./nativeShell.js";
+import { nativeAppleAvailable, appleNativeAuthorize, exchangeAppleToken, sessionTarget } from "./nativeApple.js";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
 // PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
@@ -699,6 +700,17 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const handleOAuth = useCallback(async (provider) => {
     setAuthLoading(true); setAuthError("");
     try {
+      // Apple i iPhone-rammen: Apples egen dialog i appen (trin 6). Uden pluginet går Apple som de andre, via systembrowseren.
+      if (provider === "apple" && nativeAppleAvailable()) {
+        const a = await appleNativeAuthorize();
+        if (a.ok) {
+          const ex = await exchangeAppleToken(SUPABASE_URL, SUPABASE_ANON_KEY, a.idToken, a.nonce);
+          if (ex.ok) { window.location.replace(sessionTarget(ex.access, ex.refresh)); return; }
+          throw new Error(`apple-token: ${"reason" in ex ? ex.reason : ""}`);
+        }
+        if ("cancelled" in a && a.cancelled) { setAuthLoading(false); return; }
+        throw new Error(`apple-native: ${"reason" in a ? a.reason : ""}`);
+      }
       // I iPhone-rammen åbner login i telefonens egen browser og vender tilbage til appen via NATIVE_AUTH_RETURN.
       const native = isNativeApp();
       const params = new URLSearchParams({
