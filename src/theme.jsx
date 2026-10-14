@@ -314,8 +314,6 @@ body::-webkit-scrollbar{display:none;}
    linjehøjde (den tidligere marginTop:2-hack kompenserede specifikt for
    billedlogoets egen indre luft, og er ikke længere nødvendig). */
 .topbar-beta{background:var(--amber);color:var(--on-amber);font-size:9px;font-weight:800;padding:3px 8px;border-radius:100px;letter-spacing:.5px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0;}
-.topbar-avatar{width:32px;height:32px;background:var(--green-lt);border:1.5px solid var(--green-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
-.topbar-avatar:hover{background:var(--green-mid);}
 
 /* ── JURIDISKE UNDERSIDER (Brugsvilkår/Privatlivspolitik, 29. sept. 2026) ──
    Selvstændig header, samme højde-/padding-formel som .topbar ovenfor (så
@@ -557,10 +555,6 @@ body::-webkit-scrollbar{display:none;}
 .field-no-spinner::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .field-no-spinner{-moz-appearance:textfield;}
 .field-lbl{font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:6px;display:block;letter-spacing:.1px;}
-.phone-field{display:flex;align-items:stretch;padding:0;overflow:hidden;}
-.phone-field:focus-within{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 3px var(--green-lt);}
-.phone-prefix{flex:0 0 auto;display:flex;align-items:center;padding:12px 10px 12px 14px;color:var(--ink2);font-weight:700;font-size:16px;font-family:var(--f);user-select:none;border-right:1.5px solid var(--border2);background:var(--surface3);}
-.phone-rest{flex:1;min-width:0;border:none;outline:none;background:transparent;padding:12px 14px 12px 10px;font-size:16px;font-family:var(--f);color:var(--ink);}
 /* Alder-steppens minus/plus-knapper (FormFields.jsx) — tydelig tryk-
    feedback (27. sept. 2026, "FINAL 10/10 POLISH – ONBOARDING TRIN 1"),
    samme lette scale-mønster som andre trykbare elementer i appen (fx
@@ -698,7 +692,6 @@ body::-webkit-scrollbar{display:none;}
    (+8px, som ønsket) — se .welcome-logo-wrap .brand-slogan-kommentaren
    ovenfor for hele redistribueringens baggrund. */
 .welcome-tagline{font-size:16.5px;color:var(--ink);margin-top:24px;letter-spacing:.1px;font-weight:500;line-height:1.6;max-width:324px;}
-.welcome-divider{width:40px;height:2px;background:var(--border2);border-radius:2px;margin:32px auto;}
 /* 3 fordele-række (25. sept. 2026-brief) — kort, ikon-båret opsummering,
    IKKE tunge fuld-bredde feature-kort (erstatter tidligere .welcome-features/
    .welcome-feat, som aldrig blev taget i brug). Bevidst let/luftig, ingen
@@ -866,39 +859,11 @@ body::-webkit-scrollbar{display:none;}
    opfølgning: "gør 1/5 lidt tydeligere"). */
 .step-num{font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap;}
 .step-title{font-size:17px;font-weight:700;margin-bottom:6px;color:var(--ink);letter-spacing:-.3px;}
-.step-sub{font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.55;}
-.onboard-skip{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
 
 
 /* Scan card */
-.scan-card{
-  width:100%;background:var(--surface);border:1px solid var(--border2);
-  border-radius:22px;padding:26px 20px 22px;margin-bottom:12px;cursor:pointer;
-  position:relative;overflow:hidden;display:flex;flex-direction:column;
-  align-items:center;gap:16px;
-}
-.scan-card::before{content:'';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:180px;height:80px;background:radial-gradient(ellipse,rgba(61,204,110,.22) 0%,transparent 70%);pointer-events:none;}
-.scan-card::after{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(61,204,110,.28),transparent);}
-.scan-card-text{text-align:center;}
-.scan-card-title{font-size:17px;font-weight:600;color:var(--ink);letter-spacing:-.4px;margin-bottom:4px;}
-.scan-card-sub{font-size:11px;color:var(--muted);font-weight:400;line-height:1.5;}
 
 /* Reticle */
-.reticle{width:80px;height:80px;position:relative;flex-shrink:0;}
-.scan-barcode-wrap{
-  width:85%;height:64px;position:relative;flex-shrink:0;margin:0 auto;
-}
-.scan-barcode-svg{
-  position:absolute;left:10px;right:10px;top:50%;transform:translateY(-50%);
-  height:38px;width:calc(100% - 20px);
-}
-.reticle-corner{position:absolute;width:18px;height:18px;border-color:var(--green-logo);border-style:solid;opacity:1;}
-.reticle-corner.tl{top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0;}
-.reticle-corner.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0;}
-.reticle-corner.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px;}
-.reticle-corner.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0;}
-.reticle-line{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,var(--green-logo) 15%,var(--green-logo) 85%,transparent 100%);animation:scanline 2.2s ease-in-out infinite;}
-@keyframes scanline{0%{top:13px;opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{top:51px;opacity:0;}}
 
 /* scanCtaBreathe: et let åndedræt (skala 1 → 1.015) på hele scan-CTA-
    wrapperen — stammer fra en mellemliggende hvid ghost/outline-udgave af
@@ -910,51 +875,22 @@ body::-webkit-scrollbar{display:none;}
 @keyframes scanCtaBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
 
 /* Mini cards */
-.home-cards-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
-.home-mini-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px 14px;cursor:pointer;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;transition:border-color .15s;}
-.home-mini-card::after{content:'';position:absolute;top:0;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);}
-.home-mini-card:hover{border-color:var(--border2);}
-.home-mini-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--green-lt);}
-.home-mini-label{font-size:12px;font-weight:600;color:var(--ink);letter-spacing:-.2px;margin-bottom:2px;}
-.home-mini-sub{font-size:10px;color:var(--muted);font-weight:400;}
-.home-mini-badge{width:18px;height:18px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--on-green);flex-shrink:0;}
 
 /* Section label */
 .section-lbl{font-size:9.5px;font-weight:600;color:var(--neutral);text-transform:uppercase;letter-spacing:1.8px;margin-bottom:10px;}
 
 /* Recent list */
 .recent-list{background:var(--surface3);border:1px solid var(--border);border-radius:18px;padding:2px 14px;margin-bottom:20px;}
-.recent-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
-.recent-item:last-child{border-bottom:none;}
-.recent-thumb{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
-.recent-name{font-size:13px;font-weight:500;color:var(--ink);letter-spacing:-.2px;margin-bottom:2px;}
-.recent-meta{font-size:10px;color:var(--muted);font-weight:400;}
-.recent-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto;}
-.recent-dot.safe{background:var(--green-accent);box-shadow:0 0 7px rgba(52,208,106,.6);}
-.recent-dot.warn{background:var(--amber);}
-.recent-dot.danger{background:var(--red);box-shadow:0 0 7px rgba(255,82,82,.5);}
-.recent-dot.not_found{background:var(--muted);}
 
 
 /* Profile chips (home) */
-.home-profile-chips{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
-.home-chip{display:flex;align-items:center;gap:6px;padding:6px 12px 6px 6px;background:var(--surface);border:1px solid var(--border);border-radius:100px;font-size:11px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;min-height:30px;}
-.home-chip.active{background:var(--green-selected-bg);border-color:var(--green);color:var(--green);}
-.home-chip-avatar{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700;color:var(--ink);flex-shrink:0;}
 
 /* Version */
-.version-str{font-family:var(--mono);font-size:9px;color:var(--neutral);text-align:center;padding:4px 0 16px;letter-spacing:.5px;opacity:.5;}
 
 /* Stat grid (legacy) */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;}
 .stat-num{font-size:26px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-.5px;}
-.stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.2px;}
-.scan-hero{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:20px 18px;margin-bottom:10px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
-.scan-hero:hover{background:var(--surface2);}
-.scan-hero-icon{width:52px;height:52px;background:var(--green-lt);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.scan-hero-title{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.3px;}
-.scan-hero-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:400;}
 
 /* ── SEARCH ── */
 /* Klump 6b (6. okt. 2026): rækker og chips er nu <button>; nulstil browserens knap-stil, så de ser ud som før. */
@@ -975,12 +911,6 @@ button.filter-chip{width:auto;}
 .filter-chip{padding:9px 14px;min-height:40px;border-radius:100px;border:1.5px solid var(--border2);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);}
 .filter-chip:hover{border-color:var(--border2);color:var(--ink);}
 .filter-chip.active{border-color:var(--green);background:var(--green-selected-bg);color:var(--green);}
-.product-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
-.product-card:hover{border-color:var(--border2);}
-.product-emoji{width:44px;height:44px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--border);}
-.product-name{font-size:13.5px;font-weight:700;letter-spacing:-.1px;color:var(--ink);}
-.product-brand{font-size:11.5px;color:var(--muted);margin-top:2px;}
-.verified-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;margin-top:4px;letter-spacing:.2px;}
 
 /* ── LIST ──
    Alle fem klasser herunder bruges KUN af ListScreen.jsx (29. sept. 2026,
@@ -1013,16 +943,6 @@ button.filter-chip{width:auto;}
 .list-section{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 8px;}
 
 /* ── PROFILE ── */
-.profile-hero{background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:20px 18px;margin:16px 0 12px;display:flex;align-items:center;gap:14px;}
-.pa-lg{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--on-green);background:var(--green);flex-shrink:0;}
-.profile-hero-name{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.4px;}
-.profile-hero-sub{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:400;}
-.profile-edit-btn{margin-left:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;font-family:var(--f);transition:all .15s;}
-.profile-edit-btn:hover{background:var(--surface2);border-color:var(--green);}
-.stat3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;}
-.stat3-item{background:var(--surface);border-radius:10px;padding:12px 8px;border:1px solid var(--border);}
-.stat3-num{font-size:20px;font-weight:700;letter-spacing:-.3px;color:var(--ink);}
-.stat3-lbl{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:3px;letter-spacing:.2px;}
 
 /* ── FAMILY ── */
 /* F3-9 (Bjørn, 8. okt. 2026): liste-, familie- og historikrækker har let skygge (--sh) som appens andre kort. */
@@ -1050,8 +970,6 @@ button.filter-chip{width:auto;}
 .menu-profile-card{cursor:pointer;transition:transform .15s;font-family:var(--f);text-align:left;width:calc(100% - 20px);appearance:none;}
 .menu-profile-card:active{transform:scale(.99);}
 @media (hover:hover){.menu-profile-card:hover{opacity:.85;}}
-.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.hist-dot.safe{background:var(--green-accent);}.hist-dot.danger{background:var(--red);}.hist-dot.warn,.hist-dot.warning{background:var(--amber);}.hist-dot.not_found{background:var(--muted);}
 .hist-info{flex:1;min-width:0;}
 .hist-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px;color:var(--ink);}
 .hist-time{font-size:11px;color:var(--muted);margin-top:1px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1061,7 +979,6 @@ button.filter-chip{width:auto;}
 .spinner{width:32px;height:32px;border:2.5px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-txt{font-size:13.5px;font-weight:700;color:var(--ink);letter-spacing:-.1px;}
-.loader-sub{font-size:11.5px;color:var(--muted);}
 .error-box{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--red);font-weight:600;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;}
 /* Fejltilstande (Bjørn, 6. okt. 2026): ét fælles system. Rød kun ved egentlig fejl,
    offline/gemte data er neutral information, og genopretning bruger EatSafe-grøn.
@@ -1106,16 +1023,11 @@ button.filter-chip{width:auto;}
 .enum-detail{font-size:11px;line-height:1.4;color:var(--muted);margin-top:2px;padding-bottom:6px;}
 .enum-info{width:40px;height:36px;display:flex;align-items:center;justify-content:center;background:none;border:none;padding:0;cursor:pointer;}
 .enum-check:focus-visible,.enum-info:focus-visible,.consent-link:focus-visible{outline:2px solid var(--green);outline-offset:1px;}
-.warn-box{background:var(--amber-lt);border:1px solid var(--amber-md);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.share-bar{display:flex;gap:8px;padding:12px 14px;background:var(--blue-lt);border-radius:10px;margin-bottom:10px;align-items:center;border:1px solid var(--blue-md);}
-.share-txt{flex:1;font-size:12.5px;color:var(--blue);font-weight:600;}
 .empty-state{text-align:center;padding:56px 24px;color:var(--muted);animation:fadeUp .25s ease both;}
 .empty-icon{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;background:linear-gradient(150deg,var(--surface2),var(--surface3));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:var(--sh);animation:emptyFloat 3s ease-in-out infinite;}
 @keyframes emptyFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 .empty-txt{font-size:15.5px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
 .empty-sub{font-size:13px;margin-top:6px;color:var(--muted);font-weight:400;line-height:1.55;max-width:260px;margin-left:auto;margin-right:auto;}
-.demo-code{padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;transition:all .15s;display:inline-block;margin:3px;font-family:monospace;}
-.demo-code:hover{border-color:var(--green);color:var(--green);background:var(--green-lt);}
 .screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
 #qr-reader{width:100%!important;border:none!important;min-height:200px;}
@@ -1142,7 +1054,6 @@ button.filter-chip{width:auto;}
 .product-hero-name{font-size:19px;font-weight:700;color:var(--ink);letter-spacing:-.4px;line-height:1.2;margin-bottom:3px;}
 .product-hero-brand{font-size:13px;color:var(--muted);font-weight:400;margin-bottom:10px;}
 .product-hero-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.product-hero-source{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;letterSpacing:.3px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeUp .18s ease both;}
 @keyframes acc-open{from{grid-template-rows:0fr;opacity:0;}to{grid-template-rows:1fr;opacity:1;}}
@@ -1188,7 +1099,6 @@ button.filter-chip{width:auto;}
 .scan-sweep-line{height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--green) 18%,var(--green) 82%,transparent);box-shadow:0 0 6px var(--green-mid);}
 @keyframes scan-sweep{from{transform:translateY(6%);}to{transform:translateY(94%);}}
 @media (prefers-reduced-motion: reduce){.scan-sweep{animation:none;transform:translateY(50%);}}
-@keyframes laserMove{0%{top:0;}50%{top:calc(100% - 2px);}100%{top:0;}}
 .scroll-top-btn{
   position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9990;
   width:44px;height:44px;border-radius:50%;
@@ -1254,21 +1164,6 @@ button.filter-chip{width:auto;}
 .knowledge-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom));}
 .kb-card{transition:transform .15s;}
 .kb-card:active{transform:scale(.99);}
-.ingredient-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
-.ingredient-row:last-child{border-bottom:none;}
-.ingredient-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px;}
-.step-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .2s;}
-.step-row:last-child{border-bottom:none;}
-.step-circle{width:32px;height:32px;border-radius:50%;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-.servings-ctrl{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 12px;}
-.servings-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;font-family:var(--f);}
-.servings-btn:hover{border-color:var(--green);color:var(--green);}
-.servings-num{font-size:15px;font-weight:700;color:var(--ink);min-width:22px;text-align:center;}
-.skeleton-img{width:100%;height:140px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;}
-.skeleton-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite;margin-bottom:8px;}
-@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
-.youtube-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#FF0000;border:none;border-radius:10px;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:700;color:var(--ink);width:100%;justify-content:center;transition:background .15s;margin-bottom:10px;}
-.youtube-btn:hover{background:#CC0000;}
 
 /* ── DESIGNSPROG FRA HJEM, RULLET UD TIL HELE APPEN ──
    Tryk-feedback på trykbare kort/rækker/chips — samme mønster som
@@ -1284,33 +1179,22 @@ button.filter-chip{width:auto;}
    forsøgt tryk. */
 /* F3-12 (8. okt. 2026): button.tag og .legal-topbar-back med i listen; hover-fade kun på enheder med mus
    (@media (hover:hover)), så et tryk på telefonen ikke efterlader rækken halvgennemsigtig. */
-.home-mini-card:active,.scan-hero:active,.hist-row:active,.step-row:active,
-.mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.home-chip:active,
-.filter-chip:active,.ap-chip:active,.tab:active,
-.demo-code:active,.topbar-avatar:active,.menu-item:active,.menu-profile-card:active,
-.scroll-top-btn:active,.admin-tab:active,.admin-action-card:active,
-.admin-list-row:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,
-.enum-chip:active,.enum-row:active,.enum-remove:active,.member-pick:active,
-.mp-close-btn:active,.mp-speak-btn:active,.mp-cc-toggle:active,
-button.tag:active,.legal-topbar-back:active,.invite-tab:active,
-.btn:active{
+.hist-row:active,.mp-lang-dropdown:active,.mp-lang-opt:active,.chip:active,.filter-chip:active,.ap-chip:active,.tab:active,.menu-item:active,.menu-profile-card:active,.scroll-top-btn:active,.admin-tab:active,.destructive-confirm-btn:active,.plain-cancel-btn:active,.enum-row:active,.enum-remove:active,.member-pick:active,.mp-close-btn:active,.mp-speak-btn:active,.mp-cc-toggle:active,button.tag:active,.legal-topbar-back:active,.invite-tab:active,.btn:active{
   transform:scale(.97);
 }
-.enum-chip,.enum-row,.enum-remove,.member-pick{cursor:pointer;}
+.enum-row,.enum-remove,.member-pick{cursor:pointer;}
 
 /* AdminScreen.jsx bruger udelukkende inline styles (aldrig CSS-klasser), så
    ovenstående globale :active-udrulning (14. sept.) aldrig ramte den —
    disse tre dækker filens tre mest gentagne trykbare mønstre (sektions-
    faneblade, hurtig-handling-kort, liste-rækker). cursor:pointer sættes
    her (ikke inline) for at kvalificere til :active-reglen ovenfor. */
-.admin-tab,.admin-action-card,.admin-list-row{cursor:pointer;}
+.admin-tab{cursor:pointer;}
 
 /* Løs tekst — ikke inde i et kort/surface — ligger nu direkte oven på
    baggrundens punkt-gitter. Et fint, lyst "løft" (ikke en blur/glød) holder
    den læsbar uden at det ligner en fejl. */
-.screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,
-.welcome-tagline,.brand-slogan,
-.step-title,.step-sub,.onboard-skip{
+.screen-title,.screen-sub,.section-lbl,.mp-title,.mp-subtitle,.mp-section-lbl,.welcome-tagline,.brand-slogan,.step-title{
   text-shadow:0 1px 0 rgba(255,255,255,.7);
 }
 
