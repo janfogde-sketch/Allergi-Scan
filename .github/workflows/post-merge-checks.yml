@@ -7,6 +7,8 @@ name: Tjek efter merge
 on:
   push:
     branches: [main, dev]
+    # Rene to do-/dokumentændringer giver ikke nye tjek efter merge (se også changed-scope.sh).
+    paths-ignore: ["supabase/todo/**", "docs/**", ".claude/**", "**/*.md"]
   # Når dev-grenen findes: tjekkene kører også på "udgiv"-PR'en (dev til main), så de kan gøres påkrævede.
   pull_request:
     branches: [main]

@@ -14,15 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
 
-      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+      # Rene to do-migrationer (kun insert/update på to do-listen, se changed-scope.sh) kan ikke ændre skemaet:
+      # de tunge trin springes over, men jobbet består (påkrævet tjek). Ved tvivl kører alt som før.
+      - name: Rører ændringen kun to do-listen?
+        id: scope
+        run: .github/scripts/changed-scope.sh "${{ github.event.pull_request.base.sha || github.event.before }}"
+
+      - if: steps.scope.outputs.only_docs != 'true'
+        uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         with:
           version: 2.120.0
 
-      - name: Start lokal Supabase og afspil alle migrationer
+      - if: steps.scope.outputs.only_docs != 'true'
+        name: Start lokal Supabase og afspil alle migrationer
         run: supabase start -x studio,imgproxy,logflare,vector,mailpit,edge-runtime,supavisor
 
-      - name: Kør SQL-tests
+      - if: steps.scope.outputs.only_docs != 'true'
+        name: Kør SQL-tests
         run: |
           DB_URL=$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')
           for f in supabase/tests/*.sql; do

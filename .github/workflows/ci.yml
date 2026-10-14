@@ -10,22 +10,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      # Rene to do-/dokumentændringer (se changed-scope.sh) springer de tunge trin over; jobbet består stadig,
+      # så det kan være påkrævet i GitHub. Ved tvivl kører alt som før.
+      - name: Rører ændringen kun to do, dokumenter eller Claude-filer?
+        id: scope
+        run: .github/scripts/changed-scope.sh "${{ github.event.pull_request.base.sha || github.event.before }}"
+
+      - if: steps.scope.outputs.only_docs != 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - if: steps.scope.outputs.only_docs != 'true'
+        run: npm ci
 
-      - name: Lint
+      - if: steps.scope.outputs.only_docs != 'true'
+        name: Lint
         run: npm run lint
 
-      - name: Typetjek (kernefiler, se tsconfig.check.json)
+      - if: steps.scope.outputs.only_docs != 'true'
+        name: Typetjek (kernefiler, se tsconfig.check.json)
         run: npm run typecheck
 
-      - name: Test
+      - if: steps.scope.outputs.only_docs != 'true'
+        name: Test
         run: npm test
 
-      - name: Build
+      - if: steps.scope.outputs.only_docs != 'true'
+        name: Build
         run: npm run build
