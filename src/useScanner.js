@@ -12,24 +12,18 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { compressImageToBase64, isValidEanChecksum, normalizeScannedBarcode, apiCall, makeHeaders } from "./helpers.js";
 import { reportError } from "./errorReporter.js";
+import { createBarcodeReader, decodeRotated, decodeBarcodeFile } from "./barcodeDecode.js";
 
 // ── Delt to-trins stregkode-afkodning fra et billede ──────────────────────
-// Trin 1: html5-qrcode (hurtig, gratis, ren billed-afkodning). Trin 2, kun
-// hvis trin 1 fejler: Claude Vision OCR-fallback (samme model som scanPhotoForEan
-// altid har brugt). Udtrukket 25. sept. 2026 — scanFromGallery (galleri-valgt
-// billede) havde tidligere KUN trin 1, mens scanPhotoForEan (foto taget efter
-// mislykket live-scan) havde begge. Et galleri-billede hvor html5-qrcode ikke
-// kunne afkode koden fik derfor aldrig en chance for OCR-genopretning — en
-// ubegrundet inkonsistens mellem to reelt ligeværdige indgange, ikke en
-// bevidst designbeslutning. Returnerer den fundne, checksum-validerede EAN,
+// Trin 1: ZXing (gratis, ren billed-afkodning i alle retninger). Trin 2, kun
+// hvis trin 1 fejler: Claude Vision OCR-fallback. Bruges af både galleri-valgt
+// billede (scanFromGallery) og foto taget efter mislykket live-scan
+// (scanPhotoForEan). Returnerer den fundne, checksum-validerede EAN,
 // eller null hvis begge trin fejler.
 async function decodeBarcodeFromImage(file, accessToken) {
   try {
-    const { Html5Qrcode } = await import("html5-qrcode");
-    const scanner = new Html5Qrcode("qr-reader-gallery");
-    const result = await scanner.scanFile(file, true);
-    scanner.clear();
-    return result;
+    const code = await decodeBarcodeFile(file);
+    if (code) return code;
   } catch { /* fald igennem til Vision-OCR */ }
 
   try {
@@ -53,8 +47,8 @@ async function decodeBarcodeFromImage(file, accessToken) {
 export function useScanner({ setScanError, setLoading, onScanSuccess, accessToken }) {
   // ── Kamera-state ──────────────────────────────────────────────────────────
   const [cameraActive, setCameraActive]       = useState(false);
-  // scanReady: true først når html5-qrcode reelt er i gang med at afkode billeder
-  // (Html5Qrcode.start()'s promise er løst) — IKKE bare når cameraActive er sat,
+  // scanReady: true først når videoen reelt kører
+  // (video.play()'s promise er løst) — IKKE bare når cameraActive er sat,
   // hvilket sker før kamera-streamen reelt er klar. Bruges til at undgå at vise
   // scanner-laserlinjen over et endnu-ikke-levende kamerabillede.
   const [scanReady, setScanReady]             = useState(false);
@@ -72,7 +66,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const [cameraPermissionDenied, setCameraPermissionDenied] = useState(false);
 
   // ── Refs ──────────────────────────────────────────────────────────────────
-  const html5QrRef      = useRef(null);
+  const cameraRef       = useRef(null); // { stop() } for det kørende kamera
   const torchTrackRef   = useRef(null);
   const lastScannedRef  = useRef(null);
   const scanZoomRef     = useRef(1.0);
@@ -82,7 +76,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   const photoFallbackRef = useRef(null);
   const startingRef      = useRef(false); // låser mod dobbelt-tap mens kameraet starter op
   const startRetriesRef  = useRef(0);
-  const rotatedLoopRef   = useRef(null);
+  const decodeLoopRef    = useRef(null);
 
   // onScanSuccess gemmes i ref for at undgå TDZ-problemer
   // (lookupProduct defineres efter useScanner initialiseres i App.jsx)
@@ -101,8 +95,8 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   // deres egen loading-indikator på samme tick.
   const stopCamera = useCallback(() => {
     if (noScanTimerRef.current) { clearTimeout(noScanTimerRef.current); noScanTimerRef.current = null; }
-    if (rotatedLoopRef.current) { clearInterval(rotatedLoopRef.current); rotatedLoopRef.current = null; }
-    if (html5QrRef.current) { html5QrRef.current.stop().catch(() => {}); html5QrRef.current = null; }
+    if (decodeLoopRef.current) { clearInterval(decodeLoopRef.current); decodeLoopRef.current = null; }
+    if (cameraRef.current) { cameraRef.current.stop(); cameraRef.current = null; }
     if (torchTrackRef.current) {
       try { torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {}); } catch {}
       torchTrackRef.current = null;
@@ -114,54 +108,61 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   }, [setScanError]);
 
   // ── Afkodning i alle retninger ──────────────────────────────────────────────
-  // html5-qrcode afkoder kun vandrette koder (og iOS Safari har ingen BarcodeDetector). ZXings
-  // egen TRY_HARDER-rotation virker ikke på canvas-kilder (målt: 90°/270° fejler), så billedet
-  // tegnes selv drejet 0°/90°/45°/135° på skift (én vinkel pr. tick, så hver tick er let).
-  // ZXing tåler ca. ±20° pr. vinkel og læser også på hovedet, så alle retninger er dækket.
-  const startRotatedDecodeLoop = useCallback(async (videoEl) => {
+  // Billedet fra videoen tegnes selv drejet 0°/90°/45°/135° på skift (én vinkel pr. tick, så hver tick er let;
+  // 0° får hver anden tick, da de fleste koder sidder vandret). Hvor browseren har BarcodeDetector (Chrome på
+  // Android), bruges den til 0°; iOS Safari har ingen og bruger ZXing til alle vinkler.
+  const startDecodeLoop = useCallback(async (videoEl) => {
     if (typeof window === "undefined" || !videoEl) return;
-    const Z = await import("@zxing/library");
-    if (!html5QrRef.current) return; // kameraet blev lukket imens biblioteket hentedes
-    const hints = new Map();
-    hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [
-      Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E,
-      Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF,
-    ]);
-    hints.set(Z.DecodeHintType.TRY_HARDER, true);
-    const reader = new Z.MultiFormatReader();
-    reader.setHints(hints);
+    const dec = await createBarcodeReader();
+    if (!cameraRef.current) return; // kameraet blev lukket imens biblioteket hentedes
+    let detector = null;
+    try {
+      if ("BarcodeDetector" in window) {
+        detector = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"] });
+      }
+    } catch { detector = null; }
     const frame = document.createElement("canvas");
     const frameCtx = frame.getContext("2d", { willReadFrequently: true });
     const rot = document.createElement("canvas");
     const rotCtx = rot.getContext("2d", { willReadFrequently: true });
-    const angles = [90, 45, 90, 135]; // 0° (og 180°) afkodes allerede af html5-qrcode
+    const angles = [0, 90, 0, 45, 0, 135];
     let step = 0;
     let busy = false;
-    rotatedLoopRef.current = setInterval(() => {
-      if (busy || !videoEl.videoWidth || !videoEl.videoHeight) return;
+    const found = (code) => {
+      if (!code || !decodeLoopRef.current || scanPausedRef.current) return;
+      const now = Date.now();
+      if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
+      lastScannedRef.current = { code, time: now };
+      if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 1800; gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
+      } catch {}
+      stopCamera();
+      onScanSuccessRef.current?.(code);
+    };
+    decodeLoopRef.current = setInterval(async () => {
+      if (busy || scanPausedRef.current || !videoEl.videoWidth || !videoEl.videoHeight) return;
       busy = true;
       try {
+        const deg = angles[step++ % angles.length];
+        if (deg === 0 && detector) {
+          const hits = await detector.detect(videoEl);
+          for (const hit of hits) {
+            const code = normalizeScannedBarcode(hit.rawValue, String(hit.format || "").toUpperCase());
+            if (code) { found(code); break; }
+          }
+          return;
+        }
         const scale = Math.min(1, 800 / Math.max(videoEl.videoWidth, videoEl.videoHeight));
         const w = Math.round(videoEl.videoWidth * scale), h = Math.round(videoEl.videoHeight * scale);
         frame.width = w; frame.height = h;
         frameCtx.drawImage(videoEl, 0, 0, w, h);
-        const deg = angles[step++ % angles.length];
-        if (deg === 0) { rot.width = w; rot.height = h; }
-        else if (deg === 90) { rot.width = h; rot.height = w; }
-        else { rot.width = rot.height = Math.ceil(Math.hypot(w, h)); }
-        rotCtx.fillStyle = "#888";
-        rotCtx.fillRect(0, 0, rot.width, rot.height);
-        rotCtx.translate(rot.width / 2, rot.height / 2);
-        rotCtx.rotate(deg * Math.PI / 180);
-        rotCtx.drawImage(frame, -w / 2, -h / 2);
-        rotCtx.setTransform(1, 0, 0, 1, 0, 0);
-        const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(rot)));
-        const result = reader.decode(bitmap);
-        const code = normalizeScannedBarcode(result.getText(), Z.BarcodeFormat[result.getBarcodeFormat()]);
-        if (!code || !rotatedLoopRef.current || scanPausedRef.current) return;
-        if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
-        stopCamera();
-        onScanSuccessRef.current?.(code);
+        found(decodeRotated(dec, frame, w, h, deg, rot, rotCtx));
       } catch { /* ingen kode i denne vinkel */ }
       finally { busy = false; }
     }, 50);
@@ -211,66 +212,33 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     await new Promise(r => setTimeout(r, isIOS ? 300 : 150));
 
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
-      const readerId = "qr-reader-home";
-      if (html5QrRef.current) { try { await html5QrRef.current.stop(); } catch {} html5QrRef.current = null; }
-      const readerEl = document.getElementById(readerId);
+      const readerEl = document.getElementById("qr-reader-home");
       if (!readerEl) { setScanError("Kameraet kunne ikke vises. Genindlæs siden."); setCameraActive(false); return; }
+      if (cameraRef.current) { cameraRef.current.stop(); cameraRef.current = null; }
+      readerEl.innerHTML = "";
 
-      // formatsToSupport og experimentalFeatures er KONSTRUKTØR-config i html5-qrcode;
-      // som del af start()-config blev de ignoreret (RSS-formaterne var aldrig slået til).
-      html5QrRef.current = new Html5Qrcode(readerId, {
-        verbose: false,
-        formatsToSupport: [3, 5, 8, 9, 10, 12, 13, 14, 15], // CODE_39, CODE_128, ITF, EAN_13, EAN_8, RSS_14, RSS_EXPANDED, UPC_A, UPC_E
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-      });
-
-      const qrConfig = {
-        fps: isIOS ? 12 : 20, // lavere fps på iOS: html5-qrcodes afkodning deler tråd med rotationsløkken
-        // Hele kamerabilledet afkodes (ikke kun et udsnit), så koden kan sidde hvor som helst i billedet.
-        qrbox: (w, h) => ({ width: w, height: h }),
-        aspectRatio: undefined,
-        disableFlip: false,
-        videoConstraints: isIOS
-          ? { facingMode: { exact: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-          : { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
-      };
-
-      await html5QrRef.current.start(
-        { facingMode: isIOS ? { exact: "environment" } : "environment" }, qrConfig,
-        (rawCode, decoded) => {
-          // Kameraet er allerede stoppet (en kode er under behandling):
-          // ignorér sene afkodninger, så samme scanning ikke sendes to gange.
-          if (!html5QrRef.current || scanPausedRef.current) return;
-          // Ugyldig/garblet afkodning ignoreres stille og scanningen
-          // fortsætter (28. sept. 2026, FINAL POLISH – SCANNER, krav 12) —
-          // et enkelt fejlaflæst frame er normalt og forbigående, så et
-          // afbrydende fejlbanner ville være mere distraherende end
-          // hjælpsomt her (i modsætning til manuel EAN-indtastning, hvor
-          // samme validering VISER en fejltekst, se ScannerScreen.jsx).
-          const code = normalizeScannedBarcode(rawCode, decoded?.result?.format?.formatName);
-          if (!code) return;
-          const now = Date.now();
-          if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
-          lastScannedRef.current = { code, time: now };
-          // Vibration + lyd
-          if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
-          try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = 1800; gain.gain.setValueAtTime(0.25, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
-          } catch {}
-          stopCamera();
-          onScanSuccessRef.current?.(code);
+      const videoConstraints = isIOS
+        ? { facingMode: { exact: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+        : { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } };
+      const stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+      const videoNode = document.createElement("video");
+      videoNode.setAttribute("playsinline", "true"); // iOS Safari kræver playsinline for at undgå fuldskærm
+      videoNode.setAttribute("muted", "true");
+      videoNode.muted = true;
+      videoNode.autoplay = true;
+      videoNode.srcObject = stream;
+      readerEl.appendChild(videoNode);
+      cameraRef.current = {
+        stop: () => {
+          stream.getTracks().forEach(t => t.stop());
+          try { videoNode.pause(); } catch {}
+          videoNode.srcObject = null;
+          videoNode.remove();
         },
-        () => {}
-      );
+      };
+      await videoNode.play();
 
-      // .start()'s promise er nu løst — kameraet er reelt i gang med at afkode,
-      // så scanner-laserlinjen må gerne vises fra nu af.
+      // Videoen kører — kameraet er reelt i gang, så scanner-laserlinjen må gerne vises fra nu af.
       setScanReady(true);
 
       await new Promise(r => setTimeout(r, 500));
@@ -315,7 +283,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
           };
         }
       }
-      startRotatedDecodeLoop(videoEl).catch(() => {});
+      startDecodeLoop(videoEl).catch(() => {});
       startRetriesRef.current = 0; // kameraet kørte succesfuldt — nulstil retry-tæller
     } catch (e) {
       setCameraActive(false);
@@ -331,7 +299,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     } finally {
       startingRef.current = false;
     }
-  }, [cameraActive, setScanError, stopCamera, startRotatedDecodeLoop]);
+  }, [cameraActive, setScanError, stopCamera, startDecodeLoop]);
 
   // ── scanFromGallery ────────────────────────────────────────────────────────
   const scanFromGallery = useCallback(async (file) => {
@@ -352,7 +320,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
     }
   }, [setScanError, setLoading, stopCamera, accessToken]);
 
-  // ── scanPhotoForEan — foto-fallback via html5-qrcode + Claude Vision ──────
+  // ── scanPhotoForEan — foto-fallback via ZXing + Claude Vision ──────
   const scanPhotoForEan = useCallback(async (file) => {
     if (!file) return;
     setPhotoScanLoading(true); setScanError(""); setShowPhotoHint(false);
@@ -383,10 +351,9 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
   }, [torchOn, setScanError]);
 
   // ── toggleZoom (1× ↔ 2×, kun når brugeren trykker) ──────────────────────
-  // Pause/genoptag under manuel indtastning (Bjørn, 8. okt. 2026). Videoen fryses direkte (html5-qrcodes egen pause viser en
-  // "Scanner paused"-tekst over billedet), og afkodningen ignoreres, så intet registreres bag arket.
+  // Pause/genoptag under manuel indtastning (Bjørn, 8. okt. 2026). Videoen fryses direkte, og afkodningen ignoreres, så intet registreres bag arket.
   const pauseCamera = useCallback(() => {
-    if (!html5QrRef.current) return;
+    if (!cameraRef.current) return;
     scanPausedRef.current = true;
     try { document.querySelector("#qr-reader-home video")?.pause(); } catch { /* ignoreres */ }
   }, []);
