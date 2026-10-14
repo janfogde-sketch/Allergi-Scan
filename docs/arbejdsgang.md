@@ -71,3 +71,11 @@ Engangstest (testkonti, gensendt tilbagekaldelse) er et engangsscript eller en m
   tråden sender status til koordinatoren (PR-nummer, to do-id'er, hvad der skal tjekkes efter merge) og afslutter. **Tråden venter ikke på CI.**
   Lukketråden tjekker hvert kvarter, at PR'erne er merget, at main er grøn og at migrationer er i databasen. Er noget rødt, får den oprindelige
   tråd besked om at rette det. Vent aldrig på planlagte genkontroller.
+
+## PR'er der kommer bagud (opdater-pr.yml, 14. okt. 2026)
+
+- Hovedgrenen kræver, at en PR er opdateret med main (det beskytter migrationsnumrene). Går én PR ind, kommer de andre med auto-merge derfor "bagud".
+- `.github/workflows/opdater-pr.yml` kører ved hvert push til main (og hvert kvarter som sikkerhedsnet), finder åbne PR'er med auto-merge der står bagud, opdaterer dem og starter tjekkene bagefter.
+- Opdatering med den indbyggede nøgle starter ikke tjekkene af sig selv. Derfor starter workflowen dem med `workflow_dispatch` (undtaget fra GitHubs regel), så der ikke skal bruges en ekstra nøgle. `migration-versions.yml`, `ci.yml` og `db-tests.yml` har derfor `workflow_dispatch`.
+- PR'er med konflikt rører workflowen ikke: ejertråden fletter main ind og pusher.
+- GitHubs merge-kø findes ikke for private personers repoer (kun for organisationer), så den kan ikke bruges her.

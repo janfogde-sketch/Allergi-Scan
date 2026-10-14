@@ -1,0 +1,57 @@
+name: Opdater PR'er der er bagud
+
+# main kræver, at en PR er opdateret med main, før den merges (beskytter migrationsnumrene).
+# Når en PR går ind, kommer alle andre PR'er med automatisk merge "bagud". Denne kørsel opdaterer dem selv
+# og starter tjekkene på den nye version. Uden den ville de stå stille, til nogen opdaterede dem i hånden.
+# Opdatering med GITHUB_TOKEN starter ikke tjekkene af sig selv (GitHubs regel mod uendelige løkker).
+# Derfor starter vi dem bagefter med workflow_dispatch, som er undtaget fra reglen. Ingen ekstra nøgle nødvendig.
+# En PR med konflikt rører vi ikke: ejeren skal flette main ind (CLAUDE.md afsnit 4).
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/15 * * * *" # sikkerhedsnet, hvis en kørsel ved push blev misset
+  workflow_dispatch:
+
+concurrency:
+  group: opdater-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  opdater:
+    name: Opdater PR'er med automatisk merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Opdater og start tjek
+        run: |
+          set -u
+          # GitHub regner en PRs status ud i baggrunden; kort pause efter et push til main giver et rigtigt svar.
+          [ "${{ github.event_name }}" = "push" ] && sleep 20
+          for nr in $(gh pr list -R "$REPO" --state open --base main --json number,isDraft,isCrossRepository,autoMergeRequest \
+              --jq '.[] | select(.autoMergeRequest != null and .isDraft == false and .isCrossRepository == false) | .number'); do
+            state=$(gh pr view "$nr" -R "$REPO" --json mergeStateStatus --jq .mergeStateStatus)
+            if [ "$state" = "UNKNOWN" ]; then sleep 15; state=$(gh pr view "$nr" -R "$REPO" --json mergeStateStatus --jq .mergeStateStatus); fi
+            if [ "$state" = "DIRTY" ]; then echo "PR #$nr har konflikt: ejeren skal flette main ind."; continue; fi
+            [ "$state" = "BEHIND" ] || { echo "PR #$nr: $state, intet at gøre."; continue; }
+
+            echo "PR #$nr er bagud: opdaterer."
+            gh api -X PUT "repos/$REPO/pulls/$nr/update-branch" --silent || { echo "::warning::Kunne ikke opdatere PR #$nr"; continue; }
+            sleep 5
+            ref=$(gh pr view "$nr" -R "$REPO" --json headRefName --jq .headRefName)
+            gh workflow run migration-versions.yml -R "$REPO" --ref "$ref"
+            gh workflow run ci.yml -R "$REPO" --ref "$ref"
+            gh workflow run post-merge-checks.yml -R "$REPO" --ref "$ref"
+            # DB-tests er tunge: kun hvis PR'en rører migrationer eller tests (som db-tests.yml selv skriver).
+            if gh pr diff "$nr" -R "$REPO" --name-only | grep -qE '^(supabase/migrations/|supabase/tests/|supabase/functions/delete-user/|\.github/workflows/db-tests\.yml)'; then
+              gh workflow run db-tests.yml -R "$REPO" --ref "$ref"
+            fi
+          done
