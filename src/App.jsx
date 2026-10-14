@@ -56,13 +56,17 @@ import { useMadpas } from './useMadpas.js';
 import { useAlternatives } from './useAlternatives.js';
 
 import InstallPrompt from "./InstallPrompt.jsx";
-import HelpModal from "./HelpModal.jsx";
-import SafetyInfoModal from "./SafetyInfoModal.jsx";
 import BootScreen from "./BootScreen.jsx";
 import ConsentRenewalModal from "./ConsentRenewalModal.jsx";
-import DeleteAccountModal from "./DeleteAccountModal.jsx";
+// Dialoger og ark, der sjældent vises, hentes først, når de åbnes (holder dem ude af startpakken).
+// En manglende fil efter deploy håndteres af vite:preloadError i public/js/boot.js (genindlæser én gang).
+const HelpModal = React.lazy(() => import("./HelpModal.jsx"));
+const SafetyInfoModal = React.lazy(() => import("./SafetyInfoModal.jsx"));
+const DeleteAccountModal = React.lazy(() => import("./DeleteAccountModal.jsx"));
 import { useIncomingLinks } from "./useIncomingLinks.js";
-import { JoinListSheet, FamilyInviteSheet, FamilyRequestSheet } from "./ListSheets.jsx";
+const JoinListSheet = React.lazy(() => import("./ListSheets.jsx").then(m => ({ default: m.JoinListSheet })));
+const FamilyInviteSheet = React.lazy(() => import("./ListSheets.jsx").then(m => ({ default: m.FamilyInviteSheet })));
+const FamilyRequestSheet = React.lazy(() => import("./ListSheets.jsx").then(m => ({ default: m.FamilyRequestSheet })));
 import { useFamilyInviteInbox } from "./useFamilyInviteInbox.js";
 import { recentInviteLinkFollowed } from "./familyInviteInbox.js";
 import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
@@ -847,33 +851,37 @@ export default function EatSafe() {
 
         {/* ══ HJÆLP MODAL ══ */}
         {helpOpen && (
+          <Suspense fallback={null}>
           <HelpModal
             screen={screen}
             onClose={() => setHelpOpen(false)}
             onOpenFeedback={() => { setFeedbackOpen(true); setFeedbackDone(false); }}
           />
+          </Suspense>
         )}
 
         {/* ══ SLET KONTO MODAL ══ */}
         {showDeleteAccount && (
+          <Suspense fallback={null}>
           <DeleteAccountModal
             setShowDeleteAccount={setShowDeleteAccount}
             deleteConfirmText={deleteConfirmText} setDeleteConfirmText={setDeleteConfirmText}
             deletingAccount={deletingAccount} deleteOwnAccount={deleteOwnAccount}
           />
+          </Suspense>
         )}
 
         {/* ══ BEKRÆFT TILSLUTNING TIL DELT LISTE (efter åbnet link) ══ */}
-        {joinPreview && <JoinListSheet preview={joinPreview} busy={joining} onConfirm={confirmJoin} onCancel={declineJoin} />}
+        {joinPreview && <Suspense fallback={null}><JoinListSheet preview={joinPreview} busy={joining} onConfirm={confirmJoin} onCancel={declineJoin} /></Suspense>}
 
         {/* ══ BEKRÆFT FAMILIE-INVITATION (sendt til min e-mail) ══ */}
-        {familyInvite && !joinPreview && <FamilyInviteSheet invite={familyInvite} busy={familyInviteBusy} onConfirm={acceptFamilyInvite} onDecline={declineFamilyInvite} onLater={laterFamilyInvite} />}
+        {familyInvite && !joinPreview && <Suspense fallback={null}><FamilyInviteSheet invite={familyInvite} busy={familyInviteBusy} onConfirm={acceptFamilyInvite} onDecline={declineFamilyInvite} onLater={laterFamilyInvite} /></Suspense>}
 
         {/* ══ GODKEND DEN, DER BRUGTE MIT DELTE LINK ══ */}
-        {linkRequest && !familyInvite && !joinPreview && <FamilyRequestSheet request={linkRequest} busy={linkRequestBusy} onApprove={approveLinkRequest} onDecline={declineLinkRequest} onLater={laterLinkRequest} />}
+        {linkRequest && !familyInvite && !joinPreview && <Suspense fallback={null}><FamilyRequestSheet request={linkRequest} busy={linkRequestBusy} onApprove={approveLinkRequest} onDecline={declineLinkRequest} onLater={laterLinkRequest} /></Suspense>}
 
         {/* ══ SIKKERHEDSINFORMATION ══ */}
-        {showSafetyInfo && <SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} />}
+        {showSafetyInfo && <Suspense fallback={null}><SafetyInfoModal onAcknowledge={acknowledgeSafety} busy={safetyBusy} /></Suspense>}
 
         {/* ══ FORNYET SAMTYKKE (samtykketeksten/politikken er ændret siden brugerens ja) ══ */}
         {!showSafetyInfo && <ConsentRenewalModal screen={screen} onboarded={user.onboarding_completed === true} openLegal={openLegal} />}
