@@ -136,7 +136,7 @@ export default function SettingsScreen({
   madpasLang, setMadpasLang,
   vibrateOnWarning, setVibrateOnWarning,
   soundOnWarning, setSoundOnWarning,
-  onOpenFeedback, onOpenSafetyInfo,
+  onOpenFeedback, onOpenSafetyInfo, onOpenRecalls,
 }) {
   const { accessToken, userId, clearAuth } = useAuthContext();
   const { openLegal } = useNavigationContext();
@@ -314,6 +314,12 @@ export default function SettingsScreen({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Tilbagekaldelser ── (to do 0255840a) */}
+      <div className="card">
+        <ChevronRow icon="warning" label="Aktuelle tilbagekaldelser" sub="Seneste fra Fødevarestyrelsen"
+          onClick={onOpenRecalls} last />
       </div>
 
       {/* ── Privatliv & data ── */}
