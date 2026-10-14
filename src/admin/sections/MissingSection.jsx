@@ -49,11 +49,11 @@ export default function MissingSection({ missingEans, missingEansLoading, loadMi
             <tbody>
               {missingEans.map((row, i) => (
                 <tr key={row.ean}>
-                  <td>{i + 1}</td>
-                  <td style={{ fontFamily: "var(--mono)" }}>{row.ean}</td>
-                  <td><span className="admin-pill admin-pill-red">{row.count}×</span></td>
-                  <td>{new Date(row.first_seen).toLocaleDateString("da-DK")}</td>
-                  <td>{new Date(row.last_seen).toLocaleDateString("da-DK")}</td>
+                  <td data-label="#">{i + 1}</td>
+                  <td data-label="EAN" style={{ fontFamily: "var(--mono)" }}>{row.ean}</td>
+                  <td data-label="Antal opslag"><span className="admin-pill admin-pill-red">{row.count}×</span></td>
+                  <td data-label="Først set">{new Date(row.first_seen).toLocaleDateString("da-DK")}</td>
+                  <td data-label="Sidst set">{new Date(row.last_seen).toLocaleDateString("da-DK")}</td>
                   <td style={{ display: "flex", gap: 6 }}>
                     <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => window.open(`https://world.openfoodfacts.org/product/${row.ean}`, "_blank")}>OFF</button>
                     <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => deleteMissingEan(row.ean)}>Slet</button>

@@ -18,7 +18,7 @@ function UsageTable({ title, firstCol, items, labelFn }) {
         <tbody>
           {items.map(i => (
             <tr key={i.key}>
-              <td>{labelFn(i.key)}</td><td>{formatNum(i.calls)}</td><td>{formatNum(i.input)}</td><td>{formatNum(i.output)}</td><td>{formatKr(i.dkk)}</td>
+              <td>{labelFn(i.key)}</td><td data-label="Kald">{formatNum(i.calls)}</td><td data-label="Tokens ind">{formatNum(i.input)}</td><td data-label="Tokens ud">{formatNum(i.output)}</td><td data-label="Pris">{formatKr(i.dkk)}</td>
             </tr>
           ))}
         </tbody>

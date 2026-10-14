@@ -59,15 +59,15 @@ export default function ProductsSection({
               {products.map(p => (
                 <tr key={p.id} style={{ cursor: "pointer" }} onClick={() => openProductForEdit(p)}>
                   <td>{p.name || <span style={{ color: "var(--muted)" }}>Ukendt</span>}{p.brand ? ` — ${p.brand}` : ""}</td>
-                  <td style={{ fontFamily: "var(--mono)" }}>{p.ean}</td>
-                  <td>{p.category || <span style={{ color: "var(--muted)" }}>–</span>}</td>
-                  <td>{p.source || "–"}</td>
-                  <td>
+                  <td data-label="EAN" style={{ fontFamily: "var(--mono)" }}>{p.ean}</td>
+                  <td data-label="Kategori">{p.category || <span style={{ color: "var(--muted)" }}>–</span>}</td>
+                  <td data-label="Kilde">{p.source || "–"}</td>
+                  <td data-label="Status">
                     <span className={`admin-pill ${p.verified_status === "verified" ? "admin-pill-green" : p.verified_status === "partial" ? "admin-pill-amber" : "admin-pill-neutral"}`}>
                       {p.verified_status || "unverified"}
                     </span>
                   </td>
-                  <td>{p.updated_at ? new Date(p.updated_at).toLocaleDateString("da-DK") : "–"}</td>
+                  <td data-label="Opdateret">{p.updated_at ? new Date(p.updated_at).toLocaleDateString("da-DK") : "–"}</td>
                   <td><button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={e => { e.stopPropagation(); openProductForEdit(p); }}>Redigér</button></td>
                 </tr>
               ))}

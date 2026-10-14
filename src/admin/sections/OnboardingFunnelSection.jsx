@@ -32,7 +32,7 @@ export default function OnboardingFunnelSection({ data, loading, load }) {
               <thead><tr><th>Trin</th><th>Stoppet her</th><th>Andel af alle</th><th>Heraf ældre end 24 t.</th></tr></thead>
               <tbody>
                 {f.steps.map(s => (
-                  <tr key={s.step}><td>{s.step}. {s.label}</td><td>{s.stuck}</td><td>{s.pct} %</td><td>{s.stuckOld}</td></tr>
+                  <tr key={s.step}><td>{s.step}. {s.label}</td><td data-label="Stoppet her">{s.stuck}</td><td data-label="Andel af alle">{s.pct} %</td><td data-label="Heraf ældre end 24 t.">{s.stuckOld}</td></tr>
                 ))}
               </tbody>
             </table>
