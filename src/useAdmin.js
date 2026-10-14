@@ -1,8 +1,7 @@
 // @ts-nocheck
 import { submissionAllergenFlags, cleanIngredientText, submissionMissingFields } from "./admin/submissionLogic.js";
-import { dkDayKey, dkDayStartISO, shiftDayKey, bucketByDkDay } from "./admin/statsLogic.js";
 import { useState, useRef } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
+import { SUPABASE_URL, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.js";
@@ -13,6 +12,8 @@ const TICKETS_PAGE = 100;
 const TICKETS_PAGE_ALL = 200;
 // Hver AI-reparse koster et AI-kald; loftet holder "Kør nu" til et overskueligt antal pr. tryk.
 const MANUAL_REPARSE_LIMIT = 25;
+// Serveren svarer ai_skipped:"daily_limit", når AI blev sprunget over pga. adminpuljen eller det samlede dagsloft (G29).
+const AI_LIMIT_TEXT = "AI-loftet for i dag er nået. Produktet er gemt med nøgleordsmotoren (middel kvalitet); \"Kør nu\" under Import kan tage det igen i morgen.";
 
 export function useAdmin(accessToken, userId) {
   // State
@@ -100,51 +101,16 @@ export function useAdmin(accessToken, userId) {
     if (submissionsLoadToken.current === myToken) setSubmissionsLoading(false);
   };
 
-  // Dashboard-tal (13. okt. 2026): døgn i dansk tid (statsLogic.js), scanninger = found_via 'scan', og trendrækker hentes side for side, så PostgREST's
-  // loft på 1.000 rækker ikke stille afkorter grafen.
-  const fetchAllRows = async (url, headers, pageSize = 1000, maxPages = 30) => {
-    const out = [];
-    for (let page = 0; page < maxPages; page++) {
-      const res = await fetch(url, { headers: { ...headers, "Range-Unit": "items", Range: `${page * pageSize}-${page * pageSize + pageSize - 1}` } });
-      const rows = await res.json();
-      if (!Array.isArray(rows)) throw new Error(rows?.message || "Uventet svar fra databasen");
-      out.push(...rows);
-      if (rows.length < pageSize) break;
-    }
-    return out;
-  };
-
+  // Dashboard-tal: én databasefunktion (admin_dashboard_stats) tæller det hele, så panelet ikke henter alle scanninger fra 30 dage.
+  // Definitioner (scanning = found_via 'scan', søgning for sig, døgn i dansk tid) står i funktionen og i statsLogic.js.
+  // Kaldes også efter handlinger, der ændrer sidebjælkens tal (indsendelser og tickets).
   const loadAdminStats = async () => {
     try {
-      const h = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json", "Prefer": "count=exact" };
-      const hNoCount = { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${accessToken}`, "Accept": "application/json" };
-      const count = (path) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { ...h, "Range-Unit": "items", Range: "0-0" } })
-        .then(r => { const ct = r.headers.get("content-range"); if (!ct || !r.ok) throw new Error("Kunne ikke tælle " + path.split("?")[0]); return parseInt(ct.split("/")[1]); });
-      const TREND_DAYS = 30;
-      const todayKey = dkDayKey(new Date());
-      const todayISO = dkDayStartISO(todayKey);
-      const trendStartISO = dkDayStartISO(shiftDayKey(todayKey, -(TREND_DAYS - 1)));
-      const [users, admins, products, scans, searchOpens, subs, families, tickets, scansToday, newUsersToday, scanTrendRows, userTrendRows] = await Promise.all([
-        count("users?select=id"),
-        count("users?select=id&role=eq.admin"),
-        count("products?select=id"),
-        count("scan_history?select=id&found_via=eq.scan"),
-        count("scan_history?select=id&found_via=eq.search"),
-        count("submissions?select=id&status=eq.pending"),
-        count("family_members?select=id"),
-        count("feedback_tickets?select=id&status=eq.open"),
-        count(`scan_history?select=id&found_via=eq.scan&scanned_at=gte.${todayISO}`),
-        count(`users?select=id&created_at=gte.${todayISO}`),
-        fetchAllRows(`${SUPABASE_URL}/rest/v1/scan_history?select=scanned_at&found_via=eq.scan&scanned_at=gte.${trendStartISO}&order=scanned_at.asc`, hNoCount),
-        fetchAllRows(`${SUPABASE_URL}/rest/v1/users?select=created_at&created_at=gte.${trendStartISO}&order=created_at.asc`, hNoCount),
-      ]);
-      setAdminStats({
-        total_users: users, admin_users: admins, total_products: products, total_scans: scans, search_opens: searchOpens,
-        pending_submissions: subs, total_families: families, open_tickets: tickets,
-        scans_today: scansToday, new_users_today: newUsersToday,
-        scan_trend: bucketByDkDay(scanTrendRows, "scanned_at", TREND_DAYS),
-        user_trend: bucketByDkDay(userTrendRows, "created_at", TREND_DAYS),
+      const data = await apiCall(`${SUPABASE_URL}/rest/v1/rpc/admin_dashboard_stats`, {
+        method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify({ p_days: 30 }),
       });
+      if (!data || typeof data !== "object") throw new Error("Uventet svar fra databasen");
+      setAdminStats(data);
     } catch (e) {
       console.error("loadAdminStats fejl:", e.message);
       showToast("Kunne ikke hente statistik: " + e.message, "error");
@@ -260,39 +226,29 @@ export function useAdmin(accessToken, userId) {
     setAdminUserActionLoading(true);
     try {
       const eNumbers = editingAdminUser.e_numbers.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${openAdminUser.id}`, {
-        method: "PATCH",
+      const customList = editingAdminUser.custom_allergens.split(",").map(s => s.trim()).filter(Boolean);
+      // Ét kald (admin_save_user_profile): profil og allergier gemmes i én transaktion, så et fejlet kald
+      // aldrig efterlader personen uden allergier (G28). Adgangsregler og adminlog gælder som før.
+      await apiCall(`${SUPABASE_URL}/rest/v1/rpc/admin_save_user_profile`, {
+        method: "POST",
         headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
         body: JSON.stringify({
-          name: editingAdminUser.name || null,
-          email: editingAdminUser.email || null,
-          role: editingAdminUser.role,
-          birth_year: editingAdminUser.birth_year ? +editingAdminUser.birth_year : null,
-          gender: editingAdminUser.gender || null,
-          e_numbers: eNumbers,
-          // Kun niveauer for allergener, der stadig er valgt
-          allergen_levels: Object.fromEntries(Object.entries(editingAdminUser.allergen_levels || {}).filter(([id]) => editingAdminUser.allergen_ids.includes(id))),
-          onboarding_completed: editingAdminUser.onboarding_completed,
+          p_user: openAdminUser.id,
+          p_profile: {
+            name: editingAdminUser.name || null,
+            email: editingAdminUser.email || null,
+            role: editingAdminUser.role,
+            birth_year: editingAdminUser.birth_year ? +editingAdminUser.birth_year : null,
+            gender: editingAdminUser.gender || null,
+            e_numbers: eNumbers,
+            // Kun niveauer for allergener, der stadig er valgt
+            allergen_levels: Object.fromEntries(Object.entries(editingAdminUser.allergen_levels || {}).filter(([id]) => editingAdminUser.allergen_ids.includes(id))),
+            onboarding_completed: editingAdminUser.onboarding_completed,
+          },
+          p_allergens: editingAdminUser.allergen_ids,
+          p_custom: customList,
         }),
       });
-
-      // Samlet DELETE + én bulk-POST — samme mønster som ProfileScreen bruger
-      // for sig selv — så et fejlet kald midtvejs ikke kan efterlade en
-      // delvist gemt allergen-liste.
-      const customList = editingAdminUser.custom_allergens.split(",").map(s => s.trim()).filter(Boolean);
-      await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${openAdminUser.id}&family_member_id=is.null`, {
-        method: "DELETE", headers: makeHeaders(accessToken),
-      });
-      const allergenRows = [
-        ...editingAdminUser.allergen_ids.map(a => ({ user_id: openAdminUser.id, allergen: a, type: "allergen" })),
-        ...customList.map(c => ({ user_id: openAdminUser.id, allergen: c, type: "custom" })),
-      ];
-      if (allergenRows.length > 0) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens`, {
-          method: "POST", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-          body: JSON.stringify(allergenRows),
-        });
-      }
 
       setAdminUsers(us => us.map(x => x.id === openAdminUser.id ? { ...x, name: editingAdminUser.name, email: editingAdminUser.email, role: editingAdminUser.role, birth_year: editingAdminUser.birth_year, onboarding_completed: editingAdminUser.onboarding_completed } : x));
       showToast("Bruger opdateret");
@@ -761,7 +717,7 @@ export function useAdmin(accessToken, userId) {
                   reparsed_at: new Date().toISOString(),
                 }),
               });
-              if (!method.includes("claude")) showToast("Godkendt, men AI-tjekket fejlede. Tjek produktets allergener under Produkter.", "error");
+              if (!method.includes("claude")) showToast(allergenData.ai_skipped ? "Godkendt. " + AI_LIMIT_TEXT : "Godkendt, men AI-tjekket fejlede. Tjek produktets allergener under Produkter.", "error");
             }
           } catch (e) {
             console.warn("Reparse fejl efter godkendelse:", e);
@@ -783,6 +739,7 @@ export function useAdmin(accessToken, userId) {
       showToast(e.status === 409 ? e.message : "Godkendelse fejlede: " + e.message + " — indsendelsen er ikke godkendt, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
+    loadAdminStats(); // sidebjælkens tal (ventende indsendelser, åbne tickets) følger handlingen
   };
 
   // En afvisning skal have en begrundelse: den sendes til indsenderen (N3) og
@@ -816,6 +773,7 @@ export function useAdmin(accessToken, userId) {
       showToast("Afvisning fejlede: " + e.message + " — indsendelsen er ikke afvist, listen er opdateret", "error");
       loadSubmissions(submissionFilter);
     }
+    loadAdminStats();
   };
 
   const toggleSubmissionSelection = (id) => setSelectedSubmissionIds(ids =>
@@ -848,7 +806,7 @@ export function useAdmin(accessToken, userId) {
       + (skipped > 0 ? `\n\n${skipped} mangler oplysninger og springes over (gennemgå dem enkeltvis).` : "");
     if (!window.confirm(question)) return;
     setBulkActionLoading(true);
-    let succeeded = 0, failed = 0, aiFailed = 0;
+    let succeeded = 0, failed = 0, aiFailed = 0, aiLimited = 0;
     for (const id of ids) {
       const submission = submissions.find(s => s.id === id);
       if (!submission) continue;
@@ -888,7 +846,7 @@ export function useAdmin(accessToken, userId) {
                   reparsed_at: new Date().toISOString(),
                 }),
               });
-              if (!method.includes("claude")) aiFailed++;
+              if (!method.includes("claude")) { if (allergenData.ai_skipped) aiLimited++; else aiFailed++; }
             }
             else aiFailed++;
           } catch (e) { console.warn("Bulk-reparse fejl:", e); aiFailed++; }
@@ -904,9 +862,11 @@ export function useAdmin(accessToken, userId) {
     setBulkActionLoading(false);
     const parts = [failed > 0 ? `${succeeded} af ${ids.length} godkendt, ${failed} fejlede` : `${succeeded} indsendelser godkendt`];
     if (aiFailed > 0) parts.push(`${aiFailed} uden AI-tjek (tjek dem under Produkter)`);
+    if (aiLimited > 0) parts.push(`${aiLimited} uden AI-tjek, fordi AI-loftet for i dag er nået ("Kør nu" under Import kan tage dem igen i morgen)`);
     if (skipped > 0) parts.push(`${skipped} sprunget over`);
-    showToast(parts.join(". "), failed > 0 || aiFailed > 0 ? "error" : "success");
+    showToast(parts.join(". "), failed > 0 || aiFailed > 0 || aiLimited > 0 ? "error" : "success");
     if (failed > 0) loadSubmissions(submissionFilter);
+    loadAdminStats();
   };
 
   const bulkRejectSubmissions = async () => {
@@ -934,6 +894,7 @@ export function useAdmin(accessToken, userId) {
     setBulkActionLoading(false);
     showToast(failed > 0 ? `${succeeded} af ${ids.length} afvist — ${failed} fejlede` : `${succeeded} indsendelser afvist`, failed > 0 ? "error" : "success");
     if (failed > 0) loadSubmissions(submissionFilter);
+    loadAdminStats();
   };
 
   // `note` er teamets afsluttende kommentar; den gemmes som admin_note og vises i beskeden til brugeren (N6).
@@ -952,6 +913,7 @@ export function useAdmin(accessToken, userId) {
       console.error("updateTicketStatus:", e);
       showToast("Kunne ikke opdatere ticket-status: " + e.message, "error");
     }
+    loadAdminStats();
   };
 
   const cleanOcrWithAI = async (text) => {
@@ -964,6 +926,7 @@ export function useAdmin(accessToken, userId) {
         headers: makeHeaders(accessToken),
         body: JSON.stringify({ text, force_ai: true }),
       });
+      if (data.ai_skipped) showToast("AI-loftet for i dag er nået, så kun nøgleordsmotoren har tjekket teksten.", "error");
       if (data.success && data.allergen_flags) {
         // Opdater flags fra AI-analyse. VIGTIGT: skal ind under
         // .allergen_flags — UI'et og godkendelses-payloaden læser

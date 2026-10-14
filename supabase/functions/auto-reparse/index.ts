@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
 
   try {
     const { manual = false, limit = 50 } = await req.json().catch(() => ({}));
-    const batchLimit = Math.min(Number(limit) || 50, 200);
+    // "Kør nu" fra admin højst 25 også her (ikke kun i panelet); cron-jobbet højst 200 som før.
+    const batchLimit = Math.min(Number(limit) || 50, manual ? 25 : 200);
 
     // Hent produkter der skal reparseres
     // Prioritér: pending > low > medium (kun ved manuel kørsel)

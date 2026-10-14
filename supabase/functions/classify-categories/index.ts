@@ -15,6 +15,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
+import { withinTotalAiLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
 import { TAXONOMY as SHARED_TAXONOMY } from "../_shared/categoryTaxonomy.js";
 
@@ -118,10 +119,13 @@ Deno.serve(async (req) => {
 
     let classified = 0;
     let errors = 0;
+    let stoppedByLimit = false;
     const chunkSize = Math.min(Number(batch_size) || 20, 30);
 
     for (let i = 0; i < products.length; i += chunkSize) {
       const chunk = products.slice(i, i + chunkSize);
+      // Samlet AI-dagsloft for hele appen: er det nået, venter resten til i morgen (produkterne stemples ikke).
+      if (!(await withinTotalAiLimit(supabase))) { stoppedByLimit = true; break; }
       try {
         const results = await classifyBatch(chunk, apiKey);
         for (const r of results) {
@@ -152,7 +156,7 @@ Deno.serve(async (req) => {
       .is("subcategory_classified_at", null)
       .not("name", "is", null);
 
-    return new Response(JSON.stringify({ classified, errors, remaining: remaining ?? null }), {
+    return new Response(JSON.stringify({ classified, errors, remaining: remaining ?? null, ...(stoppedByLimit ? { ai_skipped: "daily_limit" } : {}) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

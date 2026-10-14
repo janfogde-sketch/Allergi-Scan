@@ -1,6 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
-import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
+import { reportLimitHit, withinTotalAiLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor, getCaller } from "../_shared/http.ts";
 
 const corsHeaders = corsFor();
@@ -25,8 +25,10 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
-  if (!(await withinUserLimit(serviceClient, caller.id, "ocr"))) {
-    await reportLimitHit(serviceClient, caller.id, "ocr", "billedlæsning (OCR)");
+  const withinOwn = await withinUserLimit(serviceClient, caller.id, "ocr");
+  if (!withinOwn) await reportLimitHit(serviceClient, caller.id, "ocr", "billedlæsning (OCR)");
+  // Samlet dagsloft for hele appen: samme besked som det personlige loft (ingen ny tekst til brugeren).
+  if (!withinOwn || !(await withinTotalAiLimit(serviceClient))) {
     return new Response(
       JSON.stringify({ error: "Du har brugt dagens grænse for billedlæsning. Prøv igen i morgen.", code: "daily_limit", success: false }),
       { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
