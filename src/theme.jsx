@@ -1323,7 +1323,7 @@ button.tag:active,.legal-topbar-back:active,.invite-tab:active,
 .skip-link{position:absolute;top:-100px;left:16px;background:var(--green);color:var(--on-green);padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;text-decoration:none;}
 .skip-link:focus{top:8px;}
 @media (prefers-reduced-motion: reduce) {
-  *{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-delay:0s !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;transition-delay:0s !important;scroll-behavior:auto !important;}
   .spinner{animation:none;border-color:var(--green);}
 }
 @media (prefers-contrast: more) {
