@@ -152,6 +152,7 @@ textarea.todo-title-input{min-height:44px;resize:none;overflow:hidden;font-size:
 textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green);}
 .todo-comment-body.clamped{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
 .todo-comment-body{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-size:13px;line-height:1.45;margin-top:3px;}
+.todo-activity{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.4;overflow-wrap:anywhere;}
 .todo-comment.fresh{border-color:var(--green);background:var(--green-selected-bg);}
 .todo-confirm{background:var(--red-lt);border:1px solid var(--red-md);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;}
 .todo-toolbar{gap:6px;margin-bottom:6px;}

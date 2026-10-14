@@ -318,6 +318,11 @@ tællere, filtre på spor og ansvarlig, fritekstsøgning, afkrydsning direkte i 
 Menupunktet viser et rødt tal for åbne opgaver med høj prioritet (ikke ventende) eller overskredet frist. **Claude læser den med SQL og skriver til den med workflowet "Skriv til to do"** (`todo_apply`, kun `admin_todos`/kommentarer, ingen sletning; se `docs/todo-skrivning.md`, ikke migrationsfiler); hold den opdateret,
 når et punkt klares, eller et nyt opstår. Dokumentér ikke åbne punkter to steder.
 
+**Historik (14. okt. 2026, migration `20261015003000_todo_historik.sql`):** `admin_todo_activity` logger hver ændring af status, prioritet,
+ansvarlig og frist (trigger på `admin_todos`): hvem (`changed_by`), hvordan (`via`: admin, ticket = fulgte ticketstatus, workflow = "Skriv til to do",
+system) og fra/til. Kun admins kan læse; ingen kan skrive, rette eller slette (kun triggeren skriver). Slettes med opgaven og efter 12 mdr.
+(`cleanup_notifications`). Vises i opgavens vindue under kommentarerne (de seneste 5, "Vis alle"). Test `supabase/tests/todo_activity.sql`.
+
 **Tickets og to do er flettet sammen (1. okt. 2026, migration `20261001092359_tickets_todos_sync.sql`).** `admin_todos.ticket_id`
 (unik, sletter opgaven, hvis tickets slettes) peger på `feedback_tickets`. Triggere: en ny ticket giver en opgave
 (`trg_ticket_to_todo_insert`, må aldrig blokere indsendelsen; fejl logges i `client_errors`); `classify_ticket(type, tekst)` vælger
