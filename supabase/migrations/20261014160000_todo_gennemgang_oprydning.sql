@@ -31,5 +31,5 @@ where exists (select 1 from public.admin_todos where id = '2d6cafcf-bc2d-4f12-a0
 insert into public.admin_todos (title, description, priority, track, assignee_id)
 select 'Design: tjek at intet ser anderledes ud efter oprydning af død CSS',
  'Forslag (Claude, 14. okt. 2026): ca. 70 ubrugte CSS-regler og 3 animationer er fjernet fra theme.jsx (PR 754). Åbn Scan-forsiden, Profil, Historik, Indkøbsliste og login/onboarding, og tjek at afstande, farver og runde hjørner ser ud som før. Meld afvigelser som ticket. Foreslået frist: 21. okt. 2026.',
- 'low', 'design', 'd8ff299b-449e-4c88-98fd-58f397199f1c'
+ 'low', 'design', (select id from public.users where role = 'admin' and name ilike 'Bj%rn%' order by created_at limit 1)
 where not exists (select 1 from public.admin_todos where title = 'Design: tjek at intet ser anderledes ud efter oprydning af død CSS');
