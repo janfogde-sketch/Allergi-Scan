@@ -54,7 +54,22 @@ Deno.serve(async (req) => {
 
       if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-      return new Response(JSON.stringify({ success: true, favorites }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Friske allergendata (G8, 14. okt. 2026): en favorit vurderes mod produktets NUVÆRENDE allergenflag og ingredienser,
+      // ikke mod øjebliksbilledet fra da den blev gemt (som historikken). Mangler produktet, er `product` null, og appen viser
+      // da aldrig grønt ud fra det gamle øjebliksbillede.
+      const eans = [...new Set((favorites ?? []).map((f: { ean: string }) => f.ean).filter(Boolean))];
+      const fresh = new Map<string, Record<string, unknown>>();
+      if (eans.length) {
+        const { data: products, error: prodErr } = await supabase
+          .from("products")
+          .select("ean, name, allergen_flags, ingredients_text, verified_status, source, allergen_source_method, allergen_quality")
+          .in("ean", eans);
+        if (prodErr) return new Response(JSON.stringify({ error: prodErr.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        for (const p of products ?? []) fresh.set(p.ean, p);
+      }
+      const withFresh = (favorites ?? []).map((f: { ean: string }) => ({ ...f, product: fresh.get(f.ean) ?? null }));
+
+      return new Response(JSON.stringify({ success: true, favorites: withFresh }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // POST — tilføj favorit
