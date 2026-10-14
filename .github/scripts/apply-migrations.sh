@@ -19,7 +19,9 @@ for f in $(ls supabase/migrations/*.sql | sort); do
   v=$(basename "$f" | cut -d_ -f1)
   [[ "$v" =~ ^[0-9]{14}$ ]] || continue
   [[ "$v" > "$CUTOFF" ]] || continue
-  echo "$applied" | grep -qx "$v" && continue
+  # Here-string, ikke pipe: med pipefail kan "echo | grep -q" fejle med "Broken pipe", når grep stopper tidligt,
+  # og så blev en allerede anvendt migration kørt igen (fejl 400, 14. okt. 2026).
+  grep -qx "$v" <<<"$applied" && continue
   pending+=("$f")
 done
 
