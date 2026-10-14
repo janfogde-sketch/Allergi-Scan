@@ -20,7 +20,7 @@ Cloud-miljøet når eatsafe.dk, www.eatsafe.dk, Supabase og world.openfoodfacts.
 - Egen SMTP via Resend (`noreply@eatsafe.dk`). "Confirm email" er slået til.
 - Send Email Hook (`auth-send-email`) sender alle auth-mails med skabelonerne i `supabase/templates/auth/` (`src/CONTEXT.md` §11).
 - Der findes kun én velkomstmail: `supabase/templates/resend/N1-velkomst.html` (type `welcome_onboarded`, sendt efter onboarding).
-- Alle 29 mailskabeloner (inkl. N9 familieinvitation, sendt direkte af `family-invite`) deler mørk palette (`supabase/templates/resend/README.md`, test `src/mailDarkMode.test.js`). Ændr den i alle samtidig.
+- Alle 24 mailskabeloner (inkl. N9 familieinvitation, sendt direkte af `family-invite`) deler mørk palette (`supabase/templates/resend/README.md`, test `src/mailDarkMode.test.js`). Ændr den i alle samtidig.
 - `deploy-auth-templates.yml` kører kun manuelt (tilbagerulning).
 - `RESEND_API_KEY` findes kun som edge-secret, ikke i Vault.
 
