@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
+import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.js";
 
 export function useAdmin(accessToken, userId, clearAuth) {
   // State
@@ -359,6 +360,7 @@ export function useAdmin(accessToken, userId, clearAuth) {
         name: full?.name || "", brand: full?.brand || "", category: full?.category || "",
         ingredients_text: full?.ingredients_text || "",
         allergen_flags: full?.allergen_flags || {},
+        origAllergenFlags: full?.allergen_flags || {},
         verified_status: full?.verified_status || "unverified",
       });
     } catch (e) {
@@ -379,6 +381,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
           ingredients_text: editingProduct.ingredients_text,
           allergen_flags: editingProduct.allergen_flags,
           verified_status: editingProduct.verified_status,
+          // Håndrettede allergener markeres "verified" (G4), så natjobbet og "Kør nu" springer produktet over.
+          ...(JSON.stringify(editingProduct.allergen_flags || {}) !== JSON.stringify(editingProduct.origAllergenFlags || {}) ? { allergen_quality: "verified" } : {}),
         }),
       });
       const row = Array.isArray(updated) ? updated[0] : null;
@@ -732,7 +736,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
                 method: "PATCH",
                 headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
                 body: JSON.stringify({
-                  allergen_flags: allergenData.allergen_flags,
+                  // Kun opadgående (G4): admins gennemgåede valg må ikke sænkes af en ny AI-beregning.
+                  allergen_flags: mergeFlagsUpward(allergenFlags, allergenData.allergen_flags),
                   allergen_quality: method.includes("claude") ? "high" : "medium",
                   allergen_source_method: method,
                   reparsed_at: new Date().toISOString(),
@@ -844,7 +849,8 @@ export function useAdmin(accessToken, userId, clearAuth) {
               await apiCall(`${SUPABASE_URL}/rest/v1/products?ean=eq.${ean}`, {
                 method: "PATCH", headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
                 body: JSON.stringify({
-                  allergen_flags: allergenData.allergen_flags,
+                  // Kun opadgående (G4): admins gennemgåede valg må ikke sænkes af en ny AI-beregning.
+                  allergen_flags: mergeFlagsUpward(allergenFlags, allergenData.allergen_flags),
                   allergen_quality: method.includes("claude") ? "high" : "medium",
                   allergen_source_method: method,
                   reparsed_at: new Date().toISOString(),

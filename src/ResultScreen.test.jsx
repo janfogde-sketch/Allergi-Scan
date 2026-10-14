@@ -24,7 +24,7 @@ const product = (over = {}) => ({
 function setup({ scan, profile = {}, user = {}, family = [], activeProfiles = ["me"], alternatives = [], addToList = vi.fn() } = {}) {
   const setScreen = vi.fn();
   const profileValue = {
-    scanFamily: family, allergens: [], customAllerg: [], activeProfiles, ...profile,
+    scanFamily: family, allergens: [], customAllerg: [], activeProfiles, profileLoadStatus: "ok", ...profile,
   };
   const ui = (
     <AuthProvider value={{ user: { name: "Jan", diets: [], allergenLevels: {}, ...user }, accessToken: "t" }}>

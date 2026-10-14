@@ -51,7 +51,7 @@ function HistoryFilters({ filters, value, onChange }) {
 export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { allergens, customAllerg, scanFamily: family, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
   const { setScreen } = useNavigationContext();
   const { history, historyLoading, historyScope, historyError, loadHistory, clearHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
@@ -123,21 +123,10 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     return { status: ev.level, text, checkedFor, multi };
   };
 
-  // Genåbner et tidligere scan-resultat for SAMME profiler som ved den
-  // oprindelige scanning (26. sept. 2026, brugerfeedback) — sætter appens
-  // aktive profiler til den historiske liste og genbruger derefter PRÆCIS
-  // samme lookupProduct-kald som resten af appen (Favoritter, "Senest
-  // scannet" m.fl.), i stedet for at bygge en selvstændig visning af et
-  // frosset resultat. Bevidst valg at hente FRISK produktdata i stedet for
-  // at genbruge `flags_triggered` her: allergendata kan være rettet siden
-  // scanningen (fx en fejlrettelse efter en indsendelse), og et frosset,
-  // muligvis forældet "sikkert"-resultat ville være et reelt sikkerheds-
-  // problem i en allergi-app. Ingen automatisk gendannelse af de tidligere
-  // aktive profiler ved tilbage-navigation — samme model som resten af
-  // appen, hvor "aktive profiler" er ét delt, globalt valg.
+  // Genåbner et tidligere scan-resultat og henter FRISK produktdata (allergendata kan være rettet siden scanningen).
+  // Historikken ændrer aldrig det delte valg af "Tjekker for": en post fra et slettet barn må ikke give en tom profil (falsk grønt).
   const openHistoryEntry = (h) => {
     if ((h.result || h.status) === "not_found") return;
-    if (h.active_profiles?.length) setActiveProfiles(h.active_profiles);
     setProductReturn({ ean: h.ean_scanned || h.code, label: "Tilbage til historik", screen: SCREENS.HISTORY });
     lookupProduct(h.ean_scanned || h.code, { via: "none" });
   };

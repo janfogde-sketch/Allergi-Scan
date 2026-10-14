@@ -416,3 +416,19 @@ export function shouldUseClaudeFallback(text, flags) {
   if (unknownE && eNumbers.length > 3) return true;
   return false;
 }
+
+// Samler gamle og nye allergenflag, så resultatet aldrig bliver mindre forsigtigt end det gamle (G4, 14. okt. 2026):
+// nej → spor → ja. "unknown" rangerer som "no" (et nyt "no" sænker aldrig et gammelt "unknown"). Bruges af auto-reparse og
+// af godkendelse af indsendelser, så håndrettede og deklarerede værdier ikke kan blive overskrevet nedad.
+const MERGE_RANK = { unknown: 0, no: 0, traces: 1, yes: 2 };
+export function mergeFlagsUpward(oldFlags, freshFlags) {
+  const old = oldFlags || {};
+  const fresh = freshFlags || {};
+  const next = { ...old };
+  for (const key of Object.keys(fresh)) {
+    const o = old[key];
+    const n = fresh[key];
+    if (o === undefined || (MERGE_RANK[n] ?? 0) > (MERGE_RANK[o] ?? 0)) next[key] = n;
+  }
+  return next;
+}
