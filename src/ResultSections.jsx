@@ -243,9 +243,9 @@ export function makeResultSections(c) {
               </h1></>}
             </div>
             <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-              <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} aria-pressed={fav} onClick={() => toggleFavorite(scanResult)}
+              <button aria-label={fav ? "Fjern favorit" : "Tilføj favorit"} aria-pressed={fav} onClick={() => { toggleFavorite(scanResult); showToast(fav ? "Fjernet fra favoritter" : "Tilføjet til favoritter", "success"); }}
                 style={{ ...UI.uw32_h32_br50_bgrgba2552_bdnone_curpointer_dflex_aicenter_jc, width:44, height:44 }}>
-                <Icon name="heart" size={18} color={fav ? "var(--red)" : "var(--ink2)"} />
+                <Icon name="heart" size={18} fill={fav ? "var(--red)" : "none"} color={fav ? "var(--red)" : "var(--ink2)"} />
               </button>
               {/* F4-9: Del vises kun, når telefonen faktisk kan dele — ellers gjorde knappen intet. */}
               {canShare && (
