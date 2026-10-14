@@ -26,3 +26,5 @@ dist-ssr
 
 # Supabase CLI local cache (ikke projektindhold)
 supabase/.temp/
+playwright-report
+test-results

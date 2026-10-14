@@ -79,3 +79,11 @@ Engangstest (testkonti, gensendt tilbagekaldelse) er et engangsscript eller en m
 - Opdatering med den indbyggede nøgle starter ikke tjekkene af sig selv. Derfor starter workflowen dem med `workflow_dispatch` (undtaget fra GitHubs regel), så der ikke skal bruges en ekstra nøgle. `migration-versions.yml`, `ci.yml` og `db-tests.yml` har derfor `workflow_dispatch`.
 - PR'er med konflikt rører workflowen ikke: ejertråden fletter main ind og pusher.
 - GitHubs merge-kø findes ikke for private personers repoer (kun for organisationer), så den kan ikke bruges her.
+
+## Klik-tests (Playwright)
+
+Små automatiske klik-tests af hovedvejene (velkomst, login-fejl, opret-konto-fane, vilkår/privatliv, admin-siden uden login) i `e2e/`. De kører mod det byggede site (`vite preview`) med en forfalsket backend (`e2e/helpers.js`): al trafik uden for testserveren afvises, så der aldrig oprettes konti eller sendes mail/push.
+
+- **CI:** workflowet `klik-tests.yml` (eget tjek "Klik-tests"). **Kun vis fejl** (Jan, 14. okt. 2026): tjekket er ikke påkrævet i branch-beskyttelsen og stopper ikke merge. Vil vi senere gøre det blokerende, tilføjes det som påkrævet tjek efter et par ugers erfaring.
+- **Lokalt/cloud:** `npm run build && PW_CHROMIUM_PATH=<sti til forhåndsinstalleret Chromium> npm run test:e2e` (cloud: `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`). Hent aldrig browsere lokalt.
+- Nye veje tilføjes som `e2e/*.spec.js`; brug `isolerNetvaerk(page)` og ingen rigtige konti.

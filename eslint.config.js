@@ -41,7 +41,7 @@ export default defineConfig([
   },
   {
     // Tests og scripts kører i Node (global, process).
-    files: ['**/*.test.{js,jsx}', 'scripts/**', 'vite.config.ts'],
+    files: ['**/*.test.{js,jsx}', 'scripts/**', 'vite.config.ts', 'playwright.config.js'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {
