@@ -77,6 +77,8 @@ Kamera: bruges til stregkodescanning og billede af emballage; billeder forlader 
 | App info and performance | Crash logs, Diagnostics | Ja | Nej | Nej | Analytics (fejlfinding), App functionality |
 | Device or other IDs | Push-token | Ja | Nej | Ja | App functionality |
 
+Open Food Facts-billeder hentes af EatSafes egen server (`/api/off-image`) uden brugerens IP eller enhedsoplysninger; derfor er alle rækker ovenfor "Delt: Nej" (14. okt. 2026).
+
 Ikke indsamlet: Location, Financial info, Contacts, Calendar, Messages, Audio, Files, Web browsing, Advertising ID.
 
 ## Andre erklæringer ved indsendelsen

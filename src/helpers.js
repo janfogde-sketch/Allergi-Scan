@@ -64,6 +64,14 @@ export function verifiedImageUrl(product) {
   return /^\d{8,14}$/.test(ean) && ean === urlCode ? url : null;
 }
 
+// Open Food Facts-billeder vises via vores egen server (/api/off-image), så Open Food Facts aldrig ser brugerens IP eller enhed.
+// Øvrige adresser returneres uændret. verifiedImageUrl/imageAttribution arbejder stadig på den oprindelige adresse.
+export function displayImageUrl(url) {
+  if (typeof url !== "string") return url;
+  const m = url.match(/^https:\/\/images\.openfoodfacts\.org\/(images\/products\/(?:\d+\/){1,5}[\w.-]+\.(?:jpe?g|png|webp))$/i);
+  return m ? `/api/off-image?p=${encodeURIComponent(m[1])}` : url;
+}
+
 export function imageAttribution(url) {
   if (typeof url !== "string") return null;
   return /^https:\/\/images\.openfoodfacts\.org\//i.test(url) ? "Billede: Open Food Facts, CC BY-SA" : null;

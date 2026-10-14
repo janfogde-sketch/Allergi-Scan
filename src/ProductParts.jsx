@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS } from "./constants.jsx";
-import { initials, compareAllergens, productDisplayName, evaluateProductForProfiles, verifiedImageUrl, STATUS_TEXT } from "./helpers.js";
+import { initials, compareAllergens, productDisplayName, evaluateProductForProfiles, verifiedImageUrl, displayImageUrl, STATUS_TEXT } from "./helpers.js";
 import { UI } from "./styleUtils.js";
 import { Icon } from "./Icons.jsx";
 
@@ -135,7 +135,7 @@ export function getProductIcon() {
 export function ProductImage({ product, size = 64, height = size }) {
   // height ≠ size: ensartet beholder (fx 48 × 56) med centreret, uforvrænget billede på neutral baggrund.
   const boxed = height !== size;
-  const src = verifiedImageUrl(product);
+  const src = displayImageUrl(verifiedImageUrl(product));
   const placeholder = (display = "flex") => (
     <div aria-hidden="true" style={{ width:size, height, background:"var(--paper2)", borderRadius:8, display, alignItems:"center", justifyContent:"center", flexShrink:0 }}>
       <Icon name="package" size={Math.round(size*0.42)} color="var(--muted2)" />
