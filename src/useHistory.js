@@ -12,6 +12,35 @@ import { useState, useCallback } from "react";
 import { SUPABASE_URL } from "./constants.jsx";
 import { makeHeaders, apiCall } from "./helpers.js";
 
+// G8 (14. okt. 2026): en favorit vurderes mod produktets NUVÆRENDE allergenflag og ingredienser (`f.product` fra favorites-
+// funktionen), ikke mod øjebliksbilledet fra da den blev gemt. Findes produktet ikke længere, bruges øjebliksbilledet, men
+// `freshData:false` gør, at Favoritter aldrig viser det som grønt (samme regel som Historik).
+/** @param {any} f @param {string} userId */
+export function favoriteFromRow(f, userId) {
+  const p = f.product;
+  const fresh = p ? {
+    allergen_flags: p.allergen_flags || null,
+    ingredients: p.ingredients_text || "",
+    ingredients_text: p.ingredients_text || "",
+    verified_status: p.verified_status,
+    source: p.source,
+    allergen_source_method: p.allergen_source_method,
+    allergen_quality: p.allergen_quality,
+    // E-numre udledes igen af de friske ingredienser i evaluateProductForProfiles.
+    productENumbers: undefined,
+  } : {};
+  return {
+    ...f.product_snapshot,
+    ...fresh,
+    ean: f.ean,
+    category: f.category || null,
+    savedAt: new Date(f.added_at).getTime(),
+    savedBy: f.users?.name || null,
+    savedByMe: f.user_id === userId,
+    freshData: !!p,
+  };
+}
+
 export function useHistory({ accessToken, userId }) {
   const [history, setHistory]               = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -76,14 +105,7 @@ export function useHistory({ accessToken, userId }) {
         { headers: makeHeaders(accessToken) }
       );
       if (data?.success && Array.isArray(data.favorites)) {
-        setFavorites(data.favorites.map(f => ({
-          ...f.product_snapshot,
-          ean: f.ean,
-          category: f.category || null,
-          savedAt: new Date(f.added_at).getTime(),
-          savedBy: f.users?.name || null,
-          savedByMe: f.user_id === userId,
-        })));
+        setFavorites(data.favorites.map(f => favoriteFromRow(f, userId)));
         setFavoritesError(false);
       } else setFavoritesError(true);
     } catch { setFavoritesError(true); }
@@ -113,7 +135,7 @@ export function useHistory({ accessToken, userId }) {
         });
       } catch { await loadFavorites(); }
     } else {
-      const optimistic = { ...product, ean, savedAt: Date.now(), savedByMe: true };
+      const optimistic = { ...product, ean, savedAt: Date.now(), savedByMe: true, freshData: true };
       setFavorites(prev => [optimistic, ...prev]);
       try {
         await apiCall(`${SUPABASE_URL}/functions/v1/favorites`, {
