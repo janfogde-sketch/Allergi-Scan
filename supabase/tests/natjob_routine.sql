@@ -1,4 +1,4 @@
--- Test af natjob-trådens skrivevej (public.routine_apply m.fl., migration 20261015050000). Rulles tilbage til sidst.
+-- Test af natjob-trådens skrivevej (public.routine_apply m.fl., migration 20261015060000). Rulles tilbage til sidst.
 begin;
 do $$
 declare
