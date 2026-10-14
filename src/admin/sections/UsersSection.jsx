@@ -16,7 +16,7 @@ const CSV_COLUMNS = [
 ];
 
 export default function UsersSection({
-  adminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser, logAdminExport,
+  adminUsers, adminUsersHasMore, loadAdminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser, logAdminExport,
   openAdminUser, setOpenAdminUser, editingAdminUser, setEditingAdminUser, adminUserActionLoading,
   openAdminUserForEdit, saveAdminUserEdit,
 }) {
@@ -127,6 +127,12 @@ export default function UsersSection({
           </table>
         )}
       </div>
+      {adminUsersHasMore && (
+        <div style={{ margin: "12px 0", fontSize: 13, color: "var(--muted)", display: "flex", gap: 10, alignItems: "center" }}>
+          Der er flere brugere end de {adminUsers.length}, der vises.
+          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => loadAdminUsers({ more: true })}>Hent flere</button>
+        </div>
+      )}
 
       {openAdminUser && !editingAdminUser && (
         <div className="admin-modal-overlay" onClick={close}>

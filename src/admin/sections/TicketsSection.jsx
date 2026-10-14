@@ -136,7 +136,7 @@ const TAB_LABEL = { active: "Aktive", all: "Alle", ...STATUS_LABELS };
 const needsDone = (tab) => tab === "resolved" || tab === "all";
 const matchesTab = (t, tab) => tab === "all" || (tab === "active" ? t.status === "open" || t.status === "in_progress" : t.status === tab);
 
-export default function TicketsSection({ adminTickets, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus, getTicketScreenshotUrl }) {
+export default function TicketsSection({ adminTickets, ticketsHasMore, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus, getTicketScreenshotUrl }) {
   // "Løst" kræver en kort afsluttende kommentar, som vises i beskeden til brugeren.
   const [closing, setClosing] = useState(false);
   const [note, setNote] = useState("");
@@ -172,6 +172,9 @@ export default function TicketsSection({ adminTickets, ticketsLoading, adminTick
         ]} />
       </div>
 
+      {ticketsHasMore && !ticketsLoading && (
+        <div className="admin-info-note">Der er flere tickets end de {adminTickets.length}, der vises. Luk nogle, og opdatér listen for at se resten.</div>
+      )}
       {ticketsLoading ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter tickets…</div>
       ) : filtered.length === 0 ? (
