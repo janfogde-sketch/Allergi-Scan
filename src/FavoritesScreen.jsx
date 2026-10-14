@@ -130,15 +130,17 @@ export default function FavoritesScreen({ household, lookupProduct }) {
   // er et løbende gemt produkt, ikke et fastfrosset øjebliksbillede som en
   // historik-scanning, så "relevant EatSafe-status" betyder her "er det
   // sikkert for hvem jeg har valgt LIGE NU", ikke hvem der var valgt dengang
-  // produktet blev gemt. `product_snapshot` (gemt af toggleFavorite ud fra
-  // det fulde scanResult, se ResultScreen.jsx) indeholder allerede
-  // allergen_flags/ingredienser/E-numre — ingen ekstra opslag nødvendigt.
+  // produktet blev gemt. Allergenflag og ingredienser er produktets
+  // NUVÆRENDE data (favorites-funktionen henter dem, favoriteFromRow i
+  // useHistory.js), ikke øjebliksbilledet fra da favoritten blev gemt.
   const activeProfileList = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
   const favoriteStatus = (f) => {
     if (activeProfileList.length === 0 || !f.allergen_flags) return null;
     // Fælles statussystem (helpers.js): grøn kun med tilstrækkelige data.
     const ev = evaluateProductForProfiles(activeProfileList, f);
     const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
+    // Uden friske produktdata (produktet findes ikke længere) vises et "ingen match" aldrig som grønt (G8, som Historik).
+    if (ev.level === "safe" && f.freshData === false) return { status: "historical", text: "Historisk vurdering · ikke verificeret" };
     return { status: ev.level, text: detail ? `${ev.label} · ${detail}` : ev.label };
   };
 

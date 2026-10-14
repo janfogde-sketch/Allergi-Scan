@@ -195,8 +195,56 @@ export function logSearchSelection(query, product, accessToken) {
   }).catch(() => {});
 }
 
-export async function apiCall(url, options = {}) {
-  const res = await fetch(url, options);
+// G6 (14. okt. 2026): brugerappen registrerer her, hvordan et udløbet login fornyes (useAuth.js), og en tidsgrænse.
+// Admin-panelet registrerer intet og opfører sig som før.
+/** @type {{ refreshToken: null | (() => Promise<string | null>), timeoutMs: number }} */
+const apiConfig = { refreshToken: null, timeoutMs: 0 };
+/** @param {{ refreshToken?: null | (() => Promise<string | null>), timeoutMs?: number }} cfg */
+export function configureApiCall(cfg) {
+  if ("refreshToken" in cfg) apiConfig.refreshToken = cfg.refreshToken ?? null;
+  if (typeof cfg.timeoutMs === "number") apiConfig.timeoutMs = cfg.timeoutMs;
+}
+// Flere samtidige 401-svar deler én fornyelse.
+/** @type {Promise<string | null> | null} */
+let refreshInFlight = null;
+function refreshOnce() {
+  if (!refreshInFlight && apiConfig.refreshToken) {
+    refreshInFlight = apiConfig.refreshToken().catch(() => null).finally(() => { refreshInFlight = null; });
+  }
+  return refreshInFlight || Promise.resolve(null);
+}
+// Kun et kald med brugerens egen nøgle kan reddes af en fornyelse (ikke et kald med den offentlige nøgle).
+function userBearer(headers) {
+  const auth = headers && (headers.Authorization || headers.authorization);
+  return typeof auth === "string" && auth.startsWith("Bearer ") && auth !== `Bearer ${SUPABASE_ANON_KEY}`;
+}
+
+async function fetchWithTimeout(url, options) {
+  const ms = options.timeoutMs ?? apiConfig.timeoutMs;
+  const { timeoutMs: _t, ...init } = options;
+  if (!ms || init.signal || typeof AbortController === "undefined") return fetch(url, init);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } catch (e) {
+    if (ctrl.signal.aborted) {
+      const err = /** @type {Error & { status?: number, timeout?: boolean }} */ (new Error("Tidsgrænsen blev overskredet"));
+      err.timeout = true;
+      throw err;
+    }
+    throw e;
+  } finally { clearTimeout(timer); }
+}
+
+/** @param {string} url @param {RequestInit & { timeoutMs?: number }} [options] */
+export async function apiCall(url, options = {}, retried = false) {
+  const res = await fetchWithTimeout(url, options);
+  // Udløbet login (fx efter søvn): forny én gang og gentag kaldet med den nye nøgle. Lykkes fornyelsen ikke, går fejlen videre som før.
+  if (res.status === 401 && !retried && apiConfig.refreshToken && userBearer(options.headers)) {
+    const fresh = await refreshOnce();
+    if (fresh) return apiCall(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${fresh}` } }, true);
+  }
   if (!res.ok) {
     const bodyText = await res.text().catch(() => "");
     const parsed = (() => { try { return JSON.parse(bodyText); } catch { return {}; } })();
