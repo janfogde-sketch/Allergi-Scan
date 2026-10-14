@@ -740,7 +740,14 @@ export default function EatSafe() {
         {(screen === SCREENS.NOTFOUND || screen === SCREENS.ADMIN || screen === SCREENS.SUBMITTED || screen === SCREENS.LIST || screen === SCREENS.HISTORY || screen === SCREENS.FAVORITES || screen === SCREENS.KNOWLEDGE || screen === SCREENS.FAMILY || screen === SCREENS.MADPAS || screen === SCREENS.NOTIFICATIONS || screen === SCREENS.NOTIFICATION || screen === SCREENS.TICKET || screen === SCREENS.RESULT || screen === SCREENS.SUGGEST_EDIT || screen === SCREENS.SETTINGS || screen === SCREENS.RECALLS || screen === SCREENS.PROFILE || screen === SCREENS.EDITPROFILE || screen === SCREENS.EDITPREFERENCES || isLegalPage) && <div className="app-bg-hide" aria-hidden="true" />}
 
         {/* Skip-link for tastatur/screen reader brugere */}
-        <a href="#main-content" className="skip-link">Spring til indhold</a>
+        <a href="#main-content" className="skip-link" onClick={(e) => {
+          // De fleste skærme har ikke id="main-content"; spring til den første skærmflade i stedet for at gøre ingenting.
+          const t = document.getElementById("main-content") || document.querySelector(".screen, .welcome-screen, .login-wrap");
+          if (!t) return;
+          e.preventDefault();
+          t.setAttribute("tabindex", "-1");
+          t.focus({ preventScroll: false });
+        }}>Spring til indhold</a>
 
         {/* Installations-prompt — kun aktiv når man er landet via beta-QR'en */}
         <InstallPrompt />

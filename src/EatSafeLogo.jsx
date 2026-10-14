@@ -27,6 +27,7 @@ export const EatSafeLogo = ({ variant = "horizontal", size = 28, style, classNam
   const isSymbol = variant === "symbol" || variant === "symbol-mono";
   return (
     <img src={EATSAFE_LOGO_SRC[variant]} alt="EatSafe" draggable={false} className={className}
+      width={isSymbol ? size : Math.round(size * 10 / 3)} height={size}
       style={{ height: size, width: isSymbol ? size : "auto", display: "block", ...style }} />
   );
 };
