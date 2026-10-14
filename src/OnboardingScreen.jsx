@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { scrollBehavior } from "./motion.js";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { SCREENS } from "./constants.jsx";
@@ -174,7 +175,7 @@ export default function OnboardingScreen({
             // Tastaturet dækker ellers et fokuseret felt på lave skærme: ryk feltet ind midt på skærmen, når tastaturet er åbnet.
             onFocus={e => {
               const t = e.target;
-              if (t?.matches?.("input:not([type=checkbox]):not([type=radio]), select, textarea")) setTimeout(() => t.scrollIntoView?.({ block:"center", behavior:"smooth" }), 300);
+              if (t?.matches?.("input:not([type=checkbox]):not([type=radio]), select, textarea")) setTimeout(() => t.scrollIntoView?.({ block:"center", behavior: scrollBehavior() }), 300);
             }}>
             {/* Preview-only dev-navigation (25. sept. 2026) — springer
                 onboardStep frem/tilbage direkte, UDEN at validere trinnets

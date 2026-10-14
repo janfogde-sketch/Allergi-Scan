@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Redigering af én opgave (eller oprettelse af en ny). På mobil et fuldskærmspanel med fast header og fast bundbjælke (Gem/Slet
 // ligger over safe area), på desktop den eksisterende dialog. Indholdet scroller inde i panelet, og baggrunden er låst, mens det er åbent.
+import { scrollBehavior } from "../../motion.js";
 import React, { useState, useEffect, useRef } from "react";
 import { showToast, Icon } from "../../SharedComponents.jsx";
 import ActionsMenu from "../ActionsMenu.jsx";
@@ -103,7 +104,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
     if (justSent.current && comments.length > 0) {
       justSent.current = false;
       setFreshId(comments[comments.length - 1].id);
-      commentEnd.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+      commentEnd.current?.scrollIntoView?.({ block: "nearest", behavior: scrollBehavior() });
     }
   }, [comments]);
 
@@ -258,7 +259,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
             <form onSubmit={submitComment} style={{ display: "flex", gap: 8 }}>
               <input className="admin-search" style={{ maxWidth: "none", flex: 1 }} value={commentText} maxLength={2000} placeholder="Skriv en kommentar…"
                 aria-label="Ny kommentar" enterKeyHint="send"
-                onFocus={(e) => { const el = e.target; setTimeout(() => el.scrollIntoView?.({ block: "center", behavior: "smooth" }), 300); }}
+                onFocus={(e) => { const el = e.target; setTimeout(() => el.scrollIntoView?.({ block: "center", behavior: scrollBehavior() }), 300); }}
                 onChange={(e) => setCommentText(e.target.value)} />
               <button type="submit" className="admin-btn admin-btn-ghost admin-touch" disabled={sending || !commentText.trim()}>{sending ? "Sender…" : "Send"}</button>
             </form>

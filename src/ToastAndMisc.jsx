@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { scrollBehavior } from "./motion.js";
 import React from "react";
 import { createPortal } from "react-dom";
 import { isIosBrowserTab, pushUnavailableText } from "./usePwaInstall.js";
@@ -25,7 +26,7 @@ export function ScrollToTop({ threshold = 500 }) {
   return createPortal(
     <button
       className="scroll-top-btn"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
       aria-label="Til toppen"
     >
       <Icon name="chevronUp" size={20} color="var(--ink2)" />

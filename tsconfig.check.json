@@ -33,7 +33,6 @@
     "src/useHousehold.js",
     "src/saveMyAllergens.js",
     "src/useHealthConsent.js",
-    "src/useMadpas.js",
     "src/useArtifactPreview.js",
     "src/useDialogA11y.js",
     "src/usePwaInstall.js",

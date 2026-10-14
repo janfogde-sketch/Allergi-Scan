@@ -303,4 +303,7 @@ button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px sol
   .admin-tab-btn{flex-shrink:0;min-height:44px;}
   .admin-field input,.admin-field select.admin-select,select.admin-select,.admin-search,textarea.admin-textarea{font-size:16px;}
 }
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-delay:0s !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;transition-delay:0s !important;scroll-behavior:auto !important;}
+}
 `;
