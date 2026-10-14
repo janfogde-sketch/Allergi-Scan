@@ -49,6 +49,7 @@ import { useHealthConsent } from "./useHealthConsent.js";
 import { MADPAS_LANGUAGES, SCREENS } from "./constants.jsx";
 import { formatBuildTime, COMMIT_SHA } from "./utils.jsx";
 import { OFF_IMAGE_LICENSE_URL } from "./helpers.js";
+import { isStoreBuild } from "./storeBuild.js";
 
 // ── Lokale rækkekomponenter ──────────────────────────────────────────────────
 // Kun brugt i denne skærm (8+ ensartede rækker på tværs af seks kort) —
@@ -396,7 +397,7 @@ export default function SettingsScreen({
             (teknisk build-ID) er flyttet til en sekundær, udfoldelig
             detaljevisning i stedet for at stå som primær info — samme
             udfolde-mønster som "Hvilke data EatSafe gemmer" ovenfor. */}
-        <ChevronRow icon="clock" label="Version" value="Beta" sub={`Bygget ${formatBuildTime()}`}
+        <ChevronRow icon="clock" label="Version" value={isStoreBuild() ? "1.0" : "Beta"} sub={`Bygget ${formatBuildTime()}`}
           onClick={() => setShowBuildDetail(v => !v)} last={!showBuildDetail} />
         {showBuildDetail && (
           <div style={{ background:"var(--surface2)", borderRadius:10, padding:"10px 12px", margin:"0 0 12px", fontSize:11, color:"var(--muted)" }}>
