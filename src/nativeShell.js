@@ -63,3 +63,23 @@ export function listenForAuthReturn(onReturn) {
   })).then((h) => { if (cancelled) h?.remove?.(); else handle = h; }).catch(() => {});
   return () => { cancelled = true; handle?.remove?.(); };
 }
+
+/** @typedef {"light" | "medium" | "warning"} HapticKind */
+
+/**
+ * Vibration/haptik. I iPhone-rammen bruges telefonens egen haptik (iOS' browser kan ikke vibrere); ellers den
+ * almindelige `navigator.vibrate` med det mønster, kalderen hidtil brugte, så browseren og Android er uændrede.
+ * @param {HapticKind} kind
+ * @param {number | number[]} pattern
+ */
+export function haptic(kind, pattern) {
+  try {
+    const h = isNativeApp() ? nativePlugin("Haptics") : undefined;
+    if (h) {
+      if (kind === "warning") h.notification?.({ type: "WARNING" });
+      else h.impact?.({ style: kind === "medium" ? "MEDIUM" : "LIGHT" });
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern);
+  } catch { /* haptik må aldrig vælte en scanning */ }
+}

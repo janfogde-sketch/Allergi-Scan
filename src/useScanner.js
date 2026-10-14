@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { haptic } from "./nativeShell.js";
 import { SUPABASE_URL } from "./constants.jsx";
 import { compressImageToBase64, isValidEanChecksum, normalizeScannedBarcode, apiCall, makeHeaders } from "./helpers.js";
 import { reportError } from "./errorReporter.js";
@@ -133,7 +134,7 @@ export function useScanner({ setScanError, setLoading, onScanSuccess, accessToke
       const now = Date.now();
       if (lastScannedRef.current?.code === code && now - lastScannedRef.current.time < 1500) return;
       lastScannedRef.current = { code, time: now };
-      if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+      haptic("medium", [40, 20, 40]);
       try {
         const ctx = new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();
         const osc = ctx.createOscillator(); const gain = ctx.createGain();
