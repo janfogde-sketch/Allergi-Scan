@@ -130,7 +130,7 @@ export function makeRenderStep1(c) {
           softDisabled={!allOk}
           onClick={() => {
             if (!allOk) { setStep1Attempted(true); return; }
-            saveProfileStep1().then(() => setOnboardStep(2));
+            saveProfileStep1().then(ok => { if (ok) setOnboardStep(2); });
           }}>
           Fortsæt →
         </PrimaryButton>

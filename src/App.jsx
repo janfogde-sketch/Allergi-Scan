@@ -56,6 +56,7 @@ import { useAlternatives } from './useAlternatives.js';
 import InstallPrompt from "./InstallPrompt.jsx";
 import HelpModal from "./HelpModal.jsx";
 import SafetyInfoModal from "./SafetyInfoModal.jsx";
+import BootScreen from "./BootScreen.jsx";
 import ConsentRenewalModal from "./ConsentRenewalModal.jsx";
 import DeleteAccountModal from "./DeleteAccountModal.jsx";
 import { useAdminTools } from "./useAdminTools.js";
@@ -781,6 +782,12 @@ export default function EatSafe() {
         {/* Scan-loading — vist mens et scannet/søgt produkt slås op (fra
             runLookupProduct's setLoading(true) til resultatet er klart) */}
         <ScanLoadingOverlay show={loading} onCancel={cancelLookup} />
+
+        {/* ══ OPSTART (tom, men med Prøv igen/Log ind, hvis gendannelsen trækker ud) ══ */}
+        {screen === SCREENS.BOOT && (
+          <BootScreen onRetry={() => window.location.reload()}
+            onLogin={() => { clearAuth(); setAuthTab("login"); setScreen(SCREENS.LOGIN); }} />
+        )}
 
         {/* ══ BEKRÆFT E-MAIL ══ */}
         {screen === SCREENS.VERIFYEMAIL && (

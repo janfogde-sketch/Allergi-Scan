@@ -64,7 +64,16 @@ export async function persistRefreshToken(/** @type {string} */ refresh, persist
  * ok = ny nøgle; none = ingen session; expired = sessionen er død (log ud); error = ingen forbindelse/midlertidig fejl (behold sessionen).
  * @returns {Promise<{ status: "ok", accessToken: string, userId: string | null } | { status: "none" | "expired" | "error" }>}
  */
-export async function restoreSession() {
+export function restoreSession() {
+  // Samtidige fornyelser (planlagt, ved opvågning og efter et 401-svar) deler ét kald, så den lange nøgle kun bruges én gang.
+  if (!restoreInFlight) restoreInFlight = doRestore().finally(() => { restoreInFlight = null; });
+  return restoreInFlight;
+}
+/** @type {Promise<any> | null} */
+let restoreInFlight = null;
+
+/** @returns {Promise<{ status: "ok", accessToken: string, userId: string | null } | { status: "none" | "expired" | "error" }>} */
+async function doRestore() {
   if (!hasStoredSession()) return { status: "none" };
   const persist = isPersistent();
   const legacy = legacyRefresh();

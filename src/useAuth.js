@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { apiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR } from "./helpers.js";
+import { apiCall, configureApiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { forgetPushTokenForDevice } from "./usePush.js";
 import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, restoreSession, endSession } from "./sessionStore.js";
@@ -74,11 +74,16 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=onboarding_completed,onboarding_step`, {
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
+      // G7 (14. okt. 2026): et fejlsvar er ingen status. Før blev det tolket som "færdig", så en bruger midt i onboarding kunne
+      // lande i scanneren uden profil; nu behandles det som en netværksfejl nedenfor.
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const rows = await res.json();
-      const p = Array.isArray(rows) ? rows[0] : null;
-      // Kun en eksplicit færdig profil (true) går til hovedappen: en oprettet/verificeret konto er aldrig "færdig" af sig selv
-      if (p && p.onboarding_completed !== true) {
-        setOnboardStep(p.onboarding_step || 1);
+      if (!Array.isArray(rows)) throw new Error("Uventet svar");
+      const p = rows[0];
+      // Kun en eksplicit færdig profil (true) går til hovedappen: en oprettet/verificeret konto er aldrig "færdig" af sig selv,
+      // og en konto uden profilrække er heller ikke.
+      if (!p || p.onboarding_completed !== true) {
+        setOnboardStep(p?.onboarding_step || 1);
         setScreen(SCREENS.ONBOARD);
       } else {
         markOnboardedLocally();
@@ -302,6 +307,29 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     return () => { cancelled = true; window.removeEventListener("online", attempt); };
   }, []);
 
+  // ── Udløbet session (G6, 14. okt. 2026) ──────────────────────────────────
+  // Kan login ikke fornyes, logges brugeren ud med en forklaring i stedet for, at alt fejler med "Kontrollér forbindelsen".
+  const expireSession = useCallback(() => {
+    clearAuth();
+    setAuthTab("login");
+    setAuthError("Din session er udløbet. Log ind igen.");
+    setScreen(SCREENS.LOGIN);
+  }, [clearAuth, setScreen]);
+
+  // apiCall (helpers.js) fornyer login én gang ved et 401-svar og gentager kaldet; giver op efter 45 s uden svar.
+  useEffect(() => {
+    configureApiCall({
+      timeoutMs: 45000,
+      refreshToken: async () => {
+        const r = await restoreSession();
+        if (r.status === "ok") { saveTokens(r.accessToken, null, r.userId); return r.accessToken; }
+        if (r.status === "expired" || r.status === "none") expireSession();
+        return null;
+      },
+    });
+    return () => configureApiCall({ refreshToken: null });
+  }, [saveTokens, expireSession]);
+
   // ── Auto-refresh token — planlagt efter tokenets faktiske udløbstid ──────
   // (ikke en blind fast timer: en genindlæsning midt i en session, eller et
   // enkelt fejlet forsøg, må ikke kunne efterlade et udløbet token i op til
@@ -311,26 +339,47 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
     let cancelled = false;
     let timeoutId;
 
+    let running = false;
     const refresh = async (retry = 0) => {
+      if (running) return;
+      running = true;
       const r = await restoreSession();
+      running = false;
       if (cancelled) return;
       if (r.status === "ok") { saveTokens(r.accessToken, null, r.userId); return; }
-      if (r.status === "expired" || r.status === "none") { clearAuth(); return; }
+      if (r.status === "expired" || r.status === "none") { expireSession(); return; }
       // Prøv igen efter kort stigende ventetid, i stedet for at vente til næste planlagte refresh
       if (retry < 3) timeoutId = setTimeout(() => refresh(retry + 1), Math.min(30000 * (retry + 1), 120000));
     };
 
+    let expMs = 0;
     let delay;
     try {
       const { exp } = decodeJwtPayload(accessToken);
+      expMs = exp * 1000;
       // Forny 2 min før udløb (aldrig under 5 sek, aldrig over 45 min)
-      delay = Math.min(Math.max(exp * 1000 - Date.now() - 120000, 5000), 45 * 60 * 1000);
+      delay = Math.min(Math.max(expMs - Date.now() - 120000, 5000), 45 * 60 * 1000);
     } catch {
       delay = 45 * 60 * 1000; // Kunne ikke afkode udløbstid — fald tilbage til gammel adfærd
     }
     timeoutId = setTimeout(() => refresh(), delay);
-    return () => { cancelled = true; clearTimeout(timeoutId); };
-  }, [accessToken, saveTokens, clearAuth]);
+
+    // G6: telefonens timere står stille, mens appen sover. Når appen vises igen, eller forbindelsen kommer tilbage, fornys
+    // login med det samme, hvis nøglen er udløbet eller udløber inden for 2 min (også efter tre fejlede forsøg).
+    const onWake = () => {
+      if (document.visibilityState === "hidden") return;
+      if (expMs && expMs - Date.now() > 120000) return;
+      clearTimeout(timeoutId);
+      refresh();
+    };
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("online", onWake);
+    return () => {
+      cancelled = true; clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("online", onWake);
+    };
+  }, [accessToken, saveTokens, expireSession]);
 
   // ── Bekræftelsesskærmen ──────────────────────────────────────────────────
   const openVerifyScreen = useCallback((email) => {

@@ -5,9 +5,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
+import { SUPABASE_URL, SCREENS } from "./constants.jsx";
 import { makeHeaders, apiCall, pruneAllergenLevels } from "./helpers.js";
 import { saveMyAllergens } from "./saveMyAllergens.js";
+import { showToast } from "./SharedComponents.jsx";
 
 // onboardStep/setOnboardStep er deklareret i App.jsx og sendes ind som
 // props (29. sept. 2026, "Onboarding-persistens") — IKKE længere lokal
@@ -52,14 +53,15 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
   // der er ingen session at gemme til, så trinnene går bare videre uden netværkskald. Aldrig aktiv i produktion.
   const previewNoSession = import.meta.env.MODE === "artifact-preview" && !accessToken;
 
+  // G7 (14. okt. 2026): returnerer true, kun når serveren har bekræftet, at profilen er gemt; ellers vises en fejl, og trin 1 bliver stående.
   const saveProfileStep1 = async () => {
-    if (previewNoSession) return;
-    if (!(user.name || "").trim()) return;
+    if (previewNoSession) return true;
+    if (!(user.name || "").trim()) return false;
     const emailToSave = user.email || loginEmail || "";
     try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+      const rows = await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
         method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
+        headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
         body: JSON.stringify({
           name: user.name.trim(),
           email: emailToSave || null,
@@ -72,8 +74,14 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
           gender: user.gender || null,
         }),
       });
+      if (!Array.isArray(rows) || rows.length !== 1) throw new Error("Profilen blev ikke gemt");
       setUser(u => ({ ...u, name: (u.name || "").trim(), ...(emailToSave ? { email: emailToSave } : {}) }));
-    } catch (e) { console.error("saveProfileStep1 fejl:", e); }
+      return true;
+    } catch (e) {
+      console.error("saveProfileStep1 fejl:", e);
+      showToast("Dine oplysninger kunne ikke gemmes. Tjek din forbindelse, og prøv igen.", "error");
+      return false;
+    }
   };
 
   // overrideAllergens/overrideCustomAllerg (29. sept. 2026, "auto-fremad ved
@@ -100,15 +108,24 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     });
   };
 
+  // G7 (14. okt. 2026): onboarding afsluttes kun, når serveren har bekræftet det (rækken er opdateret og siger færdig).
+  // Fejler gemmet, bliver brugeren i onboarding med en fejlbesked og kan prøve igen; før blev brugeren sendt til forsiden
+  // alligevel, uden gemte E-numre og uden velkomstmail. Returnerer true/false.
   const finishOnboard = async () => {
-    try {
-      if (!previewNoSession) await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${accessToken}`, "Prefer": "return=minimal" },
-        body: JSON.stringify({ onboarding_completed: true, e_numbers: selectedENumbers }),
-      });
-    } catch {}
+    if (!previewNoSession) {
+      try {
+        const rows = await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=onboarding_completed`, {
+          method: "PATCH",
+          headers: { ...makeHeaders(accessToken), "Prefer": "return=representation" },
+          body: JSON.stringify({ onboarding_completed: true, e_numbers: selectedENumbers }),
+        });
+        if (!Array.isArray(rows) || rows[0]?.onboarding_completed !== true) throw new Error("Onboarding blev ikke gemt");
+      } catch (e) {
+        console.error("finishOnboard fejl:", e);
+        showToast("Opsætningen kunne ikke afsluttes. Tjek din forbindelse, og prøv igen.", "error");
+        return false;
+      }
+    }
     // markOnboardingCompleted (IKKE et almindeligt setUser-kald — se dens
     // egen kommentar i App.jsx for hele fejlfindingen) opdaterer en ref
     // SYNKRONT, så App.jsx's route guard garanteret ser "færdig" allerede i
@@ -122,6 +139,7 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
     setEditModeLocal(false);
     setEditMode(false);
     setIsOAuth(false);
+    return true;
   };
 
   return {
