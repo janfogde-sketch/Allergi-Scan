@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 import { analyzeIngredients, liftGlutenFromWheat, stripHtml } from "../_shared/allergenEngine.js";
 
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
@@ -155,6 +156,7 @@ Deno.serve(async (req) => {
   // ukontrollerede OFF-importer (og OFF-rate-limit-belastning) på vores vegne.
   const authHeader = req.headers.get("Authorization");
   const isCron = !!SUPABASE_SERVICE_KEY && authHeader === `Bearer ${SUPABASE_SERVICE_KEY}`;
+  let actorId = ""; // admin bag en manuel kørsel (adminloggen); tom ved cron
   if (!isCron) {
     if (!authHeader) return Response.json({ error: "Ikke autoriseret" }, { status: 401 });
     const userClient = createClient(
@@ -166,8 +168,16 @@ Deno.serve(async (req) => {
     if (!caller) return Response.json({ error: "Ugyldig token" }, { status: 401 });
     const { data: callerProfile } = await supabase
       .from("users").select("role").eq("id", caller.id).single();
-    if (callerProfile?.role !== "admin") return Response.json({ error: "Adgang nægtet — kun admin" }, { status: 403 });
+    if (callerProfile?.role !== "admin") {
+      await logAccessDenied(supabase, caller.id, "auto-import-off");
+      return Response.json({ error: "Adgang nægtet — kun admin" }, { status: 403 });
+    }
+    actorId = caller.id;
   }
+  const logRun = (outcome: "ok" | "mislykket", extra: Record<string, unknown> = {}) => actorId
+    ? logAdminEvent(supabase, actorId, "import_koert", "edge_function", "auto-import-off",
+        { funktion: "auto-import-off", antal: stats.imported, fejl_antal: stats.error, ...extra }, outcome)
+    : Promise.resolve();
 
   const stats = { imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
   const log: string[] = [];
@@ -278,8 +288,10 @@ Deno.serve(async (req) => {
       }
     }
   } catch (e: any) {
+    await logRun("mislykket", { fejl: fejlkode(e) });
     return Response.json({ ok: false, error: e.message, stats }, { status: 500 });
   }
 
+  await logRun("ok");
   return Response.json({ ok: true, stats, log });
 });

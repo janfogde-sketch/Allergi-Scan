@@ -30,6 +30,7 @@
 
 import { mergeFlagsUpward } from "../_shared/allergenEngine.js";
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,7 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+  let actorId = ""; // admin bag "Kør nu" (adminloggen); tom ved cron
   if (!isInternalCall) {
     const userClient = createClient(
       supabaseUrl,
@@ -64,11 +66,13 @@ Deno.serve(async (req) => {
     const { data: callerRow } = caller
       ? await supabase.from("users").select("role").eq("id", caller.id).single()
       : { data: null };
+    if (caller && callerRow?.role !== "admin") await logAccessDenied(supabase, caller.id, "auto-reparse");
     if (!caller || callerRow?.role !== "admin") {
       return new Response(JSON.stringify({ error: "Ikke autoriseret" }), {
         status: 401, headers: { ...CORS, "Content-Type": "application/json" },
       });
     }
+    actorId = caller.id;
   }
 
   try {
@@ -160,12 +164,19 @@ Deno.serve(async (req) => {
 
     console.log(`auto-reparse: reparsed=${reparsed}, skipped=${skipped}, errors=${errors}, manual=${manual}`);
 
+    if (actorId) {
+      await logAdminEvent(supabase, actorId, "genanalyse_koert", "edge_function", "auto-reparse",
+        { funktion: "auto-reparse", antal: reparsed, fejl_antal: errors });
+    }
     return new Response(JSON.stringify({ reparsed, skipped, errors, total: products.length, manual }), {
       headers: { ...CORS, "Content-Type": "application/json" },
     });
 
   } catch (e) {
     console.error("auto-reparse fejl:", e);
+    if (actorId) {
+      await logAdminEvent(supabase, actorId, "genanalyse_koert", "edge_function", "auto-reparse", { funktion: "auto-reparse", fejl: fejlkode(e) }, "mislykket");
+    }
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500, headers: { ...CORS, "Content-Type": "application/json" },
     });
