@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 // ─────────────────────────────────────────────────────────────────────────────
 // barcodeDecode.js
 // Stregkode-afkodning med ZXing (det eneste stregkode-bibliotek i appen).

@@ -90,7 +90,14 @@
     "src/admin/navLogic.js",
     "src/useDeleteAccount.js",
     "src/useScanner.js",
-    "src/useAdmin.js"
+    "src/useAdmin.js",
+    "src/chunkReload.js",
+    "src/devBadge.js",
+    "src/nativeApple.js",
+    "src/nativePush.js",
+    "src/nativeShell.js",
+    "src/useRecentRecalls.js",
+    "src/barcodeDecode.js"
   ],
   "exclude": [
     "node_modules"
