@@ -362,8 +362,9 @@ Go-skabelonsyntaks med `{{ .ConfirmationURL }}`, `{{ .Token }}`, `{{ .Email }}`,
 fejler, hvis den ikke er ajour).
 
 **Funktionen** (`supabase/functions/auth-send-email/index.ts`, `_shared/authMail.ts`, `_shared/standardWebhook.ts`):
-signeret webhook (Standard Webhooks; 401 uden gyldig signatur, tolerance 5 min). Bygger verify-linket
-`{SUPABASE_URL}/auth/v1/verify?token={token_hash}&type={email_action_type}&redirect_to=…`. Ved skift af e-mail med "Secure email
+signeret webhook (Standard Webhooks; 401 uden gyldig signatur, tolerance 5 min). Bygger linket direkte til appen
+`https://www.eatsafe.dk/?token_hash=…&type={email_action_type}&email={modtager}` (dev.eatsafe.dk, hvis `redirect_to` er dér); appens
+"Fortsæt som"-side bruger det først efter tryk (`src/authLink.js`, 15. okt. 2026, sikkerhedsfund S4). Ved skift af e-mail med "Secure email
 change" sendes to mails (nuværende adresse: `token_hash_new`; ny adresse: `token_hash` — Supabases felter er byttet om). Typer uden skabelon
 (fx `password_changed_notification`) svares 200 uden afsendelse. Resend-fejl (429/5xx) gentages op til tre gange, derefter svares 500, så
 Auth viser en fejl; samme `Idempotency-Key` (`auth-{webhook-id}-{n}`) hindrer dobbeltafsendelse. Fejl logges i `client_errors`

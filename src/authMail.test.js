@@ -34,9 +34,13 @@ describe("genererede skabeloner", () => {
 
 describe("confirmationUrl / renderAuthTemplate", () => {
   it("bygger verify-linket med kodet redirect", () => {
-    expect(confirmationUrl(`${URL_BASE}/`, "h h", "signup", "https://www.eatsafe.dk/?a=1&b=2"))
-      .toBe(`${URL_BASE}/auth/v1/verify?token=h%20h&type=signup&redirect_to=https%3A%2F%2Fwww.eatsafe.dk%2F%3Fa%3D1%26b%3D2`);
-    expect(confirmationUrl(URL_BASE, "h", "recovery", "")).toBe(`${URL_BASE}/auth/v1/verify?token=h&type=recovery`);
+    expect(confirmationUrl("h h", "signup", "a+b@x.dk", "https://www.eatsafe.dk/?a=1&b=2"))
+      .toBe("https://www.eatsafe.dk/?token_hash=h+h&type=signup&email=a%2Bb%40x.dk");
+    expect(confirmationUrl("h", "recovery", "a@x.dk", "https://dev.eatsafe.dk/")).toBe("https://dev.eatsafe.dk/?token_hash=h&type=recovery&email=a%40x.dk");
+    // Fremmede eller manglende adresser (og iPhone-appens egen adresse) lander altid på www.
+    for (const r of ["https://evil.example/", "dk.eatsafe.app://auth", "", undefined]) {
+      expect(confirmationUrl("h", "recovery", "a@x.dk", r).startsWith("https://www.eatsafe.dk/?")).toBe(true);
+    }
   });
   it("escaper værdier og tømmer ukendte pladsholdere", () => {
     expect(renderAuthTemplate("<a href=\"{{ .ConfirmationURL }}\">{{.Email}} {{ .Ukendt }}</a>", { ConfirmationURL: "https://x.dk/?a=1&b=2", Email: "<b>@x.dk" }))
@@ -51,7 +55,7 @@ describe("buildAuthMails", () => {
     expect(m.to).toBe("anna@example.dk");
     expect(m.template).toBe("confirmation");
     expect(m.subject).toBe("Bekræft din e-mail – EatSafe");
-    expect(m.html).toContain(`href="${URL_BASE}/auth/v1/verify?token=hash1&amp;type=signup&amp;redirect_to=https%3A%2F%2Fwww.eatsafe.dk%2F"`);
+    expect(m.html).toContain(`href="https://www.eatsafe.dk/?token_hash=hash1&amp;type=signup&amp;email=anna%40example.dk"`);
     expect(m.html).not.toMatch(/\{\{/);
   });
   it("recovery, invite, magiclink og email bruger hver deres skabelon", () => {
@@ -71,20 +75,20 @@ describe("buildAuthMails", () => {
     const [m] = buildAuthMails(payload({ email_action_type: "reauthentication", token: "246810", token_hash: "" }), URL_BASE);
     expect(m.template).toBe("reauthentication");
     expect(m.html).toContain("246810");
-    expect(m.html).not.toContain("/auth/v1/verify");
+    expect(m.html).not.toContain("token_hash=");
   });
   it("e-mailskift med Secure email change: to mails med byttede token-felter", () => {
     const mails = buildAuthMails(payload({ email_action_type: "email_change", token: "111111", token_hash: "hashNy", token_new: "222222", token_hash_new: "hashNuvaerende" }, { ...user, new_email: "ny@example.dk" }), URL_BASE);
     expect(mails.map((m) => m.to)).toEqual(["anna@example.dk", "ny@example.dk"]);
-    expect(mails[0].html).toContain("token=hashNuvaerende"); // nuværende adresse: token_hash_new
-    expect(mails[1].html).toContain("token=hashNy"); // ny adresse: token_hash
+    expect(mails[0].html).toContain("token_hash=hashNuvaerende&amp;type=email_change&amp;email=anna%40example.dk"); // nuværende adresse: token_hash_new
+    expect(mails[1].html).toContain("token_hash=hashNy&amp;type=email_change&amp;email=ny%40example.dk"); // ny adresse: token_hash
     for (const m of mails) { expect(m.html).toContain("anna@example.dk"); expect(m.html).toContain("ny@example.dk"); }
   });
   it("e-mailskift uden Secure email change: én mail til den nye adresse", () => {
     const mails = buildAuthMails(payload({ email_action_type: "email_change", token_hash: "hashNy" }, { ...user, new_email: "ny@example.dk" }), URL_BASE);
     expect(mails).toHaveLength(1);
     expect(mails[0].to).toBe("ny@example.dk");
-    expect(mails[0].html).toContain("token=hashNy");
+    expect(mails[0].html).toContain("token_hash=hashNy");
   });
   it("notifikationer og ukendte typer giver ingen mail (og ingen fejl)", () => {
     for (const type of ["password_changed_notification", "email_changed_notification", "mfa_factor_enrolled_notification", "ukendt"]) {
