@@ -27,6 +27,7 @@ const ACTION_LABELS = {
   testpush_sendt: "Test-push sendt",
   adgang_naegtet: "Adgang nægtet",
   sikkerhedsmelding: "Sikkerhedsmelding",
+  ai_budget_aendret: "AI-budget ændret",
 };
 
 const TABLE_LABELS = {
@@ -39,6 +40,7 @@ const TABLE_LABELS = {
   family_invites: "Invitation",
   notification_push_overrides: "Push-tekst",
   edge_function: "Serverfunktion",
+  app_flags: "Indstilling",
 };
 
 /** @param {string} action */
@@ -132,6 +134,7 @@ export function auditTargetText(row, names) {
   if (table === "products" && d.ean) what = what ? `${what} (${d.ean})` : d.ean;
   if (table === "submissions" && d.ean) what = `EAN ${d.ean}`;
   if (table === "notification_push_overrides" || table === "edge_function") what = row.target_id || "";
+  if (table === "app_flags") what = row.target_id === "ai_budget" ? "AI-budget" : row.target_id || "";
   if (!what && row.target_id) what = shortId(row.target_id);
   return what ? `${label}: ${what}` : label;
 }
@@ -177,13 +180,14 @@ const ACTION_META = {
   import_koert: { type: "run", category: "Kørsler", verb: "kørte import via", by: "Kørt af" },
   testpush_sendt: { type: "run", category: "Push-tekster", verb: "sendte en test-push via", by: "Sendt af" },
   adgang_naegtet: { type: "security", category: "Sikkerhed", verb: "blev nægtet adgang til", by: "Forsøgt af" },
+  ai_budget_aendret: { type: "changed", category: "Indstillinger", verb: "ændrede", by: "Ændret af" },
   sikkerhedsmelding: { type: "security", category: "Sikkerhed", verb: "meldte “Det var ikke mig” for", by: "Meldt af" },
 };
 
 const ARTICLES = {
   users: "brugeren", products: "produktet", submissions: "indsendelsen", feedback_tickets: "ticketten", knowledge_base: "leksikonposten",
   family_members: "familiemedlemmet", family_invites: "invitationen", notification_push_overrides: "push-teksten",
-  edge_function: "serverfunktionen",
+  edge_function: "serverfunktionen", app_flags: "indstillingen",
 };
 
 export const AUDIT_CATEGORIES = [...new Set(Object.values(ACTION_META).map((m) => m.category))];
