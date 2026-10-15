@@ -45,7 +45,7 @@ describe.each(WIDTHS)("bredde %i px (%s)", (w) => {
   it("Aktivitetslog viser handling, admin og skift uden e-mail eller navn", () => {
     atWidth(w);
     const rows = [{ id: 1, created_at: "2026-10-14T08:00:00Z", admin_id: "aaaaaaaa-1111", action: "rolle_aendret", target_table: "users", target_id: "bbbbbbbb-2222", details: { fra: "user", til: "admin" } }];
-    const { container } = render(<AuditLogSection rows={rows} loading={false} load={() => {}} />);
+    const { container } = render(<AuditLogSection rows={rows} names={{ users: {}, products: {} }} loading={false} loadingMore={false} hasMore={false} loaded error={null} load={() => {}} loadMore={() => {}} />);
     expect(container.textContent).toContain("Rolle ændret");
     expect(container.textContent).toContain("user → admin");
     expect(container.textContent).toContain("aaaaaaaa");
