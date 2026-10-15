@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React from "react";
 import { PRODUCT_ALLERGENS } from "../../constants.jsx";
 import { downloadCsv } from "../csvExport.js";
@@ -20,6 +21,7 @@ export default function ProductsSection({
   openProduct, setOpenProduct, editingProduct, setEditingProduct,
   productActionLoading, openProductForEdit, saveProductEdit, deleteProduct,
 }) {
+  const showSpinner = useShowSpinner(productsLoading, products.length > 0);
   const close = () => { setOpenProduct(null); setEditingProduct(null); };
 
   const handleDelete = () => {
@@ -48,7 +50,7 @@ export default function ProductsSection({
       </div>
 
       <div className="admin-table-wrap">
-        {productsLoading ? (
+        {showSpinner ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter produkter…</div>
         ) : products.length === 0 ? (
           <div className="admin-table-empty">{productSearch.trim() ? "Ingen produkter matcher" : "Søg for at finde et produkt"}</div>

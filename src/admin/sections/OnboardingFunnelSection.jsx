@@ -1,8 +1,10 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React from "react";
 import { summarizeFunnel } from "../onboardingFunnelLogic.js";
 
 export default function OnboardingFunnelSection({ data, loading, load }) {
+  const showSpinner = useShowSpinner(loading, !!data && summarizeFunnel(data).total > 0);
   const f = summarizeFunnel(data);
   const stuckTotal = f.steps.reduce((a, s) => a + s.stuck, 0);
 
@@ -14,7 +16,7 @@ export default function OnboardingFunnelSection({ data, loading, load }) {
         </div>
       </div>
 
-      {loading ? (
+      {showSpinner ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
       ) : !data || f.total === 0 ? (
         <div className="admin-table-empty">Ingen brugere endnu.</div>

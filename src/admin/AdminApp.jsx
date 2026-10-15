@@ -33,6 +33,7 @@ import { useClientErrors } from "./useClientErrors.js";
 import { useAuditLog } from "./useAuditLog.js";
 import AuditLogSection from "./sections/AuditLogSection.jsx";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
+import { RefreshContext } from "./RefreshContext.js";
 
 export default function AdminApp() {
   const auth = useAdminAuth();
@@ -197,6 +198,7 @@ export default function AdminApp() {
   return (
     <>
     <ToastHost />
+    <RefreshContext.Provider value={refreshing}>
     <AdminLayout
       section={section} setSection={setSection}
       userEmail={userEmail} userId={userId} accessToken={accessToken} logout={logout}
@@ -320,6 +322,7 @@ export default function AdminApp() {
         />
       )}
     </AdminLayout>
+    </RefreshContext.Provider>
     </>
   );
 }

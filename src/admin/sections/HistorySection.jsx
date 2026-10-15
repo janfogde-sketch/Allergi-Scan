@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React from "react";
 
 const TYPE_LABELS = { created: "Oprettet", updated: "Opdateret" };
@@ -10,6 +11,7 @@ function truncate(text, max = 60) {
 }
 
 export default function HistorySection({ revisionLog, revisionLogLoading, revisionLogFilter, setRevisionLogFilter, loadRevisionLog }) {
+  const showSpinner = useShowSpinner(revisionLogLoading, revisionLog.length > 0);
   return (
     <>
       <div className="admin-tabs">
@@ -20,7 +22,7 @@ export default function HistorySection({ revisionLog, revisionLogLoading, revisi
       </div>
 
       <div className="admin-table-wrap">
-        {revisionLogLoading ? (
+        {showSpinner ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter ændringshistorik…</div>
         ) : revisionLog.length === 0 ? (
           <div className="admin-table-empty">Ingen ændringer endnu</div>

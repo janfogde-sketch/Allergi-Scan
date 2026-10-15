@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React, { useState } from "react";
 import { ALLERGENS } from "../../constants.jsx";
 import { AllergenGlyph } from "../../SharedComponents.jsx";
@@ -19,6 +20,7 @@ export default function UsersSection({
   openAdminUser, setOpenAdminUser, editingAdminUser, setEditingAdminUser, adminUserActionLoading,
   openAdminUserForEdit, saveAdminUserEdit,
 }) {
+  const showSpinner = useShowSpinner(adminUsersLoading, adminUsers.length > 0);
   const [roleFilter, setRoleFilter] = useState("all");
 
   const filtered = adminUsers.filter(u => {
@@ -90,7 +92,7 @@ export default function UsersSection({
       </div>
 
       <div className="admin-table-wrap">
-        {adminUsersLoading ? (
+        {showSpinner ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter brugere…</div>
         ) : filtered.length === 0 ? (
           <div className="admin-table-empty">Ingen brugere matcher</div>
