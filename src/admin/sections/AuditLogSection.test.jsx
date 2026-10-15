@@ -70,4 +70,22 @@ describe("Aktivitetslog", () => {
     rerender(<AuditLogSection {...base} rows={[r]} hasMore={false} loadMore={loadMore} />);
     expect(screen.queryByRole("button", { name: "Vis flere" })).toBeNull();
   });
+  it("detaljen viser før/efter-tabel for indhold og udfald for et afvist forsøg", () => {
+    mobile();
+    const rows = [
+      { ...r, id: 8, details: { navn: "Havredrik", felter: ["allergens"], aendringer: [{ felt: "allergens", fra: [], til: ["gluten"] }] } },
+      { id: 9, created_at: "2026-10-15T07:43:00Z", admin_id: "a", action: "adgang_naegtet", outcome: "afvist", target_table: "edge_function", target_id: "products", details: { funktion: "products" } },
+    ];
+    render(<AuditLogSection {...base} rows={rows} />);
+    expect(screen.getAllByText("Mislykket/afvist").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByText(/rettede produktet/));
+    let d = screen.getByRole("dialog");
+    expect(d.textContent).toContain("Før");
+    expect(d.textContent).toContain("gluten");
+    expect(d.textContent).not.toContain("ikke de enkelte værdier");
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(screen.getByText(/blev nægtet adgang/));
+    d = screen.getByRole("dialog");
+    expect(d.textContent).toContain("Afvist");
+  });
 });
