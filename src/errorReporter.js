@@ -54,8 +54,14 @@ export function _resetForTests() {
   sentCount = 0;
 }
 
+// En lazy-indlæst skærm eller dialog, hvis fil er væk efter et deploy: public/js/boot.js genindlæser siden og sætter window.__chunkReloading, men Vite
+// svarer først på det fejlede import() med undefined, så React kaster en TypeError (Chrome: "reading 'default'", Safari: "_result.default").
+// Fejlen er så en forventet engangsstøj, ikke et nedbrud, og rapporteres ikke, mens genindlæsningen er undervejs.
+const STALE_CHUNK_ERROR = /reading 'default'|_result\.default/;
+
 export function shouldReport(message, stack = "") {
   if (!message || typeof message !== "string") return false;
+  if (typeof window !== "undefined" && /** @type {any} */ (window).__chunkReloading && STALE_CHUNK_ERROR.test(message)) return false;
   const text = `${message}\n${stack || ""}`;
   return !IGNORED_PATTERNS.some(re => re.test(text));
 }

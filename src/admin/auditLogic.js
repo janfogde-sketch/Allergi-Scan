@@ -28,6 +28,9 @@ const ACTION_LABELS = {
   adgang_naegtet: "Adgang nægtet",
   sikkerhedsmelding: "Sikkerhedsmelding",
   ai_budget_aendret: "AI-budget ændret",
+  fejlstatus_aendret: "Fejlstatus ændret",
+  fejl_genaabnet: "Fejl genåbnet automatisk",
+  fejlalvor_aendret: "Fejls alvorlighed ændret",
 };
 
 const TABLE_LABELS = {
@@ -41,6 +44,7 @@ const TABLE_LABELS = {
   notification_push_overrides: "Push-tekst",
   edge_function: "Serverfunktion",
   app_flags: "Indstilling",
+  client_errors: "Fejl",
 };
 
 /** @param {string} action */
@@ -134,6 +138,7 @@ export function auditTargetText(row, names) {
   if (table === "products" && d.ean) what = what ? `${what} (${d.ean})` : d.ean;
   if (table === "submissions" && d.ean) what = `EAN ${d.ean}`;
   if (table === "notification_push_overrides" || table === "edge_function") what = row.target_id || "";
+  if (table === "client_errors") what = shortId(row.target_id);
   if (table === "app_flags") what = row.target_id === "ai_budget" ? "AI-budget" : row.target_id || "";
   if (!what && row.target_id) what = shortId(row.target_id);
   return what ? `${label}: ${what}` : label;
@@ -181,13 +186,16 @@ const ACTION_META = {
   testpush_sendt: { type: "run", category: "Push-tekster", verb: "sendte en test-push via", by: "Sendt af" },
   adgang_naegtet: { type: "security", category: "Sikkerhed", verb: "blev nægtet adgang til", by: "Forsøgt af" },
   ai_budget_aendret: { type: "changed", category: "Indstillinger", verb: "ændrede", by: "Ændret af" },
+  fejlstatus_aendret: { type: "changed", category: "Fejl", verb: "ændrede status på", by: "Ændret af" },
+  fejl_genaabnet: { type: "changed", category: "Fejl", verb: "genåbnede automatisk", by: "Genåbnet" },
+  fejlalvor_aendret: { type: "changed", category: "Fejl", verb: "ændrede alvorligheden af", by: "Ændret af" },
   sikkerhedsmelding: { type: "security", category: "Sikkerhed", verb: "meldte “Det var ikke mig” for", by: "Meldt af" },
 };
 
 const ARTICLES = {
   users: "brugeren", products: "produktet", submissions: "indsendelsen", feedback_tickets: "ticketten", knowledge_base: "leksikonposten",
   family_members: "familiemedlemmet", family_invites: "invitationen", notification_push_overrides: "push-teksten",
-  edge_function: "serverfunktionen", app_flags: "indstillingen",
+  edge_function: "serverfunktionen", app_flags: "indstillingen", client_errors: "fejlen",
 };
 
 export const AUDIT_CATEGORIES = [...new Set(Object.values(ACTION_META).map((m) => m.category))];
@@ -228,9 +236,9 @@ export const cleanSearch = (/** @type {string} */ q) => String(q || "").replace(
 /** @param {any} v */
 const isDateKey = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 /** Dagens dato (YYYY-MM-DD) i dansk tid. @param {Date} d */
-const copenhagenDateKey = (d) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Copenhagen" }).format(d);
+export const copenhagenDateKey = (d) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Copenhagen" }).format(d);
 /** Midnat i dansk tid ved starten af en dato (plus et antal dage). @param {string} key @param {number} [plusDays] */
-function copenhagenDayStart(key, plusDays = 0) {
+export function copenhagenDayStart(key, plusDays = 0) {
   const base = new Date(`${key}T12:00:00Z`);
   base.setUTCDate(base.getUTCDate() + plusDays);
   const day = base.toISOString().slice(0, 10);

@@ -6,6 +6,9 @@ window.addEventListener('vite:preloadError', (event) => {
     if (Date.now() - last < 60000) return;
     sessionStorage.setItem('chunkReloadAt', String(Date.now()));
   } catch { return; }
+  // Vite svarer på det fejlede import() med undefined, når vi kalder preventDefault(); React.lazy kaster så en TypeError ("reading 'default'"),
+  // før siden når at genindlæses. Flaget får fejlrapporteringen til at springe netop den støj over (src/errorReporter.js).
+  window.__chunkReloading = true;
   event.preventDefault();
   window.location.reload();
 });
