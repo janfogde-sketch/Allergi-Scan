@@ -101,22 +101,15 @@ Deno.serve(async (req) => {
     // favorites/push_tokens/search_selections er BEVIDST ikke nævnt her —
     // deres user_id-fremmednøgler har ON DELETE CASCADE mod users, så de
     // ryddes automatisk når users-rækken slettes nedenfor (verificeret i
-    // databaseskemaet). family_memberships og shopping_list_access har
-    // derimod NO ACTION — uden eksplicit oprydning her ville sletningen af
-    // users-rækken simpelthen FEJLE (fremmednøgle-brud) for enhver bruger
-    // der nogensinde har tilsluttet sig en familie eller fået delt en
-    // indkøbsliste, og kontosletning ville se ud til bare ikke at virke.
+    // databaseskemaet). Den gamle familiemodel (families/family_memberships)
+    // nævnes heller ikke: family_memberships.user_id har ON DELETE CASCADE og
+    // families.created_by ON DELETE SET NULL, og tabellerne fjernes i S8 trin 2.
     await step("shopping_list_items", supabase.from("shopping_list_items").delete().eq("added_by", uid));
     await step("shopping_lists", supabase.from("shopping_lists").delete().eq("owner_id", uid));
     await step("shopping_list_access", supabase.from("shopping_list_access").delete().eq("user_id", uid));
     await step("scan_history", supabase.from("scan_history").delete().eq("user_id", uid));
     await step("user_allergens", supabase.from("user_allergens").delete().eq("user_id", uid));
     await step("family_members", supabase.from("family_members").delete().eq("user_id", uid));
-    await step("family_memberships", supabase.from("family_memberships").delete().eq("user_id", uid));
-    // families.created_by er nullable og har INGEN cascade — nulstil den i
-    // stedet for at slette familien, så resten af familien (og deres delte
-    // data) ikke forsvinder bare fordi opretteren sletter sin konto.
-    await step("families", supabase.from("families").update({ created_by: null }).eq("created_by", uid));
     await step("feedback_tickets", supabase.from("feedback_tickets").delete().eq("submitted_by", uid));
     await step("submissions", supabase.from("submissions").delete().eq("submitted_by", uid));
     // users slettes sidst før auth.users.

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { isNativeApp, authReturnTarget, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_RETURN } from "./nativeShell.js";
+import { isNativeApp, authReturnTarget, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_RETURN, NATIVE_AUTH_REDIRECT } from "./nativeShell.js";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 const stubWindow = (w) => vi.stubGlobal("window", w);
@@ -27,7 +27,15 @@ describe("nativeShell", () => {
     expect(authReturnTarget(`${NATIVE_AUTH_RETURN}#error=x`)).toBe("https://www.eatsafe.dk/?src=store#error=x");
     expect(authReturnTarget(NATIVE_AUTH_RETURN)).toBe("https://www.eatsafe.dk/?src=store");
   });
+  it("tager også imod Universal Link-returen på www.eatsafe.dk/auth-retur", () => {
+    expect(NATIVE_AUTH_REDIRECT).toBe("https://www.eatsafe.dk/auth-retur");
+    expect(authReturnTarget(`${NATIVE_AUTH_REDIRECT}?code=abc&evil=1`)).toBe("https://www.eatsafe.dk/?src=store&code=abc");
+    expect(authReturnTarget(`${NATIVE_AUTH_REDIRECT}/?error=access_denied`)).toBe("https://www.eatsafe.dk/?src=store&error=access_denied");
+  });
   it("afviser fremmede adresser", () => {
+    expect(authReturnTarget("https://www.eatsafe.dk/auth-returx?code=a")).toBeNull();
+    expect(authReturnTarget("https://evil.example/auth-retur?code=a")).toBeNull();
+    expect(authReturnTarget("http://www.eatsafe.dk/auth-retur?code=a")).toBeNull();
     expect(authReturnTarget("https://evil.example/#access_token=a")).toBeNull();
     expect(authReturnTarget("dk.eatsafe.app://authx#access_token=a")).toBeNull();
     expect(authReturnTarget("dk.eatsafe.app://other")).toBeNull();

@@ -29,6 +29,9 @@ projektmappen eller i en privat fil, og henvis dertil.
 ]}
 ```
 
+- **Overskrift (`title`):** simpel og på almindeligt dansk, så Jan forstår den med det samme, fx "Tjek kagens ingredienser mod pakken".
+  Ingen koder først (S5, G18), ingen "[Før beta]", ingen fagord eller filnavne. Koder, filnavne og detaljer hører til i `description`.
+  Gælder alle nye to do'er og når en eksisterende får ny overskrift.
 - `create`: kun `title` er påkrævet. Standard: `status` todo, `priority` normal, `track` backend. `assignee` er brugerens mailpræfiks (`jafo`, `bho`).
 - `update`: kun felter, der er med, ændres. Send `"due_date": null`/`"assignee": null`/`"link": null` for at tømme. Felter: title, description, status (todo/doing/blocked/done), priority (low/normal/high), track (backend/design/test/drift), assignee, due_date, link.
 - `comment`: `todo_id` og `body`. Kommentaren får ingen forfatter (workflowet har ingen bruger).

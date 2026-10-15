@@ -13,6 +13,8 @@
   Tickets ligger også på listen (status følger begge veje).
 - **Skriv til to do-listen kun med workflowet "Skriv til to do"** (`todo-write.yml`). Aldrig som migrationsfil og aldrig med `execute_sql`.
   Format og trin: `docs/todo-skrivning.md`.
+- **Overskrifter på to do'er (Jan, 15. okt.):** simple og på almindeligt dansk, så Jan forstår dem med det samme: ingen koder (S5, G18), ingen
+  "[Før beta]" først og ingen fagord eller filnavne i overskriften. Detaljer og koder står i beskrivelsen. Gælder også nye to do'er.
 - **Databaseændringer** er en fil i `supabase/migrations/` (version = unikt tidsstempel), anvendt af `apply-migrations.yml` ved merge til main.
   Ikke `apply_migration`/`execute_sql` til skrivning; læsning er fint. Edge-funktioner deployes ved merge af `deploy-edge-functions.yml`.
   Detaljer: `docs/drift.md`.
