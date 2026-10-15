@@ -28,7 +28,7 @@ import { useAdminNotifications } from "./useAdminNotifications.js";
 import { needsReviewCount } from "./recallLogic.js";
 import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
-import { attentionCount, isOverdue } from "./todoLogic.js";
+import { myOpenCount, isOverdue } from "./todoLogic.js";
 import { useClientErrors } from "./useClientErrors.js";
 import { useAuditLog } from "./useAuditLog.js";
 import AuditLogSection from "./sections/AuditLogSection.jsx";
@@ -204,8 +204,8 @@ export default function AdminApp() {
       userEmail={userEmail} userId={userId} accessToken={accessToken} logout={logout}
       pendingSubmissions={admin.adminStats?.pending_submissions}
       openTickets={admin.adminStats?.open_tickets}
-      todoAttention={todos.loaded ? attentionCount(todos.todos) : undefined}
-      todoOverdue={todos.loaded ? todos.todos.filter((t) => isOverdue(t)).length : undefined}
+      todoAttention={todos.loaded ? myOpenCount(todos.todos, userId) : undefined}
+      todoOverdue={todos.loaded ? todos.todos.filter((t) => isOverdue(t) && t.assignee_id === userId).length : undefined}
       pendingRecalls={needsReviewCount(recalls.recalls)}
       onRefresh={REFRESHERS[section] ? refreshCurrent : undefined} refreshing={refreshing}
       topbarExtra={

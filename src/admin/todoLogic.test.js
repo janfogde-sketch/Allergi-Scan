@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, hasValidDue, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, attentionCount, buildTodoPrompt, personName, activityValue, activityActor } from "./todoLogic.js";
+import { todayKey, isOverdue, dueInfo, sortTodos, urgencyTier, hasValidDue, authorName, fmtDanishDateTime, betaOverview, filterTodos, countByView, viewNeedsDone, myOpenCount, buildTodoPrompt, personName, activityValue, activityActor } from "./todoLogic.js";
 
 const T = (o) => ({ id: "x", title: "t", description: "", status: "todo", priority: "normal", track: "backend", assignee_id: null, due_date: null, created_at: "2026-10-01T08:00:00Z", completed_at: null, ...o });
 const TODAY = "2026-10-01";
@@ -103,12 +103,13 @@ describe("filtre og tællere", () => {
   it("kun Færdige og Alle kræver de færdige opgaver", () => {
     expect(["open", "mine", "unassigned", "done", "all"].filter(viewNeedsDone)).toEqual(["done", "all"]);
   });
-  it("attentionCount: høj prioritet eller overskredet, men ikke ventende eller færdig", () => {
+  it("myOpenCount: kun egne åbne opgaver (også ventende), ikke færdige eller andres", () => {
     const l = [
-      T({ priority: "high" }), T({ priority: "high", status: "blocked" }), T({ priority: "high", status: "done" }),
-      T({ due_date: "2026-09-30" }), T({ due_date: "2026-10-05" }), T(),
+      T({ assignee_id: "jan" }), T({ assignee_id: "jan", status: "blocked" }), T({ assignee_id: "jan", status: "done" }),
+      T({ assignee_id: "bjorn", priority: "high" }), T(),
     ];
-    expect(attentionCount(l, TODAY)).toBe(2);
+    expect(myOpenCount(l, "jan")).toBe(2);
+    expect(myOpenCount(l, "")).toBe(0);
   });
 });
 

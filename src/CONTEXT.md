@@ -39,7 +39,7 @@ pr. funktion står i `supabase/config.toml` (funktioner uden JWT validerer selv,
 | `family_invites` | id, token, invited_by, accepted_by, status, expires_at, invitee_email, mail_sent_at | To-vejs deling, 24t expiry; `invitee_email` slettes ved svar/udløb |
 | `scan_history` | id, user_id, ean, status, scanned_at | |
 | `product_submissions` | id, ean, name, status, submitted_by | |
-| `shopping_lists` | id, owner_id, name, family_id | Realtime aktiveret |
+| `shopping_lists` | id, owner_id, name | Realtime aktiveret |
 | `shopping_list_items` | id, list_id, name, checked, added_by, added_at | Realtime aktiveret |
 | `knowledge_base` | id, category, slug, title, summary, description, allergen_ids, status_label (faglig status, fx "Fødevareallergi"), risk_level (ikke længere brugt, alle null siden 30. sept. 2026), tips (text[], godkendte korte fakta til "Vidste du, at …"-kortet på scanner-forsiden, migration `20261004180850`; 25 tips på 23 opslag; hvert tip skal kunne findes i opslagets egen tekst) | 768 opslag. Kategorier: allergen (EU's 14 + hvede), ingredient (kun ting der kan stå i en ingrediensliste), dish (retter/produkter, kun via søgning), e_number, diet, cross_reaction, faq, fun_fact. |
 | `missing_ean_log` | ean, count, first_seen, last_seen, last_checked | Auto-logget + auto-importeret |

@@ -101,9 +101,7 @@ Deno.serve(async (req) => {
     // favorites/push_tokens/search_selections er BEVIDST ikke nævnt her —
     // deres user_id-fremmednøgler har ON DELETE CASCADE mod users, så de
     // ryddes automatisk når users-rækken slettes nedenfor (verificeret i
-    // databaseskemaet). Den gamle familiemodel (families/family_memberships)
-    // nævnes heller ikke: family_memberships.user_id har ON DELETE CASCADE og
-    // families.created_by ON DELETE SET NULL, og tabellerne fjernes i S8 trin 2.
+    // databaseskemaet).
     await step("shopping_list_items", supabase.from("shopping_list_items").delete().eq("added_by", uid));
     await step("shopping_lists", supabase.from("shopping_lists").delete().eq("owner_id", uid));
     await step("shopping_list_access", supabase.from("shopping_list_access").delete().eq("user_id", uid));

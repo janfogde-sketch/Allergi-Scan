@@ -61,7 +61,7 @@ end $$;
 do $$
 declare
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); c uuid := gen_random_uuid();
-  fid uuid; lid uuid; nid uuid; fmid uuid; iid uuid;
+  lid uuid; nid uuid; fmid uuid; iid uuid;
   r record; n int; res text := ''; val uuid; st text; sqls text[]; q text;
   role_before text; email_before text; plan_before timestamptz;
   public_read text[] := array['custom_allergens','knowledge_base','plans','products'];
@@ -73,8 +73,6 @@ begin
   update public.users set name='Test A' where id=a;
 
   insert into consent_log(user_id,kind,action,version) values (a,'health','given','1'),(b,'health','given','1');
-  insert into families(name,created_by) values ('F',a) returning id into fid;
-  insert into family_memberships(family_id,user_id) values (fid,a);
   insert into family_invites(invited_by,invitee_email) values (a,'inv-'||substr(a::text,1,8)||'@example.invalid') returning id into iid;
   insert into family_members(name,user_id,family_owner_id) values ('Barn',a,a) returning id into fmid;
   insert into favorites(user_id,ean,product_snapshot) values (a,'123','{}');
@@ -98,7 +96,7 @@ begin
   -- 2) Læsning som fremmed (B) + kontrol som ejer (A)
   for r in select * from (values
     ('users','id','A',true),('user_allergens','user_id','A',true),('family_members','user_id','A',true),
-    ('family_members','family_owner_id','A',true),('family_memberships','user_id','A',false),('families','created_by','A',false),
+    ('family_members','family_owner_id','A',true),
     ('shopping_lists','owner_id','A',true),('shopping_list_items','list_id','L',true),('shopping_list_access','list_id','L',true),
     ('shopping_list_hidden','list_id','L',false),('favorites','user_id','A',true),('scan_history','user_id','A',true),
     ('notifications','user_id','A',true),('notification_preferences','user_id','A',true),('push_tokens','user_id','A',true),
@@ -125,7 +123,7 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', b,'role','authenticated')::text, true);
   for r in select * from (values
     ('users','id','A'),('user_allergens','user_id','A'),('family_members','user_id','A'),('family_members','family_owner_id','A'),
-    ('family_memberships','user_id','A'),('families','created_by','A'),('shopping_lists','owner_id','A'),
+    ('shopping_lists','owner_id','A'),
     ('shopping_list_items','list_id','L'),('shopping_list_access','list_id','L'),('favorites','user_id','A'),
     ('scan_history','user_id','A'),('notifications','user_id','A'),('notification_preferences','user_id','A'),
     ('push_tokens','user_id','A'),('consent_log','user_id','A'),('feedback_tickets','submitted_by','A'),
@@ -159,8 +157,6 @@ begin
     format('insert into shopping_list_items(list_id,added_by) values (%L,%L)', lid, b),
     format('insert into shopping_list_access(list_id,user_id) values (%L,%L)', lid, b),
     format('insert into family_members(name,user_id,family_owner_id) values (''x'',%L,%L)', c, a),
-    format('insert into family_memberships(family_id,user_id) values (%L,%L)', fid, b),
-    format('insert into families(name,created_by) values (''x'',%L)', c),
     format('insert into consent_log(user_id,kind,action,version) values (%L,''health'',''given'',''1'')', c),
     format('insert into feedback_tickets(type,description,submitted_by) values (''bug'',''d'',%L)', c),
     format('insert into submissions(ean,submitted_by) values (''888'||substr(gen_random_uuid()::text,1,6)||''',%L)', c),
