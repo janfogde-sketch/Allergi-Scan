@@ -2,12 +2,11 @@ name: Klik-tests
 
 # Automatiske klik-tests (Playwright) af appens hovedveje, se e2e/. Kører mod det byggede site med en forfalsket backend.
 # Viser kun fejl: tjekket er IKKE påkrævet i GitHub og stopper ikke merge (Jan, 14. okt. 2026).
+# Kun på PR'er mod main (fx "udgiv" dev -> main) og kun når skærmene kan være ændret (Jan 15. okt. 2026: færre testminutter).
 on:
   pull_request:
-    paths-ignore: ["docs/**", ".claude/**", "supabase/migrations/**", "supabase/tests/**", "supabase/todo/**", "**/*.md"]
-  push:
     branches: [main]
-    paths-ignore: ["docs/**", ".claude/**", "supabase/migrations/**", "supabase/tests/**", "supabase/todo/**", "**/*.md"]
+    paths: ["src/**", "e2e/**", "public/**", "index.html", "admin.html", "package.json", "package-lock.json", "vite.config.*", "playwright.config.*", ".github/workflows/klik-tests.yml"]
   workflow_dispatch:
 
 jobs:
