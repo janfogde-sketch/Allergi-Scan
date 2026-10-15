@@ -102,3 +102,10 @@ ved `controllerchange`, men kun når en ældre service worker blev afløst (ikke
 `accessToken===null`. Alle logout-veje skal lukke egne overlays.
 
 ---
+
+## Butiksvej, premium og kilder (Jan, 5.-15. okt. 2026)
+
+- **Butiksvej:** Android først som TWA, derefter iOS via Capacitor med en lille native kerne.
+- **Premium** kommer først efter butikslancering og betatiden: scanning er ubegrænset og gratis; familiefunktion, al deling, alle børneprofiler, Leksikon og Madpas er premium. Pris 29 kr/md eller 249 kr/år pr. familie, 7 dages prøve. Ingen Stripe, ingen reklamer. Foreslå ikke scanningsgrænser eller gratis børneprofil, medmindre Jan genåbner det.
+- **Kilder (15. okt.):** ingen henvisninger til de tidligere butiks-kataloger nogen steder i appen, data, metadata eller kode, heller ikke for teknisk kyndige. Kilden hedder "katalog". Undtaget: mærket på pakken og Fødevarestyrelsens tilbagekaldelser. En spærre i databasen (`products_kilde_vagt`) forhindrer, at det kommer ind igen.
+- **Billeder:** butiksbilleder vises aldrig; Open Food Facts-billeder med kildeangivelse; `canonical_ean` bruges ikke til billedmatch.
