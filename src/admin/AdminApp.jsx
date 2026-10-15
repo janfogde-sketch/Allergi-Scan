@@ -21,6 +21,7 @@ import AiUsageSection from "./sections/AiUsageSection.jsx";
 import { useAiUsage } from "./useAiUsage.js";
 import OnboardingFunnelSection from "./sections/OnboardingFunnelSection.jsx";
 import { useOnboardingFunnel } from "./useOnboardingFunnel.js";
+import { useAdminFamily } from "./useAdminFamily.js";
 import RecallsSection from "./sections/RecallsSection.jsx";
 import { useAdminRecalls } from "./useAdminRecalls.js";
 import NotificationsSection from "./sections/NotificationsSection.jsx";
@@ -30,6 +31,7 @@ import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
 import { myOpenCount, isOverdue } from "./todoLogic.js";
 import { useClientErrors } from "./useClientErrors.js";
+import { useAdminUsers } from "./useAdminUsers.js";
 import { useAuditLog } from "./useAuditLog.js";
 import AuditLogSection from "./sections/AuditLogSection.jsx";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
@@ -45,12 +47,14 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const [refreshing, setRefreshing] = useState(false);
   const clientErrors = useClientErrors(accessToken);
+  const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
   // Et filter fra Dashboard gælder kun den ene åbning af To do: forlades siden, ryddes det, så menuen åbner den almindelige liste
   useEffect(() => { if (section !== "todo") setTodoPreset(null); }, [section]);
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
+  const adminFamily = useAdminFamily(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
@@ -105,17 +109,14 @@ export default function AdminApp() {
   useEffect(() => {
     if (!accessToken || !isAdmin) return;
     if (section === "dashboard") admin.loadAdminStats();
-    if (section === "users") admin.loadAdminUsers();
     if (section === "submissions") admin.loadSubmissions(admin.submissionFilter);
     if (section === "tickets") admin.loadTickets();
     if (section === "missing") loadMissingEans();
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") admin.loadKnowledgeEntries();
     if (section === "history") admin.loadRevisionLog();
-    if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
-    if (section === "onboarding") onboardingFunnel.load();
     if (section === "todo") todos.load();
     if (section === "recalls") recalls.load();
     if (section === "notifications") notifications.load();
@@ -134,8 +135,8 @@ export default function AdminApp() {
     knowledge: () => admin.loadKnowledgeEntries(),
     missing: () => loadMissingEans(),
     history: () => admin.loadRevisionLog(),
-    users: () => admin.loadAdminUsers(),
-    family: () => admin.loadFamilyOverview(),
+    users: () => adminUsers.load(),
+    family: () => adminFamily.load(),
     notifications: () => notifications.load(),
     onboarding: () => onboardingFunnel.load(),
     errors: () => clientErrors.load(),
@@ -225,15 +226,7 @@ export default function AdminApp() {
           openSubmissions={() => { admin.setSubmissionFilter("pending"); setSection("submissions"); }} />
       )}
       {section === "users" && (
-        <UsersSection
-          adminUsers={admin.adminUsers} adminUsersHasMore={admin.adminUsersHasMore} loadAdminUsers={admin.loadAdminUsers} adminUsersLoading={admin.adminUsersLoading}
-          userSearch={admin.userSearch} setUserSearch={admin.setUserSearch}
-          currentUserId={userId} updateUserRole={admin.updateUserRole} deleteUser={admin.deleteUser} logAdminExport={admin.logAdminExport}
-          openAdminUser={admin.openAdminUser} setOpenAdminUser={admin.setOpenAdminUser}
-          editingAdminUser={admin.editingAdminUser} setEditingAdminUser={admin.setEditingAdminUser}
-          adminUserActionLoading={admin.adminUserActionLoading}
-          openAdminUserForEdit={admin.openAdminUserForEdit} saveAdminUserEdit={admin.saveAdminUserEdit}
-        />
+        <UsersSection {...adminUsers} userSearch={admin.userSearch} setUserSearch={admin.setUserSearch} currentUserId={userId} />
       )}
       {section === "submissions" && (
         <SubmissionsSection
@@ -315,12 +308,7 @@ export default function AdminApp() {
         <TodoSection {...todos} userId={userId} preset={todoPreset}
           onOpenTicket={(ticketId) => { setSection("tickets"); admin.openTicketById(ticketId); }} />
       )}
-      {section === "family" && (
-        <FamilySection
-          familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}
-          familyActionLoading={admin.familyActionLoading} adminRemoveFamilyMember={admin.adminRemoveFamilyMember} adminCancelInvite={admin.adminCancelInvite}
-        />
-      )}
+      {section === "family" && <FamilySection {...adminFamily} />}
     </AdminLayout>
     </RefreshContext.Provider>
     </>

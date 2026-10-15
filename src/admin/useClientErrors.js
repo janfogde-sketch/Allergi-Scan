@@ -145,16 +145,26 @@ export function useClientErrors(/** @type {string} */ accessToken) {
     return row;
   }, [headers]);
 
-  /** @returns {Promise<{ ok: boolean, row?: any, error?: string, reasonDropped?: boolean }>} */
-  const setStatus = useCallback(async (/** @type {string} */ id, /** @type {string} */ status, /** @type {string} */ reason = "") => {
+  /**
+   * Ændrer status. Ignorering kræver en begrundelse (reason), løst en beskrivelse af rettelsen (note) og kan angive den verificerede build.
+   * @param {{ note?: string, build?: string }} [fix]
+   * @returns {Promise<{ ok: boolean, row?: any, error?: string, reasonDropped?: boolean }>}
+   */
+  const setStatus = useCallback(async (/** @type {string} */ id, /** @type {string} */ status, /** @type {string} */ reason = "", /** @type {{ note?: string, build?: string }} */ fix = {}) => {
     try {
       let reasonDropped = false;
       let row;
       try {
-        row = await patch(id, { status, ...(status === "ignored" ? { status_reason: reason } : {}) });
+        row = await patch(id, {
+          status,
+          ...(status === "ignored" ? { status_reason: reason } : {}),
+          ...(status === "resolved" ? { resolution_note: fix.note || "", verified_build: fix.build || null } : {}),
+        });
       } catch (e) {
-        // Før migrationen er live findes status_reason ikke; status ændres, men begrundelsen kan ikke gemmes
-        if (!isMissingColumn(e) || status !== "ignored") throw e;
+        if (!isMissingColumn(e)) throw e;
+        // Før migrationen er live findes kolonnerne ikke. En ignorering kan ske uden begrundelse (der siges til); løst kræver beskrivelsen og afvises.
+        if (status === "resolved") return { ok: false, error: "Databasen er ikke opdateret endnu, så beskrivelsen af rettelsen kan ikke gemmes. Prøv igen efter udgivelsen." };
+        if (status !== "ignored") throw e;
         row = await patch(id, { status });
         reasonDropped = true;
       }
@@ -198,5 +208,24 @@ export function useClientErrors(/** @type {string} */ accessToken) {
     }
   }, [headers]);
 
-  return { rows, loading, loadingMore, hasMore, loaded, error, stats, options, extended, load, loadMore, setStatus, setSeverity, loadHistory };
+  /**
+   * Oversætter en stack til oprindelig kode via edge-funktionen symbolicate-error (kun verificerede rammer). Aldrig en opdigtet placering.
+   * @returns {Promise<{ ok: true, frames: any[], resolved: number, total: number } | { ok: false, reason: "unavailable" | "denied" | "error" }>}
+   */
+  const symbolicate = useCallback(async (/** @type {string} */ build, /** @type {string} */ stack, /** @type {string} */ componentStack = "") => {
+    try {
+      const data = await apiCall(`${SUPABASE_URL}/functions/v1/symbolicate-error`, {
+        method: "POST",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({ build, stack, componentStack }),
+      });
+      if (!data || !Array.isArray(data.frames)) return { ok: false, reason: "error" };
+      return { ok: true, frames: data.frames, resolved: Number(data.resolved || 0), total: Number(data.total || data.frames.length) };
+    } catch (e) {
+      const status = /** @type {any} */ (e).status;
+      return { ok: false, reason: status === 404 ? "unavailable" : status === 401 || status === 403 ? "denied" : "error" };
+    }
+  }, [headers]);
+
+  return { rows, loading, loadingMore, hasMore, loaded, error, stats, options, extended, load, loadMore, setStatus, setSeverity, loadHistory, symbolicate };
 }

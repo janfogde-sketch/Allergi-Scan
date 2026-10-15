@@ -30,7 +30,7 @@ export const NAV_GROUPS = [
     { id: "users",         icon: "family",  label: "Brugere" },
     { id: "family",        icon: "heart",   label: "Familie" },
     { id: "notifications", icon: "bell",    label: "Notifikationer" },
-    { id: "onboarding",    icon: "profile", label: "Onboardingfrafald" },
+    { id: "onboarding",    icon: "profile", label: "Frafald i onboarding" },
   ] },
   { id: "system", label: "Drift", items: [
     { id: "errors",      icon: "warning",  label: "Fejl" },

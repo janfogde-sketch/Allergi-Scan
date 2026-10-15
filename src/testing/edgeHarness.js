@@ -49,8 +49,8 @@ function makeDb(state) {
         const log = (op, path) => state.storage.push({ bucket, op, path });
         return {
           remove: async (paths) => { log("remove", paths); return { data: paths.map((name) => ({ name })), error: null }; },
-          upload: async (path) => { log("upload", path); return { error: null }; },
-          download: async (path) => { log("download", path); return { data: new Blob(["x"], { type: "image/jpeg" }), error: null }; },
+          upload: async (path, body) => { log("upload", path); (state.files ||= {})[`${bucket}/${path}`] = body; return { error: null }; },
+          download: async (path) => { log("download", path); const kept = state.files?.[`${bucket}/${path}`]; return { data: new Blob([kept ?? "x"], { type: kept ? "application/json" : "image/jpeg" }), error: null }; },
           getPublicUrl: (path) => ({ data: { publicUrl: `https://x.supabase.co/storage/v1/object/public/${bucket}/${path}` } }),
         };
       },

@@ -33,6 +33,9 @@ kategorier — ikke bare "virke":
    Variant: **signeret token-link** (`report-unrequested-reset`): kaldes fra en statisk side med en token fra en mail;
    `verify_jwt:false`, men HMAC-signatur og udløb (`_shared/reportLink.ts`) kontrolleres før noget læses eller skrives.
 
+   Variant: **delt hemmelighed i en header** (`sourcemap-upload`, kaldt fra Vercel-buildet): `verify_jwt:false`, hemmelighed i en
+   funktions-secret (samme værdi i Vercel), sammenlignes i konstant tid; uden den (eller uden secret'en sat) svares 401, før noget læses eller skrives.
+
 En funktion der ikke falder bevidst i én af de fem er sandsynligvis et hul.
 
 **IDOR-fælden:** når en funktion tjekker ejerskab af ÉT id (fx `listId`) men

@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
 
     const data = await res.json();
     const text = data.content?.[0]?.text?.trim() || "";
-    await logAiUsage("ocr", "claude-haiku-4-5", data.usage);
+    await logAiUsage("ocr", "claude-haiku-4-5", data.usage, "user"); // kun kald med en logget ind brugers login når hertil (getCaller)
 
     return new Response(
       JSON.stringify({ success: true, text, mode: mode || "ingredients" }),

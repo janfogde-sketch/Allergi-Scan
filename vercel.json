@@ -1,5 +1,6 @@
 {
   "ignoreCommand": "bash scripts/vercel-ignore.sh",
+  "buildCommand": "npm run build:vercel",
   "headers": [
     {
       "source": "/(.*)",

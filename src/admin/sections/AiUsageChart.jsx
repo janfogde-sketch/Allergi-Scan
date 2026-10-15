@@ -7,8 +7,9 @@ import { dayLabelShort, dayLabelLong } from "../aiUsageLogic.js";
 
 const PLOT_H = 64, TIP_W = 104, TIP_H = 34; // skal passe til .dash-plot og .dash-tip i adminTheme.js
 
-export default function AiUsageChart({ data, format, axisFormat = format, narrow, label }) {
-  const [picked, setPicked] = useState(null);
+export default function AiUsageChart({ data, format, axisFormat = format, narrow, label, cap = null, onPick, children }) {
+  const [picked, setPickedRaw] = useState(null);
+  const setPicked = (v) => { setPickedRaw(v); if (onPick) onPick(v); };
   const plotRef = useRef(null);
   const wrapRef = useRef(null);
 
@@ -22,7 +23,8 @@ export default function AiUsageChart({ data, format, axisFormat = format, narrow
   }, [picked]);
 
   const max = Math.max(0, ...data.map((d) => d.value));
-  const { top, ticks } = axisScale(max);
+  const { top, ticks } = axisScale(cap || max); // med cap (fokus på almindelige dage) afkortes de højeste søjler; de markeres som afkortede
+  const clip = (v) => !!cap && v > top;
   const idx = picked ? data.findIndex((d) => d.day === picked) : -1;
   const sel = idx >= 0 ? data[idx] : null;
   const labels = new Set(labelIndexes(data.length, narrow ? 3 : 5));
@@ -38,7 +40,7 @@ export default function AiUsageChart({ data, format, axisFormat = format, narrow
   };
   let tipStyle = null;
   if (sel) {
-    const h = sel.value > 0 ? Math.max(6, (sel.value / top) * 100) : 3;
+    const h = sel.value > 0 ? Math.max(6, (Math.min(sel.value, top) / top) * 100) : 3;
     const barTop = PLOT_H * (1 - h / 100);
     const cx = ((idx + 0.5) / data.length) * 100;
     tipStyle = barTop >= TIP_H + 4
@@ -74,9 +76,10 @@ export default function AiUsageChart({ data, format, axisFormat = format, narrow
             onPointerDown={pickAt} onPointerMove={(e) => { if (e.buttons) pickAt(e); }} onKeyDown={onKeyDown}>
             {data.map((d) => (
               <button key={d.day} type="button" className={`admin-bar${picked === d.day ? " sel" : ""}`} aria-pressed={picked === d.day}
-                aria-label={`${dayLabelLong(d.day)}: ${stateText(d)}${d.flagged ? ", usædvanligt højt" : ""}`}
+                aria-label={`${dayLabelLong(d.day)}: ${stateText(d)}${d.flagged ? ", usædvanligt højt" : ""}${clip(d.value) ? ", afkortet i diagrammet" : ""}`}
                 onClick={(e) => { if (e.detail === 0) setPicked(d.day); }}>
-                <span style={{ display: "block", width: "100%", borderRadius: "3px 3px 0 0", height: `${d.value > 0 ? Math.max(6, (d.value / top) * 100) : 3}%`,
+                <span style={{ display: "block", width: "100%", borderRadius: "3px 3px 0 0", height: `${d.value > 0 ? Math.max(6, (Math.min(d.value, top) / top) * 100) : 3}%`,
+                  ...(clip(d.value) ? { backgroundImage: "repeating-linear-gradient(135deg, transparent 0 3px, var(--surface) 3px 5px)", backgroundSize: "100% 9px", backgroundRepeat: "no-repeat" } : null),
                   background: d.state === "data" && d.value > 0 ? (d.flagged ? "var(--amber)" : "var(--green)") : "var(--border2)",
                   opacity: d.state === "none" ? 0.45 : 1 }} />
               </button>
@@ -94,6 +97,7 @@ export default function AiUsageChart({ data, format, axisFormat = format, narrow
           </div>
         </div>
       </div>
+      {children}
     </figure>
   );
 }

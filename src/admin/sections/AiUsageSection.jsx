@@ -8,11 +8,12 @@ import { useIsMobile } from "../useIsMobile.js";
 import Disclosure from "../Disclosure.jsx";
 import AiUsageChart from "./AiUsageChart.jsx";
 import {
-  PERIODS, PRICE_TABLE, PRICE_CHECKED, USD_TO_DKK, INTERNAL_FUNCTIONS, functionLabel, todayKey, periodRange, rowsIn, totals, functionShares, byMonth, byDay, byFunction,
+  PERIODS, ORIGINS, PRICE_TABLE, PRICE_CHECKED, USD_TO_DKK, functionLabel, filterOrigin, originSplit, focusScale, formatPerCall, FOCUS_FACTOR, todayKey, periodRange, rowsIn, totals, functionShares, byMonth, byDay, byFunction,
   comparisonRanges, pctChange, dailySeries, metricOf, findAnomalies, budgetStatus, currentMonthRows, formatKr, formatNum, formatTokens, formatPct, monthLabel,
   dayLabelShort, dayLabelLong, ANOMALY_MIN_DAYS, ANOMALY_FACTOR, ANOMALY_MIN_EXTRA_DKK,
 } from "../aiUsageLogic.js";
 
+const ORIGIN_SHORT = { user: "Bruger", internal: "Intern", unknown: "Ukendt" };
 const METRICS = { dkk: "Kr.", calls: "Kald", tokens: "Tokens" };
 const CAUSES = { mange: "mange kald", dyre: "dyre kald", begge: "både flere og dyrere kald", ukendt: "årsagen kan ikke fastslås ud fra tallene" };
 
@@ -40,12 +41,14 @@ function Kpi({ value, label, sub, up }) {
 /** Forbrug pr. funktion i en foldet detalje: tokens og pris. */
 function FunctionDetail({ rows }) {
   const list = byFunction(rows).filter((f) => f.calls > 0);
+  const split = originSplit(rows);
   return (
     <dl className="ai-detail">
       <dt>Tokens ind</dt><dd>{formatNum(totals(rows).input)}</dd>
       <dt>Tokens ud</dt><dd>{formatNum(totals(rows).output)}</dd>
       {list.map((f) => <React.Fragment key={f.key}><dt>{functionLabel(f.key)}</dt><dd>{formatKr(f.dkk)} · {formatNum(f.calls)} kald</dd></React.Fragment>)}
-      {totals(rows).calls > 0 && <><dt>Gennemsnit pr. kald</dt><dd>{formatKr(totals(rows).dkk / totals(rows).calls)}</dd></>}
+      {totals(rows).calls > 0 && <><dt>Gennemsnit pr. kald</dt><dd>{formatPerCall(totals(rows).dkk / totals(rows).calls)}</dd></>}
+      {split.length > 1 && split.map((o) => <React.Fragment key={o.key}><dt>{o.label}</dt><dd>{formatKr(o.dkk)} · {formatNum(o.calls)} kald</dd></React.Fragment>)}
     </dl>
   );
 }
@@ -101,7 +104,7 @@ function BudgetCard({ budget, spent, saveBudget }) {
         <button type="button" className="admin-iconbtn" style={{ width: 44, height: 44, margin: "-8px -8px -8px 0" }} aria-label="Ret budget" onClick={startEdit}><Icon name="edit" size={16} color="var(--ink2)" /></button>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, marginBottom: 6, flexWrap: "wrap" }}>
-        <span>Forbrug denne måned: <b>{formatKr(st.spent)}</b> af {formatKr(st.total)}</span>
+        <span>Forbrug denne måned (alle typer): <b>{formatKr(st.spent)}</b> af {formatKr(st.total)}</span>
         <span>{st.left >= 0 ? `Tilbage: ${formatKr(st.left)}` : `Over budget med ${formatKr(-st.left)}`}</span>
       </div>
       <div className={`ai-progress ${st.level === "ok" ? "" : st.level}`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, Math.round(st.used * 100))} aria-label="Andel af månedsbudgettet brugt">
@@ -122,22 +125,34 @@ export default function AiUsageSection({ rows, loading, loaded, error, load, bud
   const [kind, setKind] = useState("month");
   const [custom, setCustom] = useState({ from: "", to: "" });
   const [metric, setMetric] = useState("dkk");
+  const [origin, setOrigin] = useState("all");
+  const [focus, setFocus] = useState(false);
+  const [info, setInfo] = useState(false);
+  const [pickedDay, setPickedDay] = useState(null);
 
   const today = todayKey();
   const range = periodRange(kind, today, custom);
-  const inRange = range ? rowsIn(rows, range) : [];
+  const scoped = filterOrigin(rows, origin); // forbrugstypen gælder alt undtagen budgettet (kalendermåneden, alle typer)
+  const inRange = range ? rowsIn(scoped, range) : [];
   const t = totals(inRange);
-  const cmpR = range ? comparisonRanges(kind, range, today, rows) : null;
-  const cur = cmpR ? totals(rowsIn(rows, cmpR.current)) : null;
-  const prev = cmpR ? totals(rowsIn(rows, cmpR.previous)) : null;
+  const cmpR = range ? comparisonRanges(kind, range, today, scoped) : null;
+  const cur = cmpR ? totals(rowsIn(scoped, cmpR.current)) : null;
+  const prev = cmpR ? totals(rowsIn(scoped, cmpR.previous)) : null;
   const cmpText = (a, b) => {
     const p = pctChange(a, b);
     return p === null ? null : `${p >= 0 ? "+" : "−"}${formatPct(Math.abs(p), 0)} mod forrige periode`;
   };
-  const series = range ? dailySeries(rows, range) : [];
-  const anomalies = findAnomalies(rows);
+  const series = range ? dailySeries(scoped, range) : [];
+  const anomalies = findAnomalies(scoped);
   const flaggedDays = new Map(anomalies.flagged.map((a) => [a.day, a]));
   const chartData = series.map((d) => ({ day: d.day, value: metricOf(d, metric), state: d.state, flagged: flaggedDays.has(d.day) }));
+  const fs = focusScale(chartData.map((d) => d.value));
+  const capOn = focus && fs.possible;
+  const clipped = capOn ? fs.outliers.map((i) => chartData[i]) : [];
+  const daysWithData = series.filter((d) => d.state === "data").length;
+  const pickedSeries = pickedDay ? series.find((d) => d.day === pickedDay) : null;
+  const pickedRows = pickedSeries ? inRange.filter((r) => r.day === pickedDay) : [];
+  const months = byMonth(scoped);
   const shares = functionShares(inRange);
   const monthSpent = totals(currentMonthRows(rows, today)).dkk;
   const flaggedInRange = range ? anomalies.flagged.filter((a) => a.day >= range.from && a.day <= range.to).sort((a, b) => (a.day < b.day ? 1 : -1)) : [];
@@ -163,13 +178,13 @@ export default function AiUsageSection({ rows, loading, loaded, error, load, bud
       <>
         {error && <div className="todo-confirm" role="alert" style={{ marginBottom: 10 }}>Opdateringen mislykkedes; de viste tal kan være forældede. <button type="button" className="todo-link-btn" style={{ minHeight: 32, textDecoration: "underline" }} onClick={() => load()}>Prøv igen</button></div>}
         {inRange.length === 0 ? (
-          <StateBox icon="clock" title="Intet forbrug i den valgte periode" text="Der er registreret AI-forbrug i andre perioder. Vælg en anden periode for at se det." />
+          <StateBox icon="clock" title={scoped.length === 0 ? "Intet forbrug af den valgte forbrugstype" : "Intet forbrug i den valgte periode"} text={scoped.length === 0 ? "Der er registreret AI-forbrug af andre typer. Vælg en anden forbrugstype for at se det." : "Der er registreret AI-forbrug i andre perioder. Vælg en anden periode for at se det."} />
         ) : (
           <>
             <div className="dash-stat-grid" style={{ marginBottom: 12 }}>
               <Kpi value={formatKr(t.dkk)} label="Estimeret forbrug" sub={cur && prev ? cmpText(cur.dkk, prev.dkk) : null} up={cur && prev && cur.dkk > prev.dkk} />
               <Kpi value={formatNum(t.calls)} label="AI-kald" sub={cur && prev ? cmpText(cur.calls, prev.calls) : null} up={cur && prev && cur.calls > prev.calls} />
-              <Kpi value={t.calls > 0 ? formatKr(t.dkk / t.calls) : "–"} label="Gennemsnit pr. kald" />
+              <Kpi value={t.calls > 0 ? formatPerCall(t.dkk / t.calls) : "–"} label="Gennemsnit pr. kald" />
               <Kpi value={formatTokens(t.input + t.output)} label="Tokens" sub={`${formatTokens(t.input)} ind · ${formatTokens(t.output)} ud`} />
             </div>
             {t.unpricedCalls > 0 && <div className="admin-info-note" role="status">{formatNum(t.unpricedCalls)} kald har en model, hvis pris ikke er kendt, og er ikke med i omkostningen.</div>}
@@ -187,37 +202,68 @@ export default function AiUsageSection({ rows, loading, loaded, error, load, bud
                   {Object.entries(METRICS).map(([k, v]) => <button key={k} type="button" className={metric === k ? "active" : ""} aria-pressed={metric === k} onClick={() => setMetric(k)}>{v}</button>)}
                 </div>
               </div>
-              <AiUsageChart data={chartData} format={fmtMetric} axisFormat={axisFmt} narrow={narrow} label={`Forbrug pr. dag, ${METRICS[metric].toLowerCase()}`} />
-              <div className="ai-note">Gule søjler er usædvanligt høje dage. Blege søjler er dage før registreringen begyndte.</div>
+              <AiUsageChart data={chartData} format={fmtMetric} axisFormat={axisFmt} narrow={narrow} label={`Forbrug pr. dag, ${METRICS[metric].toLowerCase()}`} cap={capOn ? fs.cap : null} onPick={setPickedDay}>
+                {pickedSeries && (
+                  <div className="ai-day" role="status">
+                    <div className="ai-day-title">{dayLabelLong(pickedSeries.day)}{flaggedDays.has(pickedSeries.day) && <span className="ai-flag">Usædvanlig</span>}</div>
+                    {pickedSeries.state !== "data" ? (
+                      <div>{pickedSeries.state === "none" ? "Ikke registreret (før registreringen begyndte)." : "Registreret, men intet forbrug."}</div>
+                    ) : (
+                      <dl className="ai-detail">
+                        <dt>Omkostning (estimat)</dt><dd>{formatKr(pickedSeries.dkk)}</dd>
+                        <dt>AI-kald</dt><dd>{formatNum(pickedSeries.calls)}</dd>
+                        <dt>Tokens ind</dt><dd>{formatNum(pickedSeries.input)}</dd>
+                        <dt>Tokens ud</dt><dd>{formatNum(pickedSeries.output)}</dd>
+                        {byFunction(pickedRows).filter((f) => f.calls > 0).map((f) => <React.Fragment key={f.key}><dt>{functionLabel(f.key)}</dt><dd>{formatKr(f.dkk)} · {formatNum(f.calls)} kald</dd></React.Fragment>)}
+                        {originSplit(pickedRows).length > 1 && originSplit(pickedRows).map((o) => <React.Fragment key={o.key}><dt>{o.label}</dt><dd>{formatKr(o.dkk)}</dd></React.Fragment>)}
+                      </dl>
+                    )}
+                  </div>
+                )}
+              </AiUsageChart>
+              <div className="ai-note ai-chart-note">
+                <span>Data registreret på {daysWithData} {daysWithData === 1 ? "dag" : "dage"}. Tryk på en søjle for detaljer.</span>
+                <button type="button" className="ai-info-btn" aria-label="Forklaring til diagrammet" aria-expanded={info} onClick={() => setInfo((v) => !v)}><Icon name="info" size={16} color="var(--muted)" /></button>
+              </div>
+              {info && <div className="ai-note" role="note">Grønne søjler er dage med forbrug, gule er usædvanligt høje dage, tynde grå er registrerede dage uden forbrug, og blege stiplede er dage før registreringen begyndte (ukendt, ikke nul).</div>}
+              {fs.possible && (
+                <div className="ai-focus">
+                  <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-pressed={capOn} onClick={() => setFocus((v) => !v)}>{capOn ? "Vis fuld skala" : "Fokusér på almindelige dage"}</button>
+                </div>
+              )}
+              {capOn && (
+                <div className="ai-note" role="status">Skalaen er afkortet, så almindelige dage kan aflæses: {clipped.map((d) => `${dayLabelShort(d.day)} (${fmtMetric(d.value)})`).join(", ")} går ud over diagrammet og er tegnet stribet. Tryk på søjlen for den rigtige værdi.</div>
+              )}
               {flaggedInRange.length > 0 && (
                 <ul className="ai-note" style={{ paddingLeft: 18, margin: "6px 0 0" }}>
                   {flaggedInRange.map((a) => (
-                    <li key={a.day}><b>{dayLabelShort(a.day)}</b>: {formatKr(a.dkk)} (typisk {formatKr(a.median)}) – {CAUSES[a.cause]}{a.topFunction ? `; mest fra ${functionLabel(a.topFunction)}${a.internalTop ? " (intern)" : ""}` : ""}.</li>
+                    <li key={a.day}><b>{dayLabelShort(a.day)}</b>: {formatKr(a.dkk)} (typisk {formatKr(a.median)}) – {CAUSES[a.cause]}{a.functions && a.functions.length ? `; bidrag: ${a.functions.map((f) => `${functionLabel(f.key)} ${formatKr(f.dkk)}`).join(", ")}` : ""}.</li>
                   ))}
                 </ul>
               )}
-              {!anomalies.enough && <div className="ai-note">Usædvanlige dage markeres, når der er mindst {ANOMALY_MIN_DAYS} dage med data (nu {anomalies.daysWithData}).</div>}
             </div>
 
             <div className="ai-card">
               <h3 className="ai-card-title">Forbrug pr. funktion</h3>
               {shares.map((f) => (
                 <div key={f.key} className="ai-fn">
-                  <div className="ai-fn-top"><span>{functionLabel(f.key)}{INTERNAL_FUNCTIONS.includes(f.key) ? " (intern)" : ""}</span><span>{formatKr(f.dkk)} · {formatPct(f.share)}</span></div>
+                  <div className="ai-fn-top"><span>{functionLabel(f.key)}</span><span>{formatKr(f.dkk)} · {formatPct(f.share)}</span></div>
                   <div className="ai-progress" role="img" aria-label={`${functionLabel(f.key)}: ${formatPct(f.share)} af forbruget`}><span style={{ width: `${(f.share || 0) * 100}%` }} /></div>
-                  <div className="ai-fn-sub">{formatNum(f.calls)} kald · {formatKr(f.perCall)} pr. kald</div>
+                  <div className="ai-fn-sub">{formatNum(f.calls)} kald · {formatPerCall(f.perCall)} pr. kald{origin === "all" && originSplit(f.rows).length > 1 ? ` · ${originSplit(f.rows).map((o) => `${ORIGIN_SHORT[o.key]} ${formatKr(o.dkk)}`).join(" · ")}` : ""}{origin === "all" && originSplit(f.rows).length === 1 ? ` · ${ORIGIN_SHORT[originSplit(f.rows)[0].key]}` : ""}</div>
                 </div>
               ))}
             </div>
           </>
         )}
 
-        <div className="ai-card">
-          <h3 className="ai-card-title">Måneder</h3>
-          {byMonth(rows).map((m) => (
-            <Disclosure key={m.key} title={monthLabel(m.key)} meta={`${formatKr(m.dkk)} · ${formatNum(m.calls)} kald`}><FunctionDetail rows={m.rows} /></Disclosure>
-          ))}
-        </div>
+        {months.length >= 2 && (
+          <div className="ai-card">
+            <h3 className="ai-card-title">Måneder</h3>
+            {months.map((m) => (
+              <Disclosure key={m.key} title={monthLabel(m.key)} meta={`${formatKr(m.dkk)} · ${formatNum(m.calls)} kald`}><FunctionDetail rows={m.rows} /></Disclosure>
+            ))}
+          </div>
+        )}
 
         {dayList.length > 0 && (
           <div className="ai-card">
@@ -241,6 +287,10 @@ export default function AiUsageSection({ rows, loading, loaded, error, load, bud
           <select id="ai-period" value={kind} onChange={(e) => setKind(e.target.value)}>
             {Object.entries(PERIODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></div>
+        <div><label htmlFor="ai-origin">Forbrugstype</label>
+          <select id="ai-origin" value={origin} onChange={(e) => setOrigin(e.target.value)}>
+            {Object.entries(ORIGINS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select></div>
         {kind === "custom" && (
           <>
             <div><label htmlFor="ai-from">Fra dato</label><input id="ai-from" type="date" value={custom.from} max={custom.to || today} onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))} /></div>
@@ -254,10 +304,12 @@ export default function AiUsageSection({ rows, loading, loaded, error, load, bud
 
       <Disclosure title="Om AI-forbruget">
         <p style={{ margin: "0 0 6px" }}><strong>Model:</strong> {PRICE_TABLE.map((p) => p.label).join(", ")} bruges til læsning af fotos, allergen-tjek og kategorisering.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Estimat:</strong> Alle beløb er estimerede, regnet ud fra registrerede tokens og Anthropics prisliste ({PRICE_TABLE.map((p) => `${p.label}: ${p.inUsd} dollar pr. million tokens ind og ${p.outUsd} ud`).join("; ")}; priserne er læst {PRICE_CHECKED} og ikke verificeret automatisk), omregnet med en fast kurs på {String(USD_TO_DKK).replace(".", ",")} kr. pr. dollar. De er ikke faktureret beløb; fakturaen fra Anthropic kan afvige. Cache-tokens tælles som almindeligt input, så estimatet kan være en smule for højt. Hver række bruger prisen for sin model.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Datoer:</strong> Dage er i dansk tid. Før den første registrering vises forbruget som "ikke registreret", ikke som nul. Sammenligninger bruges kun for afsluttede døgn og perioder, der er helt registreret.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Registreres:</strong> pr. dag, funktion og model: antal kald og tokens ind og ud. Der gemmes ingen bruger-id eller tekst her. Selve AI-kaldene sendes til Anthropic, som beskrevet i privatlivspolitikken.</p>
-        <p style={{ margin: 0 }}><strong>Usædvanlige dage:</strong> en dag markeres, når den er mindst {ANOMALY_FACTOR} gange medianen og mindst {ANOMALY_MIN_EXTRA_DKK} kr. højere, og kun med mindst {ANOMALY_MIN_DAYS} dage med data. Der skelnes ikke mellem brugeraktivitet og baggrundsjob; kun kategorisering er kendt som intern.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Estimat:</strong> Alle beløb er estimerede: registrerede tokens × Anthropics prisliste ({PRICE_TABLE.map((p) => `${p.label}: ${p.inUsd} dollar pr. million tokens ind og ${p.outUsd} ud`).join("; ")}; læst {PRICE_CHECKED}, ikke verificeret automatisk) × en fast kurs på {String(USD_TO_DKK).replace(".", ",")} kr. pr. dollar. Der er ingen fakturadata, så beløbene kan afvige fra Anthropics faktura. Totaler beregnes af de underliggende tal og afrundes først ved visning, så dagsbeløb kan afvige en øre fra månedens sum. Cache-tokens tælles som almindeligt input; AI-kaldene bruger ikke prompt-caching i dag.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Datoer:</strong> Dage er i dansk tid. Før den første registrering vises forbruget som "ikke registreret", ikke som nul. Sammenligninger bruger kun afsluttede døgn og perioder, der er helt registreret. Budgettet gælder altid kalendermåneden og alle forbrugstyper, uanset valgt periode og filter.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Forbrugstype:</strong> Brugerfunktion er et kald med en almindelig brugers login (fx læsning af fotos). Intern proces er et kald med service-nøglen (baggrundsjob som kategorisering). Ukendt er alt, der ikke kan fastslås: forbrug registreret før oprindelsen blev gemt (undtagen kategorisering, som kun kan kaldes internt) og allergen-tjek fra en administrator, hvor det ikke kan ses, om det kom fra panelet eller eget brug. Der gættes ikke.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Diagrammet:</strong> grønne søjler er dage med forbrug, gule er usædvanligt høje, tynde grå er dage uden forbrug, og blege stiplede er dage før registreringen. "Fokusér på almindelige dage" afkorter skalaen, når en dag er mindst {FOCUS_FACTOR} gange medianen; de afkortede søjler er stribede og nævnes under diagrammet.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Usædvanlige dage:</strong> en dag markeres, når den er mindst {ANOMALY_FACTOR} gange medianen og mindst {ANOMALY_MIN_EXTRA_DKK} kr. højere, og kun med mindst {ANOMALY_MIN_DAYS} dage med data (nu {anomalies.daysWithData}). Forklaringen skelner mellem flere kald og dyrere kald.</p>
+        <p style={{ margin: 0 }}><strong>Registreres:</strong> pr. dag, funktion, model og forbrugstype: antal kald og tokens ind og ud. Der gemmes ingen bruger-id eller tekst her. Selve AI-kaldene sendes til Anthropic, som beskrevet i privatlivspolitikken.</p>
       </Disclosure>
     </>
   );

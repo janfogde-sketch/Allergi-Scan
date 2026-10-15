@@ -17,6 +17,9 @@ export default defineConfig({
     ),
   },
   build: {
+    // 'hidden': kortene bygges (til symbolisering af fejlrapporter), men bundterne henviser ikke til dem. På Vercel sender scripts/upload-sourcemaps.mjs
+    // dem til en privat bøtte og sletter dem fra dist, så de aldrig udgives. Se docs/admin-statusser.md (Fejl).
+    sourcemap: 'hidden',
     // Multi-page build: index.html er den mobile PWA (uændret), admin.html
     // er det separate desktop-admin-panel (src/admin/) — egen bundle, egen
     // React-rod, rører ikke den mobile apps bundle-størrelse eller stabilitet.
@@ -46,6 +49,7 @@ export default defineConfig({
     alias: [
       { find: /^jsr:@supabase\/supabase-js@2[\d.]*$/, replacement: resolve(rootDir, 'src/testing/supabaseStub.js') },
       { find: /^https:\/\/deno\.land\/std@[\d.]+\/http\/server\.ts$/, replacement: resolve(rootDir, 'src/testing/denoServeStub.js') },
+      { find: /^npm:source-map-js@[\d.]+$/, replacement: 'source-map-js' },
       { find: /^https:\/\/esm\.sh\/@supabase\/supabase-js@2[\d.]*$/, replacement: resolve(rootDir, 'src/testing/supabaseStub.js') },
     ],
   },
