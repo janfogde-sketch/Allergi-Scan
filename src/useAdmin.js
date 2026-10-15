@@ -6,7 +6,6 @@ import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.js";
 
-const USERS_PAGE = 200;
 const SUBMISSIONS_PAGE = 100;
 const TICKETS_PAGE = 100;
 const TICKETS_PAGE_ALL = 200;
@@ -21,19 +20,13 @@ export function useAdmin(accessToken, userId) {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
   const [adminSection, setAdminSection] = useState("dashboard");
-  const [adminUsers, setAdminUsers] = useState([]);
-  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   // Listerne henter en side ad gangen og beder om én række mere end vist,
   // så admin kan se, at der er flere (ellers skjuler listen rækker uden besked).
-  const [adminUsersHasMore, setAdminUsersHasMore] = useState(false);
   const [submissionsHasMore, setSubmissionsHasMore] = useState(false);
   const [ticketsHasMore, setTicketsHasMore] = useState(false);
   // Standard: kun aktive tickets (åbne og i gang). Løste hentes først, når nogen beder om det.
   const [adminTicketFilter, setAdminTicketFilter] = useState("active");
   const [ticketsIncludeDone, setTicketsIncludeDone] = useState(false);
-  const [openAdminUser, setOpenAdminUser] = useState(null);
-  const [editingAdminUser, setEditingAdminUser] = useState(null);
-  const [adminUserActionLoading, setAdminUserActionLoading] = useState(false);
   const [revisionLog, setRevisionLog] = useState([]);
   const [revisionLogLoading, setRevisionLogLoading] = useState(false);
   const [revisionLogFilter, setRevisionLogFilter] = useState("all");
@@ -154,128 +147,6 @@ export function useAdmin(accessToken, userId) {
     }
   };
 
-  // more=true henter næste side og lægger den bagved den viste liste.
-  const loadAdminUsers = async ({ more = false } = {}) => {
-    const offset = more ? adminUsers.length : 0;
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/users?select=id,name,email,role,created_at,onboarding_completed,birth_year&order=created_at.desc&limit=${USERS_PAGE + 1}&offset=${offset}`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      if (Array.isArray(data)) {
-        setAdminUsersHasMore(data.length > USERS_PAGE);
-        const page = data.slice(0, USERS_PAGE);
-        setAdminUsers(more ? (prev) => [...prev, ...page.filter(r => !prev.some(x => x.id === r.id))] : page);
-      }
-    } catch (e) {
-      console.error("loadAdminUsers:", e);
-      showToast("Kunne ikke hente brugere: " + e.message, "error");
-    }
-  };
-
-  // Bekræftelse og låst egen række ligger i UsersSection; databasen nægter desuden at fjerne den sidste admin (G17).
-  const updateUserRole = async (uid, role) => {
-    if (uid === userId) { showToast("Du kan ikke ændre din egen rolle", "error"); return; }
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}`, {
-        method: "PATCH",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({ role }),
-      });
-      setAdminUsers(u => u.map(x => x.id === uid ? { ...x, role } : x));
-    } catch (e) {
-      console.error("updateUserRole:", e);
-      showToast("Kunne ikke ændre rolle: " + e.message, "error");
-    }
-  };
-
-  const openAdminUserForEdit = async (u) => {
-    setOpenAdminUser(u);
-    setEditingAdminUser(null);
-    try {
-      const rows = await apiCall(
-        `${SUPABASE_URL}/rest/v1/users?id=eq.${u.id}&select=*`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      const full = Array.isArray(rows) ? rows[0] : null;
-      if (!full) throw new Error("Bruger ikke fundet");
-      // Brugerens EGNE allergener (family_member_id er altid null her — familie-
-      // medlemmers allergener ligger på family_members-tabellen, ikke her).
-      const allergenRows = await apiCall(
-        `${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${u.id}&family_member_id=is.null&select=allergen,type`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      ).catch(() => []);
-      const rowsArr = Array.isArray(allergenRows) ? allergenRows : [];
-      setEditingAdminUser({
-        name: full.name || "", email: full.email || "",
-        role: full.role || "user", birth_year: full.birth_year || "", gender: full.gender || "",
-        e_numbers: (full.e_numbers || []).join(", "),
-        allergen_levels: full.allergen_levels || {},
-        onboarding_completed: !!full.onboarding_completed,
-        allergen_ids: rowsArr.filter(r => r.type === "allergen").map(r => r.allergen),
-        custom_allergens: rowsArr.filter(r => r.type === "custom").map(r => r.allergen).join(", "),
-      });
-    } catch (e) {
-      showToast("Kunne ikke hente brugerens fulde data: " + e.message, "error");
-      setOpenAdminUser(null);
-    }
-  };
-
-  const saveAdminUserEdit = async () => {
-    if (!openAdminUser || !editingAdminUser) return;
-    setAdminUserActionLoading(true);
-    try {
-      const eNumbers = editingAdminUser.e_numbers.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-      const customList = editingAdminUser.custom_allergens.split(",").map(s => s.trim()).filter(Boolean);
-      // Ét kald (admin_save_user_profile): profil og allergier gemmes i én transaktion, så et fejlet kald
-      // aldrig efterlader personen uden allergier (G28). Adgangsregler og adminlog gælder som før.
-      await apiCall(`${SUPABASE_URL}/rest/v1/rpc/admin_save_user_profile`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-        body: JSON.stringify({
-          p_user: openAdminUser.id,
-          p_profile: {
-            name: editingAdminUser.name || null,
-            email: editingAdminUser.email || null,
-            role: editingAdminUser.role,
-            birth_year: editingAdminUser.birth_year ? +editingAdminUser.birth_year : null,
-            gender: editingAdminUser.gender || null,
-            e_numbers: eNumbers,
-            // Kun niveauer for allergener, der stadig er valgt
-            allergen_levels: Object.fromEntries(Object.entries(editingAdminUser.allergen_levels || {}).filter(([id]) => editingAdminUser.allergen_ids.includes(id))),
-            onboarding_completed: editingAdminUser.onboarding_completed,
-          },
-          p_allergens: editingAdminUser.allergen_ids,
-          p_custom: customList,
-        }),
-      });
-
-      setAdminUsers(us => us.map(x => x.id === openAdminUser.id ? { ...x, name: editingAdminUser.name, email: editingAdminUser.email, role: editingAdminUser.role, birth_year: editingAdminUser.birth_year, onboarding_completed: editingAdminUser.onboarding_completed } : x));
-      showToast("Bruger opdateret");
-      setOpenAdminUser(null); setEditingAdminUser(null);
-    } catch (e) {
-      // Fanger bl.a. hvis admin forsøger at ændre email til én der allerede
-      // er i brug (unique constraint) — vis den reelle årsag.
-      showToast("Kunne ikke gemme bruger: " + e.message, "error");
-    }
-    setAdminUserActionLoading(false);
-  };
-
-  const deleteUser = async (uid) => {
-    try {
-      const res = await apiCall(`${SUPABASE_URL}/functions/v1/delete-user`, {
-        method: "POST",
-        headers: makeHeaders(accessToken),
-        body: JSON.stringify({ uid }),
-      });
-      if (res?.error) throw new Error(res.error);
-      setAdminUsers(u => u.filter(x => x.id !== uid));
-    } catch (e) {
-      console.error("deleteUser:", e);
-      showToast("Kunne ikke slette bruger: " + e.message, "error");
-    }
-  };
-
   // ── Produkt-database (direkte søgning/redigering i products) ──────────────
   // Uden søgeord vises de senest opdaterede produkter — 20.000+ rækker i
   // tabellen gør det urealistisk at vise "alle", og en tom liste ville se ud
@@ -365,16 +236,6 @@ export function useAdmin(accessToken, userId) {
       showToast("Kunne ikke slette produkt: " + e.message, "error");
     }
     setProductActionLoading(false);
-  };
-
-  // CSV-eksport sker i browseren; adminloggen får besked om den her (G13). Fejler logningen, stoppes eksporten ikke.
-  const logAdminExport = async (target, count) => {
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/rpc/log_admin_export`, {
-        method: "POST", headers: makeHeaders(accessToken),
-        body: JSON.stringify({ p_target: target, p_count: count }),
-      });
-    } catch (e) { console.warn("logAdminExport:", e); }
   };
 
   // Skærmbilleder i feedback ligger i den lukkede bucket feedback-screenshots (G15); admin får et link, der udløber efter 10 minutter.
@@ -980,12 +841,8 @@ export function useAdmin(accessToken, userId) {
     submissionsLoading,
     adminStats,
     adminSection, setAdminSection,
-    adminUsers, setAdminUsers, adminUsersHasMore, submissionsHasMore, ticketsHasMore,
-    adminUsersLoading,
+    submissionsHasMore, ticketsHasMore,
     adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone,
-    openAdminUser, setOpenAdminUser,
-    editingAdminUser, setEditingAdminUser, adminUserActionLoading,
-    openAdminUserForEdit, saveAdminUserEdit,
     userSearch, setUserSearch,
     userSearchParam, setUserSearchParam,
     openSubmission, setOpenSubmission,
@@ -1002,9 +859,7 @@ export function useAdmin(accessToken, userId) {
     loadAdminStats,
     loadTickets,
     openTicketById,
-    loadAdminUsers,
-    updateUserRole, logAdminExport, getTicketScreenshotUrl,
-    deleteUser,
+    getTicketScreenshotUrl,
     updateSubmissionAndApprove,
     rejectSubmission,
     updateTicketStatus,

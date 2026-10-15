@@ -30,6 +30,7 @@ import TodoSection from "./sections/TodoSection.jsx";
 import { useAdminTodos } from "./useAdminTodos.js";
 import { myOpenCount, isOverdue } from "./todoLogic.js";
 import { useClientErrors } from "./useClientErrors.js";
+import { useAdminUsers } from "./useAdminUsers.js";
 import { useAuditLog } from "./useAuditLog.js";
 import AuditLogSection from "./sections/AuditLogSection.jsx";
 import GlobalSearchBox from "./GlobalSearchBox.jsx";
@@ -45,6 +46,7 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const [refreshing, setRefreshing] = useState(false);
   const clientErrors = useClientErrors(accessToken);
+  const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
   // Et filter fra Dashboard gælder kun den ene åbning af To do: forlades siden, ryddes det, så menuen åbner den almindelige liste
@@ -105,7 +107,6 @@ export default function AdminApp() {
   useEffect(() => {
     if (!accessToken || !isAdmin) return;
     if (section === "dashboard") admin.loadAdminStats();
-    if (section === "users") admin.loadAdminUsers();
     if (section === "submissions") admin.loadSubmissions(admin.submissionFilter);
     if (section === "tickets") admin.loadTickets();
     if (section === "missing") loadMissingEans();
@@ -134,7 +135,7 @@ export default function AdminApp() {
     knowledge: () => admin.loadKnowledgeEntries(),
     missing: () => loadMissingEans(),
     history: () => admin.loadRevisionLog(),
-    users: () => admin.loadAdminUsers(),
+    users: () => adminUsers.load(),
     family: () => admin.loadFamilyOverview(),
     notifications: () => notifications.load(),
     onboarding: () => onboardingFunnel.load(),
@@ -225,15 +226,7 @@ export default function AdminApp() {
           openSubmissions={() => { admin.setSubmissionFilter("pending"); setSection("submissions"); }} />
       )}
       {section === "users" && (
-        <UsersSection
-          adminUsers={admin.adminUsers} adminUsersHasMore={admin.adminUsersHasMore} loadAdminUsers={admin.loadAdminUsers} adminUsersLoading={admin.adminUsersLoading}
-          userSearch={admin.userSearch} setUserSearch={admin.setUserSearch}
-          currentUserId={userId} updateUserRole={admin.updateUserRole} deleteUser={admin.deleteUser} logAdminExport={admin.logAdminExport}
-          openAdminUser={admin.openAdminUser} setOpenAdminUser={admin.setOpenAdminUser}
-          editingAdminUser={admin.editingAdminUser} setEditingAdminUser={admin.setEditingAdminUser}
-          adminUserActionLoading={admin.adminUserActionLoading}
-          openAdminUserForEdit={admin.openAdminUserForEdit} saveAdminUserEdit={admin.saveAdminUserEdit}
-        />
+        <UsersSection {...adminUsers} userSearch={admin.userSearch} setUserSearch={admin.setUserSearch} currentUserId={userId} />
       )}
       {section === "submissions" && (
         <SubmissionsSection

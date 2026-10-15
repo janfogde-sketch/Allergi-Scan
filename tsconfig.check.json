@@ -60,6 +60,8 @@
     "src/admin/useAiUsage.js",
     "src/admin/csvExport.js",
     "src/admin/useClientErrors.js",
+    "src/admin/useAdminUsers.js",
+    "src/admin/usersLogic.js",
     "src/legalText/inline.js",
     "src/admin/recallLogic.js",
     "src/admin/aiUsageLogic.js",

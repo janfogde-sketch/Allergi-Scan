@@ -53,8 +53,8 @@ begin
 
   -- Gem profil og allergier i ét hug
   perform public.admin_save_user_profile(usr,
-    '{"name":"Nyt navn","role":"user","e_numbers":["E100"],"allergen_levels":{"peanuts":"severe"},"onboarding_completed":true}'::jsonb,
-    array['peanuts','peanuts',' '], array['kiwi']);
+    '{"name":"Nyt navn","e_numbers":["E100"],"allergen_levels":{"peanuts":"severe"}}'::jsonb,
+    array['peanuts','peanuts',' '], array['kiwi'], 'Test: brugeren bad om rettelse');
   select name into v_name from public.users where id=usr;
   if v_name <> 'Nyt navn' then res := res || 'NAVN-IKKE-GEMT '; end if;
   select count(*) into n from public.user_allergens where user_id=usr and family_member_id is null;
@@ -66,7 +66,7 @@ begin
 
   -- En fejl (ugyldigt fødselsår) ruller det hele tilbage: navn og allergier er uændrede
   begin
-    perform public.admin_save_user_profile(usr, '{"name":"Fejl","birth_year":"abc"}'::jsonb, array['milk'], '{}');
+    perform public.admin_save_user_profile(usr, '{"name":"Fejl","birth_year":"abc"}'::jsonb, array['milk'], '{}', 'Test');
     res := res || 'UGYLDIG-VÆRDI-ACCEPTERET ';
   exception when others then null; end;
   select name into v_name from public.users where id=usr;
