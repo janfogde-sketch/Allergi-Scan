@@ -42,6 +42,8 @@ jobs:
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
+          # Runneren har ældre pg_dump/pg_restore først i PATH; Supabase kører Postgres 17.
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
 
       - name: Hent nyeste kopi
         run: |
