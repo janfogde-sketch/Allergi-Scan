@@ -6,13 +6,14 @@ import { Icon } from "../../SharedComponents.jsx";
 import { useIsMobile } from "../useIsMobile.js";
 import {
   AUDIT_TYPES, AUDIT_CATEGORIES, AUDIT_PERIODS, auditActionLabel, auditActionType, auditChangeText, auditActorText, auditTargetText, auditSummary,
-  auditCategory, auditFilterCount, fmtAuditDateTime, shortId,
+  auditCategory, auditChanges, auditFilterCount, auditOutcome, fmtAuditDateTime, shortId,
 } from "../auditLogic.js";
 
 const EMPTY = { type: "", category: "", period: "all", q: "" };
+const OUTCOME_LABELS = { ok: "Gennemført", mislykket: "Mislykkedes", afvist: "Afvist" };
 
-function TypePill({ action }) {
-  const t = AUDIT_TYPES[auditActionType(action)];
+function TypePill({ action, outcome }) {
+  const t = AUDIT_TYPES[auditActionType(action, outcome)];
   return <span className={`admin-pill ${t.pill}`} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name={t.icon} size={12} />{t.label}</span>;
 }
 
@@ -34,7 +35,8 @@ function Detail({ row, names, onClose }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   const change = auditChangeText(row);
-  const fields = row.details && Array.isArray(row.details.felter) && row.details.felter.length > 0;
+  const changes = auditChanges(row);
+  const fields = changes.length === 0 && row.details && Array.isArray(row.details.felter) && row.details.felter.length > 0;
   const item = (label, value) => value ? <div className="audit-detail-row"><dt>{label}</dt><dd>{value}</dd></div> : null;
   return (
     <div className="admin-modal-overlay" onClick={onClose}>
@@ -42,7 +44,7 @@ function Detail({ row, names, onClose }) {
         <div className="admin-modal-header">
           <div>
             <div style={{ fontSize: 15, fontWeight: 800 }}>{auditActionLabel(row.action)}</div>
-            <div style={{ marginTop: 6 }}><TypePill action={row.action} /></div>
+            <div style={{ marginTop: 6 }}><TypePill action={row.action} outcome={row.outcome} /></div>
           </div>
           <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={onClose} aria-label="Luk">Luk</button>
         </div>
@@ -51,11 +53,22 @@ function Detail({ row, names, onClose }) {
           {item("Tidspunkt", fmtAuditDateTime(row.created_at, true))}
           {item("Udført af", `${auditActorText(row, names.users)}${row.admin_id ? ` (id ${shortId(row.admin_id)})` : ""}`)}
           {item("Kategori", auditCategory(row.action))}
+          {auditOutcome(row) !== "ok" && item("Udfald", OUTCOME_LABELS[auditOutcome(row)] || row.outcome)}
           {item("Berørt", auditTargetText(row, names))}
-          {item(fields ? "Berørte felter" : "Ændring", change.replace(/^Felter: /, "")) }
+          {changes.length === 0 && item(fields ? "Berørte felter" : "Ændring", change.replace(/^Felter: /, ""))}
           {item("Log-id", String(row.id))}
         </dl>
-        {!change && <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Der er ikke logget flere oplysninger om denne handling.</div>}
+        {changes.length > 0 && (
+          <table className="admin-table audit-changes" style={{ marginTop: 4, fontSize: 12.5 }}>
+            <thead><tr><th>Felt</th><th>Før</th><th>Efter</th></tr></thead>
+            <tbody>
+              {changes.map((c) => (
+                <tr key={c.felt}><td>{c.felt}</td><td style={{ wordBreak: "break-word" }}>{c.fra}</td><td style={{ wordBreak: "break-word" }}>{c.til}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {!change && changes.length === 0 && <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Der er ikke logget flere oplysninger om denne handling.</div>}
         {fields && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>Loggen gemmer kun, hvilke felter der blev ændret, ikke de enkelte værdier.</div>}
       </div>
     </div>
@@ -110,7 +123,7 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
       <div className="admin-card-list">
         {rows.map((r) => (
           <button key={r.id} type="button" className="admin-item-card audit-card" onClick={() => setOpen(r.id)}>
-            <div className="audit-card-head"><TypePill action={r.action} /><span className="audit-card-title">{auditActionLabel(r.action)}</span></div>
+            <div className="audit-card-head"><TypePill action={r.action} outcome={r.outcome} /><span className="audit-card-title">{auditActionLabel(r.action)}</span></div>
             <div className="audit-card-text">{auditSummary(r, names)}</div>
             {auditChangeText(r) && <div className="audit-card-change">{auditChangeText(r)}</div>}
             <div className="audit-card-date">{fmtAuditDateTime(r.created_at)}</div>
@@ -127,7 +140,7 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
             {rows.map((r) => (
               <tr key={r.id} style={{ cursor: "pointer" }} tabIndex={0} onClick={() => setOpen(r.id)} onKeyDown={(e) => { if (e.key === "Enter") setOpen(r.id); }}>
                 <td style={{ whiteSpace: "nowrap" }}>{fmtAuditDateTime(r.created_at)}</td>
-                <td><TypePill action={r.action} /> <span style={{ marginLeft: 4 }}>{auditActionLabel(r.action)}</span></td>
+                <td><TypePill action={r.action} outcome={r.outcome} /> <span style={{ marginLeft: 4 }}>{auditActionLabel(r.action)}</span></td>
                 <td>{auditActorText(r, names.users)}</td>
                 <td>{auditTargetText(r, names)}</td>
                 <td>{auditChangeText(r)}</td>
@@ -199,7 +212,7 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
       )}
 
       <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-        Loggen viser ændringer og sletninger af følsomme data samt eksporter og gemmes i 12 måneder. Den indeholder aldrig adgangskoder, e-mails eller helbredsdata.
+        Loggen viser oprettelser, ændringer og sletninger af følsomme data, eksporter og afviste forsøg. Den gemmes i 12 måneder (afviste og mislykkede forsøg i 90 dage) og indeholder aldrig adgangskoder, e-mails eller helbredsdata.
       </div>
 
       {openRow && <Detail row={openRow} names={names} onClose={() => setOpen(null)} />}

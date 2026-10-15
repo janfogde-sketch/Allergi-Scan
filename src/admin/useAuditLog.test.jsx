@@ -45,7 +45,7 @@ describe("useAuditLog", () => {
   });
   it("filtre, der udelukker alt, henter ikke noget", async () => {
     const { result } = renderHook(() => useAuditLog("tok"));
-    await act(async () => { await result.current.load({ type: "exported", category: "Roller" }); });
+    await act(async () => { await result.current.load({ type: "exported", category: "Sikkerhed" }); });
     expect(apiCall).not.toHaveBeenCalled();
     expect(result.current.rows).toEqual([]);
     expect(result.current.loaded).toBe(true);

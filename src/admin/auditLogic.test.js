@@ -51,7 +51,7 @@ describe("filtre og forespørgsel til loggen", () => {
     expect(auditActionType("produkt_slettet")).toBe("deleted");
     expect(auditActionType("csv_eksport")).toBe("exported");
     expect(auditActionType("noget_nyt")).toBe("changed");
-    expect(auditCategory("rolle_aendret")).toBe("Roller");
+    expect(auditCategory("rolle_aendret")).toBe("Sikkerhed");
     expect(auditCategory("noget_nyt")).toBe("Andet");
     expect(AUDIT_CATEGORIES).toContain("Allergier og profiler");
   });
@@ -59,7 +59,7 @@ describe("filtre og forespørgsel til loggen", () => {
     expect(auditActionsFor({})).toBeNull();
     expect(auditActionsFor({ type: "deleted" })).toEqual(expect.arrayContaining(["produkt_slettet", "bruger_slettet"]));
     expect(auditActionsFor({ type: "deleted", category: "Produkter" })).toEqual(["produkt_slettet"]);
-    expect(buildAuditQuery({ type: "exported", category: "Roller" }, NOW)).toBeNull();
+    expect(buildAuditQuery({ type: "exported", category: "Sikkerhed" }, NOW)).toBeNull();
   });
   it("sorterer nyeste først med id som sidste nøgle og henter en side ad gangen", () => {
     const q = buildAuditQuery({ limit: 51 }, NOW);
@@ -96,5 +96,38 @@ describe("filtre og forespørgsel til loggen", () => {
     expect(auditSummary({ action: "produkt_rettet", admin_id: "a", target_table: "products", details: { navn: "Havredrik" } }, { users, products: {} })).toBe("Jan rettede produktet “Havredrik”");
     expect(auditSummary({ action: "csv_eksport", admin_id: "a", target_table: "products" }, { users })).toBe("Jan eksporterede produktlisten");
     expect(fmtAuditDateTime("2026-10-15T07:42:00Z")).toBe("15. oktober 2026 · 09.42");
+  });
+});
+
+import { auditChanges, auditValueText, auditOutcome, auditChangeText as changeText } from "./auditLogic.js";
+
+describe("før/efter, oprettelser og afviste forsøg", () => {
+  const NOW = new Date("2026-10-15T10:00:00Z");
+  it("viser før/efter pr. felt for indhold, og tomme værdier som 'tom'", () => {
+    const row = { details: { felter: ["allergens", "name"], aendringer: [{ felt: "allergens", fra: [], til: ["gluten", "mælk"] }, { felt: "name", fra: "A", til: null }] } };
+    expect(auditChanges(row)).toEqual([{ felt: "allergens", fra: "tom", til: "gluten, mælk" }, { felt: "name", fra: "A", til: "tom" }]);
+    expect(auditChanges({ details: { felter: ["name"] } })).toEqual([]);
+    expect(auditValueText(0)).toBe("0");
+    expect(auditValueText({ a: 1 })).toBe('{"a":1}');
+  });
+  it("oprettelser har egen type, og mislykket/afvist filtreres på udfald", () => {
+    expect(auditActionType("produkt_oprettet")).toBe("created");
+    expect(auditActionType("produkt_rettet", "mislykket")).toBe("failed");
+    expect(auditActionType("adgang_naegtet", "afvist")).toBe("failed");
+    expect(auditActionsFor({ type: "created" })).toEqual(expect.arrayContaining(["produkt_oprettet", "vidensindgang_oprettet"]));
+    const q = buildAuditQuery({ type: "failed" }, NOW);
+    expect(q).toContain("outcome=neq.ok");
+    expect(q).not.toContain("action=in.");
+    expect(q).toContain("details,outcome");
+    expect(buildAuditQuery({ type: "failed", category: "Sikkerhed" }, NOW)).toContain("action=in.(rolle_aendret,adgang_naegtet,sikkerhedsmelding)");
+    expect(auditOutcome({})).toBe("ok");
+  });
+  it("afviste forsøg og mislykkede handlinger læses som sætning", () => {
+    const users = { u: { name: "Bo" }, a: { name: "Jan" } };
+    expect(auditSummary({ action: "adgang_naegtet", outcome: "afvist", admin_id: "u", target_table: "edge_function", target_id: "products" }, { users }))
+      .toBe("Bo blev nægtet adgang til serverfunktionen “products”");
+    expect(auditSummary({ action: "allergener_gemt", outcome: "mislykket", admin_id: "a", target_table: "products", details: { navn: "Mel" } }, { users, products: {} }))
+      .toBe("Jan gemte allergener på produktet “Mel” (mislykkedes)");
+    expect(changeText({ details: { funktion: "products", fejl: "db_fejl" } })).toBe("Funktion: products · Fejl: db_fejl");
   });
 });

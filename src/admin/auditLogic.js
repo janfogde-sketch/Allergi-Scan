@@ -18,6 +18,15 @@ const ACTION_LABELS = {
   invitation_annulleret: "Invitation annulleret",
   pushtekst_aendret: "Push-tekst ændret",
   csv_eksport: "CSV-eksport",
+  produkt_oprettet: "Produkt oprettet",
+  vidensindgang_oprettet: "Leksikonpost oprettet",
+  vidensindgang_rettet: "Leksikonpost rettet",
+  allergener_gemt: "Allergener gemt på produkt",
+  genanalyse_koert: "Genanalyse kørt",
+  import_koert: "Import kørt",
+  testpush_sendt: "Test-push sendt",
+  adgang_naegtet: "Adgang nægtet",
+  sikkerhedsmelding: "Sikkerhedsmelding",
 };
 
 const TABLE_LABELS = {
@@ -29,6 +38,7 @@ const TABLE_LABELS = {
   family_members: "Familiemedlem",
   family_invites: "Invitation",
   notification_push_overrides: "Push-tekst",
+  edge_function: "Serverfunktion",
 };
 
 /** @param {string} action */
@@ -36,15 +46,38 @@ export function auditActionLabel(action) {
   return ACTION_LABELS[action] || action;
 }
 
+/** Logværdi som kort tekst: tom, tal, tekst eller liste. @param {any} v */
+export function auditValueText(v) {
+  if (v === null || v === undefined || v === "") return "tom";
+  if (Array.isArray(v)) return v.length ? v.join(", ") : "tom";
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
 /**
- * @param {{ action?: string, details?: { fra?: string|null, til?: string|null, felter?: string[], antal?: number,
- *   handling?: string, titel?: string|null, tekst?: string|null } | null }} row
+ * Før/efter pr. felt (kun indhold som produkter og leksikon; brugerprofiler logger aldrig værdier).
+ * @param {{ details?: { aendringer?: Array<{ felt: string, fra?: any, til?: any }> } | null }} row
+ * @returns {Array<{ felt: string, fra: string, til: string }>}
+ */
+export function auditChanges(row) {
+  const list = row && row.details && Array.isArray(row.details.aendringer) ? row.details.aendringer : [];
+  return list.map((c) => ({ felt: c.felt, fra: auditValueText(c.fra), til: auditValueText(c.til) }));
+}
+
+/** Udfald: ok (standard), mislykket eller afvist. @param {{ outcome?: string|null }} row */
+export const auditOutcome = (row) => (row && row.outcome) || "ok";
+
+/**
+ * @param {{ action?: string, outcome?: string|null, details?: { fra?: string|null, til?: string|null, felter?: string[], antal?: number,
+ *   handling?: string, titel?: string|null, tekst?: string|null, funktion?: string, fejl?: string } | null }} row
  */
 export function auditChangeText(row) {
   const d = row && row.details;
   if (!d) return "";
   if (d.fra != null || d.til != null) return `${d.fra ?? "tom"} → ${d.til ?? "tom"}`;
   const parts = [];
+  if (d.funktion) parts.push(`Funktion: ${d.funktion}`);
+  if (d.fejl) parts.push(`Fejl: ${d.fejl}`);
   if (Array.isArray(d.felter) && d.felter.length) parts.push(`Felter: ${d.felter.join(", ")}`);
   if (d.handling && d.antal != null) parts.push(`${d.antal} ${d.handling}`);
   else if (d.antal != null) parts.push(`${d.antal} rækker`);
@@ -98,25 +131,27 @@ export function auditTargetText(row, names) {
   else if (table === "products") what = d.navn || (names && names.products && names.products[row.target_id || ""] && names.products[row.target_id || ""].name) || "";
   if (table === "products" && d.ean) what = what ? `${what} (${d.ean})` : d.ean;
   if (table === "submissions" && d.ean) what = `EAN ${d.ean}`;
-  if (table === "notification_push_overrides") what = row.target_id || "";
+  if (table === "notification_push_overrides" || table === "edge_function") what = row.target_id || "";
   if (!what && row.target_id) what = shortId(row.target_id);
   return what ? `${label}: ${what}` : label;
 }
 
 // ── Filtre, typer og forespørgsel til den sideinddelte log (15. okt. 2026) ──────────────────────────────────────────────
-// Typer og kategorier udledes af handlingen (der logges ikke "oprettet" i dag, så den type findes ikke i filteret).
+// Typer og kategorier udledes af handlingen. "Mislykket/afvist" udledes af kolonnen outcome (afviste forsøg og fejlede handlinger).
 
 /** @type {Record<string, { label: string, pill: string, icon: string }>} */
 export const AUDIT_TYPES = {
+  created: { label: "Oprettet", pill: "admin-pill-neutral", icon: "plus" },
   changed: { label: "Ændret", pill: "admin-pill-neutral", icon: "edit" },
   processed: { label: "Behandlet", pill: "admin-pill-neutral", icon: "check" },
   deleted: { label: "Slettet", pill: "admin-pill-red", icon: "trash" },
   exported: { label: "Eksporteret", pill: "admin-pill-neutral", icon: "download" },
+  failed: { label: "Mislykket/afvist", pill: "admin-pill-red", icon: "warning" },
 };
 
 /** @type {Record<string, { type: string, category: string, verb: string }>} */
 const ACTION_META = {
-  rolle_aendret: { type: "changed", category: "Roller", verb: "ændrede rollen for" },
+  rolle_aendret: { type: "changed", category: "Sikkerhed", verb: "ændrede rollen for" },
   bruger_slettet: { type: "deleted", category: "Brugere", verb: "slettede" },
   ticketstatus_aendret: { type: "changed", category: "Tickets", verb: "ændrede status på" },
   indsendelse_behandlet: { type: "processed", category: "Indsendelser", verb: "behandlede" },
@@ -131,18 +166,28 @@ const ACTION_META = {
   invitation_annulleret: { type: "deleted", category: "Familie", verb: "annullerede" },
   pushtekst_aendret: { type: "changed", category: "Push-tekster", verb: "ændrede" },
   csv_eksport: { type: "exported", category: "Eksport", verb: "eksporterede" },
+  produkt_oprettet: { type: "created", category: "Produkter", verb: "oprettede" },
+  vidensindgang_oprettet: { type: "created", category: "Leksikon", verb: "oprettede" },
+  vidensindgang_rettet: { type: "changed", category: "Leksikon", verb: "rettede" },
+  allergener_gemt: { type: "changed", category: "Produkter", verb: "gemte allergener på" },
+  genanalyse_koert: { type: "processed", category: "Kørsler", verb: "kørte genanalyse via" },
+  import_koert: { type: "processed", category: "Kørsler", verb: "kørte import via" },
+  testpush_sendt: { type: "processed", category: "Push-tekster", verb: "sendte en test-push via" },
+  adgang_naegtet: { type: "processed", category: "Sikkerhed", verb: "blev nægtet adgang til" },
+  sikkerhedsmelding: { type: "processed", category: "Sikkerhed", verb: "meldte “Det var ikke mig” for" },
 };
 
 const ARTICLES = {
   users: "brugeren", products: "produktet", submissions: "indsendelsen", feedback_tickets: "ticketten", knowledge_base: "leksikonposten",
   family_members: "familiemedlemmet", family_invites: "invitationen", notification_push_overrides: "push-teksten",
+  edge_function: "serverfunktionen",
 };
 
 export const AUDIT_CATEGORIES = [...new Set(Object.values(ACTION_META).map((m) => m.category))];
 export const AUDIT_PERIODS = { all: "Hele perioden", day: "Seneste 24 timer", week: "Seneste 7 dage", month: "Seneste 30 dage" };
 
-/** @param {string} action */
-export const auditActionType = (action) => (ACTION_META[action] || { type: "changed" }).type;
+/** Typen til mærket; en mislykket eller afvist række vises altid som "Mislykket/afvist". @param {string} action @param {string|null} [outcome] */
+export const auditActionType = (action, outcome) => (outcome && outcome !== "ok" ? "failed" : (ACTION_META[action] || { type: "changed" }).type);
 /** @param {string} action */
 export const auditCategory = (action) => (ACTION_META[action] || { category: "Andet" }).category;
 
@@ -152,6 +197,7 @@ export const auditCategory = (action) => (ACTION_META[action] || { category: "An
  * @returns {string[] | null}
  */
 export function auditActionsFor({ type = "", category = "" } = {}) {
+  if (type === "failed") type = ""; // filtreres på outcome, ikke handling
   if (!type && !category) return null;
   return Object.keys(ACTION_META).filter((a) => (!type || ACTION_META[a].type === type) && (!category || ACTION_META[a].category === category));
 }
@@ -174,7 +220,7 @@ export const cleanSearch = (/** @type {string} */ q) => String(q || "").replace(
  */
 export function buildAuditQuery(o, now = new Date()) {
   const { type = "", category = "", period = "all", q = "", cursor = null, limit = 50, matchIds = [] } = o;
-  const parts = ["select=id,created_at,admin_id,action,target_table,target_id,details", "order=created_at.desc,id.desc", `limit=${limit}`];
+  const parts = ["select=id,created_at,admin_id,action,target_table,target_id,details,outcome", "order=created_at.desc,id.desc", `limit=${limit}`];
   const actions = auditActionsFor({ type, category });
   if (actions && actions.length === 0) return null;
   const search = cleanSearch(q);
@@ -193,6 +239,7 @@ export function buildAuditQuery(o, now = new Date()) {
   }
   if (ors.length) parts.push(`and=(${ors.join(",")})`);
   if (actions) parts.push(`action=in.(${actions.join(",")})`);
+  if (type === "failed") parts.push("outcome=neq.ok");
   const since = { day: 1, week: 7, month: 30 }[/** @type {"day"|"week"|"month"} */ (period)];
   if (since) parts.push(`created_at=gte.${encodeURIComponent(new Date(now.getTime() - since * 86400_000).toISOString())}`);
   return parts.join("&");
@@ -218,7 +265,8 @@ export function auditSummary(row, names) {
   if (!meta) return `${actor}: ${row.action}`;
   if (row.action === "csv_eksport") return `${actor} eksporterede ${label.toLowerCase()}listen`;
   const art = ARTICLES[row.target_table || ""] || label.toLowerCase();
-  return `${actor} ${meta.verb} ${art}${what ? ` “${what}”` : ""}`;
+  const failed = auditOutcome(row) === "mislykket" ? " (mislykkedes)" : "";
+  return `${actor} ${meta.verb} ${art}${what ? ` “${what}”` : ""}${failed}`;
 }
 
 /** Dato og tid til kort og detalje: "15. oktober 2026 · 09.42". */
