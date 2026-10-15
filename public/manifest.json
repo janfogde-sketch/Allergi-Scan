@@ -19,6 +19,10 @@
     { "src": "/icon-512-maskable.png",  "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/apple-touch-icon.png",   "sizes": "180x180", "type": "image/png", "purpose": "any" }
   ],
+  "screenshots": [
+    { "src": "/screenshots/shot-1-velkommen.png", "sizes": "1170x2532", "type": "image/png", "form_factor": "narrow", "label": "Velkommen til EatSafe" },
+    { "src": "/screenshots/shot-2-login.png", "sizes": "1170x2532", "type": "image/png", "form_factor": "narrow", "label": "Log ind" }
+  ],
   "categories": ["food", "health", "lifestyle"],
   "prefer_related_applications": false
 }
