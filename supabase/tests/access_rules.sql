@@ -9,7 +9,7 @@
 -- 2) Læsning: B ser ingen af A's rækker i nogen brugertabel (og A ser sine egne, så testen ikke er tom).
 -- 3) Ændring/sletning: B rammer 0 af A's rækker.
 -- 4) Oprettelse på andres vegne og selvophøjelse (rolle/abonnement/e-mail) afvises.
--- 5) Anon: ser intet i brugertabeller.
+-- 5) Anon: ser intet i brugertabeller, men godkendte allergener; is_admin kan ikke kaldes af anon.
 -- Backup-tabeller (…_backup_…, …_diff_…, …_ÅÅÅÅMMDD) er IKKE undtaget: appens roller må hverken tømme, skrive eller læse dem.
 begin;
 
@@ -18,7 +18,7 @@ do $$
 declare
   r record; res text := '';
   -- funktioner med SECURITY DEFINER, som anon må køre (offentlige opslag, fejllog, triggerfunktioner kan ikke kaldes direkte)
-  anon_ok text[] := array['active_recalls_for_ean','get_invite_preview','is_admin','log_client_error',
+  anon_ok text[] := array['active_recalls_for_ean','get_invite_preview','log_client_error',
     'trg_notify_invite_accepted','trg_notify_link_declined','trg_notify_list_item_added',
     'trg_notify_submission_reviewed','trg_notify_ticket_update'];
 begin
@@ -50,6 +50,10 @@ begin
     res := res || 'ANON-FUNKTION:' || r.proname || ' ';
   end loop;
 
+  -- is_admin kun for loggede brugere (S8): anon og PUBLIC må ikke kunne kalde den
+  if has_function_privilege('anon', 'public.is_admin(uuid)', 'execute') then res := res || 'ANON-KAN-KALDE:is_admin '; end if;
+  if not has_function_privilege('authenticated', 'public.is_admin(uuid)', 'execute') then res := res || 'BRUGER-KAN-IKKE-KALDE:is_admin '; end if;
+
   if res <> '' then raise exception 'STRUKTUR: %', res; end if;
 end $$;
 
@@ -60,7 +64,7 @@ declare
   fid uuid; lid uuid; nid uuid; fmid uuid; iid uuid;
   r record; n int; res text := ''; val uuid; st text; sqls text[]; q text;
   role_before text; email_before text; plan_before timestamptz;
-  public_read text[] := array['custom_allergens','knowledge_base','plans','products','recipe_ingredients','recipes'];
+  public_read text[] := array['custom_allergens','knowledge_base','plans','products'];
   claims text;
 begin
   insert into auth.users(id,email,aud,role) values (a,'a-'||substr(a::text,1,8)||'@example.invalid','authenticated','authenticated');
@@ -88,6 +92,7 @@ begin
   insert into submissions(ean,submitted_by) values ('999'||substr(a::text,1,6),a);
   insert into user_allergens(user_id,allergen) values (a,'gluten');
   insert into user_allergens(user_id,allergen,family_member_id) values (a,'gluten',fmid);
+  insert into custom_allergens(name,created_by,approved) values ('Test godkendt '||a,null,true),('Test egen '||a,a,false);
 
   -- (tabel, kolonne, værdi: A=bruger, L=liste, N=notifikation, F=familiemedlem, I=invitation, ejer læser selv?)
   -- 2) Læsning som fremmed (B) + kontrol som ejer (A)
@@ -208,7 +213,22 @@ begin
     end;
     if n>0 then res := res || 'ANON-LÆSER:' || r.relname || '(' || n || ') '; end if;
   end loop;
+  -- Allergi-listen virker for ikke-loggede: godkendte allergener ses, ikke-godkendte ikke
+  select count(*) into n from public.custom_allergens where name='Test godkendt '||a;
+  if n<>1 then res := res || 'ANON-SER-IKKE-GODKENDT-ALLERGEN '; end if;
+  select count(*) into n from public.custom_allergens where name='Test egen '||a;
+  if n<>0 then res := res || 'ANON-SER-IKKE-GODKENDT:custom_allergens '; end if;
   execute 'reset role';
+
+  -- Loggede brugere: ejer ser sit ikke-godkendte allergen, en fremmed gør ikke; begge ser det godkendte
+  for st in select unnest(array['B','A']) loop
+    execute 'set local role authenticated';
+    perform set_config('request.jwt.claims', json_build_object('sub', case st when 'B' then b else a end,'role','authenticated')::text, true);
+    select count(*) into n from public.custom_allergens where name in ('Test godkendt '||a, 'Test egen '||a);
+    execute 'reset role';
+    if st='B' and n<>1 then res := res || 'FREMMED-ALLERGENER(' || n || ') '; end if;
+    if st='A' and n<>2 then res := res || 'EJER-ALLERGENER(' || n || ') '; end if;
+  end loop;
 
   -- A's data er uændret efter alle forsøg
   if not exists (select 1 from public.users where id=a and name='Test A') then res := res || 'A-PROFIL-ÆNDRET '; end if;
