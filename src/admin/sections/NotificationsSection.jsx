@@ -189,7 +189,6 @@ export default function NotificationsSection({ admins, overrides, loading, load,
             </label>
           </div>
           <button className="admin-btn admin-btn-primary" onClick={send} disabled={sending || !recipient || !check.ok}>{sending ? "Sender…" : "Send test"}</button>
-          <button className="admin-btn admin-btn-ghost" style={{ marginLeft: 8 }} onClick={() => load()}>Opdater</button>
           <TestResult res={result} />
         </div>
       </div>

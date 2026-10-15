@@ -16,8 +16,7 @@
 - **Databaseændringer** er en fil i `supabase/migrations/` (version = unikt tidsstempel), anvendt af `apply-migrations.yml` ved merge til main.
   Brug ikke `apply_migration`/`execute_sql` til skrivning; læsning er fint. Edge-funktioner deployes ved merge af `deploy-edge-functions.yml`.
   Detaljer: `docs/drift.md`.
-- **Pauser (Jans beslutning):** Supabase Pro er på pause; spørg ikke, om det er glemt, kun om han vil opgradere. **Vercel skal på Pro, før appen
-  går live.** Testrunden på rigtige telefoner er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X). Opret tickets for `fail`.
+- **Pauser (Jans beslutning):** Supabase Pro er på pause; spørg ikke, om det er glemt, kun om han vil opgradere. Vercel er på Pro (15. okt. 2026). Testrunden på rigtige telefoner er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X). Opret tickets for `fail`.
 - **Netværk:** cloud-miljøet når eatsafe.dk, Supabase og world.openfoodfacts.org. Testkonto med admin-rolle: kun efter Jans ja.
   Test-mail og test-push sendes kun til Jans og Bjørns egne konti.
 - **Login og mail:** egen SMTP via Resend; auth-mails sendes af `auth-send-email` (`supabase/templates/`). Alle 24 mailskabeloner deler
@@ -129,10 +128,10 @@ med workflowet, eller af sessionen selv, hvis ingen er udpeget. Ved færdig opga
 **Ingen CVR-krævende forslag** og ingen betalte planer uden Jans ja. **Alle iPhone-tests lægges som to do hos Bjørn**, aldrig hos Jan.
 Supabase-dialoger er usynlige: brug kun læsning dér.
 
-**Vercel (Free, 100 deploys/dag): push/merge KUN ved funktions- og dataændringer.** Rene design- og dokumentændringer committes, men pushes
+**Vercel (Pro, ingen dagsgrænse): push/merge helst kun ved funktions- og dataændringer (sparer byggetid).** Rene design- og dokumentændringer committes, men pushes
 med næste funktionsændring eller på bestilling. Udebliver et deploy, aldrig en tom commit (`docs/arbejdsgang.md`).
 
-**Dev-gren (aktiv først når Jan siger "slå dev til"):** arbejde går til PR mod `dev`; Jans "udgiv" = én PR `dev` → `main`.
+**Dev-gren (slået til 14. okt. 2026, testadresse dev.eatsafe.dk):** frontend (skærme, knapper) går som PR mod `dev`; migrationer, edge-funktioner, workflows, admin og hotfix direkte mod `main` (bagudkompatible; derefter merges `main` ind i `dev`). Dev deler database med produktion. Jans "udgiv" = én PR `dev` → `main`.
 
 **Design** verificeres i en Artifact-preview i stedet for deploy (`docs/arbejdsgang.md`).
 

@@ -13,6 +13,7 @@
 // samme, uanset om brugeren findes (afslører ikke noget).
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent } from "../_shared/adminAudit.ts";
 import { verifyReportToken } from "../_shared/reportLink.ts";
 import { sendHtmlMail, escapeHtml } from "../_shared/mailSend.ts";
 
@@ -81,6 +82,8 @@ Deno.serve(async (req) => {
 
     const { data: report, error: insErr } = await supabase.from("security_reports").insert({ user_id: user.id, kind: KIND }).select("id").single();
     if (insErr || !report) throw new Error(`security_reports: ${insErr?.message ?? "ingen række"}`);
+    // Adminloggen (kategori Sikkerhed): kun bruger-id, ingen e-mail
+    await logAdminEvent(supabase, user.id, "sikkerhedsmelding", "users", user.id, { type: KIND });
 
     // For mange indberetninger på kort tid: gem dem, men send ikke flere mails/opgaver (beskytter mod oversvømmelse)
     const { count } = await supabase.from("security_reports").select("id", { count: "exact", head: true }).gte("created_at", since);

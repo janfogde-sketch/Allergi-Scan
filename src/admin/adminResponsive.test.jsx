@@ -82,14 +82,13 @@ describe("tickets: mobilkort og handlingsmenu", () => {
     expect(screen.getByText("PrivacyScreen")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Kopiér prompt" })).toBeTruthy();
   });
-  it("downloads og opdatering ligger i 'Flere handlinger'", () => {
+  it("downloads ligger i 'Flere handlinger', og opdatering sker fra headeren (ikke her)", () => {
     setMobile(false);
     render(<TicketsSection {...props} />);
     expect(screen.queryByText(/Download åbne/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Flere handlinger/ }));
     expect(screen.getByRole("menuitem", { name: /Download åbne \+ prompts \(1\)/ })).toBeTruthy();
-    fireEvent.click(screen.getByRole("menuitem", { name: /Opdatér listen/ }));
-    expect(props.loadTickets).toHaveBeenCalled();
+    expect(screen.queryByRole("menuitem", { name: /Opdatér/ })).toBeNull();
   });
   it("titel og uddrag udledes af beskrivelsen, også uden punktum", () => {
     expect(ticketTitleParts("Kort fejl").title).toBe("Kort fejl");

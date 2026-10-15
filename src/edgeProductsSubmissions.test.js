@@ -157,6 +157,20 @@ describe("edge: submissions", () => {
     expect(h.writes()[0].op("insert")[0]).toMatchObject({ ean: "5701234567890", submitted_by: "user-a", status: "pending", type: "new_product" });
   });
 
+  it("fotos lægges i den private bøtte og gemmes som henvisning, ikke som offentlig URL", async () => {
+    const h = await loadHandler("submissions", { tokens, resolver: resolver() });
+    const img = "/9j/4AAQSkZJRg==";
+    const r = await h.call("POST", "/submissions", { token: "a", body: { ...body, raw_label_image: img, ai_parsed_data: { name: "X", product_image_base64: img }, images: [{ kind: "nutrition", base64: img }] } });
+    expect(r.status).toBe(201);
+    expect(h.state.storage.every((c) => c.bucket === "submission-images" && c.op === "upload")).toBe(true);
+    expect(h.state.storage).toHaveLength(3);
+    const row = h.writes()[0].op("insert")[0];
+    expect(row.raw_label_image).toMatch(/^storage:submission-images\/labels\//);
+    expect(row.ai_parsed_data.product_image_url).toMatch(/^storage:submission-images\/products\//);
+    expect(row.ai_parsed_data.images[0].url).toMatch(/^storage:submission-images\/extra\//);
+    expect(JSON.stringify(row)).not.toContain("/object/public/");
+  });
+
   it("rettelsesforslag uden kendt produkt afvises (400)", async () => {
     const h = await loadHandler("submissions", { tokens, resolver: resolver() });
     expect((await h.call("POST", "/submissions", { token: "a", body: { ...body, type: "edit" } })).status).toBe(400);
@@ -222,6 +236,28 @@ describe("edge: submissions", () => {
       const upd = h.writes().find((c) => c.table === "submissions");
       expect(upd.op("update")[0]).toMatchObject({ status: "approved", product_id: "ny" });
       expect(h.writes().find((c) => c.table === "admin_audit_log").op("insert")[0]).toMatchObject({ action: "indsendelse_godkendt" });
+    });
+
+    it("produktbilledet kopieres til den offentlige bøtte; fotoet af ingredienslisten forbliver privat", async () => {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("{}")));
+      const submission = sub({ raw_label_image: "storage:submission-images/labels/1_label.jpg", ai_parsed_data: { product_image_url: "storage:submission-images/products/1_product.jpg" } });
+      const h = await loadHandler("submissions", { tokens, resolver: resolver({ submission }) });
+      expect((await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "approved" } })).status).toBe(200);
+      expect(h.state.storage).toEqual([
+        { bucket: "submission-images", op: "download", path: "products/1_product.jpg" },
+        { bucket: "product-images", op: "upload", path: "products/1_product.jpg" },
+      ]);
+      const prod = h.writes().find((c) => c.table === "products").op("insert")[0];
+      expect(prod.image_url).toBe("https://x.supabase.co/storage/v1/object/public/product-images/products/1_product.jpg");
+    });
+
+    it("uden produktbillede bruges det private etiketbillede ikke som produktbillede", async () => {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("{}")));
+      const submission = sub({ raw_label_image: "storage:submission-images/labels/1_label.jpg", ai_parsed_data: {} });
+      const h = await loadHandler("submissions", { tokens, resolver: resolver({ submission }) });
+      expect((await h.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "approved" } })).status).toBe(200);
+      expect(h.state.storage).toEqual([]);
+      expect(h.writes().find((c) => c.table === "products").op("insert")[0].image_url).toBeNull();
     });
 
     it("findes stregkoden allerede, forbliver indsendelsen ventende (409)", async () => {

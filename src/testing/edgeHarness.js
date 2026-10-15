@@ -43,14 +43,25 @@ function makeDb(state) {
   return {
     from: query,
     rpc: (name, args) => run(makeCall(null, name, args, [])),
-    storage: { from: () => ({ remove: async () => ({ data: [], error: null }), upload: async () => ({ error: null }) }) },
+    // Lagerkald logges i state.storage som { bucket, op, path }.
+    storage: {
+      from: (bucket) => {
+        const log = (op, path) => state.storage.push({ bucket, op, path });
+        return {
+          remove: async (paths) => { log("remove", paths); return { data: paths.map((name) => ({ name })), error: null }; },
+          upload: async (path) => { log("upload", path); return { error: null }; },
+          download: async (path) => { log("download", path); return { data: new Blob(["x"], { type: "image/jpeg" }), error: null }; },
+          getPublicUrl: (path) => ({ data: { publicUrl: `https://x.supabase.co/storage/v1/object/public/${bucket}/${path}` } }),
+        };
+      },
+    },
     auth: { admin: { deleteUser: async (id) => { state.deletedAuthUsers.push(id); return { error: null }; } } },
   };
 }
 
 // tokens: { "Bearer abc": "user-id" }. Ukendt token giver ingen bruger.
 export async function loadHandler(fn, { tokens = {}, resolver, env = {}, file = "index.ts" } = {}) {
-  const state = { calls: [], resolver, deletedAuthUsers: [] };
+  const state = { calls: [], resolver, deletedAuthUsers: [], storage: [] };
   const fullEnv = { ...BASE_ENV, ...env };
   let handler = null;
   globalThis.Deno = { env: { get: (k) => fullEnv[k] }, serve: (h) => { handler = h; } };

@@ -42,3 +42,92 @@ describe("adminlog med navne og felter", () => {
     expect(auditTargetText({ target_table: "family_members", target_id: "abcdefgh-1" }, {})).toBe("Familiemedlem: abcdefgh");
   });
 });
+
+import { buildAuditQuery, auditActionsFor, auditSummary, auditFilterCount, cleanSearch, auditActionType, auditCategory, fmtAuditDateTime, AUDIT_CATEGORIES } from "./auditLogic.js";
+
+describe("filtre og forespørgsel til loggen", () => {
+  const NOW = new Date("2026-10-15T10:00:00Z");
+  it("grupperer handlinger i typer og kategorier, og ukendte er 'Ændret'/'Andet'", () => {
+    expect(auditActionType("produkt_slettet")).toBe("deleted");
+    expect(auditActionType("csv_eksport")).toBe("exported");
+    expect(auditActionType("noget_nyt")).toBe("changed");
+    expect(auditCategory("rolle_aendret")).toBe("Sikkerhed");
+    expect(auditCategory("noget_nyt")).toBe("Andet");
+    expect(AUDIT_CATEGORIES).toContain("Allergier og profiler");
+  });
+  it("type og kategori giver en handlingsliste; uden fælles handling er svaret null", () => {
+    expect(auditActionsFor({})).toBeNull();
+    expect(auditActionsFor({ type: "deleted" })).toEqual(expect.arrayContaining(["produkt_slettet", "bruger_slettet"]));
+    expect(auditActionsFor({ type: "deleted", category: "Produkter" })).toEqual(["produkt_slettet"]);
+    expect(buildAuditQuery({ type: "exported", category: "Sikkerhed" }, NOW)).toBeNull();
+  });
+  it("sorterer nyeste først med id som sidste nøgle og henter en side ad gangen", () => {
+    const q = buildAuditQuery({ limit: 51 }, NOW);
+    expect(q).toContain("order=created_at.desc,id.desc");
+    expect(q).toContain("limit=51");
+    expect(q).not.toContain("and=");
+  });
+  it("næste side bruger nøgle-paginering på (created_at, id)", () => {
+    const q = buildAuditQuery({ cursor: { created_at: "2026-10-14T08:00:00.123456+00:00", id: 42 } }, NOW);
+    expect(q).toContain("and=(or(created_at.lt.2026-10-14T08%3A00%3A00.123456%2B00%3A00,and(created_at.eq.2026-10-14T08%3A00%3A00.123456%2B00%3A00,id.lt.42)))");
+  });
+  it("periode giver en nedre tidsgrænse, og søgning samler navne-id'er, felter og handlingsnavne", () => {
+    expect(buildAuditQuery({ period: "week" }, NOW)).toContain("created_at=gte.2026-10-08T10%3A00%3A00.000Z");
+    expect(buildAuditQuery({ period: "all" }, NOW)).not.toContain("gte");
+    const q = buildAuditQuery({ q: "rolle", matchIds: ["u1", "p1"] }, NOW);
+    expect(q).toContain("admin_id.in.(u1,p1)");
+    expect(q).toContain("target_id.in.(u1,p1)");
+    expect(q).toContain("details->>navn.ilike.*rolle*");
+    expect(q).toContain("action.in.(rolle_aendret)");
+  });
+  it("søgning og sidenøgle kombineres i ét and-filter, og søgeordet renses", () => {
+    const q = buildAuditQuery({ q: "a,b)", cursor: { created_at: "2026-10-14T08:00:00Z", id: 1 } }, NOW);
+    expect(q.match(/and=/g).length).toBeGreaterThanOrEqual(1);
+    expect(q).not.toContain("a,b)");
+    expect(cleanSearch(' x,(y)* "z" ')).toBe("x y z");
+  });
+  it("tæller kun filtre ud over søgningen", () => {
+    expect(auditFilterCount({ type: "deleted", category: "", period: "all" })).toBe(1);
+    expect(auditFilterCount({ type: "deleted", category: "Produkter", period: "week" })).toBe(3);
+    expect(auditFilterCount({})).toBe(0);
+  });
+  it("sætning og dato til listen", () => {
+    const users = { a: { name: "Jan" } };
+    expect(auditSummary({ action: "produkt_rettet", admin_id: "a", target_table: "products", details: { navn: "Havredrik" } }, { users, products: {} })).toBe("Jan rettede produktet “Havredrik”");
+    expect(auditSummary({ action: "csv_eksport", admin_id: "a", target_table: "products" }, { users })).toBe("Jan eksporterede produktlisten");
+    expect(fmtAuditDateTime("2026-10-15T07:42:00Z")).toBe("15. oktober 2026 · 09.42");
+  });
+});
+
+import { auditChanges, auditValueText, auditOutcome, auditChangeText as changeText } from "./auditLogic.js";
+
+describe("før/efter, oprettelser og afviste forsøg", () => {
+  const NOW = new Date("2026-10-15T10:00:00Z");
+  it("viser før/efter pr. felt for indhold, og tomme værdier som 'tom'", () => {
+    const row = { details: { felter: ["allergens", "name"], aendringer: [{ felt: "allergens", fra: [], til: ["gluten", "mælk"] }, { felt: "name", fra: "A", til: null }] } };
+    expect(auditChanges(row)).toEqual([{ felt: "allergens", fra: "tom", til: "gluten, mælk" }, { felt: "name", fra: "A", til: "tom" }]);
+    expect(auditChanges({ details: { felter: ["name"] } })).toEqual([]);
+    expect(auditValueText(0)).toBe("0");
+    expect(auditValueText({ a: 1 })).toBe('{"a":1}');
+  });
+  it("oprettelser har egen type, og mislykket/afvist filtreres på udfald", () => {
+    expect(auditActionType("produkt_oprettet")).toBe("created");
+    expect(auditActionType("produkt_rettet", "mislykket")).toBe("failed");
+    expect(auditActionType("adgang_naegtet", "afvist")).toBe("failed");
+    expect(auditActionsFor({ type: "created" })).toEqual(expect.arrayContaining(["produkt_oprettet", "vidensindgang_oprettet"]));
+    const q = buildAuditQuery({ type: "failed" }, NOW);
+    expect(q).toContain("outcome=neq.ok");
+    expect(q).not.toContain("action=in.");
+    expect(q).toContain("details,outcome");
+    expect(buildAuditQuery({ type: "failed", category: "Sikkerhed" }, NOW)).toContain("action=in.(rolle_aendret,adgang_naegtet,sikkerhedsmelding)");
+    expect(auditOutcome({})).toBe("ok");
+  });
+  it("afviste forsøg og mislykkede handlinger læses som sætning", () => {
+    const users = { u: { name: "Bo" }, a: { name: "Jan" } };
+    expect(auditSummary({ action: "adgang_naegtet", outcome: "afvist", admin_id: "u", target_table: "edge_function", target_id: "products" }, { users }))
+      .toBe("Bo blev nægtet adgang til serverfunktionen “products”");
+    expect(auditSummary({ action: "allergener_gemt", outcome: "mislykket", admin_id: "a", target_table: "products", details: { navn: "Mel" } }, { users, products: {} }))
+      .toBe("Jan gemte allergener på produktet “Mel” (mislykkedes)");
+    expect(changeText({ details: { funktion: "products", fejl: "db_fejl" } })).toBe("Funktion: products · Fejl: db_fejl");
+  });
+});

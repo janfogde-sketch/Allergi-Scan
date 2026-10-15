@@ -166,9 +166,6 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
           <button type="button" className="admin-icon-btn" aria-label="Sådan fungerer opgaver" title="Sådan fungerer opgaver" onClick={() => setShowInfo(true)}>
             <Icon name="info" size={18} />
           </button>
-          <button type="button" className="admin-icon-btn" aria-label="Opdatér listen" title="Opdatér listen" aria-busy={loading} disabled={loading} onClick={() => load()}>
-            {loading ? <div className="admin-spinner" /> : <Icon name="refresh" size={18} />}
-          </button>
         </div>
       </div>
 

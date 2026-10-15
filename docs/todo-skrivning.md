@@ -13,6 +13,12 @@ ingen fri SQL. Ingen PR, intet migrationsnummer, ingen CI og ingen Vercel-udruln
 3. Hent kørslen med `actions_list` (list_workflow_runs) og `actions_get`/`get_job_logs`; vent til den står `success`. Log viser handlingerne og svaret.
 4. **Verificér selv** med en læsning bagefter (status, kommentar), som Jan har bedt om.
 
+## Loggen er offentlig
+
+Repoet er offentligt. Workflowet skriver kun handlingstype og id i loggen, ikke titler eller tekster (sikkerhedsgennemgang 15. okt. 2026, S3).
+Skriv alligevel aldrig følsomme detaljer i en to do (fx hvordan et sikkerhedshul udnyttes, personoplysninger, nøgler). Læg detaljerne i
+projektmappen eller i en privat fil, og henvis dertil.
+
 ## Format
 
 ```json

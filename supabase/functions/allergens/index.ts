@@ -2,6 +2,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
 import { reportLimitHit, withinGlobalLimit, withinTotalAiLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
+import { logAdminEvent, logAccessDenied, fejlkode, feltAendringer } from "../_shared/adminAudit.ts";
 import {
   ALL_ALLERGENS,
   analyzeIngredients,
@@ -198,6 +199,7 @@ Deno.serve(async (req) => {
       if (!isInternalCall) {
         const { data: callerRow } = await supabase.from("users").select("role").eq("id", caller!.id).single();
         if (callerRow?.role !== "admin") {
+          await logAccessDenied(supabase, caller!.id, "allergens");
           return new Response(
             JSON.stringify({ error: "Kun admins kan gemme allergen-data direkte på et produkt" }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -205,6 +207,9 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Adminloggen: før/efter på produktet, når en admin gemmer (interne kald fra natjob o.l. logges ikke)
+      const { data: before } = isInternalCall ? { data: null } :
+        await supabase.from("products").select("name, ean, allergen_flags, allergen_source_method").eq("id", product_id).maybeSingle();
       const { error } = await supabase
         .from("products")
         .update({
@@ -214,6 +219,19 @@ Deno.serve(async (req) => {
           allergen_source_method: method,
         })
         .eq("id", product_id);
+
+      if (!isInternalCall) {
+        const who = { navn: before?.name ?? null, ean: before?.ean ?? null };
+        if (error) {
+          await logAdminEvent(supabase, caller!.id, "allergener_gemt", "products", String(product_id), { ...who, fejl: fejlkode(error) }, "mislykket");
+        } else {
+          const changes = feltAendringer(
+            { allergen_flags: before?.allergen_flags ?? null, allergen_source_method: before?.allergen_source_method ?? null },
+            { allergen_flags: allergenFlags, allergen_source_method: method },
+          );
+          await logAdminEvent(supabase, caller!.id, "allergener_gemt", "products", String(product_id), { ...changes, ...who });
+        }
+      }
 
       if (error) {
         return new Response(

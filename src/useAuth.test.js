@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { useAuth } from "./useAuth.js";
 import * as sessionStore from "./sessionStore.js";
 
@@ -375,7 +375,8 @@ describe("useAuth — app-start overskriver ikke en besked åbnet fra push", () 
 
 // Login via links (15. okt. 2026, sikkerhedsfund S4/S5).
 describe("useAuth — login via links logger kun ind efter bekræftelse", () => {
-  const jwt = (p) => `h.${btoa(JSON.stringify(p)).replace(/=+$/, "")}.s`;
+  // Med udløbstid: uden "exp" planlægger appen fornyelsen straks, og test-stubben svarer "ingen session" (= logget ud).
+  const jwt = (p) => `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, ...p })).replace(/=+$/, "")}.s`;
   const atUrl = (u) => window.history.replaceState({}, "", u);
   const json = (body, ok = true, status = 200) => ({ ok, status, json: async () => body, text: async () => JSON.stringify(body) });
   const flush = async () => { await act(async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); }); };
@@ -453,7 +454,7 @@ describe("useAuth — login via links logger kun ind efter bekræftelse", () => 
     const second = setup();
     await flush();
     expect(JSON.parse(global.fetch.mock.calls[0][1].body).auth_code).toBe("egen");
-    expect(second.result.current.accessToken).toBe(access);
+    await waitFor(() => expect(second.result.current.accessToken).toBe(access));
     expect(localStorage.getItem("as_pkce_verifier")).toBeNull();
   });
 });

@@ -29,6 +29,7 @@
 // Auth (kategori 2 og 4 i .claude/rules/edge-function-auth.md): kun admin-JWT eller service-role.
 // ─────────────────────────────────────────────────────────────────────────────
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 import { analyzeIngredients, liftGlutenFromWheat, ALL_ALLERGENS } from "../_shared/allergenEngine.js";
 
 const CORS = {
@@ -55,6 +56,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   const isInternalCall = !!serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`;
+  let actorId = ""; // admin bag et manuelt kald (adminloggen); tom ved systemkald
   if (!isInternalCall) {
     if (!authHeader) return json({ error: "Ikke autoriseret" }, 401);
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
@@ -64,8 +66,14 @@ Deno.serve(async (req) => {
     const { data: callerRow } = caller
       ? await supabase.from("users").select("role").eq("id", caller.id).single()
       : { data: null };
+    if (caller && callerRow?.role !== "admin") await logAccessDenied(supabase, caller.id, "allergen-reanalyze");
     if (!caller || callerRow?.role !== "admin") return json({ error: "Ikke autoriseret" }, 401);
+    actorId = caller.id;
   }
+  const logRun = (mode: string, applied: number, errors: number) => actorId
+    ? logAdminEvent(supabase, actorId, "genanalyse_koert", "edge_function", "allergen-reanalyze",
+        { funktion: "allergen-reanalyze", tilstand: mode, antal: applied, fejl_antal: errors })
+    : Promise.resolve();
 
   try {
     const { mode, after = null, limit = 500 } = await req.json().catch(() => ({}));
@@ -158,6 +166,7 @@ Deno.serve(async (req) => {
         await supabase.from(DOWN_TABLE).update({ applied_at: new Date().toISOString() }).eq("product_id", r.product_id);
         applied++;
       }
+      await logRun(mode, applied, errors);
       return json({
         mode, applied, skipped, errors,
         next: (dRows ?? []).length === size ? dRows[dRows.length - 1].product_id : null,
@@ -252,12 +261,17 @@ Deno.serve(async (req) => {
       await supabase.from(DIFF_TABLE).update({ applied_at: new Date().toISOString() }).eq("product_id", r.product_id);
       applied++;
     }
+    await logRun(mode, applied, errors);
     return json({
       mode, applied, errors,
       next: (rows ?? []).length === batch ? rows[rows.length - 1].product_id : null,
     });
   } catch (e) {
     console.error("allergen-reanalyze fejl:", e);
+    if (actorId) {
+      await logAdminEvent(supabase, actorId, "genanalyse_koert", "edge_function", "allergen-reanalyze",
+        { funktion: "allergen-reanalyze", fejl: fejlkode(e) }, "mislykket");
+    }
     return json({ error: String(e) }, 500);
   }
 });
