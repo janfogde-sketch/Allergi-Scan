@@ -3,11 +3,11 @@ name: DB-tests
 # Bygger en tom Postgres ud fra supabase/migrations/ og kører SQL-tests i supabase/tests/.
 # Rører aldrig produktion (kører på en midlertidig kopi på GitHub-maskinen). Kræver ikke Supabase Pro.
 on:
-  workflow_dispatch: # startes af opdater-pr.yml efter en automatisk opdatering af PR'en
+  workflow_dispatch:
   pull_request:
     paths: ["supabase/migrations/**", "supabase/tests/**", "supabase/functions/delete-user/**", ".github/workflows/db-tests.yml"]
   push:
-    branches: [main, dev]
+    branches: [main]
     paths: ["supabase/migrations/**", "supabase/tests/**", "supabase/functions/delete-user/**", ".github/workflows/db-tests.yml"]
 
 jobs:
