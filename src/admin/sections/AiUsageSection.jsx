@@ -1,5 +1,4 @@
 // @ts-nocheck
-import RefreshButton from "../RefreshButton.jsx";
 import React, { useState } from "react";
 import {
   HAIKU_USD_PER_M_INPUT, HAIKU_USD_PER_M_OUTPUT, USD_TO_DKK, FUNCTION_LABELS,
@@ -41,7 +40,6 @@ export default function AiUsageSection({ rows, loading, load }) {
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
           Forbrug på Claude Haiku (læsning af fotos, allergen-tjek, kategorisering). Kun samlede tal, ingen data pr. bruger.
         </div>
-        <RefreshButton onClick={load} />
       </div>
 
       {loading ? (

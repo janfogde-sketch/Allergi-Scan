@@ -10,18 +10,11 @@ const r = { id: 7, created_at: "2026-10-15T07:42:00Z", admin_id: "a", action: "p
 const mobile = () => { window.matchMedia = vi.fn().mockImplementation((q) => ({ matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })); };
 
 describe("Aktivitetslog", () => {
-  it("har kort introduktion, ikon-opdatering med tilgængelighedstekst og opbevaring nederst", () => {
+  it("har kort introduktion og opbevaring nederst, og ingen egen opdateringsknap (den sidder i headeren)", () => {
     render(<AuditLogSection {...base} />);
     expect(screen.getByText("Se, hvem der har foretaget ændringer i systemet, og hvornår.")).toBeTruthy();
-    const btn = screen.getByRole("button", { name: "Opdater aktivitetslog" });
-    expect(btn.textContent).toBe("");
+    expect(screen.queryByRole("button", { name: /Opdater/ })).toBeNull();
     expect(screen.getByText(/gemmes i 12 måneder/)).toBeTruthy();
-  });
-  it("opdateringsknappen er slået fra og roterer under indlæsning", () => {
-    render(<AuditLogSection {...base} loading rows={[r]} />);
-    const btn = screen.getByRole("button", { name: "Opdater aktivitetslog" });
-    expect(btn.disabled).toBe(true);
-    expect(btn.className).toContain("spinning");
   });
   it("tom log, ingen match og fejl er tre forskellige tilstande", () => {
     const { unmount } = render(<AuditLogSection {...base} />);

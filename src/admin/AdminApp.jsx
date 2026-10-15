@@ -42,6 +42,7 @@ export default function AdminApp() {
 
   const admin = useAdmin(accessToken, userId);
   const [section, setSection] = useState("dashboard");
+  const [refreshing, setRefreshing] = useState(false);
   const clientErrors = useClientErrors(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -120,6 +121,34 @@ export default function AdminApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: hent kun ved sektionsskift eller login; indlæsningsfunktionerne genskabes hver gang og må ikke udløse nye hent
   }, [section, accessToken, isAdmin]);
 
+  // Opdatering fra headeren: genhenter den aktuelle sides data med de nuværende filtre (indlæsningsfunktionerne bruger selv de gemte filtre).
+  // Sider uden data, der kan opdateres (Import), har ingen knap. Gentagne tryk ignoreres, mens en opdatering kører.
+  const REFRESHERS = {
+    dashboard: () => Promise.all([admin.loadAdminStats(), todos.load()]),
+    todo: () => todos.load(),
+    submissions: () => admin.loadSubmissions(),
+    recalls: () => recalls.load(),
+    tickets: () => admin.loadTickets(),
+    products: () => admin.loadProducts(),
+    knowledge: () => admin.loadKnowledgeEntries(),
+    missing: () => loadMissingEans(),
+    history: () => admin.loadRevisionLog(),
+    users: () => admin.loadAdminUsers(),
+    family: () => admin.loadFamilyOverview(),
+    notifications: () => notifications.load(),
+    onboarding: () => onboardingFunnel.load(),
+    errors: () => clientErrors.load(),
+    "ai-usage": () => aiUsage.load(),
+    audit: () => auditLog.load(),
+  };
+  const refreshCurrent = async () => {
+    const fn = REFRESHERS[section];
+    if (!fn || refreshing) return;
+    setRefreshing(true);
+    try { await fn(); } catch (e) { showToast("Kunne ikke opdatere siden: " + (e && e.message ? e.message : "ukendt fejl"), "error"); }
+    setRefreshing(false);
+  };
+
   if (!accessToken) {
     return (
       <div className="admin-login-wrap">
@@ -176,6 +205,7 @@ export default function AdminApp() {
       todoAttention={todos.loaded ? attentionCount(todos.todos) : undefined}
       todoOverdue={todos.loaded ? todos.todos.filter((t) => isOverdue(t)).length : undefined}
       pendingRecalls={needsReviewCount(recalls.recalls)}
+      onRefresh={REFRESHERS[section] ? refreshCurrent : undefined} refreshing={refreshing}
       topbarExtra={
         <GlobalSearchBox
           globalSearch={admin.globalSearch} setGlobalSearch={admin.setGlobalSearch}

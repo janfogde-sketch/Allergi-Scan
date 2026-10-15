@@ -304,6 +304,11 @@ button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px sol
 .admin-search-sheet-body div[style*="cursor"]{padding:12px 4px !important;}
 .admin-iconbtn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:none;background:none;border-radius:10px;cursor:pointer;flex-shrink:0;}
 .admin-iconbtn:active{background:var(--surface2);}
+.admin-iconbtn:disabled{cursor:default;}
+.admin-iconbtn:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
+.admin-iconbtn.spinning svg{animation:admin-spin .8s linear infinite;}
+.admin-topbar .admin-iconbtn svg{stroke-width:2.2;}
+.admin-topbar-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
 
 /* ── Mobil: sidemenuen bliver en udtrækskuffe, indholdet fylder hele bredden ── */
 .admin-menu-btn,.admin-nav-backdrop{display:none;}
