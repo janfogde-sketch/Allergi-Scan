@@ -382,14 +382,16 @@ describe("useAuth — login via links logger kun ind efter bekræftelse", () => 
   const flush = async () => { await act(async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); }); };
   afterEach(() => atUrl("/"));
 
-  it("en fremmed #access_token gemmes ikke, før brugeren trykker Fortsæt", async () => {
+  it("en #access_token i adressen logger aldrig ind og vises som et udløbet link", async () => {
     const access = jwt({ sub: "evil", email: "angriber@x.dk" });
-    atUrl(`/#access_token=${access}&refresh_token=r`);
+    atUrl(`/#access_token=${access}&refresh_token=r&type=signup`);
     const { result, setScreen } = setup();
     await flush();
-    expect(setScreen).toHaveBeenCalledWith("authconfirm");
-    expect(result.current.pendingAuthLink.email).toBe("angriber@x.dk");
+    expect(setScreen).not.toHaveBeenCalledWith("authconfirm");
+    expect(setScreen).toHaveBeenCalledWith("login");
+    expect(result.current.pendingAuthLink).toBeNull();
     expect(sessionStore.persistRefreshToken).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
     expect(result.current.accessToken).toBeNull();
     expect(window.location.hash).toBe("");
   });

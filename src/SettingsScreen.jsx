@@ -39,7 +39,8 @@
 //   gjort mere universel/ærlig i stedet.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { isNativeApp } from "./nativeShell.js";
 import { Icon, showToast, ConfirmDialog, PushUnavailableNote } from "./SharedComponents.jsx";
 import { usePush, SAVE_FAILED_REASON } from "./usePush.js";
 import { useNotificationPrefs } from "./useNotificationPrefs.js";
@@ -145,6 +146,19 @@ export default function SettingsScreen({
   const { supported: pushSupported, permission: pushPermission, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePush();
   const [pushLoading, setPushLoading] = useState(false);
   const [pushStatus, setPushStatus] = useState(pushPermission);
+  // Tilladelsen alene betyder ikke, at push virker: er abonnementet væk (fx udløbet eller ryddet), skal knappen ikke stå som "Aktiveret".
+  useEffect(() => {
+    if (pushPermission !== "granted" || !pushSupported || isNativeApp()) return;
+    let alive = true;
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+        const sub = reg ? await reg.pushManager.getSubscription() : null;
+        if (alive && !sub) setPushStatus("default");
+      } catch { /* kan ikke tjekkes: behold tilladelsens status */ }
+    })();
+    return () => { alive = false; };
+  }, [pushPermission, pushSupported]);
 
   // ── Notifikations-kategorier (hvilke typer, via hvilke kanaler) ──────────────
   const { prefs: notifPrefs, savingKeys: notifSavingKeys, setPref: setNotifPref, categories: notifCategories } = useNotificationPrefs({ accessToken, userId });

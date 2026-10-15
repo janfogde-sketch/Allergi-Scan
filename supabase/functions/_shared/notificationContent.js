@@ -149,7 +149,7 @@ export const DEFINITIONS = {
       P("Tak, fordi du har indsendt oplysninger om **{{productName}}**."),
       P("Vores team har gennemgået din indsendelse, men har ikke kunnet godkende den på det nuværende grundlag."),
       PANEL("Begrundelse fra vores team", [P("{{reason}}", { multiline: true })]),
-      P("Du er velkommen til at indsende oplysningerne igen, når du har fulgt vejledningen ovenfor. Sørg gerne for, at billederne tydeligt viser produktets stregkode og hele ingredienslisten."),
+      P("Du er velkommen til at indsende oplysningerne igen, når du har rettet det, som begrundelsen nævner. Sørg gerne for, at billederne tydeligt viser produktets stregkode og hele ingredienslisten."),
       P("Tak for din hjælp. Selvom denne indsendelse ikke blev godkendt, sætter vi pris på, at du bidrager til at gøre EatSafe bedre."),
       P("Hvis du har spørgsmål til vores svar, kan du kontakte os via feedbackknappen i appen."),
       DISC,

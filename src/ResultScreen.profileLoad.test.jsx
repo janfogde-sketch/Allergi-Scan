@@ -23,7 +23,7 @@ const scanResult = {
 };
 
 function renderWith(status, retry = () => {}) {
-  profileCtx = { scanFamily: [], allergens: [], customAllerg: [], activeProfiles: ["me"], profileLoadStatus: status, retryProfileLoad: retry };
+  profileCtx = { scanFamily: [], allergens: ["noedder"], customAllerg: [], activeProfiles: ["me"], profileLoadStatus: status, retryProfileLoad: retry };
   return render(<ResultScreen scanResult={scanResult} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
 }
 
@@ -56,6 +56,23 @@ describe("ResultScreen uden hentet profil", () => {
     expect(screen.queryByText("Din profil kunne ikke hentes")).toBeNull();
     expect(screen.queryByText("Henter din profil …")).toBeNull();
     expect(screen.getAllByText(/Ingen registrerede konflikter/).length).toBeGreaterThan(0);
+  });
+});
+
+describe("ResultScreen uden valgte allergier (generalprøven 15. okt. 2026)", () => {
+  it("viser aldrig grønt, men beder brugeren vælge allergier", () => {
+    profileCtx = { scanFamily: [], allergens: [], customAllerg: [], activeProfiles: ["me"], profileLoadStatus: "ok", retryProfileLoad: () => {} };
+    render(<ResultScreen scanResult={{ ...scanResult, name: "Peanutbar", ingredients: "jordnødder, sukker", allergen_flags: { jordnoedder: "yes" } }} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
+    expect(screen.getByText("Du har ikke valgt nogen allergier")).toBeTruthy();
+    expect(screen.getByText("Vælg allergier")).toBeTruthy();
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
+  });
+
+  it("siger det samme for et valgt familiemedlem uden allergier", () => {
+    profileCtx = { scanFamily: [{ id: "barn", name: "Oskar", allergens: [] }], allergens: ["noedder"], customAllerg: [], activeProfiles: ["barn"], profileLoadStatus: "ok", retryProfileLoad: () => {} };
+    render(<ResultScreen scanResult={scanResult} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
+    expect(screen.getByText("Ingen allergier valgt")).toBeTruthy();
+    expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 });
 
