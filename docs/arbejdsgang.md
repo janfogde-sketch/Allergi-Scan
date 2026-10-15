@@ -117,3 +117,7 @@ Samlet fra projektets indstillinger, så alle arbejder ens.
 - **Model pr. opgave:** Haiku til små og enkle opgaver (status, lukke to do'er), Sonnet til almindeligt kodearbejde, Opus kun til svære eller risikable (sikkerhed, allergenlogik, data der ikke kan fortrydes, login).
 - **Tråde:** navngiv med spor som præfiks ("Kode:", "Design:", "Data:", "Ledelse:"); færre og større tråde, højst 3 ad gangen og aldrig i samme område. Luk færdige tråde.
 - **Opfølgning** på en løst opgave bliver en ny to do med foreslået frist, markeret som forslag.
+
+## Tjek selv tests (Jan, 15. okt. 2026)
+
+En tråd, der skriver, at den venter på tests/CI, må ikke afslutte sin tur uden ét af to: automatisk merge sat på PR'en (squash), eller en `send_later`-påmindelse hvert 3. minut, der læser PR'ens checks direkte. En GitHub-besked kan udeblive, så den vækker ikke altid tråden. Påmindelsen kører, til checks er grønne (merge eller meld, hvis godkendelse mangler) eller røde (ret eller meld hvorfor ikke). Auto-merge kan kun sættes, mens checks stadig kører; er alt allerede grønt, merges der direkte.
