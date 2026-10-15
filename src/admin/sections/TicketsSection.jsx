@@ -168,14 +168,13 @@ export default function TicketsSection({ adminTickets, ticketsHasMore, ticketsLo
         </div>
         <ActionsMenu items={[
           openCount > 0 && { label: `Download åbne + prompts (${openCount})`, hint: "Én tekstfil med alle åbne tickets som færdige prompts", onClick: () => { exportOpenTickets(adminTickets); showToast("Eksport gennemført", "success"); } },
-          { label: "Opdatér listen", icon: "refresh", onClick: () => loadTickets({ includeDone: ticketsIncludeDone }) },
         ]} />
       </div>
 
       {ticketsHasMore && !ticketsLoading && (
         <div className="admin-info-note">Der er flere tickets end de {adminTickets.length}, der vises. Luk nogle, og opdatér listen for at se resten.</div>
       )}
-      {ticketsLoading ? (
+      {ticketsLoading && adminTickets.length === 0 ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter tickets…</div>
       ) : filtered.length === 0 ? (
         <div className="admin-table-empty">Ingen tickets her</div>

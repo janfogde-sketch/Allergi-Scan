@@ -1,5 +1,4 @@
 // @ts-nocheck
-import RefreshButton from "../RefreshButton.jsx";
 import React, { useState } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 
@@ -42,7 +41,6 @@ export default function ErrorsSection({ errors, loading, filter, setFilter, load
             </button>
           ))}
         </div>
-        <RefreshButton onClick={load} />
       </div>
       <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
         Fejl, som appen selv har registreret hos brugerne. Samme fejl inden for en time tælles sammen i én række. En løst fejl åbnes igen, hvis den sker igen.

@@ -12,12 +12,19 @@ describe("RefreshButton", () => {
   it("er en ikonknap med skærmlæsertekst, kalder onClick og er slået fra under indlæsning", () => {
     const onClick = vi.fn();
     const { rerender } = render(<RefreshButton onClick={onClick} />);
-    const btn = screen.getByRole("button", { name: "Opdatér listen" });
+    const btn = screen.getByRole("button", { name: "Opdater siden" });
     expect(btn.textContent).toBe(""); // kun ikon
     fireEvent.click(btn);
     expect(onClick).toHaveBeenCalledTimes(1);
     rerender(<RefreshButton onClick={onClick} loading />);
-    expect(screen.getByRole("button", { name: "Opdatér listen" }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Opdater siden" }).disabled).toBe(true);
+  });
+  it("headervarianten har samme udseende som de øvrige headerikoner og roterer under indlæsning", () => {
+    render(<RefreshButton variant="header" onClick={() => {}} loading />);
+    const btn = screen.getByRole("button", { name: "Opdater siden" });
+    expect(btn.className).toContain("admin-iconbtn");
+    expect(btn.className).toContain("spinning");
+    expect(btn.disabled).toBe(true);
   });
   it("ingen sektion har længere en tekstknap, der hedder Opdater", () => {
     const dir = join(process.cwd(), "src/admin/sections");

@@ -181,3 +181,38 @@ describe("fast top og bund, og lukning", () => {
     expect(document.querySelector(".admin-main").hasAttribute("inert")).toBe(false);
   });
 });
+
+describe("opdatering i headeren", () => {
+  it("står umiddelbart til venstre for søgningen, er kun et ikon og kalder onRefresh", () => {
+    setMobile(false);
+    const onRefresh = vi.fn();
+    const { container } = mount({ onRefresh, topbarExtra: <button type="button" aria-label="Søg i admin">s</button> });
+    const actions = container.querySelector(".admin-topbar-actions");
+    const [first, second] = actions.querySelectorAll("button");
+    expect(first.getAttribute("aria-label")).toBe("Opdater siden");
+    expect(first.textContent).toBe("");
+    expect(second.getAttribute("aria-label")).toBe("Søg i admin");
+    fireEvent.click(first);
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+  it("roterer og er slået fra under opdatering, og vises ikke på sider uden opdatering", () => {
+    setMobile(false);
+    const { container, rerender } = mount({ onRefresh: vi.fn(), refreshing: true });
+    const btn = screen.getByRole("button", { name: "Opdater siden" });
+    expect(btn.disabled).toBe(true);
+    expect(btn.className).toContain("spinning");
+    rerender(<AdminLayout {...base} section="import"><div /></AdminLayout>);
+    expect(container.querySelector("[aria-label='Opdater siden']")).toBeNull();
+  });
+  it("alle sider med data har en opdatering i AdminApp, kun Import har ingen", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { NAV_ITEMS } = await import("./navLogic.js");
+    const src = readFileSync(join(process.cwd(), "src/admin/AdminApp.jsx"), "utf8");
+    const block = src.slice(src.indexOf("const REFRESHERS"), src.indexOf("const refreshCurrent"));
+    for (const item of NAV_ITEMS) {
+      if (item.id === "import") expect(block).not.toMatch(/\bimport\s*:/);
+      else expect(block, item.id).toMatch(new RegExp(`(^|\\s|")${item.id}"?\\s*:`));
+    }
+  });
+});

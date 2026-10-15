@@ -3,7 +3,6 @@
 // og loggen hentes 50 ad gangen ("Vis flere"). Se useAuditLog.js og auditLogic.js.
 import React, { useState, useEffect, useRef } from "react";
 import { Icon } from "../../SharedComponents.jsx";
-import RefreshButton from "../RefreshButton.jsx";
 import { useIsMobile } from "../useIsMobile.js";
 import {
   AUDIT_TYPES, AUDIT_CATEGORIES, AUDIT_PERIODS, auditActionLabel, auditActionType, auditChangeText, auditActorText, auditTargetText, auditSummary,
@@ -144,7 +143,6 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
     <>
       <div className="audit-head">
         <div className="audit-intro">Se, hvem der har foretaget ændringer i systemet, og hvornår.</div>
-        <RefreshButton loading={loading} label="Opdater aktivitetslog" onClick={refresh} />
       </div>
 
       <div className="admin-toolbar todo-toolbar">
