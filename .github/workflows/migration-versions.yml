@@ -5,7 +5,8 @@ name: Migrationsnumre
 # eller er aeldre end den nyeste paa main (Supabase springer dem over uden fejl). Rører ikke databasen.
 on:
   pull_request:
-  workflow_dispatch: # startes af opdater-pr.yml efter en automatisk opdatering af PR'en
+    branches: [main] # migrationer går altid direkte mod main; påkrævet tjek på main
+  workflow_dispatch:
 
 jobs:
   migrationsnumre:

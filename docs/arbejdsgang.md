@@ -38,7 +38,7 @@ Når godkendt: push → ÉN PR (dansk body, tjek PR-template, slut med footer + 
 **Dev-gren (slået til 14. okt. 2026, to do 274dffa5):** Grenen `dev` har testadressen **dev.eatsafe.dk** (Vercel, Git Branch `dev`; kun `main` og `dev` udrulles, andre grene får ingen forhåndsvisning, se `ignoreCommand` i `vercel.json`). Adressen har `noindex` og et lille "TEST"-mærke øverst (`src/devBadge.js`). Den deler **database og edge-funktioner med produktion**: det, man gør dér, er rigtige data på ens egen konto, og kun Jan og Bjørn bruger den.
 - **Til `dev` (PR mod `dev`, squash-merge):** frontend, altså skærme, knapper og tekster. Jans "push" betyder da PR mod `dev` og squash-merge dér.
 - **Direkte til `main` (som før):** migrationer, edge-funktioner, workflows, admin-panelet og kritiske hotfix. De skal være bagudkompatible, så den gamle app også virker. Efter et hotfix merges `main` ind i `dev`. En skærmændring, der kræver ny database, tages i to trin: database først til `main`, skærm bagefter via `dev`.
-- **Udgiv:** Jans "udgiv" = én PR `dev` → `main`, squash-merge; først da går skærmændringerne live. Tjekkene (CI, Tjek efter merge) kører på PR'er mod både `dev` og `main`. `apply-migrations.yml`, `deploy-edge-functions.yml` og `deploy-auth-templates.yml` kører kun ved push til `main`.
+- **Udgiv:** Jans "udgiv" = én PR `dev` → `main`, squash-merge; først da går skærmændringerne live. PR'er mod `dev` får kun de hurtige tjek (CI); den fulde runde kører på PR'er mod `main`, også "udgiv" (se "Testminutter" nedenfor). `apply-migrations.yml`, `deploy-edge-functions.yml` og `deploy-auth-templates.yml` kører kun ved push til `main`.
 - Login-cookien er per domæne, så dev og www har hver sin login. Auth-mails linker til www, så nulstilling af kodeord testes dér. Push-beskeder registreret fra dev lander i den rigtige tabel (kun egne konti).
 
 ## Vercel (Free, 100 deploys/dag)
@@ -79,15 +79,24 @@ Engangstest (testkonti, gensendt tilbagekaldelse) er et engangsscript eller en m
 ## PR'er der kommer bagud (opdater-pr.yml, 14. okt. 2026)
 
 - Hovedgrenen kræver, at en PR er opdateret med main (det beskytter migrationsnumrene). Går én PR ind, kommer de andre med auto-merge derfor "bagud".
-- `.github/workflows/opdater-pr.yml` kører ved hvert push til main (og hvert kvarter som sikkerhedsnet), finder åbne PR'er med auto-merge der står bagud, opdaterer dem og starter tjekkene bagefter.
-- Opdatering med den indbyggede nøgle starter ikke tjekkene af sig selv. Derfor starter workflowen dem med `workflow_dispatch` (undtaget fra GitHubs regel), så der ikke skal bruges en ekstra nøgle. `migration-versions.yml`, `ci.yml` og `db-tests.yml` har derfor `workflow_dispatch`.
+- `.github/workflows/opdater-pr.yml` kører ved hvert push til main (og en gang i timen som sikkerhedsnet), finder åbne PR'er med auto-merge der står bagud, opdaterer dem og starter tjekkene bagefter.
+- Opdatering med den indbyggede nøgle starter ikke tjekkene af sig selv. Workflowen genkører PR'ens egne kørsler ("action_required"); kun hvis der ingen er, startes `migration-versions.yml`, `ci.yml` og `db-tests.yml` med `workflow_dispatch` som reserve.
 - PR'er med konflikt rører workflowen ikke: ejertråden fletter main ind og pusher.
 - GitHubs merge-kø findes ikke for private personers repoer (kun for organisationer), så den kan ikke bruges her.
+
+## Testminutter (Jan 15. okt. 2026)
+
+Målt 14.-15. okt.: 2.060 GitHub-testminutter på ét døgn (980 kørsler), halvdelen dobbeltkørsler. Reglerne:
+- **PR mod `dev`:** kun CI (lint, typetjek, tests, build, tegn-tjek). Ingen klik-tests eller DB-tests.
+- **PR mod `main`** (database, edge-funktioner, workflows, hotfix og "udgiv"): CI og Migrationsnumre altid; DB-tests kun ved migrationer/tests; "Tjek efter merge" (pakker, serverfunktioner) kun ved ændrede serverfunktioner eller pakker; klik-tests kun ved ændrede skærmfiler.
+- **Efter merge til `main`:** kun CI, DB-tests og "Tjek efter merge" efter samme filregler. Intet kører ved push til `dev`.
+- **Én gang om ugen** (mandag): pakketjek og dækningsrapport.
+- Nye workflows skal have filfilter (`paths`) og må ikke dublere et eksisterende tjek. Færre og større PR'er sparer mest.
 
 ## Klik-tests (Playwright)
 
 Små automatiske klik-tests af hovedvejene (velkomst, login-fejl, opret-konto-fane, vilkår/privatliv, admin-siden uden login) i `e2e/`. De kører mod det byggede site (`vite preview`) med en forfalsket backend (`e2e/helpers.js`): al trafik uden for testserveren afvises, så der aldrig oprettes konti eller sendes mail/push.
 
-- **CI:** workflowet `klik-tests.yml` (eget tjek "Klik-tests"). **Kun vis fejl** (Jan, 14. okt. 2026): tjekket er ikke påkrævet i branch-beskyttelsen og stopper ikke merge. Vil vi senere gøre det blokerende, tilføjes det som påkrævet tjek efter et par ugers erfaring.
+- **CI:** workflowet `klik-tests.yml` (eget tjek "Klik-tests") kører kun på PR'er mod `main` (fx "udgiv"), og kun når skærmfiler er ændret. **Kun vis fejl** (Jan, 14. okt. 2026): tjekket er ikke påkrævet i branch-beskyttelsen og stopper ikke merge. Vil vi senere gøre det blokerende, tilføjes det som påkrævet tjek efter et par ugers erfaring.
 - **Lokalt/cloud:** `npm run build && PW_CHROMIUM_PATH=<sti til forhåndsinstalleret Chromium> npm run test:e2e` (cloud: `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`). Hent aldrig browsere lokalt.
 - Nye veje tilføjes som `e2e/*.spec.js`; brug `isolerNetvaerk(page)` og ingen rigtige konti.
