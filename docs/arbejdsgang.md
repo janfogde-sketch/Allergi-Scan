@@ -36,9 +36,10 @@ Når godkendt: push → ÉN PR (dansk body, tjek PR-template, slut med footer + 
 **Auto-merge uden ventetid (Jan, 14. okt. 2026):** Automatisk merge er slået til i repoet. Når merge er godkendt i tråden, sættes auto-merge (squash) på PR'en, tråden sender status til koordinatoren (PR-nummer, to do-id'er, hvad der skal tjekkes efter merge, fx en migration i databasen) og afslutter. Tråden venter ikke på CI. Lukketråden tjekker hvert kvarter, at PR'erne er merget, at main er grøn, og at migrationer er i databasen. Er noget rødt, får den oprindelige tråd besked om at rette det.
 
 **Dev-gren (slået til 14. okt. 2026, to do 274dffa5):** Grenen `dev` har testadressen **dev.eatsafe.dk** (Vercel, Git Branch `dev`; kun `main` og `dev` udrulles, andre grene får ingen forhåndsvisning, se `ignoreCommand` i `vercel.json`). Adressen har `noindex` og et lille "TEST"-mærke øverst (`src/devBadge.js`). Den deler **database og edge-funktioner med produktion**: det, man gør dér, er rigtige data på ens egen konto, og kun Jan og Bjørn bruger den.
-- **Til `dev` (PR mod `dev`, squash-merge):** frontend, altså skærme, knapper og tekster. Jans "push" betyder da PR mod `dev` og squash-merge dér.
-- **Direkte til `main` (som før):** migrationer, edge-funktioner, workflows, admin-panelet og kritiske hotfix. De skal være bagudkompatible, så den gamle app også virker. Efter et hotfix merges `main` ind i `dev`. En skærmændring, der kræver ny database, tages i to trin: database først til `main`, skærm bagefter via `dev`.
-- **Udgiv:** Jans "udgiv" = én PR `dev` → `main`, squash-merge; først da går skærmændringerne live. PR'er mod `dev` får kun de hurtige tjek (CI); den fulde runde kører på PR'er mod `main`, også "udgiv" (se "Testminutter" nedenfor). `apply-migrations.yml`, `deploy-edge-functions.yml` og `deploy-auth-templates.yml` kører kun ved push til `main`.
+- **Dev først (Jan, 15. okt. 2026):** alt bygges først på `dev` (PR mod `dev`, squash-merge), også migrationer, edge-funktioner, workflows og admin-panelet. Jans "push" betyder PR mod `dev` og squash-merge dér. Intet går til `main`, før det er gennemtestet med de tests, vi har (se "Udgiv").
+- **Migrationer og edge-funktioner:** de køres først ved push til `main` og kan derfor ikke prøves på dev. Dev deler database med produktion, så de skal være bagudkompatible, og DB-testene kører i PR'en `dev` → `main`. En skærmændring, der kræver ny database, tages i to trin: databasen først, skærmen bagefter, begge via `dev`.
+- **Undtagelse, kritiske hotfix:** en crashende skærm eller lignende i produktion rettes straks som isoleret PR direkte mod `main`. Bagefter merges `main` ind i `dev`.
+- **Udgiv:** Jans "udgiv" = én PR `dev` → `main`, squash-merge; først da går ændringerne live. PR'en skal have grøn CI, DB-tests og klik-tests. PR'er mod `dev` får kun de hurtige tjek (CI); den fulde runde kører på PR'er mod `main`, også "udgiv" (se "Testminutter" nedenfor). `apply-migrations.yml`, `deploy-edge-functions.yml` og `deploy-auth-templates.yml` kører kun ved push til `main`.
 - Login-cookien er per domæne, så dev og www har hver sin login. Auth-mails linker til www, så nulstilling af kodeord testes dér. Push-beskeder registreret fra dev lander i den rigtige tabel (kun egne konti).
 
 ## Vercel (Free, 100 deploys/dag)
@@ -100,3 +101,19 @@ Små automatiske klik-tests af hovedvejene (velkomst, login-fejl, opret-konto-fa
 - **CI:** workflowet `klik-tests.yml` (eget tjek "Klik-tests") kører kun på PR'er mod `main` (fx "udgiv"), og kun når skærmfiler er ændret. **Kun vis fejl** (Jan, 14. okt. 2026): tjekket er ikke påkrævet i branch-beskyttelsen og stopper ikke merge. Vil vi senere gøre det blokerende, tilføjes det som påkrævet tjek efter et par ugers erfaring.
 - **Lokalt/cloud:** `npm run build && PW_CHROMIUM_PATH=<sti til forhåndsinstalleret Chromium> npm run test:e2e` (cloud: `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`). Hent aldrig browsere lokalt.
 - Nye veje tilføjes som `e2e/*.spec.js`; brug `isolerNetvaerk(page)` og ingen rigtige konti.
+
+## Faste aftaler (Jan, 14.-15. okt. 2026)
+
+Samlet fra projektets indstillinger, så alle arbejder ens.
+- **Hvad skal forbi Jan:** ændringer i funktioner for brugeren, produktvalg, database, sikkerhed, login og politikker kræver hans ja pr. punkt (et ja til en omgang er ikke et ja til dem). Det kører uden ham: fejlrettelser, der får en eksisterende funktion til at virke som tænkt, og ændringer i admin. Sådanne tråde sætter selv auto-merge, når testene er grønne.
+- **Tekster:** nye eller ændrede tekster, brugerne ser, gennemlæses af Bjørn (to do hos Bjørn), ikke Jan. Alle iPhone-tests ligger hos Bjørn.
+- **Sikkerhed:** skriv aldrig kodeord eller nøgler i chat, filer eller logs. Test-mail og test-push kun til Jans og Bjørns egne konti; ingen testkonti med admin-rolle uden Jans ja.
+- **Data:** slet ikke data eller tabeller uden Jans ja. Backup-tabellen `removed_image_backup_20261005` beholdes (andre backups: se retention i `src/CONTEXT.md`).
+- **Vercel:** Pro. Slet ingen Vercel-projekter. Vercel springer ændringer over, der kun rører dokumenter, workflows eller databasefiler.
+- **GitHub-repoet:** om det skal gøres privat, afgøres omkring 22. okt. ud fra målt forbrug af testminutter.
+- **Fejl i `client_errors`:** markeres løst eller ignoreret (fx "Share canceled" = ignoreret, ikke en fejl).
+- **Skærmbilleder og tjek** laves fra den nyeste pushede version (`origin/main`), ikke en lokal gren. Browser-preview kun til større designopgaver og kun, når en ændring skal ses (koster forbrug).
+- **Kodegennemgang** før beta er læsende: rapport plus to do pr. fund, ingen rettelser før Jans ja.
+- **Model pr. opgave:** Haiku til små og enkle opgaver (status, lukke to do'er), Sonnet til almindeligt kodearbejde, Opus kun til svære eller risikable (sikkerhed, allergenlogik, data der ikke kan fortrydes, login).
+- **Tråde:** navngiv med spor som præfiks ("Kode:", "Design:", "Data:", "Ledelse:"); færre og større tråde, højst 3 ad gangen og aldrig i samme område. Luk færdige tråde.
+- **Opfølgning** på en løst opgave bliver en ny to do med foreslået frist, markeret som forslag.
