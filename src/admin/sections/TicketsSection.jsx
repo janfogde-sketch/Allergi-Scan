@@ -168,7 +168,7 @@ export default function TicketsSection({ adminTickets, ticketsHasMore, ticketsLo
         </div>
         <ActionsMenu items={[
           openCount > 0 && { label: `Download åbne + prompts (${openCount})`, hint: "Én tekstfil med alle åbne tickets som færdige prompts", onClick: () => { exportOpenTickets(adminTickets); showToast("Eksport gennemført", "success"); } },
-          { label: "Opdatér listen", onClick: () => loadTickets({ includeDone: ticketsIncludeDone }) },
+          { label: "Opdatér listen", icon: "refresh", onClick: () => loadTickets({ includeDone: ticketsIncludeDone }) },
         ]} />
       </div>
 
