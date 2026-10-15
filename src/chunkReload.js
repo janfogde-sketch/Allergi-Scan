@@ -1,3 +1,4 @@
+// @ts-check
 // Efter en udrulning findes gamle kodefiler ikke længere. Genindlæs højst én gang
 // pr. minut (samme nøgle som public/js/boot.js), så en fejl aldrig giver en løkke.
 const KEY = "chunkReloadAt";

@@ -1,3 +1,4 @@
+// @ts-check
 // Lille "TEST"-mærke øverst på testadressen (dev.eatsafe.dk), så den ikke forveksles med den rigtige app.
 export const isDevHost = (hostname) => /^dev\.eatsafe\.dk$/i.test(hostname || "");
 
