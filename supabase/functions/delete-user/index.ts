@@ -4,6 +4,7 @@
 // Sletning af en ANDEN bruger kræver admin-rolle på den kaldende bruger.
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied } from "../_shared/adminAudit.ts";
 import { TRANSACTIONAL_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
 import { formatDanishDateTime } from "../_shared/notifyHelpers.js";
 import { PRODUCT_IMAGES_BUCKET, pathsToDelete } from "../_shared/productImages.js";
@@ -23,6 +24,8 @@ class DeleteStepError extends Error {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Til adminloggen ved en mislykket sletning (sættes, når en admin sletter en andens konto)
+  let auditActor: string | null = null, auditTarget = "";
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -56,8 +59,13 @@ Deno.serve(async (req) => {
       if (!isSelfDelete) {
         const { data: callerProfile } = await supabase
           .from("users").select("role").eq("id", caller.id).single();
-        if (callerProfile?.role !== "admin") throw new Error("Kun admins kan slette andre brugere");
+        if (callerProfile?.role !== "admin") {
+          await logAccessDenied(supabase, caller.id, "delete-user");
+          throw new Error("Kun admins kan slette andre brugere");
+        }
         adminActorId = caller.id;
+        auditActor = caller.id;
+        auditTarget = String(uid);
       }
     }
 
@@ -154,6 +162,10 @@ Deno.serve(async (req) => {
     if (err instanceof DeleteStepError) {
       // Den tekniske årsag logges; brugeren får en kort dansk besked (ingen rå databasefejl).
       console.error(`delete-user: ${err.message}`);
+      if (auditActor) {
+        const logClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+        await logAdminEvent(logClient, auditActor, "bruger_slettet", "users", auditTarget, { fejl: "sletning_stoppet" }, "mislykket");
+      }
       try {
         const logClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
         await logClient.rpc("log_client_error", { p_message: `Kontosletning stoppet: ${err.message}`, p_source: "edge:delete-user" });

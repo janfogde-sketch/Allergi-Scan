@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 import { normalizeNutrition } from "../_shared/nutrition.js";
 import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor, getCaller } from "../_shared/http.ts";
@@ -115,6 +116,7 @@ Deno.serve(async (req) => {
   const parts = url.pathname.split("/").filter(Boolean);
   const identifier = parts[parts.length - 1];
   const method = req.method;
+  let reviewing: { status?: string } | null = null; // sat under godkend/afvis (adminloggen ved fejl)
 
   try {
 
@@ -259,10 +261,13 @@ Deno.serve(async (req) => {
 
     // ── GET — hent alle submissions (admin) ────────────────────────────────
     if (method === "GET" && identifier === "submissions") {
-      if (!(await callerIsAdmin())) return new Response(
-        JSON.stringify({ error: "Kun admins kan se alle indsendelser" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (!(await callerIsAdmin())) {
+        await logAccessDenied(supabase, caller.id, "submissions");
+        return new Response(
+          JSON.stringify({ error: "Kun admins kan se alle indsendelser" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const status = url.searchParams.get("status") ?? "pending";
       const { data: submissions, error } = await supabase
         .from("submissions").select("*").eq("status", status)
@@ -285,12 +290,16 @@ Deno.serve(async (req) => {
 
     // ── PATCH — godkend eller afvis (admin) ────────────────────────────────
     if (method === "PATCH" && identifier !== "submissions") {
-      if (!(await callerIsAdmin())) return new Response(
-        JSON.stringify({ error: "Kun admins kan godkende eller afvise indsendelser" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (!(await callerIsAdmin())) {
+        await logAccessDenied(supabase, caller.id, "submissions");
+        return new Response(
+          JSON.stringify({ error: "Kun admins kan godkende eller afvise indsendelser" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const body = await req.json();
       const { status, review_note } = body;
+      reviewing = { status };
       // Revisionsspor: den der godkender er altid kalderen, aldrig en værdi fra klienten.
       const reviewed_by = caller.id;
 
@@ -482,6 +491,10 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "Ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
+    if (reviewing) {
+      await logAdminEvent(supabase, caller.id, reviewing.status === "approved" ? "indsendelse_godkendt" : "indsendelse_afvist",
+        "submissions", identifier, { fejl: fejlkode(err) }, "mislykket");
+    }
     return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
