@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // @ts-nocheck
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { nativeAppleAvailable, appleNativeAuthorize, exchangeAppleToken, sessionTarget, isAppleCancel } from "./nativeApple.js";
+import { nativeAppleAvailable, appleNativeAuthorize, exchangeAppleToken, isAppleCancel } from "./nativeApple.js";
 
 afterEach(() => { delete window.Capacitor; });
 const stub = (authorize) => { window.Capacitor = { isNativePlatform: () => true, Plugins: { SignInWithApple: { authorize } } }; };
@@ -47,12 +47,5 @@ describe("nativeApple", () => {
     expect(await exchangeAppleToken("u", "k", "i", "n", vi.fn().mockResolvedValue({ ok: false, status: 400 }))).toEqual({ ok: false, reason: "HTTP 400" });
     expect((await exchangeAppleToken("u", "k", "i", "n", vi.fn().mockRejectedValue(new Error("net")))).ok).toBe(false);
     expect((await exchangeAppleToken("u", "k", "i", "n", vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }))).ok).toBe(false);
-  });
-  it("sender sessionen til den eksisterende modtagelse af #access_token", () => {
-    const t = sessionTarget("A", "R");
-    expect(t.startsWith("https://www.eatsafe.dk/?src=store#")).toBe(true);
-    const p = new URLSearchParams(new URL(t).hash.slice(1));
-    expect(p.get("access_token")).toBe("A");
-    expect(p.get("refresh_token")).toBe("R");
   });
 });

@@ -32,17 +32,25 @@ export async function openInSystemBrowser(url) {
   try { await browser.open({ url }); return true; } catch { return false; }
 }
 
+/** Parametre fra login-returen, som sendes videre til appen (engangskoden og evt. fejl). */
+const RETURN_PARAMS = ["code", "error", "error_code", "error_description"];
+
 /**
- * Oversætter adressen, som systembrowseren sendte appen tilbage til, til en adresse i selve appen, som den
- * eksisterende login-modtagelse (#access_token=...) forstår. Andre adresser giver null.
+ * Oversætter adressen, som systembrowseren sendte appen tilbage til, til en adresse i selve appen, som
+ * login-modtagelsen (authLink.js, ?code=...) forstår. Andre adresser giver null.
  * @param {string} url
  * @returns {string | null}
  */
 export function authReturnTarget(url) {
   if (typeof url !== "string" || !(url === NATIVE_AUTH_RETURN || /^dk\.eatsafe\.app:\/\/auth([?#/]|$)/.test(url))) return null;
-  const i = url.indexOf("#");
-  const hash = i >= 0 ? url.slice(i) : "";
-  return `${WEB_ORIGIN}/?src=store${hash}`;
+  const h = url.indexOf("#");
+  const hash = h >= 0 ? url.slice(h) : "";
+  const beforeHash = h >= 0 ? url.slice(0, h) : url;
+  const q = beforeHash.indexOf("?");
+  const incoming = new URLSearchParams(q >= 0 ? beforeHash.slice(q + 1) : "");
+  const out = new URLSearchParams({ src: "store" });
+  for (const k of RETURN_PARAMS) { const v = incoming.get(k); if (v) out.set(k, v); }
+  return `${WEB_ORIGIN}/?${out.toString()}${hash}`;
 }
 
 /**

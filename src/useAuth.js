@@ -14,7 +14,8 @@ import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, 
 import { reportError } from "./errorReporter.js";
 import { clearOfflineCache } from "./useOffline.js";
 import { isNativeApp, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_RETURN } from "./nativeShell.js";
-import { nativeAppleAvailable, appleNativeAuthorize, exchangeAppleToken, sessionTarget } from "./nativeApple.js";
+import { nativeAppleAvailable, appleNativeAuthorize, exchangeAppleToken } from "./nativeApple.js";
+import { parseAuthLink, hasAuthLink, cleanAuthUrl, startPkce, takePkceVerifier, exchangeAuthCode, verifyEmailLink, discardSession } from "./authLink.js";
 
 // Simpel, ikke-overdrevet streng e-mail-validering (27. sept. 2026, MASTER
 // PROMPT "FINAL 10/10 POLISH – OPRET KONTO & LOG IND") — erstatter den
@@ -154,14 +155,14 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   const [authTab, setAuthTab]           = useState("signup"); // "signup" | "login"
   const [isOAuth, setIsOAuth]           = useState(/** @type {boolean | string} */ (false));
   // Aflæst allerede under første render, FØR nogen effekt kører: landede
-  // appen fra et login-/bekræftelseslink (#access_token=...)? Effekten
+  // appen fra et login-/bekræftelseslink (?code=, ?token_hash=, #access_token=)? Effekten
   // nedenfor, der tager imod linket, fjerner selve hashen fra adressen, så
   // app-boot-effekten kan ikke længere se den, når den kører lige efter.
   // Uden denne ref slog app-boot onboarding-status op for en GAMMEL konto,
   // der stadig lå i browseren, og sendte en ny bruger fra
   // bekræftelsesmailen direkte til forsiden (fundet 30. sept. 2026).
   const arrivedViaAuthLinkRef = useRef(
-    typeof window !== "undefined" && window.location.hash.includes("access_token")
+    typeof window !== "undefined" && hasAuthLink(window.location)
   );
   // "Husk mig" (25. sept. 2026-brief) — sand som standard: cookien er vedvarende. Slået fra bliver den en sessionscookie,
   // der forsvinder, når browseren lukkes (mærket lægges i sessionStorage).
@@ -202,84 +203,156 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   // ── Retur fra login i systembrowseren (kun iPhone-rammen): send hashen videre til modtagelsen nedenfor ──
   useEffect(() => listenForAuthReturn((target) => { window.location.replace(target); }), []);
 
-  // ── OAuth callback — fang access_token fra URL hash ──────────────────────
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) return;
-    const params = new URLSearchParams(hash.replace("#", "?").replace("#", "&"));
-    // Udløbet eller allerede brugt bekræftelseslink (Supabase sender
-    // #error=...&error_code=otp_expired tilbage i stedet for en session).
-    if (params.get("error") || params.get("error_code")) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      if (readPendingVerify()) {
-        setVerifyError("Linket i mailen er udløbet eller allerede brugt. Tryk på “Send mail igen”, eller log ind, hvis du allerede har bekræftet.");
-        setScreen(SCREENS.VERIFYEMAIL);
-      } else {
-        setAuthTab("login");
-        setAuthError("Linket i mailen er udløbet eller allerede brugt. Log ind for at fortsætte.");
-        setScreen(SCREENS.LOGIN);
+  // ── Login via links (15. okt. 2026, sikkerhedsfund S4/S5) ─────────────────
+  // Et link fra en mail (?token_hash=) eller den gamle form med nøglerne i adressen (#access_token=) logger først ind, når brugeren
+  // har set kontoen og trykket "Fortsæt" (AuthConfirmScreen.jsx). Så kan et fremmed link ikke i det skjulte logge brugeren ind på en
+  // anden konto. Google/Facebook/Apple vender tilbage med ?code=, som kun kan veksles med engangsnøglen fra denne enhed (PKCE).
+  const [pendingAuthLink, setPendingAuthLink] = useState(/** @type {any} */ (null));
+  const [authConfirmLoading, setAuthConfirmLoading] = useState(false);
+  const [authConfirmError, setAuthConfirmError] = useState("");
+  const [authConfirmDone, setAuthConfirmDone] = useState(false);
+
+  // Udløbet eller allerede brugt link: samme beskeder som hidtil.
+  const showExpiredLink = useCallback(() => {
+    setPendingAuthLink(null);
+    if (readPendingVerify()) {
+      setVerifyError("Linket i mailen er udløbet eller allerede brugt. Tryk på “Send mail igen”, eller log ind, hvis du allerede har bekræftet.");
+      setScreen(SCREENS.VERIFYEMAIL);
+    } else {
+      setAuthTab("login");
+      setAuthError("Linket i mailen er udløbet eller allerede brugt. Log ind for at fortsætte.");
+      setScreen(SCREENS.LOGIN);
+    }
+  }, [setScreen]);
+
+  const showLoginInterrupted = useCallback(() => {
+    setAuthTab("login");
+    setAuthError("Login blev afbrudt. Prøv igen.");
+    setScreen(SCREENS.LOGIN);
+  }, [setScreen]);
+
+  // Gem en ny session fra et link eller social login, og send brugeren videre til den rigtige skærm.
+  const completeLinkLogin = useCallback((access, refresh, type) => {
+    try {
+      const payload = decodeJwtPayload(access);
+      const uid = payload.sub;
+      saveTokens(access, refresh, uid);
+      // Nulstillingslink fra "Glemt adgangskode": vælg ny kode først, i
+      // stedet for at lukke brugeren direkte ind i appen.
+      if (type === "recovery") {
+        setResetError(""); setResetDone(false);
+        setScreen(SCREENS.RESETPASSWORD);
+        return;
       }
+      // Kom brugeren fra bekræftelseslinket i mailen (type=signup)? Så er e-mailen bekræftet af selve klikket: ingen
+      // "jeg har bekræftet"-handling og ingen mellemskærm, brugeren går direkte videre til (det gemte trin i) onboarding.
+      const fromSignupLink = type === "signup" || type === "email";
+      if (fromSignupLink) {
+        writePendingVerify("");
+        setVerifyEmail(""); setVerifyStatus("pending");
+        setVerifyError(""); setVerifyNotice("");
+      }
+      fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,onboarding_completed,onboarding_step`, {
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
+      })
+        .then(r => r.json())
+        .then(data => {
+          const profile = data?.[0];
+          // Kun en færdig onboarding sender direkte ind i appen — ikke det
+          // at kontoen findes eller at e-mailen netop er bekræftet.
+          if (profile?.onboarding_completed === true) {
+            markOnboardedLocally();
+            setScreen(SCREENS.HOME);
+            return;
+          }
+          setOnboardStep(profile?.onboarding_step || 1);
+          const meta = payload.user_metadata || {};
+          setUser(u => ({ ...u, email: payload.email || meta.email || u.email || "",
+            name: u.name || profile?.name || meta.full_name || meta.name || "" }));
+          if (fromSignupLink) {
+            setIsOAuth("email");
+            setScreen(SCREENS.ONBOARD);
+          } else {
+            // Google/Facebook: e-mailen er bekræftet af udbyderen, så
+            // brugeren går direkte til (det gemte trin i) onboarding.
+            // "google" styrer teksten under E-mail-feltet i trin 1.
+            setIsOAuth(payload.app_metadata?.provider || true);
+            setScreen(SCREENS.ONBOARD);
+          }
+        })
+        .catch(() => { if (fromSignupLink) { setOnboardStep(1); setIsOAuth("email"); setScreen(SCREENS.ONBOARD); } else setScreen(SCREENS.HOME); });
+    } catch (e) {
+      console.error("Login-link fejl:", e);
+      setScreen(SCREENS.HOME);
+    }
+  }, [saveTokens, setScreen, setUser, setOnboardStep]);
+
+  // Læs et login-link i adressen ved start, og fjern det straks fra adressen.
+  useEffect(() => {
+    const link = parseAuthLink(window.location);
+    if (!link) return;
+    window.history.replaceState({}, document.title, cleanAuthUrl(window.location));
+    if (link.kind === "error") { showExpiredLink(); return; }
+    if (link.kind === "code") {
+      const verifier = takePkceVerifier();
+      if (!verifier) { showLoginInterrupted(); return; }
+      exchangeAuthCode(SUPABASE_URL, SUPABASE_ANON_KEY, link.code, verifier).then((r) => {
+        if (r.ok && r.access) completeLinkLogin(r.access, r.refresh, "");
+        else { reportError(new Error(`pkce-exchange: ${"reason" in r ? r.reason : "ingen session"}`), { source: "oauth-return" }); showLoginInterrupted(); }
+      });
       return;
     }
-    const access = params.get("access_token");
-    const refresh = params.get("refresh_token");
-    if (access && refresh) {
-      try {
-        const payload = decodeJwtPayload(access);
-        const uid = payload.sub;
-        saveTokens(access, refresh, uid);
-        // Nulstillingslink fra "Glemt adgangskode": vælg ny kode først, i
-        // stedet for at lukke brugeren direkte ind i appen.
-        if (params.get("type") === "recovery") {
-          setResetError(""); setResetDone(false);
-          setScreen(SCREENS.RESETPASSWORD);
-          window.history.replaceState({}, document.title, window.location.pathname);
-          return;
-        }
-        // Kom brugeren fra bekræftelseslinket i mailen (type=signup)? Så er e-mailen bekræftet af selve klikket: ingen
-        // "jeg har bekræftet"-handling og ingen mellemskærm, brugeren går direkte videre til (det gemte trin i) onboarding.
-        const fromSignupLink = params.get("type") === "signup";
-        if (fromSignupLink) {
-          writePendingVerify("");
-          setVerifyEmail(""); setVerifyStatus("pending");
-          setVerifyError(""); setVerifyNotice("");
-        }
-        fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${uid}&select=name,onboarding_completed,onboarding_step`, {
-          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${access}`, "Accept": "application/json" },
-        })
-          .then(r => r.json())
-          .then(data => {
-            const profile = data?.[0];
-            // Kun en færdig onboarding sender direkte ind i appen — ikke det
-            // at kontoen findes eller at e-mailen netop er bekræftet.
-            if (profile?.onboarding_completed === true) {
-              markOnboardedLocally();
-              setScreen(SCREENS.HOME);
-              return;
-            }
-            setOnboardStep(profile?.onboarding_step || 1);
-            const meta = payload.user_metadata || {};
-            setUser(u => ({ ...u, email: payload.email || meta.email || u.email || "",
-              name: u.name || profile?.name || meta.full_name || meta.name || "" }));
-            if (fromSignupLink) {
-              setIsOAuth("email");
-              setScreen(SCREENS.ONBOARD);
-            } else {
-              // Google/Facebook: e-mailen er bekræftet af udbyderen, så
-              // brugeren går direkte til (det gemte trin i) onboarding.
-              // "google" styrer teksten under E-mail-feltet i trin 1.
-              setIsOAuth(payload.app_metadata?.provider || true);
-              setScreen(SCREENS.ONBOARD);
-            }
-          })
-          .catch(() => { if (fromSignupLink) { setOnboardStep(1); setIsOAuth("email"); setScreen(SCREENS.ONBOARD); } else setScreen(SCREENS.HOME); });
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } catch (e) {
-        console.error("OAuth callback fejl:", e);
-        setScreen(SCREENS.HOME);
-      }
+    if (link.kind === "tokens") {
+      let payload;
+      try { payload = decodeJwtPayload(link.access); } catch { showLoginInterrupted(); return; }
+      setPendingAuthLink({ ...link, email: payload.email || "" });
+    } else {
+      setPendingAuthLink(link);
     }
-  }, [saveTokens]);
+    setAuthConfirmError(""); setAuthConfirmDone(false);
+    setScreen(SCREENS.AUTHCONFIRM);
+  }, []);
+
+  // "Fortsæt" på bekræftelsessiden.
+  const confirmAuthLink = useCallback(async () => {
+    const link = pendingAuthLink;
+    if (!link || authConfirmLoading) return;
+    if (link.kind === "tokens") { setPendingAuthLink(null); completeLinkLogin(link.access, link.refresh, link.type); return; }
+    setAuthConfirmLoading(true); setAuthConfirmError("");
+    const r = await verifyEmailLink(SUPABASE_URL, SUPABASE_ANON_KEY, link.tokenHash, link.type);
+    setAuthConfirmLoading(false);
+    if (!r.ok) {
+      const fail = /** @type {{ status?: number, errorCode?: string }} */ (r);
+      if (fail.status === 403 || fail.errorCode === "otp_expired") { showExpiredLink(); return; }
+      setAuthConfirmError(fail.status === 429 ? "Der er forsøgt for mange gange. Vent et øjeblik, og prøv igen." : "Der opstod en fejl. Prøv igen.");
+      return;
+    }
+    // Fx første af to links ved skift af e-mail: bekræftet, men ingen session.
+    if (!r.access) { setAuthConfirmDone(true); return; }
+    let email = "";
+    try { email = decodeJwtPayload(r.access).email || ""; } catch { /* vises uden e-mail */ }
+    // Linket viste en e-mail; passer kontoen ikke, afvises den (et fremmed link med en falsk e-mail i adressen).
+    if (link.email && link.type !== "email_change" && email.toLowerCase() !== link.email.toLowerCase()) {
+      discardSession(SUPABASE_URL, SUPABASE_ANON_KEY, r.access);
+      setPendingAuthLink(null);
+      setAuthTab("login");
+      setAuthError("Linket passer ikke til din konto. Log ind for at fortsætte.");
+      setScreen(SCREENS.LOGIN);
+      return;
+    }
+    // Uden e-mail i linket: vis kontoen, før der logges ind.
+    if (!link.email) { setPendingAuthLink({ kind: "tokens", access: r.access, refresh: r.refresh, type: link.type, email }); return; }
+    setPendingAuthLink(null);
+    completeLinkLogin(r.access, r.refresh, link.type);
+  }, [pendingAuthLink, authConfirmLoading, completeLinkLogin, showExpiredLink, setScreen]);
+
+  // "Det er ikke mig" / "Annullér": intet gemmes, og appen startes forfra (med en evt. eksisterende session på enheden).
+  const cancelAuthLink = useCallback(() => {
+    const link = pendingAuthLink;
+    if (link?.kind === "tokens") discardSession(SUPABASE_URL, SUPABASE_ANON_KEY, link.access);
+    setPendingAuthLink(null);
+    window.location.replace(window.location.pathname + window.location.search);
+  }, [pendingAuthLink]);
 
   // ── Gendan sessionen ved opstart ──────────────────────────────────────────
   // App.jsx viser "Hjem" ved opstart blot fordi der er en session på enheden (mærket i sessionStore.js). Her hentes en ny kort nøgle
@@ -705,7 +778,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         const a = await appleNativeAuthorize();
         if (a.ok) {
           const ex = await exchangeAppleToken(SUPABASE_URL, SUPABASE_ANON_KEY, a.idToken, a.nonce);
-          if (ex.ok) { window.location.replace(sessionTarget(ex.access, ex.refresh)); return; }
+          if (ex.ok) { setAuthLoading(false); completeLinkLogin(ex.access, ex.refresh, ""); return; }
           throw new Error(`apple-token: ${"reason" in ex ? ex.reason : ""}`);
         }
         if ("cancelled" in a && a.cancelled) { setAuthLoading(false); return; }
@@ -713,8 +786,11 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       }
       // I iPhone-rammen åbner login i telefonens egen browser og vender tilbage til appen via NATIVE_AUTH_RETURN.
       const native = isNativeApp();
+      // PKCE: kun fingeraftrykket sendes med; selve engangsnøglen bliver på enheden (authLink.js).
+      const codeChallenge = await startPkce();
       const params = new URLSearchParams({
         provider, redirect_to: native ? NATIVE_AUTH_RETURN : window.location.origin + "/",
+        code_challenge: codeChallenge, code_challenge_method: "s256",
         ...(provider === "google" ? { prompt: "select_account" } : {}),
       });
       const authUrl = `${SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
@@ -730,7 +806,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       setAuthError(`Login med ${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : provider === "apple" ? "Apple" : provider} mislykkedes. Prøv igen.`);
       setAuthLoading(false);
     }
-  }, []);
+  }, [completeLinkLogin]);
 
   // ── Glemt adgangskode (25. sept. 2026-brief) — samme REST-mønster som
   // handleLogin/handleSignup, mod Supabases indbyggede recover-endpoint.
@@ -808,6 +884,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
   }, [userId, accessToken, setScreen, resolveOnboardingRoute]);
 
   return {
+    pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink,
     resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
     accessToken, setAccessToken,
     userId, setUserId,
