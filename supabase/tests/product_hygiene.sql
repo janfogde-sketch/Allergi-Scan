@@ -4,9 +4,9 @@ begin;
 
 insert into products (ean, name, source) values
   ('499041601114', '  Creme   fraiche ', 'user'),        -- 12 cifre, gyldigt som 13 med foranstillet nul
-  ('259804', 'BUTIKSNUMMER KAGE', 'bilka'),              -- internt varenummer: ean røres ikke
-  ('3364048109147', 'COGNAC VSOP', 'bilka'),             -- versaler -> normal skrift, VSOP bevares
-  ('5714946004583', 'IPA', 'bilka');                     -- kort enkeltord i versaler røres ikke
+  ('259804', 'BUTIKSNUMMER KAGE', 'katalog'),            -- internt varenummer: ean røres ikke
+  ('3364048109147', 'COGNAC VSOP', 'katalog'),           -- versaler -> normal skrift, VSOP bevares
+  ('5714946004583', 'IPA', 'katalog');                   -- kort enkeltord i versaler røres ikke
 
 do $$
 begin

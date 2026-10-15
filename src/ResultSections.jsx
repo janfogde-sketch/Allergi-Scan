@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS } from "./constants.jsx";
-import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, ingredientsVerifiedText, STORE_SOURCES, STORE_CATALOG_NAMES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl, displayImageUrl } from "./helpers.js";
+import { buildNutritionRows, traceNutNames, sulfiteAssessment, glutenCerealsIn, verifiedBadge, ingredientsVerifiedText, STORE_SOURCES, productDisplayName, findProductOnList, imageAttribution, OFF_IMAGE_LICENSE_URL, verifiedImageUrl, displayImageUrl } from "./helpers.js";
 
 import { Icon, SafetyRow, showToast, AllergenGlyph } from "./SharedComponents.jsx";
 
@@ -226,7 +226,7 @@ export function makeResultSections(c) {
       : scanResult.source === "off" || scanResult.source === "open_food_facts"
       ? "Produktdata kommer fra Open Food Facts og kan være brugeroprettede. Kontrollér altid produktets aktuelle emballage."
       : STORE_SOURCES.includes(scanResult.source)
-      ? `Produktoplysningerne stammer fra ${STORE_CATALOG_NAMES[scanResult.source] || "butikkens"} varekatalog. Produktbilledet kan komme fra en anden kilde. Oplysningerne kan være ufuldstændige eller forældede, så kontrollér altid produktets aktuelle emballage.`
+      ? "Produktoplysningerne stammer fra et varekatalog. Produktbilledet kan komme fra en anden kilde. Oplysningerne kan være ufuldstændige eller forældede, så kontrollér altid produktets aktuelle emballage."
       : "Produktdata er indsendt af en EatSafe-bruger og kan indeholde fejl eller være forældede.";
     return (
       <div className="product-hero" style={{ position:"relative", border:`2px solid ${verdictColor}` }}>

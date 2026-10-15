@@ -1,4 +1,4 @@
-// Sikker navnematch af næringsværdier (Nemlig-varer uden rigtig stregkode).
+// Sikker navnematch af næringsværdier (katalogvarer uden rigtig stregkode).
 // En Open Food Facts-kandidat accepteres kun, hvis mærket passer, og de tal varen allerede har
 // (kcal, fedt, evt. kulhydrat) stemmer med kandidatens. Så udfyldes kun tomme felter, aldrig gæt.
 
