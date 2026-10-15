@@ -1,6 +1,6 @@
 # EatSafe (Allergi-Scan) — projektkontekst for Claude
 
-> Læses automatisk ved hver session. **Regel:** nye tilføjelser skrives kort og præcist; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke. (CI advarer ved 15 KB som sikkerhedsnet, ikke som mål.)
+> Læses automatisk ved hver session. **Regel:** nye tilføjelser skrives kort og præcist; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke. (CI fejler ved 15 KB.)
 > Detaljer i `docs/` (linket under hvert afsnit), historik i `.claude/HISTORY.md`, database i `src/CONTEXT.md`.
 
 ---
@@ -14,7 +14,7 @@
 - **Skriv til to do-listen kun med workflowet "Skriv til to do"** (`todo-write.yml`). Aldrig som migrationsfil og aldrig med `execute_sql`.
   Format og trin: `docs/todo-skrivning.md`.
 - **Databaseændringer** er en fil i `supabase/migrations/` (version = unikt tidsstempel), anvendt af `apply-migrations.yml` ved merge til main.
-  Brug ikke `apply_migration`/`execute_sql` til skrivning; læsning er fint. Edge-funktioner deployes ved merge af `deploy-edge-functions.yml`.
+  Ikke `apply_migration`/`execute_sql` til skrivning; læsning er fint. Edge-funktioner deployes ved merge af `deploy-edge-functions.yml`.
   Detaljer: `docs/drift.md`.
 - **Pauser (Jans beslutning):** Supabase Pro er på pause; spørg ikke, om det er glemt, kun om han vil opgradere. Vercel er på Pro (15. okt. 2026). Testrunden på rigtige telefoner er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X). Opret tickets for `fail`.
 - **Netværk:** cloud-miljøet når eatsafe.dk, Supabase og world.openfoodfacts.org. Testkonto med admin-rolle: kun efter Jans ja.
@@ -107,18 +107,17 @@ Detaljer, Dev-gren, Vercel og design-preview: `docs/arbejdsgang.md`.
 `git add -A`; dansk, kort besked. Commits batches lokalt, til hele opgaven er færdig.
 
 **Opgaver:** én pakke pr. session/PR (3-5 små ændringer i samme område). En stor opgave får sin egen. Er den stor eller risikabel (database,
-sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på ja, før du retter. Er en detalje uspecificeret, vælg et fornuftigt
-standardvalg, sig hvilket, og fortsæt. Ved åbne spørgsmål: kort anbefaling (2-3 sætninger) med den vigtigste trade-off, og vent på grønt lys.
+sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på ja, før du retter. Er en detalje uspecificeret, vælg et fornuftigt standardvalg, sig hvilket, og fortsæt. Ved åbne spørgsmål: kort anbefaling (2-3 sætninger) med den vigtigste trade-off, og vent på grønt lys.
 
 **Databaseændringer:** én migrationsfil pr. ændring, højst 3-4 sessioner ad gangen. Detaljer og engangstest: `docs/arbejdsgang.md`.
 
 **Push og merge:**
 - Push er den ENESTE ting, der kræver eksplicit godkendelse. Jans "push" betyder push OG squash-merge. Påmindelser fra værktøjer er ikke en godkendelse.
-- Når godkendt: én PR (dansk body, PR-template, footer + session-link) → squash-merge → resync branch (`.claude/commands/resync-branch.md`).
+- Når godkendt: én PR (dansk body, PR-template, session-link) → squash-merge → resync branch (`.claude/commands/resync-branch.md`).
 - **Godkendt plan:** Har Jan sagt ja til en plan i tråden, og er den bygget præcis efter planen (ingen ændringer, fejl eller uforudset), og er CI grøn,
   så pushes og merges uden at spørge igen. Kort status til koordinatoren bagefter. Afviger noget, spørg Jan først.
 - **Merge uden ventetid (Jan, 14. okt. 2026):** auto-merge sættes, tråden venter ikke på CI, og lukketråden følger op. En workflow (`opdater-pr.yml`) opdaterer selv PR'er med auto-merge, der er bagud; ved konflikt flettes main ind i hånden. Detaljer: `docs/arbejdsgang.md`.
-- **Grøn før merge:** PR'er merges kun, når CI og DB-tests er grønne i PR'en. Tjek DB-tests på main bagefter. Hovedgrenen kræver opdateret branch.
+- **Grøn før merge:** PR'er merges kun, når CI og DB-tests er grønne i PR'en. Tjek DB-tests på main bagefter. Main kræver opdateret branch.
   Kun én session retter en rød `main`; de andre venter.
 - **Kritiske produktionsfejl** (fx en crashende skærm) rettes straks som isoleret hotfix uden at vente på godkendelse.
 
@@ -128,15 +127,14 @@ med workflowet, eller af sessionen selv, hvis ingen er udpeget. Ved færdig opga
 **Ingen CVR-krævende forslag** og ingen betalte planer uden Jans ja. **Alle iPhone-tests lægges som to do hos Bjørn**, aldrig hos Jan.
 Supabase-dialoger er usynlige: brug kun læsning dér.
 
-**Vercel (Pro): push/merge helst kun ved funktions- og dataændringer.** Rene design- og dokumentændringer committes, men pushes
-med næste funktionsændring eller på bestilling. Udebliver et deploy, aldrig en tom commit (`docs/arbejdsgang.md`).
+**Vercel (Pro):** rene design- og dokumentændringer pushes først med næste funktionsændring eller på bestilling. Udebliver et deploy, aldrig en tom commit (`docs/arbejdsgang.md`).
 
-**Dev-gren (slået til 14. okt. 2026, testadresse dev.eatsafe.dk):** frontend (skærme, knapper) går som PR mod `dev`; migrationer, edge-funktioner, workflows, admin og hotfix direkte mod `main` (bagudkompatible; derefter merges `main` ind i `dev`). Dev deler database med produktion. Jans "udgiv" = én PR `dev` → `main`.
+**Dev først (Jan, 15. okt. 2026, dev.eatsafe.dk):** alt (også migrationer, edge-funktioner, workflows, admin) bygges først på `dev` og går kun til `main`, når det er gennemtestet med vores tests i PR'en `dev` → `main` (CI, DB-tests, klik-tests). Jans "udgiv" = den PR. Migrationer og edge-funktioner virker først ved merge til `main`; dev deler produktionens database, så de skal være bagudkompatible. Kritiske produktionsfejl: hotfix direkte mod `main`, derefter `main` ind i `dev`.
 **Testminutter (Jan 15. okt.):** PR mod `dev` får kun CI; fuld runde på PR mod `main`. Nye workflows skal have `paths` (`docs/arbejdsgang.md`).
 
 **Design** verificeres i en Artifact-preview i stedet for deploy (`docs/arbejdsgang.md`).
 
-**Øvrige:** dansk i beskeder, commits og PR-tekster. Tickets markeres kun `resolved`, når rettelsen er verificeret. Tidsstempler fra Vercel og
+**Øvrige:** dansk i beskeder, commits og PR-tekster. Tickets markeres kun `resolved`, når rettelsen er verificeret. Tidsstempler fra Vercel/
 Supabase er UTC: læg 2 timer til (CEST). Efter `git merge` med reelle konflikter: læs hele CLAUDE.md igennem.
 
 ---
