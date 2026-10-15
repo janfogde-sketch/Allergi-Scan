@@ -1,6 +1,6 @@
 # EatSafe (Allergi-Scan) — projektkontekst for Claude
 
-> Læses ved hver session. **Regel:** tilføjelser kort; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke. (CI fejler ved 15 KB.)
+> Læses ved hver session. **Regel:** tilføjelser kort; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke.
 > Detaljer i `docs/` (linket under hvert afsnit), historik i `.claude/HISTORY.md`, database i `src/CONTEXT.md`.
 
 ---
