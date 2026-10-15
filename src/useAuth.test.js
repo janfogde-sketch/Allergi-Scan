@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { useAuth } from "./useAuth.js";
 import * as sessionStore from "./sessionStore.js";
 
@@ -453,7 +453,7 @@ describe("useAuth — login via links logger kun ind efter bekræftelse", () => 
     const second = setup();
     await flush();
     expect(JSON.parse(global.fetch.mock.calls[0][1].body).auth_code).toBe("egen");
-    expect(second.result.current.accessToken).toBe(access);
+    await waitFor(() => expect(second.result.current.accessToken).toBe(access));
     expect(localStorage.getItem("as_pkce_verifier")).toBeNull();
   });
 });
