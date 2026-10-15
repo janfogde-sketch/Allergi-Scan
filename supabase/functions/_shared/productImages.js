@@ -1,10 +1,22 @@
-// Fælles hjælp til billeder i lagerbøtten product-images (indsendte produktfotos).
-// Bruges af delete-user (billeder fjernes ved kontosletning) og cleanup-orphan-images.
+// Fælles hjælp til billeder i lagerbøtterne product-images (offentlig: godkendte produktbilleder) og
+// submission-images (privat: indsendte fotos, kun admin og serveren kan læse dem).
+// Bruges af submissions, delete-user (billeder fjernes ved kontosletning), cleanup-orphan-images og admin-panelet.
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
+export const SUBMISSION_IMAGES_BUCKET = "submission-images";
+// Indsendelser gemmer en henvisning til den private bøtte i stedet for en offentlig URL, fx "storage:submission-images/labels/1_label.jpg".
+export const SUBMISSION_REF_PREFIX = `storage:${SUBMISSION_IMAGES_BUCKET}/`;
 const MARKER = `/object/public/${PRODUCT_IMAGES_BUCKET}/`;
 
-// Filstien i bøtten ud fra en offentlig URL; null hvis det ikke er en URL til vores bøtte (fx base64 eller en OFF-URL).
+export const submissionImageRef = (path) => SUBMISSION_REF_PREFIX + path;
+
+// Filstien i den private bøtte ud fra en henvisning; null for alt andet.
+export function privateImagePath(ref) {
+  if (typeof ref !== "string" || !ref.startsWith(SUBMISSION_REF_PREFIX)) return null;
+  return ref.slice(SUBMISSION_REF_PREFIX.length) || null;
+}
+
+// Filstien i product-images ud fra en offentlig URL; null hvis det ikke er en URL til vores bøtte (fx base64 eller en OFF-URL).
 export function storagePathFromUrl(url) {
   if (typeof url !== "string") return null;
   const i = url.indexOf(MARKER);
@@ -13,20 +25,34 @@ export function storagePathFromUrl(url) {
   return path || null;
 }
 
-// Alle filstier en indsendelse peger på: etiketbillede, produktbillede og ekstra billeder.
-export function submissionImagePaths(submission) {
+// {bucket, path} for en offentlig product-images-URL eller en privat henvisning; null for alt andet.
+export function storageRef(url) {
+  const priv = privateImagePath(url);
+  if (priv) return { bucket: SUBMISSION_IMAGES_BUCKET, path: priv };
+  const pub = storagePathFromUrl(url);
+  return pub ? { bucket: PRODUCT_IMAGES_BUCKET, path: pub } : null;
+}
+
+// Alle filer en indsendelse peger på: etiketbillede, produktbillede og ekstra billeder.
+export function submissionImageRefs(submission) {
   const parsed = submission?.ai_parsed_data ?? {};
   const urls = [
     submission?.raw_label_image,
     parsed.product_image_url,
     ...(Array.isArray(parsed.images) ? parsed.images.map((im) => im?.url) : []),
   ];
-  return urls.map(storagePathFromUrl).filter(Boolean);
+  return urls.map(storageRef).filter(Boolean);
 }
 
-// Stier der skal slettes: alle brugerens filer undtagen dem, et produkt i produktdatabasen bruger som billede.
+// Filer der skal slettes, som {bucket: [stier]}: alle brugerens filer undtagen dem i product-images,
+// som et produkt i produktdatabasen bruger som billede.
 export function pathsToDelete(submissions, productImageUrls) {
   const keep = new Set((productImageUrls ?? []).map(storagePathFromUrl).filter(Boolean));
-  const all = new Set((submissions ?? []).flatMap(submissionImagePaths));
-  return [...all].filter((p) => !keep.has(p));
+  const out = {};
+  for (const r of (submissions ?? []).flatMap(submissionImageRefs)) {
+    if (r.bucket === PRODUCT_IMAGES_BUCKET && keep.has(r.path)) continue;
+    const list = (out[r.bucket] ??= []);
+    if (!list.includes(r.path)) list.push(r.path);
+  }
+  return out;
 }

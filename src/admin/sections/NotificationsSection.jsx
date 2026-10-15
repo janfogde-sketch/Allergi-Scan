@@ -1,4 +1,5 @@
 // @ts-nocheck
+import RefreshButton from "../RefreshButton.jsx";
 import React, { useState, useEffect, useMemo } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 import {
@@ -189,7 +190,7 @@ export default function NotificationsSection({ admins, overrides, loading, load,
             </label>
           </div>
           <button className="admin-btn admin-btn-primary" onClick={send} disabled={sending || !recipient || !check.ok}>{sending ? "Sender…" : "Send test"}</button>
-          <button className="admin-btn admin-btn-ghost" style={{ marginLeft: 8 }} onClick={() => load()}>Opdater</button>
+          <RefreshButton style={{ marginLeft: 8 }} onClick={() => load()} />
           <TestResult res={result} />
         </div>
       </div>
