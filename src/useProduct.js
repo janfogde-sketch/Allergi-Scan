@@ -6,7 +6,7 @@
 
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
-import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, submissionErrorText, matchCustomAllergens, normalizeProductFlags, STATUS_TEXT } from "./helpers.js";
+import { makeHeaders, apiCall, compareAllergens, compareENumbers, extractENumbers, traceId, traceLog, compressImageToBase64, submissionErrorText, matchCustomAllergens, normalizeProductFlags, scanNeedsWarning, STATUS_TEXT } from "./helpers.js";
 import { saveToOfflineCache, getFromOfflineCache } from "./useOffline.js";
 import { haptic } from "./nativeShell.js";
 
@@ -208,8 +208,10 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
-    vibrateOnWarning, soundOnWarning,
+    vibrateOnWarning, soundOnWarning, scanProfiles,
   } = ctx;
+  // Advarsel og alternativer følger resultatsidens vurdering (scanNeedsWarning). Uden profilliste: den ældre status.
+  const needsWarning = (r) => (scanProfiles ? scanNeedsWarning(scanProfiles, r) : (r.status === "danger" || r.status === "warn"));
 
   if (!ean?.trim()) return;
   haptic("light", 40);
@@ -255,7 +257,7 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     // stod på fra en tidligere scanning i samme session (eller intet, hvis
     // det er appens første scanning), i stedet for at vise de rigtige
     // alternativer til DETTE produkt.
-    if (cachedResult.status === "danger" || cachedResult.status === "warn") {
+    if (needsWarning(cachedResult)) {
       fireWarningAlert(vibrateOnWarning, soundOnWarning);
       loadAlternatives(cachedResult, ean.trim());
     } else {
@@ -350,8 +352,8 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     setHistory(h => pushLocalHistory(h, finalResult));
     // Historikken gemmes i baggrunden, så et langsomt kald ikke holder resultatet tilbage.
     Promise.resolve(logHistory(ean.trim(), product.id, finalResult.status, result.allergen_flags, activeProfiles)).catch(() => {});
-    // Hent alternativer hvis produktet er farligt eller har spor
-    if (finalResult.status === "danger" || finalResult.status === "warn") {
+    // Advarsel og alternativer, når produktet ikke er grønt for de valgte profiler
+    if (needsWarning(finalResult)) {
       fireWarningAlert(vibrateOnWarning, soundOnWarning);
       loadAlternatives(finalResult, ean.trim());
     } else {
