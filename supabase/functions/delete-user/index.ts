@@ -72,17 +72,19 @@ Deno.serve(async (req) => {
       if (error) throw new DeleteStepError(label, error.message);
     };
 
-    // Indsendte billeder (offentlig bøtte) fjernes FØRST, mens indsendelsernes rækker stadig peger på dem, så et nyt forsøg kan
-    // finde resten. Billeder, et godkendt produkt i produktdatabasen bruger, bliver (privatlivspolitikken, afsnit 11).
+    // Indsendte billeder (privat bøtte og ældre filer i den offentlige) fjernes FØRST, mens indsendelsernes rækker stadig peger på dem,
+    // så et nyt forsøg kan finde resten. Billeder, et godkendt produkt i produktdatabasen bruger, bliver (privatlivspolitikken, afsnit 11).
     const { data: subs, error: subsError } = await supabase
       .from("submissions").select("raw_label_image, ai_parsed_data").eq("submitted_by", uid);
     if (subsError) throw new DeleteStepError("submissions (opslag)", subsError.message);
-    if (pathsToDelete(subs ?? [], []).length > 0) {
+    if (Object.keys(pathsToDelete(subs ?? [], [])).length > 0) {
       const { data: kept, error: keptError } = await supabase.from("products").select("image_url").ilike("image_url", `%/${PRODUCT_IMAGES_BUCKET}/%`);
       if (keptError) throw new DeleteStepError("products (billeder)", keptError.message);
       const toRemove = pathsToDelete(subs ?? [], (kept ?? []).map((r: { image_url: string }) => r.image_url));
-      for (let i = 0; i < toRemove.length; i += 100) {
-        await step("storage product-images", supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(toRemove.slice(i, i + 100)));
+      for (const [bucket, paths] of Object.entries(toRemove) as [string, string[]][]) {
+        for (let i = 0; i < paths.length; i += 100) {
+          await step(`storage ${bucket}`, supabase.storage.from(bucket).remove(paths.slice(i, i + 100)));
+        }
       }
     }
 

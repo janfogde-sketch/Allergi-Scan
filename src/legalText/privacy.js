@@ -260,6 +260,10 @@ export default {
     ],
     [
       "p",
+      "Billeder, du sender ind, er kun synlige for EatSafes administratorer, indtil de er godkendt. Godkendes et produktbillede, vises det offentligt på produktet. Billeder af ingredienslisten vises ikke offentligt."
+    ],
+    [
+      "p",
       "EatSafe anvender Anthropic API som kommerciel tjeneste til aflæsning af emballagebilleder og vurdering af ingredienstekst; der sendes aldrig konto-, profil- eller helbredsoplysninger til Anthropic. Anthropic oplyser aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning."
     ],
     [

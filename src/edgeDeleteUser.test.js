@@ -59,6 +59,24 @@ describe("edge: delete-user", () => {
     }
   });
 
+  it("indsendte billeder slettes i begge bøtter, men et offentligt billede, et produkt bruger, bliver", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const pub = "https://x.supabase.co/storage/v1/object/public/product-images/";
+    const subs = [
+      { raw_label_image: "storage:submission-images/labels/1.jpg", ai_parsed_data: { product_image_url: "storage:submission-images/products/1.jpg" } },
+      { raw_label_image: pub + "labels/0.jpg", ai_parsed_data: { product_image_url: pub + "products/0.jpg" } },
+    ];
+    const h = await loadHandler("delete-user", { tokens, resolver: base((c) => {
+      if (c.table === "submissions" && c.kind === "select") return { data: subs, error: null };
+      if (c.table === "products") return { data: [{ image_url: pub + "products/0.jpg" }], error: null };
+    }) });
+    expect((await h.call("POST", "/delete-user", { token: "a", body: { uid: "user-a" } })).status).toBe(200);
+    expect(h.state.storage).toEqual([
+      { bucket: "submission-images", op: "remove", path: ["labels/1.jpg", "products/1.jpg"] },
+      { bucket: "product-images", op: "remove", path: ["labels/0.jpg"] },
+    ]);
+  });
+
   it("en admin kan slette en anden konto", async () => {
     vi.stubGlobal("fetch", vi.fn());
     const h = await loadHandler("delete-user", { tokens, resolver: base((c) => (c.table === "submissions" ? { data: [], error: null } : undefined)) });
