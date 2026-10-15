@@ -45,5 +45,8 @@ Live: push og mail slået til via `app_flags`. Beskeder i appen påvirkes ikke a
 
 - Databaseændringer skrives som fil i `supabase/migrations/` (version = tidsstempel) og anvendes af `apply-migrations.yml` ved merge til main. Se `supabase/migrations/README.md`.
 - Edge-funktioner deployes ved merge af `deploy-edge-functions.yml` (secret `SUPABASE_ACCESS_TOKEN`, skal have "Full access"; 401/403 = ny adgangsnøgle, udløber).
+- `SUPABASE_ACCESS_TOKEN` ligger i GitHub-miljøet `produktion` (Settings → Environments), som kun `main` må bruge. De seks workflows med nøglen
+  (`apply-migrations`, `deploy-edge-functions`, `deploy-auth-templates`, `todo-write`, `natjob-hent`, `natjob-skriv`) kører kun på `main`. Ny nøgle lægges
+  i miljøet, ikke som repo-secret (sikkerhedsgennemgang 15. okt. 2026, S1).
 - `supabase/config.toml` har `verify_jwt` pr. funktion.
 - Backup-tabeller bevares indtil deres frist (fx `opskrift_rester_backup_20261014` til 13. nov.; `products_allergen_backup_20261006`).
