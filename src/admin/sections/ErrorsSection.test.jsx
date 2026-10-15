@@ -1,7 +1,7 @@
 // @ts-nocheck
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
 import ErrorsSection from "./ErrorsSection.jsx";
 
 afterEach(cleanup);
@@ -56,7 +56,7 @@ describe("Fejl: side", () => {
 describe("Fejl: detaljeark", () => {
   const open = (props = {}) => {
     render(<ErrorsSection {...base} rows={[row]} {...props} />);
-    fireEvent.click(screen.getByText(/forekomster/).closest("button"));
+    fireEvent.click(screen.getByText(/forekomst/).closest("button"));
   };
   it("viser X (uden teksten Luk), handlinger for åben fejl og lukker", () => {
     open();
@@ -86,14 +86,85 @@ describe("Fejl: detaljeark", () => {
     expect(go.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(/Hvorfor ignoreres/), { target: { value: "  Gammel version  " } });
     fireEvent.click(go);
-    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("e1", "ignored", "Gammel version"));
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("e1", "ignored", "Gammel version", {}));
   });
-  it("mislykket statusændring viser fejl og beholder den gamle status", async () => {
+  it("'Markér som løst' åbner en bekræftelse; beskrivelsen er påkrævet, versionen kan udelades, og X lukker dialogen uden at lukke arket", async () => {
+    const setStatus = vi.fn().mockResolvedValue({ ok: true, row: { ...row, status: "resolved", resolution_note: "Rettet", verified_build: null } });
+    open({ setStatus });
+    fireEvent.click(screen.getByRole("button", { name: "Markér som løst" }));
+    const dlg = screen.getByRole("dialog", { name: "Markér fejl som løst?" });
+    expect(within(dlg).getByText("Bekræft, at fejlen er rettet og verificeret.")).toBeTruthy();
+    const go = within(dlg).getByRole("button", { name: "Markér som løst" });
+    expect(go.disabled).toBe(true);
+    expect(within(dlg).getByRole("button", { name: "Annuller" })).toBeTruthy();
+    expect(within(dlg).getByRole("button", { name: "Luk dialog" }).textContent).toBe("");
+    fireEvent.click(within(dlg).getByRole("button", { name: "Luk dialog" }));
+    expect(screen.queryByRole("dialog", { name: "Markér fejl som løst?" })).toBeNull();
+    expect(screen.getByRole("dialog", { name: /scanner/i })).toBeTruthy(); // arket står stadig
+  });
+  it("løst: beskrivelse og eventuel verificeret build sendes med; ugyldigt build-id afvises", async () => {
+    const setStatus = vi.fn().mockResolvedValue({ ok: true, row: { ...row, status: "resolved", resolution_note: "Rettet", verified_build: "d81f4e2" } });
+    open({ setStatus });
+    fireEvent.click(screen.getByRole("button", { name: "Markér som løst" }));
+    const dlg = () => screen.getByRole("dialog", { name: "Markér fejl som løst?" });
+    fireEvent.change(within(dlg()).getByLabelText(/Beskrivelse af rettelse/), { target: { value: "  Rettet  " } });
+    fireEvent.change(within(dlg()).getByLabelText(/Verificeret i version/), { target: { value: "local" } });
+    expect(within(dlg()).getByRole("alert").textContent).toMatch(/7 til 40 tegn/);
+    expect(within(dlg()).getByRole("button", { name: "Markér som løst" }).disabled).toBe(true);
+    fireEvent.change(within(dlg()).getByLabelText(/Verificeret i version/), { target: { value: "D81F4E2" } });
+    fireEvent.click(within(dlg()).getByRole("button", { name: "Markér som løst" }));
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("e1", "resolved", "", { note: "Rettet", build: "d81f4e2" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Markér fejl som løst?" })).toBeNull());
+  });
+  it("en løst fejl viser rettelsen og den angivne build (eller at den ikke er angivet)", () => {
+    open({ rows: [{ ...row, status: "resolved", resolution_note: "Rettet i boot.js", verified_build: "d81f4e2" }] });
+    expect(screen.getByText("Rettelse")).toBeTruthy();
+    expect(screen.getByText("Rettet i boot.js")).toBeTruthy();
+    expect(screen.getByText("Angivet som verificeret i build")).toBeTruthy();
+    expect(screen.getByText("d81f4e2")).toBeTruthy();
+    cleanup();
+    open({ rows: [{ ...row, status: "resolved", resolution_note: "Fix", verified_build: null }] });
+    expect(screen.getByText("Ikke angivet")).toBeTruthy();
+  });
+  it("uden version sendes build som tom, og ikke-gemte oplysninger kasseres kun efter bekræftelse", async () => {
+    const setStatus = vi.fn().mockResolvedValue({ ok: true, row: { ...row, status: "resolved", resolution_note: "x" } });
+    open({ setStatus });
+    fireEvent.click(screen.getByRole("button", { name: "Markér som løst" }));
+    fireEvent.change(screen.getByLabelText(/Beskrivelse af rettelse/), { target: { value: "Udkast" } });
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.getByRole("alertdialog", { name: "Kassér ændringer?" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Fortsæt redigering" }));
+    expect(screen.getByLabelText(/Beskrivelse af rettelse/).value).toBe("Udkast");
+    fireEvent.click(screen.getByRole("button", { name: "Annuller" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kassér ændringer" }));
+    expect(screen.queryByRole("dialog", { name: "Markér fejl som løst?" })).toBeNull();
+    expect(setStatus).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog", { name: /scanner/i })).toBeTruthy();
+  });
+  it("en mislykket statusændring viser fejlen i dialogen og beholder den gamle status", async () => {
     const setStatus = vi.fn().mockResolvedValue({ ok: false, error: "HTTP 500" });
     open({ setStatus });
     fireEvent.click(screen.getByRole("button", { name: "Markér som løst" }));
+    fireEvent.change(screen.getByLabelText(/Beskrivelse af rettelse/), { target: { value: "Rettet" } });
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Markér fejl som løst?" })).getByRole("button", { name: "Markér som løst" }));
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Statussen blev ikke ændret"));
-    expect(screen.getByRole("button", { name: "Markér som løst" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Markér fejl som løst?" })).toBeTruthy(); // teksten er bevaret
+    expect(screen.getByLabelText(/Beskrivelse af rettelse/).value).toBe("Rettet");
+  });
+  it("tidspunkter: én forekomst viser kun 'Registreret'; flere viser første, seneste og antal; build-id i stedet for appversion", () => {
+    open({ rows: [{ ...row, occurrences: 1, last_seen: row.first_seen }] });
+    expect(screen.getByText("Registreret")).toBeTruthy();
+    expect(screen.queryByText("Første forekomst")).toBeNull();
+    expect(screen.queryByText("Seneste forekomst")).toBeNull();
+    expect(screen.queryByText("Antal forekomster")).toBeNull();
+    expect(screen.getByText("Build-id")).toBeTruthy();
+    expect(screen.queryByText("Appversion")).toBeNull();
+    cleanup();
+    open();
+    expect(screen.getByText("Første forekomst")).toBeTruthy();
+    expect(screen.getByText("Seneste forekomst")).toBeTruthy();
+    expect(screen.getByText("Antal forekomster")).toBeTruthy();
+    expect(screen.queryByText("Registreret")).toBeNull();
   });
   it("tekniske oplysninger og historik er lukkede, indtil de åbnes; stacktrace ligger i kodeblok", async () => {
     open();
@@ -103,5 +174,64 @@ describe("Fejl: detaljeark", () => {
     fireEvent.click(screen.getByRole("button", { name: "Historik" }));
     await waitFor(() => expect(screen.getByText("Ingen statusændringer endnu.")).toBeTruthy());
     expect(base.loadHistory).toHaveBeenCalledWith("e1");
+  });
+});
+
+describe("Fejl: oprindelig kode, historik og kodefelter", () => {
+  const open = (props = {}) => {
+    render(<ErrorsSection {...base} rows={[{ ...row, app_version: "d81f4e2" }]} {...props} />);
+    fireEvent.click(screen.getByText(/forekomst/).closest("button"));
+    fireEvent.click(screen.getByRole("button", { name: "Tekniske oplysninger" }));
+  };
+  it("viser kun verificerede, oversatte rammer med antal, og den originale stacktrace står uændret", async () => {
+    const frames = [{ resolved: true, name: "lazyInitializer", source: "node_modules/react/cjs/react.production.min.js", origLine: 18, origCol: 381 }, { resolved: false, raw: "x" }];
+    const symbolicate = vi.fn().mockResolvedValue({ ok: true, frames, resolved: 1, total: 2 });
+    open({ symbolicate });
+    fireEvent.click(screen.getByRole("button", { name: "Vis oprindelig kode" }));
+    await waitFor(() => expect(screen.getByText(/1 af 2 rammer er oversat og verificeret mod build d81f4e2/)).toBeTruthy());
+    expect(symbolicate).toHaveBeenCalledWith("d81f4e2", expect.stringContaining("TypeError"), "");
+    expect([...document.querySelectorAll(".err-code")].some((n) => n.textContent === "lazyInitializer  node_modules/react/cjs/react.production.min.js:18:381")).toBe(true);
+    expect(screen.getByText(/at a\.js:1/)).toBeTruthy(); // original stack uændret
+  });
+  it("uden source map, uden opsætning eller uden build-id opdigtes intet", async () => {
+    const symbolicate = vi.fn().mockResolvedValue({ ok: true, frames: [{ resolved: false }], resolved: 0, total: 1 });
+    open({ symbolicate });
+    fireEvent.click(screen.getByRole("button", { name: "Vis oprindelig kode" }));
+    await waitFor(() => expect(screen.getByText(/Ingen rammer kunne oversættes: der findes intet source map for build d81f4e2/)).toBeTruthy());
+    expect(screen.queryByText(/Oprindelig kode/)).toBeNull(); // intet felt med oversatte placeringer
+    cleanup();
+    const unavailable = vi.fn().mockResolvedValue({ ok: false, reason: "unavailable" });
+    open({ symbolicate: unavailable });
+    fireEvent.click(screen.getByRole("button", { name: "Vis oprindelig kode" }));
+    await waitFor(() => expect(screen.getByText(/Oversættelse er ikke sat op endnu/)).toBeTruthy());
+    cleanup();
+    render(<ErrorsSection {...base} rows={[{ ...row, app_version: "local" }]} symbolicate={vi.fn()} />);
+    fireEvent.click(screen.getByText(/forekomst/).closest("button"));
+    fireEvent.click(screen.getByRole("button", { name: "Tekniske oplysninger" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vis oprindelig kode" }));
+    expect(screen.getByText(/Build-id mangler/)).toBeTruthy();
+  });
+  it("historikken er kronologisk med registreringen først og viser rettelse og hvem", async () => {
+    const loadHistory = vi.fn().mockResolvedValue({ items: [{ id: 9, action: "fejlstatus_aendret", admin_id: "a", created_at: "2026-10-15T12:00:00Z", details: { fra: "open", til: "resolved", rettelse: "Rettet i boot.js", verificeret_build: "d81f4e2" } }], users: { a: { name: "Jan" } } });
+    open({ loadHistory });
+    fireEvent.click(screen.getByRole("button", { name: "Historik" }));
+    await waitFor(() => expect(screen.getByText("Markeret som løst")).toBeTruthy());
+    const titles = [...document.querySelectorAll(".err-history-title")].map((n) => n.textContent);
+    expect(titles).toEqual(["Fejl registreret", "Markeret som løst"]);
+    expect(screen.getByText("Rettelse: Rettet i boot.js")).toBeTruthy();
+    expect(screen.getByText("Angivet som verificeret i build d81f4e2")).toBeTruthy();
+    expect(screen.getByText(/^Jan · /)).toBeTruthy();
+  });
+  it("kodefelter: lange værdier får en svag kantmarkering (mere indhold end synligt), og kopiering tager hele indholdet", async () => {
+    const sw = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(900);
+    const cw = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(300);
+    const writeText = vi.fn().mockResolvedValue();
+    Object.assign(navigator, { clipboard: { writeText } });
+    open();
+    await waitFor(() => expect(document.querySelector(".err-code-wrap.more-x")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Kopiér Stacktrace" }));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("at a.js:1"));
+    expect(writeText.mock.calls[0][0]).toContain("TypeError"); // hele stacken, ikke kun det synlige
+    sw.mockRestore(); cw.mockRestore();
   });
 });

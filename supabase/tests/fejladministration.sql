@@ -36,7 +36,7 @@ begin
   select status, occurrences into rec from public.client_errors where id=eid;
   if rec.status<>'ignored' then res := res || 'IGNORERET-AENDRET '; end if;
   if rec.occurrences<>4 then res := res || 'IGNORERET-IKKE-TAELLT(' || rec.occurrences || ') '; end if;
-  update public.client_errors set status='resolved' where id=eid;
+  update public.client_errors set status='resolved', resolution_note='Opsætning' where id=eid;
   perform public.log_client_error('Cannot read properties of undefined (reading ''default'')', null, 'react', 'Scanner', '/', 'ua', 'aaa1111', null);
   select status, reopen_count, status_reason into rec from public.client_errors where id=eid;
   if rec.status<>'open' or rec.reopen_count<>1 then res := res || 'IKKE-GENAABNET(' || rec.status || ',' || rec.reopen_count || ') '; end if;
@@ -54,9 +54,26 @@ begin
   -- Administrator
   execute 'set local role authenticated';
   perform set_config('request.jwt.claims', json_build_object('sub', adm,'role','authenticated')::text, true);
-  update public.client_errors set status='resolved' where id=eid;
-  select count(*) into n from public.admin_audit_log where action='fejlstatus_aendret' and admin_id=adm and target_id=eid::text and details->>'fra'='open' and details->>'til'='resolved';
+  -- Løst kræver en beskrivelse af rettelsen; verificeret build er valgfri, men skal være et build-id
+  begin update public.client_errors set status='resolved' where id=eid; res := res || 'LOEST-UDEN-BESKRIVELSE '; exception when others then null; end;
+  begin update public.client_errors set status='resolved', resolution_note='   ' where id=eid; res := res || 'LOEST-MED-TOM-BESKRIVELSE '; exception when others then null; end;
+  begin update public.client_errors set status='resolved', resolution_note='Rettet', verified_build='local' where id=eid; res := res || 'UGYLDIGT-BUILD-ACCEPTERET '; exception when others then null; end;
+  update public.client_errors set status='resolved', resolution_note='  Rettet i boot.js  ', verified_build='  D81F4E2 ' where id=eid;
+  select status, resolution_note, verified_build into rec from public.client_errors where id=eid;
+  if rec.resolution_note<>'Rettet i boot.js' or rec.verified_build<>'d81f4e2' then res := res || 'BESKRIVELSE-IKKE-RENSET(' || coalesce(rec.resolution_note,'-') || ',' || coalesce(rec.verified_build,'-') || ') '; end if;
+  select count(*) into n from public.admin_audit_log where action='fejlstatus_aendret' and admin_id=adm and target_id=eid::text and details->>'fra'='open' and details->>'til'='resolved'
+    and details->>'rettelse'='Rettet i boot.js' and details->>'verificeret_build'='d81f4e2';
   if n<>1 then res := res || 'STATUSSKIFT-IKKE-LOGGET(' || n || ') '; end if;
+  -- Genåbnet manuelt: beskrivelsen og buildet nulstilles på rækken (historikken bevares i adminloggen)
+  update public.client_errors set status='open' where id=eid;
+  select resolution_note, verified_build into rec from public.client_errors where id=eid;
+  if rec.resolution_note is not null or rec.verified_build is not null then res := res || 'BESKRIVELSE-IKKE-RYDDET-VED-GENAABNING '; end if;
+  select count(*) into n from public.admin_audit_log where action='fejlstatus_aendret' and target_id=eid::text and details->>'rettelse'='Rettet i boot.js';
+  if n<>1 then res := res || 'HISTORIK-TABT-VED-GENAABNING(' || n || ') '; end if;
+  -- Løst uden verificeret build: logges uden build-feltet
+  update public.client_errors set status='resolved', resolution_note='Uden build' where id=eid;
+  select count(*) into n from public.admin_audit_log where action='fejlstatus_aendret' and target_id=eid::text and details->>'rettelse'='Uden build' and not (details ? 'verificeret_build');
+  if n<>1 then res := res || 'UDEN-BUILD-FORKERT-LOGGET(' || n || ') '; end if;
   begin
     update public.client_errors set status='ignored' where id=eid; res := res || 'IGNORERING-UDEN-BEGRUNDELSE '; 
   exception when others then null; end;
@@ -86,6 +103,24 @@ begin
   execute 'reset role';
   select count(*) into n from public.client_errors where first_seen > now() - interval '10 minutes';
   if n > 301 then res := res || 'LOFT-OVERSKREDET(' || n || ') '; end if;
+
+  -- Private bøtte til source maps: ikke offentlig, ingen adgang for brugere (kun service-nøglen), og oprydningsfunktionen kun for service_role
+  perform set_config('request.jwt.claims', '', true);
+  execute 'reset role';
+  select count(*) into n from storage.buckets where id='sourcemaps' and public=false; if n<>1 then res := res || 'SOURCEMAPS-BOET-IKKE-PRIVAT '; end if;
+  select count(*) into n from pg_policies where schemaname='storage' and tablename='objects' and (coalesce(qual,'') like '%sourcemaps%' or coalesce(with_check,'') like '%sourcemaps%');
+  if n<>0 then res := res || 'SOURCEMAPS-HAR-POLITIK(' || n || ') '; end if;
+  insert into storage.objects(bucket_id, name) values ('sourcemaps', 'abc1234/test.js.map');
+  execute 'set local role authenticated';
+  perform set_config('request.jwt.claims', json_build_object('sub', adm,'role','authenticated')::text, true);
+  select count(*) into n from storage.objects where bucket_id='sourcemaps'; if n<>0 then res := res || 'ADMIN-LAESER-SOURCEMAPS(' || n || ') '; end if;
+  perform set_config('request.jwt.claims', '', true);
+  execute 'reset role';
+  if has_function_privilege('authenticated', 'public.old_sourcemaps()', 'execute') or has_function_privilege('anon', 'public.old_sourcemaps()', 'execute') then res := res || 'OLD_SOURCEMAPS-AABEN '; end if;
+  if not has_function_privilege('service_role', 'public.old_sourcemaps()', 'execute') then res := res || 'OLD_SOURCEMAPS-LUKKET-FOR-SERVICE '; end if;
+  select count(*) into n from public.old_sourcemaps(); if n<>0 then res := res || 'NYT-KORT-SLETTES(' || n || ') '; end if;
+  update storage.objects set created_at = now() - interval '91 days' where bucket_id='sourcemaps';
+  select count(*) into n from public.old_sourcemaps(); if n<>1 then res := res || 'GAMMELT-KORT-IKKE-FUNDET(' || n || ') '; end if;
 
   if res <> '' then raise exception 'FEJLADMINISTRATION: %', res; end if;
 end $$;

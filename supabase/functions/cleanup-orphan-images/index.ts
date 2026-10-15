@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       { bucket: PRODUCT_IMAGES_BUCKET, rpc: "orphan_product_images" },
       { bucket: SUBMISSION_IMAGES_BUCKET, rpc: "orphan_submission_images" },
       { bucket: "feedback-screenshots", rpc: "orphan_feedback_screenshots" },
+      { bucket: "sourcemaps", rpc: "old_sourcemaps" }, // source maps ældre end 90 dage (samme frist som fejlene)
     ];
     const orphans: Record<string, string[]> = {};
     let removed = 0;

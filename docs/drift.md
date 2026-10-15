@@ -50,3 +50,9 @@ Live: push og mail slået til via `app_flags`. Beskeder i appen påvirkes ikke a
   i miljøet, ikke som repo-secret (sikkerhedsgennemgang 15. okt. 2026, S1).
 - `supabase/config.toml` har `verify_jwt` pr. funktion.
 - Backup-tabeller bevares indtil deres frist (fx `opskrift_rester_backup_20261014` til 13. nov.; `products_allergen_backup_20261006`).
+
+## Source maps (16. okt. 2026)
+- Vercel kører `npm run build:vercel`: `vite build` (kort som `hidden`) og derefter `scripts/upload-sourcemaps.mjs`, som uploader kortene til edge-funktionen `sourcemap-upload` og sletter alle `.map` fra `dist` (aldrig offentlige).
+- Kræver hemmeligheden `SOURCEMAP_UPLOAD_TOKEN` (mindst 16 tegn, tilfældig) som **både** Supabase funktions-secret **og** Vercel-miljøvariabel (Production og Preview). Mangler den, springes upload over uden at buildet fejler. Skriv aldrig værdien i chat, filer eller logs.
+- Bøtten `sourcemaps` er privat uden politikker; kort slettes efter 90 dage (`cleanup-orphan-images`). `symbolicate-error` kræver admin-login.
+

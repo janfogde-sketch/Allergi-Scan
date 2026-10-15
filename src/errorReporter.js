@@ -136,12 +136,37 @@ export async function reportError(error, meta = {}) {
   }
 }
 
+/**
+ * Efter en automatisk genindlæsning pga. en kodefil, der ikke kunne hentes (public/js/boot.js gemmer filnavnet i sessionStorage): rapportér HÆNDELSEN
+ * én gang med filnavnet og om enheden var online, i stedet for støjen "reading 'default'". Meddelelsen indeholder kun skærmens navn (uden hash),
+ * så samme kodefil giver samme fejlgruppe på tværs af udrulninger; det fulde filnavn står i konteksten.
+ * @returns {Promise<boolean>}
+ */
+export async function reportPendingChunkFailure() {
+  try {
+    const raw = sessionStorage.getItem("chunkFailure");
+    if (!raw) return false;
+    sessionStorage.removeItem("chunkFailure");
+    const info = JSON.parse(raw);
+    if (!info || typeof info !== "object" || Date.now() - Number(info.at || 0) > 5 * 60_000) return false;
+    const file = typeof info.file === "string" && /^[\w.-]{1,120}\.js$/.test(info.file) ? info.file : "";
+    const name = file ? file.replace(/-[A-Za-z0-9_-]{8}\.js$/, "") : "ukendt fil";
+    return await reportError(`Kodefil kunne ikke hentes, og siden blev genindlæst: ${name}`, {
+      source: "chunk",
+      context: { failedChunk: file || null, online: info.online !== false, build: COMMIT_SHA },
+    });
+  } catch {
+    return false;
+  }
+}
+
 let installed = false;
 
 /** Lyt efter ufangede fejl og afviste promises i hele appen. */
 export function installErrorReporting(target = typeof window !== "undefined" ? window : null) {
   if (!target || installed) return;
   installed = true;
+  reportPendingChunkFailure();
   target.addEventListener("error", (e) => {
     reportError(e?.error || e?.message, { source: "window" });
   });

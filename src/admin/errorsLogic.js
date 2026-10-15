@@ -16,7 +16,7 @@ export const SEVERITY_HELP = {
 export const TABS = [["open", "Åben"], ["resolved", "Løst"], ["ignored", "Ignoreret"], ["all", "Alle"]];
 export const ERROR_PERIODS = { all: "Hele perioden", today: "I dag", week: "Seneste 7 dage", month: "Seneste 30 dage", custom: "Brugerdefineret periode" };
 
-export const SELECT_EXTENDED = "id,source,message,stack,screen,url,user_agent,app_version,app_versions,context,occurrences,first_seen,last_seen,status,severity,status_reason,reopen_count";
+export const SELECT_EXTENDED = "id,source,message,stack,screen,url,user_agent,app_version,app_versions,context,occurrences,first_seen,last_seen,status,severity,status_reason,reopen_count,resolution_note,verified_build";
 export const SELECT_BASE = "id,source,message,stack,screen,url,user_agent,app_version,context,occurrences,first_seen,last_seen,status";
 
 /** Området: skærmen, ellers en læsbar kilde (edge-funktion, browser). @param {{ screen?: string|null, source?: string|null }} e */
@@ -24,6 +24,7 @@ export function areaLabel(e) {
   if (e.screen) return e.screen;
   const s = e.source || "";
   if (s.startsWith("edge:")) return `Server: ${s.slice(5)}`;
+  if (s === "chunk") return "Kodefil (genindlæst)";
   if (s === "window") return "Browser";
   if (s === "promise") return "Browser (løfte)";
   return s || "Ukendt";
@@ -90,12 +91,30 @@ export function componentStackOf(context) {
   return s ? s.split("\n").slice(0, 12).join("\n") : "";
 }
 
+/** Build-id'er for en gruppe: de registrerede (første først), ellers kun det første. Kun faktiske værdier fra buildsystemet. @param {any} e @returns {string[]} */
+export function buildIdsOf(e) {
+  const list = Array.isArray(e.app_versions) && e.app_versions.length ? e.app_versions : e.app_version ? [e.app_version] : [];
+  return list.filter((v) => typeof v === "string" && v);
+}
+export const isBuildId = (v) => /^[0-9a-f]{7,40}$/.test(String(v || "").trim().toLowerCase());
+
+/**
+ * Tidspunkterne til detaljevisningen uden gentagelser: én forekomst viser kun "Registreret"; flere viser første, seneste og antal.
+ * @param {{ first_seen: string, last_seen: string, occurrences: number|string }} e @returns {Array<[string, string]>} [label, værdi]; tidspunkterne er rå og formateres af visningen
+ */
+export function occurrenceRows(e) {
+  const n = Number(e.occurrences || 1);
+  if (n <= 1 && e.first_seen === e.last_seen) return [["Registreret", e.first_seen]];
+  return [["Første forekomst", e.first_seen], ["Seneste forekomst", e.last_seen], ["Antal forekomster", Number(e.occurrences).toLocaleString("da-DK")]];
+}
+
 /**
  * Struktureret fejlrapport til AI-assisteret fejlsøgning. Kun sikre, relevante oplysninger: ingen bruger-id, ingen rå user agent, ingen
  * tokens eller query-parametre, og alt sendes gennem sanitizeText.
  * @param {any} e en fejlgruppe
+ * @param {string} [symbolicated] verificerede oprindelige placeringer (fra source map), hvis administratoren har hentet dem; ellers udelades de
  */
-export function buildErrorPrompt(e) {
+export function buildErrorPrompt(e, symbolicated = "") {
   const lines = [
     "Undersøg denne fejl i EatSafe (Allergi-Scan-kodebasen).",
     "",
@@ -105,14 +124,18 @@ export function buildErrorPrompt(e) {
     `Seneste forekomst: ${fmtAuditDateTime(e.last_seen)}`,
     `Antal forekomster: ${e.occurrences}${e.reopen_count ? ` (vendt tilbage ${e.reopen_count} gange efter at være markeret løst)` : ""}`,
   ];
-  const versions = Array.isArray(e.app_versions) && e.app_versions.length ? e.app_versions : e.app_version ? [e.app_version] : [];
-  if (versions.length) lines.push(`Appversion(er): ${versions.join(", ")}`);
+  const builds = buildIdsOf(e);
+  if (builds.length) lines.push(`Build-id (git-commit, første forekomst først): ${builds.join(", ")}`);
   const platform = uaSummary(e.user_agent);
   if (platform) lines.push(`Platform: ${platform}`);
   if (e.url) lines.push(`Side: ${sanitizeText(e.url)}`);
-  if (e.stack) lines.push("", "Stacktrace:", sanitizeText(e.stack).slice(0, 3000));
+  const chunk = e.context && typeof e.context.failedChunk === "string" && /^[\w.-]{1,120}\.js$/.test(e.context.failedChunk) ? e.context.failedChunk : "";
+  if (chunk) lines.push(`Kodefil, der ikke kunne hentes: ${chunk}${e.context.online === false ? " (enheden var offline)" : ""}`);
+  if (e.stack) lines.push("", "Stacktrace (minificeret):", sanitizeText(e.stack).slice(0, 3000));
   const cs = componentStackOf(e.context);
-  if (cs) lines.push("", "Komponent-stak:", sanitizeText(cs));
+  if (cs) lines.push("", "Komponent-stak (minificeret):", sanitizeText(cs));
+  if (symbolicated) lines.push("", "Oprindelige kodeplaceringer (oversat med source maps til netop dette build-id; kun verificerede rammer):", sanitizeText(symbolicated));
+  else if (e.stack && builds[0]) lines.push("", `Stacken er minificeret. Oversæt den til oprindelig kode med: node scripts/symbolicate.mjs ${builds[0]} <fil med stacken> (genopbygger netop dette build med source maps). Rammer, der ikke kan verificeres, står som "ikke oversat".`);
   lines.push("", "Find årsagen i den eksisterende kode, identificér den konkrete fejl, og foreslå eller lav en målrettet rettelse. Gæt ikke ud fra fejlteksten alene; kan fejlen ikke reproduceres eller forklares ud fra koden, så sig det. Læs CLAUDE.md først, og vent på min bekræftelse, før du ændrer noget stort eller risikabelt.");
   return lines.join("\n");
 }
@@ -172,12 +195,40 @@ export function filterOptions(rows) {
   return { screens: [...screens].sort((a, b) => a.localeCompare(b, "da")), hasNoScreen: none, versions: [...versions].sort(), severities: ["critical", "high", "medium", "low"].filter((s) => severities.has(s)) };
 }
 
-const ACTION_TEXT = { fejlstatus_aendret: "Status ændret", fejl_genaabnet: "Genåbnet automatisk", fejlalvor_aendret: "Alvorlighed ændret" };
-/** Én linje i historikken ud fra en adminlogpost. @param {any} h @param {Record<string, any>} users */
-export function historyText(h, users) {
-  const d = h.details || {};
-  const who = h.action === "fejl_genaabnet" ? "System" : (users && users[h.admin_id] && (users[h.admin_id].name || users[h.admin_id].email)) || (h.admin_id ? String(h.admin_id).slice(0, 8) : "Ukendt");
-  const lab = (v) => STATUS_LABELS[/** @type {"open"} */ (v)] || SEVERITY_LABELS[/** @type {"high"} */ (v)] || (v === "ingen" ? "Ingen" : v);
-  const change = d.fra != null || d.til != null ? `${lab(d.fra)} → ${lab(d.til)}` : "";
-  return { when: fmtAuditDateTime(h.created_at), who, title: ACTION_TEXT[h.action] || h.action, change, reason: typeof d.begrundelse === "string" ? d.begrundelse : "" };
+/**
+ * Historikken i kronologisk rækkefølge (ældste først): "Fejl registreret" (første forekomst) og derefter statusændringerne fra adminloggen.
+ * Manuelle ændringer viser, hvem der udførte dem; automatiske er systemhandlinger. Ingen tekniske id'er.
+ * @param {any} row fejlgruppen @param {any[]} items poster fra admin_audit_log @param {Record<string, any>} users
+ * @returns {Array<{ key: string, when: string, who: string, title: string, lines: string[] }>}
+ */
+export function historyEntries(row, items, users) {
+  const out = [];
+  if (row && row.first_seen) out.push({ key: "registreret", at: row.first_seen, when: fmtAuditDateTime(row.first_seen), who: "System", title: "Fejl registreret", lines: [] });
+  for (const h of items || []) {
+    const d = h.details || {};
+    const auto = h.action === "fejl_genaabnet" || d.automatisk === true;
+    const who = auto ? "System" : (users && users[h.admin_id] && (users[h.admin_id].name || users[h.admin_id].email)) || "Ukendt administrator";
+    /** @type {string[]} */
+    const lines = [];
+    let title;
+    if (h.action === "fejlalvor_aendret") {
+      title = "Alvorlighed ændret";
+      const lab = (v) => SEVERITY_LABELS[/** @type {"high"} */ (v)] || (v === "ingen" ? "Ikke vurderet" : v);
+      lines.push(`${lab(d.fra)} → ${lab(d.til)}`);
+    } else if (d.til === "resolved") {
+      title = "Markeret som løst";
+      if (d.rettelse) lines.push(`Rettelse: ${d.rettelse}`);
+      lines.push(d.verificeret_build ? `Angivet som verificeret i build ${d.verificeret_build}` : "Verificeret build er ikke angivet");
+    } else if (d.til === "ignored") {
+      title = "Ignoreret";
+      if (d.begrundelse) lines.push(`Begrundelse: ${d.begrundelse}`);
+    } else if (d.til === "open") {
+      title = auto ? "Genåbnet automatisk (fejlen skete igen)" : "Genåbnet manuelt";
+    } else title = ACTION_TEXT[h.action] || "Ændring";
+    out.push({ key: String(h.id), at: h.created_at, when: fmtAuditDateTime(h.created_at), who, title, lines });
+  }
+  return out.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0)).map(({ at: _at, ...rest }) => rest);
 }
+
+const ACTION_TEXT = { fejlstatus_aendret: "Status ændret", fejl_genaabnet: "Genåbnet automatisk", fejlalvor_aendret: "Alvorlighed ændret" };
+
