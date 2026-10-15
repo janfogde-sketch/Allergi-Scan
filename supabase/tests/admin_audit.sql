@@ -88,8 +88,11 @@ begin
   insert into public.products(ean,name) values ('5700000099992','Ny testvare');
   select count(*) into n from public.admin_audit_log where admin_id=adm and action='produkt_oprettet' and details->>'ean'='5700000099992';
   if n<>1 then res := res || 'PRODUKT-OPRETTELSE-IKKE-LOGGET(' || n || ') '; end if;
+  -- Leksikonet skrives af admin-panelet med egne rettigheder; testen skriver uden rolle, men med adminens login-id (triggeren ser adm)
+  execute 'reset role';
   insert into public.knowledge_base(category,title,slug) values ('faq','Testpost','testpost-audit-'||substr(adm::text,1,8)) returning id::text into v_status;
   update public.knowledge_base set summary='Kort' where id::text=v_status;
+  execute 'set local role authenticated';
   select count(*) into n from public.admin_audit_log where admin_id=adm and action='vidensindgang_oprettet' and target_id=v_status and details->>'navn'='Testpost';
   if n<>1 then res := res || 'LEKSIKON-OPRETTELSE-IKKE-LOGGET(' || n || ') '; end if;
   select count(*) into n from public.admin_audit_log where admin_id=adm and action='vidensindgang_rettet' and target_id=v_status
