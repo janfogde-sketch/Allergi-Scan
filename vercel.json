@@ -55,6 +55,19 @@
       ]
     },
     {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
       "source": "/.well-known/assetlinks.json",
       "headers": [
         {
@@ -80,6 +93,10 @@
     {
       "source": "/slet-konto",
       "destination": "/slet-konto.html"
+    },
+    {
+      "source": "/auth-retur",
+      "destination": "/api/auth-retur"
     },
     {
       "source": "/api/:path*",

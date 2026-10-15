@@ -15,16 +15,21 @@ Plan: `/mnt/project-files/eatsafe/ios-skal-plan-2026-10-14.md`. iOS-rammen er en
 | Team ID og signering | Xcode → App → Signing & Capabilities (`DEVELOPMENT_TEAM` i `ios/App/App.xcodeproj/project.pbxproj`) | Membership |
 | Push-nøgle (.p8), Key ID | Supabase secrets `APNS_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID` (indføres i trin 3) | Keys → Apple Push Notifications service |
 | Capability "Push Notifications" | Xcode → Signing & Capabilities | App ID |
-| Associated Domains (retur fra login, trin 2) | `applinks:www.eatsafe.dk` + fil `apple-app-site-association` på eatsafe.dk | App ID |
+| Associated Domains (retur fra login, trin 2) | Xcode → + Capability → Associated Domains: `applinks:www.eatsafe.dk`; erstat `TEAMID` i `public/.well-known/apple-app-site-association` med Team ID | App ID |
 | Sign in with Apple | `docs/apple-login-opsaetning.md` | Services ID |
 | Bygning | Mac/Xcode eller bygge-tjeneste; ikke valgt endnu | |
 
 ## Login i systembrowseren (trin 2)
 - I iPhone-rammen åbner Google/Facebook (og senere Apple) i telefonens browser (`src/nativeShell.js`, `handleOAuth` i `src/useAuth.js`) og
-  vender tilbage via adressen `dk.eatsafe.app://auth` (URL-skema i `Info.plist`).
-- **Skal sættes i Supabase (Authentication → URL Configuration → Redirect URLs): `dk.eatsafe.app://auth`.** Uden den afvises login i iPhone-appen.
-  Browseren og Android er upåvirket.
-- Retur-adressen er et eget URL-skema, så det virker uden Apple-konto. Universal Links (`applinks:`) kan skiftes til senere.
+  vender tilbage via `https://www.eatsafe.dk/auth-retur` (`NATIVE_AUTH_REDIRECT`, sikkerhedsfund S5). Login bruger PKCE, så adressen bærer
+  kun en engangskode, som er værdiløs uden nøglen i appen.
+- Med Associated Domains (tabellen ovenfor) åbner iPhone appen direkte på den adresse (Universal Link). Uden sender serveren
+  (`api/auth-retur.js`) videre til appens eget URL-skema `dk.eatsafe.app://auth` (`Info.plist`), så login virker også før Apple-kontoen.
+  Kun `code` og fejl sendes videre.
+- **Skal stå i Supabase (Authentication → URL Configuration → Redirect URLs): `https://www.eatsafe.dk/auth-retur`** (præcis, uden stjerne).
+  Uden den falder Supabase tilbage til standardadressen, og login i iPhone-appen afbrydes. Browseren og Android er upåvirket.
+- Tjek efter Associated Domains: `https://www.eatsafe.dk/.well-known/apple-app-site-association` viser Team ID, og et login i appen
+  vender tilbage uden at vise "Åbn i EatSafe?".
 
 ## Apples push (trin 3)
 - Appen (`src/nativePush.js`, `src/usePush.js`) beder om tilladelse, får Apples push-adresse og gemmer den i `push_tokens.token` som
