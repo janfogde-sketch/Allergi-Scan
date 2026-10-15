@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, profilesHaveSelections, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -188,7 +188,9 @@ export default function ResultScreen({
   // ingrediensliste overhovedet at kontrollere noget som helst imod.
   const hasAnyAllergenData = scanResult.allergen_flags && Object.values(scanResult.allergen_flags).some(v => v === "yes" || v === "no" || v === "traces");
   const hasIngredientsText = !!(scanResult.ingredients && scanResult.ingredients.trim());
-  const hasSufficientData = !profileResults.some(p => (p.unknown || []).length > 0 || (p.insufficient || []).length > 0) && (hasAnyAllergenData || hasIngredientsText);
+  // Ingen valgte allergier, E-numre eller egne ord: intet er tjekket, så aldrig grøn (15. okt. 2026, generalprøven).
+  const nothingChosen = !scanResult.isDemo && !profilesHaveSelections(resultProfilesRaw);
+  const hasSufficientData = !nothingChosen && !profileResults.some(p => (p.unknown || []).length > 0 || (p.insufficient || []).length > 0) && (hasAnyAllergenData || hasIngredientsText);
   const topStatus = computeTopStatus({ hasSufficientData, ...findings });
   // "Kan ikke vurderes": ingen fund, men for lidt data til at kontrollere alle valg (også ved flere profiler, hvor "ukendt" ellers giver et gult "kan ikke bekræftes").
   const cannotAssess = topStatus.level === "unknown";
@@ -450,7 +452,14 @@ export default function ResultScreen({
       {recalls.length > 0 && <RecallNotice recalls={recalls} />}
 
       {/* Kan ikke vurderes: hjælp med de manglende oplysninger er den vigtigste handling, og indkøbslisten bliver sekundær nederst */}
-      {cannotAssess && renderMissingData()}
+      {cannotAssess && nothingChosen && (activeProfiles.includes("me")
+        ? <StateBox icon="info" title="Du har ikke valgt nogen allergier"
+            text="Derfor har vi ikke tjekket produktet for noget. Vælg dine allergier, så vurderer vi produktet for dig."
+            actionLabel="Vælg allergier" onAction={() => setScreen(SCREENS.EDITPREFERENCES)} />
+        : <StateBox icon="info" title="Ingen allergier valgt"
+            text="Den valgte person har ingen allergier valgt, så vi har ikke tjekket produktet for noget. Du kan vælge dem under Familie."
+            actionLabel="Gå til Familie" onAction={() => setScreen(SCREENS.FAMILY)} />)}
+      {cannotAssess && !nothingChosen && renderMissingData()}
       {!cannotAssess && renderAddToList()}
       {confirmAddOpen && (
         <ConfirmDialog

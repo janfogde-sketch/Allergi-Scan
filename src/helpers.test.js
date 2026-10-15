@@ -337,8 +337,10 @@ describe("evaluateProductForProfiles (fælles statussystem)", () => {
     expect(ev.level).toBe("unknown");
     expect(ev.missing).toContain("Ingrediensliste mangler");
   });
-  it("tom profil uden valg har intet at kontrollere", () => {
-    expect(evaluateProductForProfiles([prof({ allergens: [] })], { name: "X" }).level).toBe("safe");
+  it("tom profil uden valg er aldrig grøn (generalprøven 15. okt. 2026)", () => {
+    const ev = evaluateProductForProfiles([prof({ allergens: [] })], { name: "Peanutbar", ingredients_text: "Jordnødder", allergen_flags: { jordnoedder: "yes" } });
+    expect(ev.level).toBe("unknown");
+    expect(ev.missing).toContain("Ingen allergier valgt");
   });
 });
 

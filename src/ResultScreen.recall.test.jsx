@@ -10,7 +10,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 let recalls = [];
 vi.mock("./useRecalls.js", () => ({ useRecalls: () => recalls }));
 vi.mock("./AuthContext.jsx", () => ({ useAuthContext: () => ({ user: { name: "Anna" }, accessToken: "tok" }) }));
-vi.mock("./ProfileContext.jsx", () => ({ useProfileContext: () => ({ scanFamily: [], allergens: [], customAllerg: [], activeProfiles: ["me"], profileLoadStatus: "ok", retryProfileLoad: () => {} }) }));
+vi.mock("./ProfileContext.jsx", () => ({ useProfileContext: () => ({ scanFamily: [], allergens: ["noedder"], customAllerg: [], activeProfiles: ["me"], profileLoadStatus: "ok", retryProfileLoad: () => {} }) }));
 vi.mock("./NavigationContext.jsx", () => ({ useNavigationContext: () => ({ setScreen: () => {} }) }));
 vi.mock("./HistoryContext.jsx", () => ({ useHistoryContext: () => ({ isFavorite: () => false, toggleFavorite: () => {} }) }));
 vi.mock("./ShoppingContext.jsx", () => ({ useShoppingContext: () => ({ lists: [], activeList: null, activeListId: null, addToList: () => {}, shoppingList: [], toggleItem: () => {} }) }));

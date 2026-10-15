@@ -5,7 +5,7 @@ import React, { useState, Suspense, useEffect, useCallback, useRef, useMemo } fr
 // ─── BUILD INFO (injiceres af Vite ved build-tid) ─────────────────────────────
 import { SCREENS } from "./constants.jsx";
 
-import { householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, mergeAllergenLevels } from "./helpers.js";
+import { householdToProfiles, syncLinkedActiveProfiles, isLinkedProfileId, mergeAllergenLevels, buildActiveProfileList } from "./helpers.js";
 
 import { Icon, LazyFallback, ToastHost, showToast, ScanLoadingOverlay } from "./SharedComponents.jsx";
 
@@ -643,14 +643,17 @@ export default function EatSafe() {
   // — denne wrapper sender blot alt afhængigt state med som ctx ved hvert kald,
   // så der (i modsætning til før) ALDRIG kan opstå en stale-closure-bug fra en
   // ufuldstændig deps-liste.
+  // De valgte profiler, som resultatsiden vurderer imod; advarsel og alternativer følger samme vurdering.
+  const scanProfiles = useMemo(() => buildActiveProfileList({ user, family: scanFamily, allergens, customAllerg, selectedENumbers, activeProfiles }),
+    [user, scanFamily, allergens, customAllerg, selectedENumbers, activeProfiles]);
   const lookupProduct = useCallback((ean, opts) => runLookupProduct(ean, {
-    accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family: scanFamily, activeProfiles,
+    accessToken, activeIds, activeLevels, activeCustom, activeENumbers, family: scanFamily, activeProfiles, scanProfiles,
     productCacheRef, scanTokenRef, scanAbortRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
     vibrateOnWarning, soundOnWarning,
-  }, opts), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles,
+  }, opts), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles, scanProfiles,
        productCacheRef, scanTokenRef, scanAbortRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,

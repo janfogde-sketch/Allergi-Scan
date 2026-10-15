@@ -734,16 +734,33 @@ export function evaluateProductForProfiles(profiles, product) {
   ]))];
   const hasAnyData = !!product && ((product.allergen_flags && Object.keys(product.allergen_flags).length > 0) || ingredientsText.trim().length > 0);
   const noProfiles = (profiles || []).length === 0;
-  const nothingToCheck = !noProfiles && (profiles || []).every(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) === 0);
+  // Ingen valgte allergier, E-numre eller egne ord (fx sprunget over, eller et gem fejlede): intet er tjekket, så aldrig grøn (15. okt. 2026).
+  const nothingToCheck = !noProfiles && !profilesHaveSelections(profiles);
   let level = "safe";
   if (conflict) level = "danger";
   else if (traceReasons.length > 0) level = "warn";
-  else if (noProfiles || missing.length > 0 || (!hasAnyData && !nothingToCheck)) level = "unknown";
+  else if (noProfiles || nothingToCheck || missing.length > 0 || !hasAnyData) level = "unknown";
   const label = level === "danger" ? conflict : STATUS_TEXT[level];
   const reasons = level === "danger" ? [...dangerReasons, ...traceReasons] : level === "warn" ? traceReasons : [];
   // Ingen profil at vurdere imod er aldrig "sikkert": manglende oplysninger er ikke sikkerhed.
   if (noProfiles && !missing.length) missing.push("Ingen profil valgt");
+  if (nothingToCheck) missing.push("Ingen allergier valgt");
   return { level, label, reasons, missing, results };
+}
+
+// Har mindst én af profilerne valgt noget at tjekke for (allergier, egne ord eller E-numre)?
+export function profilesHaveSelections(profiles) {
+  return (profiles || []).some(p => (p.allergens?.length || 0) + (p.custom?.length || 0) + (p.eNumbers?.length || 0) > 0);
+}
+
+// Skal en scanning give advarsel (vibration/lyd) og hente alternativer? (15. okt. 2026, generalprøven)
+// Følger samme vurdering som resultatsiden: alt, der ikke er grønt, advarer. Den ældre beregning på resultatet
+// (status) tæller stadig med, så der aldrig kommer færre advarsler end før. Er der intet at tjekke imod
+// (ingen profil eller ingen valg), advares der ikke; resultatsiden beder i stedet brugeren vælge.
+export function scanNeedsWarning(profiles, result) {
+  if (!result || !profilesHaveSelections(profiles)) return false;
+  if (result.status === "danger" || result.status === "warn") return true;
+  return evaluateProductForProfiles(profiles, result).level !== "safe";
 }
 
 // Scanner-forsidens dynamiske tekster (4. okt. 2026, Bjørn): forklaringen og
