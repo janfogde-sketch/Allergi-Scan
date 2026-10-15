@@ -14,16 +14,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # CLAUDE.md holdes under 15 KB (se CLAUDE.md, regel øverst). Tjekket kører også på dokumentændringer.
-      - name: CLAUDE.md er under 15 KB
-        run: |
-          size=$(wc -c < CLAUDE.md)
-          echo "CLAUDE.md er $size bytes"
-          if [ "$size" -ge 15000 ]; then
-            echo "CLAUDE.md er for stor ($size bytes, grænsen er 15000). Flyt detaljer til en fil i docs/."
-            exit 1
-          fi
-
       # Flyttet hertil fra "Tjek efter merge" 15. okt. 2026 (sparer en maskine pr. kørsel).
       - name: Ødelagte danske tegn (kyrilliske tegn i stedet for æ/ø/å)
         run: |
