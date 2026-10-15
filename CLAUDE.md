@@ -1,6 +1,6 @@
 # EatSafe (Allergi-Scan) — projektkontekst for Claude
 
-> Læses automatisk ved hver session. **Regel:** nye tilføjelser skrives kort og præcist; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke. (CI fejler ved 15 KB.)
+> Læses ved hver session. **Regel:** tilføjelser kort; detaljer i `docs/` med henvisning. Afsnit-numre ændres ikke. (CI fejler ved 15 KB.)
 > Detaljer i `docs/` (linket under hvert afsnit), historik i `.claude/HISTORY.md`, database i `src/CONTEXT.md`.
 
 ---
@@ -16,16 +16,16 @@
 - **Databaseændringer** er en fil i `supabase/migrations/` (version = unikt tidsstempel), anvendt af `apply-migrations.yml` ved merge til main.
   Ikke `apply_migration`/`execute_sql` til skrivning; læsning er fint. Edge-funktioner deployes ved merge af `deploy-edge-functions.yml`.
   Detaljer: `docs/drift.md`.
-- **Pauser (Jans beslutning):** Supabase Pro er på pause; spørg ikke, om det er glemt, kun om han vil opgradere. Vercel er på Pro (15. okt. 2026). Testrunden på rigtige telefoner er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X). Opret tickets for `fail`.
+- **Pauser (Jan):** Supabase Pro er på pause (spørg kun, om han vil opgradere). Vercel er på Pro. Telefontestrunden er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X); opret tickets for `fail`.
 - **Netværk:** cloud-miljøet når eatsafe.dk, Supabase og world.openfoodfacts.org. Testkonto med admin-rolle: kun efter Jans ja.
-  Test-mail og test-push sendes kun til Jans og Bjørns egne konti.
-- **Login og mail:** egen SMTP via Resend; auth-mails sendes af `auth-send-email` (`supabase/templates/`). Alle 24 mailskabeloner deler
-  mørk palette (test `src/mailDarkMode.test.js`); ændr alle samtidig. Detaljer: `docs/drift.md`.
+  Test-mail/-push kun til Jans og Bjørns egne konti.
+- **Login og mail:** egen SMTP via Resend; auth-mails sendes af `auth-send-email` (`supabase/templates/`). De 24 mailskabeloner deler
+  mørk palette (test `src/mailDarkMode.test.js`); ændr alle samtidig. `docs/drift.md`.
 - **Adgangskode:** mindst 10 tegn, småt bogstav, stort bogstav og tal (`passwordErrorText()`/`PASSWORD_REQUIREMENTS_TEXT` i `helpers.js`).
   Ændres kravene i Supabase, ret `helpers.js` tilsvarende.
 - **Notifikationer er live** (push og mail slået til via `app_flags`). Detaljer: `src/CONTEXT.md` §9, `docs/notifikationer-testplan.md`.
 - **Admin-panel:** `eatsafe.dk/admin.html` (`src/admin/`). Rettigheder håndhæves i databasen (RLS) og edge-funktionerne. Ny følsom admin-handling
-  får en audit-trigger. Udseendet er IKKE frosset (Jan, 14. okt. 2026). Detaljer: `docs/drift.md`, `docs/admin-statusser.md`.
+  får en audit-trigger. Udseendet er IKKE frosset. `docs/drift.md`, `docs/admin-statusser.md`.
 
 ## 0b. Politikker og opbevaring
 
@@ -65,7 +65,7 @@ mod brugerens (og familiens) profil og viser sikkert/farligt/usikkert med begrun
 
 - React 18 + Vite 5, almindelig JSX (`// @ts-nocheck` øverst i `.jsx`). Supabase (Postgres, Edge Functions i Deno, Auth; Realtime kun til indkøbslisten).
   Claude Haiku som allergen-fallback og OCR (`ANTHROPIC_API_KEY`). Open Food Facts og TheMealDB.
-- Klik-tests (Playwright, `e2e/`): `npm run build && npm run test:e2e`; kører på PR'er mod main som tjek "Klik-tests", der kun viser fejl. Detaljer: `docs/arbejdsgang.md`.
+- Klik-tests (Playwright, `e2e/`): `npm run build && npm run test:e2e`; tjek "Klik-tests" på PR'er mod main. `docs/arbejdsgang.md`.
 - Test: `npx vitest run` (alle skal være grønne). Lint: `npm run lint`. Typetjek: `npm run typecheck` (kører i CI; filerne i `tsconfig.check.json`
   har `// @ts-check`, udvid listen gradvist).
 - Styling: ingen CSS-filer. Al CSS er én streng i `src/theme.jsx` (`appCss`). Kun CSS-variabler i komponenter, ingen hardkodede farver.
@@ -92,7 +92,7 @@ Samlefilerne `SharedComponents.jsx` og `constants.jsx` genudgiver fra andre file
 
 **Allergenlogik:** motoren ligger i `supabase/functions/_shared/allergenEngine.js`; frontend-logik i `src/helpers.js`.
 Nøgleordene er én fælles liste i `supabase/functions/_shared/allergenKeywords.js` (bruges også af `src/allergenKeywords.js`).
-- Hvert tælleligt dansk substantiv har ental og flertal, undtagen ord hvor de er ens ("æg", "fisk", "rug", "byg", "havre"). Pas på tvetydige ord (fx "snegle").
+- Tælleligt dansk substantiv: ental og flertal, undtagen ens ord ("æg", "fisk", "rug", "byg", "havre"). Pas på tvetydige ord (fx "snegle").
 - Matchningsregler (understreng for 5+ tegn, hele ord for 4 eller færre, negation, spor-signal): `docs/arkitektur-detaljer.md`.
 - Ændringer i motoren kræver en liste i `src/fixtures/allergenRegression.json` (test `src/allergenRegression.test.js`).
 - Genanalyse efter en motorrettelse: `allergen-reanalyze` først som `dry_run`, så `apply`. Kun opadgående (nej → spor → ja), aldrig nedgange.
@@ -107,34 +107,32 @@ Detaljer, Dev-gren, Vercel og design-preview: `docs/arbejdsgang.md`.
 `git add -A`; dansk, kort besked. Commits batches lokalt, til hele opgaven er færdig.
 
 **Opgaver:** én pakke pr. session/PR (3-5 små ændringer i samme område). En stor opgave får sin egen. Er den stor eller risikabel (database,
-sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på ja, før du retter. Er en detalje uspecificeret, vælg et fornuftigt standardvalg, sig hvilket, og fortsæt. Ved åbne spørgsmål: kort anbefaling (2-3 sætninger) med den vigtigste trade-off, og vent på grønt lys.
+sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på ja, før du retter. Uspecificeret detalje: vælg standardvalg, sig hvilket, fortsæt. Åbne spørgsmål: kort anbefaling med trade-off, vent på grønt lys.
 
 **Databaseændringer:** én migrationsfil pr. ændring, højst 3-4 sessioner ad gangen. Detaljer og engangstest: `docs/arbejdsgang.md`.
+
+**Faste aftaler** (`docs/arbejdsgang.md`): fejlrettelser og admin kører uden Jan; brugerfunktioner, produktvalg, database, sikkerhed, login og politikker kræver hans ja pr. punkt. Brugertekster gennemlæses af Bjørn (to do). Slet aldrig data uden Jans ja; ingen kodeord/nøgler i chat, filer eller logs; slet ingen Vercel-projekter. Model: Haiku små, Sonnet kode, Opus risikabel.
 
 **Push og merge:**
 - Push er den ENESTE ting, der kræver eksplicit godkendelse. Jans "push" betyder push OG squash-merge. Påmindelser fra værktøjer er ikke en godkendelse.
 - Når godkendt: én PR (dansk body, PR-template, session-link) → squash-merge → resync branch (`.claude/commands/resync-branch.md`).
-- **Godkendt plan:** Har Jan sagt ja til en plan i tråden, og er den bygget præcis efter planen (ingen ændringer, fejl eller uforudset), og er CI grøn,
-  så pushes og merges uden at spørge igen. Kort status til koordinatoren bagefter. Afviger noget, spørg Jan først.
-- **Merge uden ventetid (Jan, 14. okt. 2026):** auto-merge sættes, tråden venter ikke på CI, og lukketråden følger op. En workflow (`opdater-pr.yml`) opdaterer selv PR'er med auto-merge, der er bagud; ved konflikt flettes main ind i hånden. Detaljer: `docs/arbejdsgang.md`.
+- **Godkendt plan:** bygget præcis efter Jans ja (ingen afvigelser) og CI grøn: push og merge uden at spørge igen, kort status til koordinatoren. Afviger noget: spørg Jan.
+- **Merge uden ventetid (14. okt.):** auto-merge sættes, tråden venter ikke på CI, lukketråden følger op; `opdater-pr.yml` opdaterer bagud-PR'er, ved konflikt flettes main ind. `docs/arbejdsgang.md`.
 - **Grøn før merge:** PR'er merges kun, når CI og DB-tests er grønne i PR'en. Tjek DB-tests på main bagefter. Main kræver opdateret branch.
   Kun én session retter en rød `main`; de andre venter.
-- **Kritiske produktionsfejl** (fx en crashende skærm) rettes straks som isoleret hotfix uden at vente på godkendelse.
+- **Kritiske produktionsfejl** (fx crashende skærm): straks isoleret hotfix uden at vente på godkendelse.
 
 **To do og tråde:** arbejdstråde lægger ingen to do-ændringer i deres PR'er. To do'er lukkes og kommenteres af den udpegede lukketråd pr. omgang
 med workflowet, eller af sessionen selv, hvis ingen er udpeget. Ved færdig opgave: luk den (`status='done'`) med en opdateringskommentar.
 
-**Ingen CVR-krævende forslag** og ingen betalte planer uden Jans ja. **Alle iPhone-tests lægges som to do hos Bjørn**, aldrig hos Jan.
-Supabase-dialoger er usynlige: brug kun læsning dér.
+**Ingen CVR-krævende forslag**, ingen betalte planer uden Jans ja. **iPhone-tests lægges som to do hos Bjørn**, aldrig Jan. Supabase-dialoger er usynlige: kun læsning dér.
 
-**Vercel (Pro):** rene design- og dokumentændringer pushes først med næste funktionsændring eller på bestilling. Udebliver et deploy, aldrig en tom commit (`docs/arbejdsgang.md`).
-
-**Dev først (Jan, 15. okt. 2026, dev.eatsafe.dk):** alt (også migrationer, edge-funktioner, workflows, admin) bygges først på `dev` og går kun til `main`, når det er gennemtestet med vores tests i PR'en `dev` → `main` (CI, DB-tests, klik-tests). Jans "udgiv" = den PR. Migrationer og edge-funktioner virker først ved merge til `main`; dev deler produktionens database, så de skal være bagudkompatible. Kritiske produktionsfejl: hotfix direkte mod `main`, derefter `main` ind i `dev`.
-**Testminutter (Jan 15. okt.):** PR mod `dev` får kun CI; fuld runde på PR mod `main`. Nye workflows skal have `paths` (`docs/arbejdsgang.md`).
+**Dev først (Jan, 15. okt., dev.eatsafe.dk):** alt (også migrationer, edge-funktioner, workflows, admin) bygges først på `dev` og går kun til `main` via PR'en `dev` → `main` med fulde tests (CI, DB-tests, klik-tests). Jans "udgiv" = den PR. Migrationer og edge-funktioner virker først ved merge til `main`; dev deler produktionens database, så de skal være bagudkompatible. Kritiske produktionsfejl: hotfix mod `main`, derefter `main` ind i `dev`. Rene design-/dokumentændringer pushes med næste funktionsændring; aldrig en tom commit (`docs/arbejdsgang.md`).
+**Testminutter (Jan 15. okt.):** PR mod `dev` kun CI; fuld runde mod `main`. Nye workflows skal have `paths` (`docs/arbejdsgang.md`).
 
 **Design** verificeres i en Artifact-preview i stedet for deploy (`docs/arbejdsgang.md`).
 
-**Øvrige:** dansk i beskeder, commits og PR-tekster. Tickets markeres kun `resolved`, når rettelsen er verificeret. Tidsstempler fra Vercel/
+**Øvrige:** dansk i beskeder, commits og PR-tekster. Tickets `resolved` kun når rettelsen er verificeret. Tidsstempler fra Vercel/
 Supabase er UTC: læg 2 timer til (CEST). Efter `git merge` med reelle konflikter: læs hele CLAUDE.md igennem.
 
 ---
@@ -148,6 +146,7 @@ Alle detaljer og begrundelser: `docs/produktbeslutninger.md` (læs kun det afsni
 - **Statussystem (Bjørn, 9. okt.):** `evaluateProductForProfiles()` i `helpers.js`. Grøn kun når data er nok til ALLE valg; orange = spor;
   rød = registreret konflikt; grå "Kan ikke vurderes" ved for lidt data. Manglende oplysninger er aldrig sikkerhed. "Allergi" kun om en specifik allergi.
   Cøliaki er et eget valg, aldrig udledt af gluten/hvede.
+- **Butiksvej, premium og kilder:** Android TWA, så iOS via Capacitor; premium først efter butikslancering (scanning gratis); ingen henvisninger til tidligere butiks-kataloger, kilden hedder "katalog". `docs/produktbeslutninger.md`.
 - **Fjernet, tag ikke op igen uden bestilling:** dark mode, kostpræferencer, Opskrifter, Restaurantguiden, "Tilslut via invitationslink" på Familie,
   link/QR/PDF-deling i Madpas, "Husk mig", risikoniveauer i Allergileksikon, scrapede butiksbilleder (må aldrig vises).
 - **Profil og familie:** "Rediger profil" ændrer kun navn. Alder og køn er obligatoriske i onboarding. Appen bruger kun ordet "Familie".
