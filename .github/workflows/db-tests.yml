@@ -4,8 +4,8 @@ name: DB-tests
 # Rører aldrig produktion (kører på en midlertidig kopi på GitHub-maskinen). Kræver ikke Supabase Pro.
 on:
   workflow_dispatch:
+  # Ingen paths-filter på pull_request: tjekket skal altid rapportere, ellers hænger et påkrævet tjek (se trinnet "Rører ændringen databasen?").
   pull_request:
-    paths: ["supabase/migrations/**", "supabase/tests/**", "supabase/functions/delete-user/**", ".github/workflows/db-tests.yml"]
   push:
     branches: [main]
     paths: ["supabase/migrations/**", "supabase/tests/**", "supabase/functions/delete-user/**", ".github/workflows/db-tests.yml"]
@@ -24,16 +24,28 @@ jobs:
         id: scope
         run: .github/scripts/changed-scope.sh "${{ github.event.pull_request.base.sha || github.event.before }}"
 
-      - if: steps.scope.outputs.only_docs != 'true'
+      # På en PR springes de tunge trin over, når ingen database-filer er rørt (jobbet består stadig). Ved tvivl kører alt.
+      - name: Rører ændringen databasen?
+        id: dbscope
+        run: |
+          RUN=true
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            if FILES=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD 2>/dev/null); then
+              echo "$FILES" | grep -qE '^(supabase/migrations/|supabase/tests/|supabase/functions/delete-user/|\.github/workflows/db-tests\.yml)' || RUN=false
+            fi
+          fi
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+
+      - if: steps.scope.outputs.only_docs != 'true' && steps.dbscope.outputs.run == 'true'
         uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         with:
           version: 2.120.0
 
-      - if: steps.scope.outputs.only_docs != 'true'
+      - if: steps.scope.outputs.only_docs != 'true' && steps.dbscope.outputs.run == 'true'
         name: Start lokal Supabase og afspil alle migrationer
         run: supabase start -x studio,imgproxy,logflare,vector,mailpit,edge-runtime,supavisor
 
-      - if: steps.scope.outputs.only_docs != 'true'
+      - if: steps.scope.outputs.only_docs != 'true' && steps.dbscope.outputs.run == 'true'
         name: Kør SQL-tests
         run: |
           DB_URL=$(supabase status -o env | grep '^DB_URL=' | cut -d= -f2- | tr -d '"')
