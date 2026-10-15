@@ -158,6 +158,33 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .admin-icon-btn.spinning svg{animation:admin-spin .8s linear infinite;}
 .audit-head{display:flex !important;flex-wrap:nowrap !important;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;}
 .audit-intro{flex:1;min-width:0;font-size:13px;color:var(--muted);}
+.admin-disclosure{margin-top:10px;}
+.admin-disclosure-head{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 2px;background:none;border:none;border-top:1px solid var(--border);font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--ink2);cursor:pointer;text-align:left;}
+.admin-disclosure-head:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
+.admin-disclosure-chev{display:inline-flex;transition:transform .15s ease;}
+.admin-disclosure-chev.open{transform:rotate(180deg);}
+.admin-disclosure-body{padding:0 2px 6px;font-size:12.5px;color:var(--muted);line-height:1.5;}
+.audit-sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:14px;}
+.audit-sheet-title{font-size:16px;font-weight:800;color:var(--ink);overflow-wrap:anywhere;}
+.audit-sheet-time{font-size:12px;color:var(--muted);margin-top:2px;}
+.audit-sheet-close{margin:-8px -8px 0 0;}
+.audit-tech{display:flex;flex-direction:column;gap:6px;margin:0;}
+.audit-tech-row{display:flex;align-items:center;gap:8px;}
+.audit-tech-row dt{flex:0 0 96px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.audit-tech-row dd{margin:0;flex:1;min-width:0;font-family:var(--mono,ui-monospace,monospace);font-size:12px;color:var(--ink2);overflow-wrap:anywhere;}
+.audit-copy{flex:none;width:44px;height:44px;margin:-8px -8px -8px 0;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;border-radius:8px;cursor:pointer;}
+.audit-copy:active{background:var(--surface2);}
+.audit-card{position:relative;padding-right:36px;text-align:left;}
+.audit-card-cat{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+.audit-card-outcome{font-size:12px;font-weight:700;color:var(--red);margin-top:2px;}
+.audit-card-chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;}
+.audit-card-title{display:flex;align-items:center;gap:6px;}
+.audit-search-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:32px;padding:4px 6px 4px 10px;margin:0 0 8px;border:1px solid var(--green);background:var(--green-selected-bg,var(--green-lt));color:var(--green);border-radius:999px;font-size:12.5px;font-weight:700;font-family:var(--f);cursor:pointer;}
+.audit-sheet-safe{padding-bottom:env(safe-area-inset-bottom);}
+.audit-filter-search,.audit-filter-wide{grid-column:1/-1;}
+.audit-filter-panel{grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));}
+.audit-filter-panel .admin-select,.audit-filter-panel input[type=date],.audit-filter-panel .admin-search{width:100%;min-height:40px;box-sizing:border-box;}
+.audit-filter-panel input[type=date]{padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:var(--f);font-size:13px;background:var(--surface);color:var(--ink);}
 .audit-state{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 20px;}
 .audit-state-icon{width:44px;height:44px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
 .audit-state-title{font-size:14px;font-weight:800;color:var(--ink);}
