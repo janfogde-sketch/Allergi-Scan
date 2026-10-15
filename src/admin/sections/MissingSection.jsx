@@ -1,7 +1,9 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React, { useEffect } from "react";
 
 export default function MissingSection({ missingEans, missingEansLoading, loadMissingEans, deleteMissingEan }) {
+  const showSpinner = useShowSpinner(missingEansLoading, missingEans.length > 0);
   useEffect(() => { if (missingEans.length === 0) loadMissingEans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps -- bevidst: henter kun én gang ved åbning, og kun hvis listen er tom
 
   const totalScans = missingEans.reduce((s, r) => s + (r.count || 1), 0);
@@ -38,7 +40,7 @@ export default function MissingSection({ missingEans, missingEansLoading, loadMi
       )}
 
       <div className="admin-table-wrap">
-        {missingEansLoading ? (
+        {showSpinner ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
         ) : missingEans.length === 0 ? (
           <div className="admin-table-empty">Ingen manglende EAN'er endnu</div>

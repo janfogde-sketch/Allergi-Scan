@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import { useIsMobile } from "../useIsMobile.js";
 import React, { useState, useEffect } from "react";
 import { PRODUCT_ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
@@ -128,6 +129,7 @@ export default function SubmissionsSection({
   selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
   bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
 }) {
+  const showSpinner = useShowSpinner(submissionsLoading, submissions.length > 0);
   const [submitterInfo, setSubmitterInfo] = useState(null);
   const [submitterLoading, setSubmitterLoading] = useState(false);
   const [newENumber, setNewENumber] = useState("");
@@ -229,7 +231,7 @@ export default function SubmissionsSection({
       {submissionsHasMore && !submissionsLoading && (
         <div className="admin-info-note">Der er flere indsendelser end de {submissions.length}, der vises. Behandl dem her, og opdatér listen for at se resten.</div>
       )}
-      {submissionsLoading ? (
+      {showSpinner ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter indsendelser…</div>
       ) : submissions.length === 0 ? (
         <div className="admin-table-empty">Ingen {SUBMISSION_STATUS_LABELS[submissionFilter]?.toLowerCase() || ""} indsendelser</div>

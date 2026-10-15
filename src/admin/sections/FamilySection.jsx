@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React from "react";
 
 const INVITE_STATUS_LABELS = { pending: "Afventer", accepted: "Accepteret", expired: "Udløbet", revoked: "Tilbagekaldt" };
@@ -10,6 +11,7 @@ function userLabel(u) {
 }
 
 export default function FamilySection({ familyMembers, familyInvites, familyLoading, familyActionLoading, adminRemoveFamilyMember, adminCancelInvite }) {
+  const showSpinner = useShowSpinner(familyLoading, (familyMembers.length > 0 || (familyInvites || []).length > 0));
   // Grupperer family_members pr. ejer, så admin ser hele husstanden samlet
   // i stedet for en flad liste af enkeltmedlemmer uden kontekst.
   const groups = {};
@@ -20,7 +22,7 @@ export default function FamilySection({ familyMembers, familyInvites, familyLoad
   }
   const groupList = Object.values(groups);
 
-  if (familyLoading) {
+  if (showSpinner) {
     return <div className="admin-loading-row"><div className="admin-spinner" /> Henter familie-overblik…</div>;
   }
 

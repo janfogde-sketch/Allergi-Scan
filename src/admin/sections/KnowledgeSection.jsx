@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React from "react";
 import { ALLERGENS } from "../../constants.jsx";
 import { AllergenGlyph } from "../../SharedComponents.jsx";
@@ -41,6 +42,7 @@ export default function KnowledgeSection({
   knowledgeActionLoading, openKnowledgeEntryForEdit, openNewKnowledgeEntry,
   saveKnowledgeEntry, deleteKnowledgeEntry,
 }) {
+  const showSpinner = useShowSpinner(knowledgeLoading, knowledgeEntries.length > 0);
   const close = () => { setOpenKnowledgeEntry(null); setEditingKnowledgeEntry(null); };
 
   const handleDelete = () => {
@@ -77,7 +79,7 @@ export default function KnowledgeSection({
       </div>
 
       <div className="admin-table-wrap">
-        {knowledgeLoading ? (
+        {showSpinner ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter leksikon-entries…</div>
         ) : knowledgeEntries.length === 0 ? (
           <div className="admin-table-empty">Ingen entries matcher</div>
