@@ -222,6 +222,41 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .audit-detail-row{display:flex;flex-direction:column;gap:1px;}
 .audit-detail dt{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
 .audit-detail dd{margin:0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere;}
+.err-tabs{margin-bottom:12px;}
+.err-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.err-stats div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:0;}
+.err-stats b{display:block;font-size:16px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;}
+.err-stats span{display:block;font-size:11px;color:var(--muted);line-height:1.3;}
+.err-card{position:relative;padding-right:36px;}
+.err-card-top{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+.err-card-area{font-size:13.5px;font-weight:800;color:var(--ink);overflow-wrap:anywhere;margin-right:2px;}
+.err-card-msg{font-size:13px;color:var(--ink2);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.err-card-meta{font-size:12px;color:var(--muted);margin-top:4px;}
+.err-sev{display:inline-flex;align-items:center;padding:1px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid var(--border2);color:var(--ink2);background:transparent;}
+.err-sev-critical{background:var(--ink);border-color:var(--ink);color:var(--surface);}
+.err-sev-high{border-color:var(--amber-md);color:var(--amber);background:var(--amber-lt);}
+.err-sev-medium{border-color:var(--blue-md);color:var(--blue);background:var(--blue-lt);}
+.err-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.err-sheet{min-width:0;}
+.err-message{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--ink);overflow-wrap:anywhere;word-break:break-word;}
+.err-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 8px;}
+.err-actions .admin-btn{flex:1 1 140px;justify-content:center;}
+.err-prompt-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;}
+.err-ignore{margin:12px 0 8px;display:flex;flex-direction:column;gap:6px;}
+.err-ignore label,.err-sevrow label{font-size:11px;font-weight:700;color:var(--muted);}
+.err-ignore textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:var(--f);font-size:14px;background:var(--surface);color:var(--ink);resize:vertical;}
+.err-sevrow{display:flex;flex-direction:column;gap:4px;margin:8px 0;}
+.err-sevrow .admin-select{width:100%;min-height:40px;box-sizing:border-box;}
+.err-sevhelp{font-size:12px;color:var(--muted);}
+.err-tech{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.err-code-wrap{min-width:0;}
+.err-code-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.err-code-head .audit-copy{margin:-8px -8px -8px 0;}
+.err-code{margin:2px 0 0;padding:8px 10px;max-width:100%;max-height:260px;overflow:auto;box-sizing:border-box;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-family:var(--mono,ui-monospace,monospace);font-size:11.5px;line-height:1.45;color:var(--ink2);white-space:pre;-webkit-overflow-scrolling:touch;}
+.err-history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.err-history-title{font-size:13px;font-weight:700;color:var(--ink);}
+.err-history-meta{font-size:12px;color:var(--muted);}
+.err-history-reason{font-size:12.5px;color:var(--ink2);overflow-wrap:anywhere;}
 .todo-toolbar{gap:6px;margin-bottom:6px;}
 .todo-search{position:relative;flex:1 1 180px;min-width:0;}
 .todo-search .admin-search{width:100%;max-width:none;min-height:40px;padding:8px 44px 8px 34px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border2);border-radius:8px;-webkit-appearance:none;appearance:none;}

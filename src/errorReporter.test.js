@@ -4,6 +4,23 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { reportError, shouldReport, getRecentErrors, _resetForTests } from "./errorReporter.js";
 import { setMemoryToken } from "./sessionStore.js";
 
+describe("forældet lazy-chunk efter deploy", () => {
+  const chrome = "Cannot read properties of undefined (reading 'default')";
+  const safari = "undefined is not an object (evaluating 'e._result.default')";
+  it("rapporteres ikke, mens boot.js genindlæser siden (begge browserformater)", () => {
+    window.__chunkReloading = true;
+    expect(shouldReport(chrome)).toBe(false);
+    expect(shouldReport(safari)).toBe(false);
+    delete window.__chunkReloading;
+  });
+  it("rapporteres som alle andre fejl, når der ikke genindlæses, og andre fejl rapporteres altid", () => {
+    expect(shouldReport(chrome)).toBe(true);
+    window.__chunkReloading = true;
+    expect(shouldReport("Cannot read properties of undefined (reading 'map')")).toBe(true);
+    delete window.__chunkReloading;
+  });
+});
+
 describe("shouldReport", () => {
   it("afviser tom tekst og kendt støj", () => {
     expect(shouldReport("")).toBe(false);
