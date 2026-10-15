@@ -61,6 +61,7 @@
     "src/admin/csvExport.js",
     "src/admin/useClientErrors.js",
     "src/admin/useAdminUsers.js",
+    "src/admin/useAdminFamily.js",
     "src/admin/usersLogic.js",
     "src/legalText/inline.js",
     "src/admin/recallLogic.js",

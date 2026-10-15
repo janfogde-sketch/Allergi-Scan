@@ -30,10 +30,6 @@ export function useAdmin(accessToken, userId) {
   const [revisionLog, setRevisionLog] = useState([]);
   const [revisionLogLoading, setRevisionLogLoading] = useState(false);
   const [revisionLogFilter, setRevisionLogFilter] = useState("all");
-  const [familyMembers, setFamilyMembers] = useState([]);
-  const [familyInvites, setFamilyInvites] = useState([]);
-  const [familyLoading, setFamilyLoading] = useState(false);
-  const [familyActionLoading, setFamilyActionLoading] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState(null);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
@@ -286,71 +282,6 @@ export function useAdmin(accessToken, userId) {
       showToast("Kunne ikke hente ændringshistorik: " + e.message, "error");
     }
     setRevisionLogLoading(false);
-  };
-
-  // ── Familie-overblik (support-værktøj) ──────────────────────────────────────
-  // Krævede en RLS-migration (admin_can_read_family_invites) — family_members
-  // tillod allerede admin-læsning, men family_invites kun inviteren/den der
-  // accepterede selv. Henter begge tabeller + batch-opløser alle involverede
-  // bruger-id'er (ejer/medlem/inviteret/accepteret) i ét kald, samme mønster
-  // som loadRevisionLog.
-  const loadFamilyOverview = async () => {
-    setFamilyLoading(true);
-    try {
-      const [members, invites] = await Promise.all([
-        apiCall(`${SUPABASE_URL}/rest/v1/family_members?select=*&order=family_owner_id`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }),
-        apiCall(`${SUPABASE_URL}/rest/v1/family_invites?select=*&order=created_at.desc`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }),
-      ]);
-      const membersArr = Array.isArray(members) ? members : [];
-      const invitesArr = Array.isArray(invites) ? invites : [];
-      const userIds = [...new Set([
-        ...membersArr.map(m => m.family_owner_id),
-        ...invitesArr.map(i => i.invited_by),
-        ...invitesArr.map(i => i.accepted_by),
-      ].filter(Boolean))];
-      const userRows = userIds.length
-        ? await apiCall(`${SUPABASE_URL}/rest/v1/users?id=in.(${userIds.join(",")})&select=id,name,email`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
-        : [];
-      const userMap = Object.fromEntries((Array.isArray(userRows) ? userRows : []).map(u => [u.id, u]));
-      setFamilyMembers(membersArr.map(m => ({ ...m, owner: userMap[m.family_owner_id] || null })));
-      setFamilyInvites(invitesArr.map(i => ({ ...i, inviter: userMap[i.invited_by] || null, accepter: i.accepted_by ? (userMap[i.accepted_by] || null) : null })));
-    } catch (e) {
-      setFamilyMembers([]); setFamilyInvites([]);
-      showToast("Kunne ikke hente familie-overblik: " + e.message, "error");
-    }
-    setFamilyLoading(false);
-  };
-
-  // Fjerner et familiemedlem (support-værktøj — fx forældet/duplikeret profil).
-  // Krævede admin-bypass på family_members' DELETE-policy (admin_can_manage_family_data).
-  const adminRemoveFamilyMember = async (id) => {
-    setFamilyActionLoading(true);
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/family_members?id=eq.${id}`, {
-        method: "DELETE", headers: makeHeaders(accessToken),
-      });
-      setFamilyMembers(m => m.filter(x => x.id !== id));
-      showToast("Familiemedlem fjernet");
-    } catch (e) {
-      showToast("Kunne ikke fjerne familiemedlem: " + e.message, "error");
-    }
-    setFamilyActionLoading(false);
-  };
-
-  // Annullerer en afventende invitation. family_invites havde slet ingen
-  // DELETE-policy før admin_can_manage_family_data-migrationen.
-  const adminCancelInvite = async (id) => {
-    setFamilyActionLoading(true);
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/family_invites?id=eq.${id}`, {
-        method: "DELETE", headers: makeHeaders(accessToken),
-      });
-      setFamilyInvites(i => i.filter(x => x.id !== id));
-      showToast("Invitation annulleret");
-    } catch (e) {
-      showToast("Kunne ikke annullere invitation: " + e.message, "error");
-    }
-    setFamilyActionLoading(false);
   };
 
   // ── Global søgning ──────────────────────────────────────────────────────────
@@ -876,8 +807,6 @@ export function useAdmin(accessToken, userId) {
     revisionLog, revisionLogLoading, revisionLogFilter, setRevisionLogFilter, loadRevisionLog,
     selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
     bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
-    familyMembers, familyInvites, familyLoading, loadFamilyOverview,
-    familyActionLoading, adminRemoveFamilyMember, adminCancelInvite,
     globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
   };
 }

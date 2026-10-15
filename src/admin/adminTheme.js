@@ -276,6 +276,11 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .usr-row-mail{font-size:13px;color:var(--ink2);overflow-wrap:anywhere;}
 .usr-row-meta{font-size:12px;color:var(--muted);margin-top:3px;}
 .usr-warn{color:var(--amber);font-weight:700;}
+.fam-sub{font-size:12px;font-weight:800;color:var(--ink2);margin:14px 0 6px;}
+.fam-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.fam-line-title{font-size:14px;font-weight:700;overflow-wrap:anywhere;}
+.fam-line-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.fam-reason{margin-top:10px;}
 .usr-export{font-size:12.5px;font-weight:700;color:var(--ink2);}
 .usr-export:hover{color:var(--green);}
 .usr-export:disabled{opacity:.5;cursor:default;}

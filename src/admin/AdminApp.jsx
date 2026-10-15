@@ -21,6 +21,7 @@ import AiUsageSection from "./sections/AiUsageSection.jsx";
 import { useAiUsage } from "./useAiUsage.js";
 import OnboardingFunnelSection from "./sections/OnboardingFunnelSection.jsx";
 import { useOnboardingFunnel } from "./useOnboardingFunnel.js";
+import { useAdminFamily } from "./useAdminFamily.js";
 import RecallsSection from "./sections/RecallsSection.jsx";
 import { useAdminRecalls } from "./useAdminRecalls.js";
 import NotificationsSection from "./sections/NotificationsSection.jsx";
@@ -53,6 +54,7 @@ export default function AdminApp() {
   useEffect(() => { if (section !== "todo") setTodoPreset(null); }, [section]);
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
+  const adminFamily = useAdminFamily(accessToken);
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
@@ -113,7 +115,6 @@ export default function AdminApp() {
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") admin.loadKnowledgeEntries();
     if (section === "history") admin.loadRevisionLog();
-    if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
     if (section === "todo") todos.load();
@@ -135,7 +136,7 @@ export default function AdminApp() {
     missing: () => loadMissingEans(),
     history: () => admin.loadRevisionLog(),
     users: () => adminUsers.load(),
-    family: () => admin.loadFamilyOverview(),
+    family: () => adminFamily.load(),
     notifications: () => notifications.load(),
     onboarding: () => onboardingFunnel.load(),
     errors: () => clientErrors.load(),
@@ -307,12 +308,7 @@ export default function AdminApp() {
         <TodoSection {...todos} userId={userId} preset={todoPreset}
           onOpenTicket={(ticketId) => { setSection("tickets"); admin.openTicketById(ticketId); }} />
       )}
-      {section === "family" && (
-        <FamilySection
-          familyMembers={admin.familyMembers} familyInvites={admin.familyInvites} familyLoading={admin.familyLoading}
-          familyActionLoading={admin.familyActionLoading} adminRemoveFamilyMember={admin.adminRemoveFamilyMember} adminCancelInvite={admin.adminCancelInvite}
-        />
-      )}
+      {section === "family" && <FamilySection {...adminFamily} />}
     </AdminLayout>
     </RefreshContext.Provider>
     </>

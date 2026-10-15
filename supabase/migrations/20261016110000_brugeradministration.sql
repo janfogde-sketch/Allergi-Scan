@@ -234,7 +234,7 @@ begin
   end if;
   return jsonb_build_object(
     'is_admin', (select role = 'admin' from public.users where id = p_user),
-    'family_profiles_owned', (select count(*) from public.family_members where family_owner_id = p_user),
+    'family_profiles_owned', (select count(*) from public.family_members where family_owner_id = p_user and user_id is distinct from p_user),
     'family_links', (select count(*) from public.family_members where user_id = p_user and family_owner_id is distinct from p_user),
     'invites_sent', (select count(*) from public.family_invites where invited_by = p_user),
     'shopping_lists_owned', (select count(*) from public.shopping_lists where owner_id = p_user),

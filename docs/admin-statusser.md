@@ -113,3 +113,15 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
 - **Udvikling over tid** (oprettede konti pr. dag) vises først ved mindst 20 konti fordelt på 14 dage; nye kohorter får mindst 24 timer, før gennemførelsen vurderes.
 - DB-test `supabase/tests/onboarding_status.sql`.
 
+
+## Familie (16. okt. 2026)
+
+- **Kilde:** serverfunktionerne `admin_family_overview`, `admin_family_detail` og `admin_list_family_invites` (migration `20261016130000`). Panelet læser ikke længere
+  tabellerne direkte. Ingen allergier eller andre helbredsoplysninger vises.
+- **Familie = ejer:** en række pr. `coalesce(family_owner_id, user_id)`. "Ukendt bruger" opstod tidligere, når `family_owner_id` var tom; nu bruges brugerens egen række som ejer.
+- **Status på invitationer er afledt:** `pending` med udløbet `expires_at` vises som "Udløbet" (databasen opdaterer ikke selv statussen; serveren afviser korrekt en udløbet invitation).
+  "Accepteret" uden navn betyder, at den, der accepterede, ikke længere findes (`accepted_by` nulstilles ved kontosletning); vises som "slettet konto".
+- **Tilbagekald:** `admin_revoke_family_invite` sætter status til `revoked` (rækken bevares) og kræver begrundelse. Forespørgsler om forbindelse (`requested_by`) afvises.
+- **Fjern medlem:** `admin_remove_family_member` kræver begrundelse og giver præcis én logpost (`familiemedlem_fjernet`). Administratorer har ikke længere direkte sletning på `family_members`/`family_invites`.
+- **Før migrationen er udgivet** vises "Familieoversigten er ikke udgivet endnu" (funktionerne giver 404), aldrig en tom liste.
+- **Ikke gjort:** ejerskifte for en familie og ændring af en families sammensætning. Kræver Jans ja (modellen "ingen kobling uden eget ja").
