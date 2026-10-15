@@ -22,7 +22,7 @@ begin
   update public.users set role='admin' where id=adm;
   alter table public.users enable trigger prevent_role_self_escalation_trigger;
   -- Administratorens og den almindelige brugers konti hører ikke med i testen af kohorten: de er gennemført, så de kan udelades ved at flytte oprettelsesdatoen
-  update public.users set created_at = now() - interval '40 days' where id in (adm, usr);
+  update public.users set created_at = now() - interval '40 days' where id not in (done_u, unc, ns, ip, dr, tst); -- også konti, der allerede findes i databasen
 
   -- Nye konti starter som ufærdige med trin og højeste trin registreret
   select onboarding_completed, onboarding_step, onboarding_max_step into rec from public.users where id=ns;
