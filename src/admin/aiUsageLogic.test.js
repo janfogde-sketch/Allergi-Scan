@@ -35,7 +35,7 @@ describe("aiUsageLogic", () => {
 
 import {
   priceFor, periodRange, comparisonRanges, pctChange, dailySeries, trackingStart, findAnomalies, budgetStatus, functionShares, addDays, todayKey,
-  formatTokens, formatPct, dayLabelShort, rowsIn,
+  formatTokens, formatPct, dayLabelShort, rowsIn, effectiveOrigin, filterOrigin, originSplit, formatKr, formatPerCall, focusScale,
 } from "./aiUsageLogic.js";
 
 const row = (day, fn, calls, input, output, model = "claude-haiku-4-5") => ({ day, function_name: fn, model, calls, input_tokens: input, output_tokens: output });
@@ -148,5 +148,75 @@ describe("budget og formattering", () => {
     expect(formatTokens(820)).toBe("820");
     expect(dayLabelShort("2026-10-08")).toBe("8. okt.");
     expect(rowsIn(OKT, { from: "2026-10-13", to: "2026-10-14" })).toHaveLength(2);
+  });
+});
+
+describe("forbrugstype (oprindelse)", () => {
+  const r = (fn, origin) => ({ day: "2026-10-15", function_name: fn, model: "claude-haiku-4-5", origin, calls: 1, input_tokens: 1000, output_tokens: 100 });
+  it("registreret oprindelse bruges; ellers kun funktionen, hvis den dokumenteret kun kan kaldes internt; alt andet er ukendt", () => {
+    expect(effectiveOrigin(r("allergens", "user"))).toBe("user");
+    expect(effectiveOrigin(r("allergens", "internal"))).toBe("internal");
+    expect(effectiveOrigin(r("allergens", "unknown"))).toBe("unknown");
+    expect(effectiveOrigin(r("allergens", undefined))).toBe("unknown"); // ældre data uden kolonnen
+    expect(effectiveOrigin(r("ocr", undefined))).toBe("unknown"); // aldrig gættet
+    expect(effectiveOrigin(r("classify-categories", "unknown"))).toBe("internal");
+    expect(effectiveOrigin(r("classify-categories", undefined))).toBe("internal");
+  });
+  it("filter og opdeling summerer til helheden", () => {
+    const rows = [r("allergens", "user"), r("allergens", "internal"), r("allergens", "unknown"), r("classify-categories", "unknown")];
+    expect(filterOrigin(rows, "all")).toHaveLength(4);
+    expect(filterOrigin(rows, "internal")).toHaveLength(2);
+    expect(filterOrigin(rows, "user")).toHaveLength(1);
+    expect(filterOrigin(rows, "unknown")).toHaveLength(1);
+    const split = originSplit(rows);
+    expect(split.map((o) => o.key)).toEqual(["user", "internal", "unknown"]);
+    expect(split.reduce((s, o) => s + o.dkk, 0)).toBeCloseTo(totals(rows).dkk, 12);
+  });
+});
+
+describe("økonomisk korrekthed", () => {
+  const rows = [
+    { day: "2026-10-08", function_name: "allergens", model: "claude-haiku-4-5", calls: 20, input_tokens: 11453, output_tokens: 3340 },
+    { day: "2026-10-08", function_name: "classify-categories", model: "claude-haiku-4-5", calls: 582, input_tokens: 1514471, output_tokens: 896321 },
+    { day: "2026-10-13", function_name: "allergens", model: "claude-haiku-4-5", calls: 201, input_tokens: 115393, output_tokens: 33567 },
+    { day: "2026-10-14", function_name: "allergens", model: "claude-haiku-4-5", calls: 201, input_tokens: 116655, output_tokens: 33567 },
+    { day: "2026-10-15", function_name: "allergens", model: "claude-haiku-4-5", calls: 200, input_tokens: 114747, output_tokens: 33400 },
+  ];
+  it("totalen regnes af de uafrundede tal: 47,4285 kr. (vises som 47,43), mens de afrundede dagsbeløb giver 47,42", () => {
+    const total = totals(rows).dkk;
+    expect(total).toBeCloseTo(47.4285, 3);
+    expect(formatKr(total)).toBe("47,43 kr.");
+    const days = byDay(rows).map((d) => d.dkk);
+    expect(days.reduce((s, v) => s + v, 0)).toBeCloseTo(total, 10); // dag + dag = måned uden afrunding
+    const roundedSum = days.reduce((s, v) => s + Math.round(v * 100) / 100, 0);
+    expect(roundedSum.toFixed(2)).toBe("47.42"); // forskellen er ren afrunding (−0,0085 kr.), ikke en fejl
+    expect(Math.abs(roundedSum - total)).toBeLessThan(0.005 * days.length);
+  });
+  it("funktioner og måned bruger samme grundlag som dagene", () => {
+    const fn = byFunction(rows).reduce((s, f) => s + f.dkk, 0);
+    expect(fn).toBeCloseTo(totals(rows).dkk, 10);
+    expect(byMonth(rows)[0].dkk).toBeCloseTo(totals(rows).dkk, 10);
+  });
+  it("gennemsnit pr. kald i øre under 1 kr., ellers kroner; tom periode giver tankestreg", () => {
+    expect(formatPerCall(0.00973)).toBe("0,97 øre");
+    expect(formatPerCall(0.0711)).toBe("7,11 øre");
+    expect(formatPerCall(0.25)).toBe("25,0 øre");
+    expect(formatPerCall(1.5)).toBe("1,50 kr.");
+    expect(formatPerCall(null)).toBe("–");
+    expect(formatPerCall(NaN)).toBe("–");
+  });
+});
+
+describe("fokus på almindelige dage", () => {
+  it("kræver mindst tre dage med forbrug og en dag på mindst 4 × medianen; ellers ingen mulighed", () => {
+    expect(focusScale([1, 1.1]).possible).toBe(false);
+    expect(focusScale([1, 1.2, 1.1, 1.3]).possible).toBe(false);
+    expect(focusScale([0, 0, 0]).possible).toBe(false);
+  });
+  it("sætter skalaen til 120 % af den højeste almindelige dag og peger på udsvingene; nuldage tæller ikke med i medianen", () => {
+    const f = focusScale([41.57, 0, 0, 1.95, 1.96, 1.94, 0]);
+    expect(f.possible).toBe(true);
+    expect(f.outliers).toEqual([0]);
+    expect(f.cap).toBeCloseTo(1.96 * 1.2, 6);
   });
 });

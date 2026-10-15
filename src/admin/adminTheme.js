@@ -211,6 +211,12 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .ai-detail dd{margin:0;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;}
 .ai-flag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--amber-lt);color:var(--amber);font-size:10.5px;font-weight:800;vertical-align:middle;}
 .ai-note{font-size:12px;color:var(--muted);margin:8px 0 0;}
+.ai-chart-note{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ai-info-btn{flex:none;width:44px;height:44px;margin:-12px -10px -12px 0;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;border-radius:8px;cursor:pointer;}
+.ai-info-btn:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
+.ai-focus{margin-top:6px;}
+.ai-day{margin-top:8px;padding:10px 12px;background:var(--surface2);border-radius:10px;}
+.ai-day-title{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:6px;}
 .audit-state{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 20px;}
 .audit-state-icon{width:44px;height:44px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
 .audit-state-title{font-size:14px;font-weight:800;color:var(--ink);}

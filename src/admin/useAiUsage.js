@@ -1,5 +1,5 @@
 // @ts-check
-// Henter forbruget på Claude (public.ai_usage_daily; kun admins kan læse tabellen, RLS), de sidste 400 dage, og månedsbudgettet (get_ai_budget).
+// Henter forbruget på Claude (public.ai_usage_daily; kun admins kan læse tabellen, RLS; med origin, når migrationen er live), de sidste 400 dage, og månedsbudgettet (get_ai_budget).
 // En fejl er en egen tilstand (error), aldrig en tom liste. Findes budgetfunktionerne ikke endnu (migrationen er ikke udgivet), er budgetAvailable false.
 import { useState } from "react";
 import { SUPABASE_URL } from "../constants.jsx";
@@ -19,10 +19,18 @@ export function useAiUsage(accessToken) {
     setError(null);
     try {
       const since = new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10);
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/ai_usage_daily?select=day,function_name,model,calls,input_tokens,output_tokens&day=gte.${since}&order=day.desc&limit=5000`,
+      const get = (/** @type {string} */ cols) => apiCall(
+        `${SUPABASE_URL}/rest/v1/ai_usage_daily?select=${cols}&day=gte.${since}&order=day.desc&limit=5000`,
         { headers: makeHeaders(accessToken) }
       );
+      let data;
+      try {
+        data = await get("day,function_name,model,origin,calls,input_tokens,output_tokens");
+      } catch (e) {
+        // Før migrationen 20261016090000 er live, findes origin ikke (400): hent uden; forbrugstypen afledes så kun af funktionen
+        if (/** @type {any} */ (e).status !== 400) throw e;
+        data = await get("day,function_name,model,calls,input_tokens,output_tokens");
+      }
       setRows(Array.isArray(data) ? data : []);
       setLoaded(true);
     } catch (e) {

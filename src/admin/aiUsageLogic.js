@@ -19,6 +19,30 @@ export const FUNCTION_LABELS = {
 };
 /** Funktioner, koden viser kun kan kaldes internt (service-nøglen: baggrundsjob og godkendelse af indsendelser). Øvrige kan ikke adskilles. */
 export const INTERNAL_FUNCTIONS = ["classify-categories"];
+
+// ── Forbrugstype (oprindelse) ─────────────────────────────────────────────────────────────────────────────────────────────
+export const ORIGINS = { all: "Alle", user: "Brugerfunktioner", internal: "Interne processer", unknown: "Ukendt / ikke klassificeret" };
+/**
+ * Rækkens forbrugstype. Kun registreret eller dokumenterbar oprindelse bruges: origin fra databasen (user/internal), ellers funktionen, hvis den
+ * kun kan kaldes internt (INTERNAL_FUNCTIONS, bekræftet i koden: classify-categories afviser alt andet end service-nøglen). Alt andet er "unknown".
+ * @param {{ function_name: string, origin?: string|null }} r
+ */
+export function effectiveOrigin(r) {
+  if (r.origin === "user" || r.origin === "internal") return r.origin;
+  return INTERNAL_FUNCTIONS.includes(r.function_name) ? "internal" : "unknown";
+}
+/** @param {UsageRow[]} rows @param {string} kind all | user | internal | unknown */
+export const filterOrigin = (rows, kind) => (kind === "all" || !kind ? rows : rows.filter((r) => effectiveOrigin(r) === kind));
+/** Omkostning pr. forbrugstype; kun typer med kald. @param {UsageRow[]} rows */
+export function originSplit(rows) {
+  const out = [];
+  for (const k of /** @type {const} */ (["user", "internal", "unknown"])) {
+    const rs = rows.filter((r) => effectiveOrigin(r) === k);
+    const t = totals(rs);
+    if (t.calls > 0) out.push({ key: k, label: ORIGINS[k], ...t });
+  }
+  return out;
+}
 export const functionLabel = (/** @type {string} */ k) => /** @type {Record<string,string>} */ (FUNCTION_LABELS)[k] || k;
 
 /**
@@ -38,7 +62,7 @@ export function costDkk(inputTokens, outputTokens, model, day) {
   return ((inputTokens / 1e6) * p.inUsd + (outputTokens / 1e6) * p.outUsd) * USD_TO_DKK;
 }
 
-/** @typedef {{ day: string, function_name: string, model?: string|null, calls: number|string, input_tokens: number|string, output_tokens: number|string }} UsageRow */
+/** @typedef {{ day: string, function_name: string, model?: string|null, origin?: string|null, calls: number|string, input_tokens: number|string, output_tokens: number|string }} UsageRow */
 /** @typedef {{ calls: number, input: number, output: number, dkk: number, unpricedCalls: number }} Totals */
 
 /** @param {UsageRow[]} rows @returns {Totals} */
@@ -190,8 +214,9 @@ export function findAnomalies(rows) {
     const perRatio = mPer > 0 && d.calls > 0 ? d.dkk / d.calls / mPer : null;
     const many = callsRatio !== null && callsRatio >= 2, dear = perRatio !== null && perRatio >= 2;
     const cause = many && dear ? "begge" : many ? "mange" : dear ? "dyre" : "ukendt";
-    const top = byFunction(d.rows)[0];
-    flagged.push({ day: d.key, dkk: d.dkk, median: mDkk, cause, topFunction: top ? top.key : null, internalTop: top ? INTERNAL_FUNCTIONS.includes(top.key) : false });
+    const fns = byFunction(d.rows).filter((f) => f.dkk > 0).slice(0, 3).map((f) => ({ key: f.key, dkk: f.dkk, calls: f.calls }));
+    const top = fns[0];
+    flagged.push({ day: d.key, dkk: d.dkk, median: mDkk, cause, topFunction: top ? top.key : null, functions: fns, internalTop: top ? INTERNAL_FUNCTIONS.includes(top.key) : false });
   }
   return { enough: true, daysWithData: days.length, flagged };
 }
@@ -214,6 +239,14 @@ export function budgetStatus(budget, spent) {
 export function formatKr(v) {
   return v.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kr.";
 }
+/** Pris pr. kald: under 1 kr. i øre (0,97 øre), ellers i kroner. Flere decimaler kun, hvor de skelner (under 10 øre: to; ellers én). @param {number|null|undefined} dkk */
+export function formatPerCall(dkk) {
+  if (dkk === null || dkk === undefined || !Number.isFinite(dkk)) return "–";
+  if (dkk >= 1) return formatKr(dkk);
+  const ore = dkk * 100;
+  const digits = ore < 10 ? 2 : 1;
+  return `${ore.toLocaleString("da-DK", { minimumFractionDigits: digits, maximumFractionDigits: digits })} øre`;
+}
 export const formatNum = (n) => Number(n).toLocaleString("da-DK");
 /** Tokens kort: 1.234 → "1.234", 1.514.471 → "1,51 mio.". */
 export const formatTokens = (n) => (n >= 1e6 ? `${(n / 1e6).toLocaleString("da-DK", { maximumFractionDigits: 2 })} mio.` : formatNum(n));
@@ -223,3 +256,24 @@ export const monthLabel = (k) => `${MONTHS[Number(k.slice(5, 7)) - 1]} ${k.slice
 const SHORT = ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "aug.", "sep.", "okt.", "nov.", "dec."];
 export const dayLabelShort = (k) => `${Number(k.slice(8, 10))}. ${SHORT[Number(k.slice(5, 7)) - 1]}`;
 export const dayLabelLong = (k) => `${Number(k.slice(8, 10))}. ${MONTHS[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`;
+
+// ── Diagramskala ────────────────────────────────────────────────────────────────────────────────────────────────────────
+export const FOCUS_FACTOR = 4; // en dag er "meget højere", når den er mindst så mange gange medianen af dage med forbrug
+export const FOCUS_MIN_DAYS = 3; // mindst så mange dage med forbrug, før en fokuseret skala giver mening
+
+/**
+ * Mulighed for at fokusere på almindelige forbrugsdage. Dage mindst 4 × medianen (af dage med forbrug) regnes som udsving; skalaen sættes til
+ * 120 % af den højeste almindelige dag. Udsvingsdagene tegnes i fuld højde og markeres som afkortet; deres rigtige værdi vises altid i detaljerne.
+ * @param {number[]} values værdier pr. dag (kun dage med forbrug > 0 tæller)
+ * @returns {{ possible: boolean, cap: number, outliers: number[] }} outliers = indeks i values
+ */
+export function focusScale(values) {
+  const pos = values.filter((v) => v > 0);
+  if (pos.length < FOCUS_MIN_DAYS) return { possible: false, cap: 0, outliers: [] };
+  const m = median(pos);
+  const limit = FOCUS_FACTOR * m;
+  const normal = pos.filter((v) => v < limit);
+  const outliers = values.map((v, i) => (v >= limit ? i : -1)).filter((i) => i >= 0);
+  if (!outliers.length || !normal.length) return { possible: false, cap: 0, outliers: [] };
+  return { possible: true, cap: Math.max(...normal) * 1.2, outliers };
+}

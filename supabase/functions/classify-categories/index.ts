@@ -64,7 +64,7 @@ async function classifyBatch(products: { id: string; name: string; brand: string
 
   if (!res.ok) throw new Error(`Claude API fejl: ${res.status}`);
   const data = await res.json();
-  await logAiUsage("classify-categories", "claude-haiku-4-5", data.usage);
+  await logAiUsage("classify-categories", "claude-haiku-4-5", data.usage, "internal"); // kun service-nøglen kan kalde funktionen
   let raw = data.content?.[0]?.text || "[]";
   raw = raw.replace(/```json\s*|\s*```/g, "").trim();
   const parsed = JSON.parse(raw);
