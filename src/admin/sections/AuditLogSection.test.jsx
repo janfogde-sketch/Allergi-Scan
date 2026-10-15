@@ -163,3 +163,51 @@ describe("Aktivitetslog: kort og detaljer", () => {
     expect(d.textContent).toContain("Afvist");
   });
 });
+
+describe("Aktivitetslog: antal og tastatur", () => {
+  it("viser antal fra serveren med korrekt ental/flertal og 'Nyeste først' som ren tekst", () => {
+    const { unmount } = render(<AuditLogSection {...base} rows={[r]} total={1} />);
+    expect(screen.getByText("1 aktivitet")).toBeTruthy();
+    expect(screen.getByText("Nyeste først").tagName).toBe("SPAN");
+    unmount();
+    render(<AuditLogSection {...base} rows={[r]} total={1234} hasMore />);
+    expect(screen.getByText("1.234 aktiviteter")).toBeTruthy();
+  });
+  it("tæller ikke kun de hentede rækker, når der er flere; ukendt antal vises ikke", () => {
+    render(<AuditLogSection {...base} rows={[r]} total={null} hasMore />);
+    expect(screen.queryByText(/^[\d.]+ aktivitet/)).toBeNull();
+  });
+  it("ved søgning eller filter står der 'filtreret' ved antallet", () => {
+    render(<AuditLogSection {...base} rows={[r]} total={2} />);
+    openFilters();
+    fireEvent.change(screen.getByLabelText("Søg"), { target: { value: "havre" } });
+    expect(screen.getByText("2 aktiviteter · filtreret")).toBeTruthy();
+  });
+  it("tryk uden for søgefeltet og træk i siden lukker tastaturet; søgeordet bevares og sendes straks", () => {
+    const load = vi.fn();
+    render(<AuditLogSection {...base} rows={[r]} total={1} load={load} />);
+    openFilters();
+    const input = screen.getByLabelText("Søg");
+    expect(input.getAttribute("enterkeyhint")).toBe("search");
+    input.focus();
+    fireEvent.change(input, { target: { value: "havre" } });
+    expect(document.activeElement).toBe(input);
+    fireEvent.pointerDown(document.body);
+    expect(document.activeElement).not.toBe(input);
+    expect(input.value).toBe("havre");
+    expect(load).toHaveBeenLastCalledWith(expect.objectContaining({ q: "havre" }));
+    input.focus();
+    fireEvent.touchMove(document.body);
+    expect(document.activeElement).not.toBe(input);
+    expect(input.value).toBe("havre");
+  });
+  it("tryk i selve søgefeltet lukker ikke tastaturet", () => {
+    render(<AuditLogSection {...base} rows={[r]} total={1} />);
+    openFilters();
+    const input = screen.getByLabelText("Søg");
+    input.focus();
+    fireEvent.pointerDown(input);
+    expect(document.activeElement).toBe(input);
+  });
+});
+

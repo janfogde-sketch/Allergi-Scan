@@ -74,7 +74,7 @@ function Detail({ row, names, onClose }) {
             <thead><tr><th>Felt</th><th>Før</th><th>Efter</th></tr></thead>
             <tbody>
               {changes.map((c) => (
-                <tr key={c.felt}><td>{c.felt}</td><td style={{ wordBreak: "break-word" }}>{c.fra}</td><td style={{ wordBreak: "break-word" }}>{c.til}</td></tr>
+                <tr key={c.felt}><td data-label="Felt">{c.felt}</td><td data-label="Før" style={{ wordBreak: "break-word" }}>{c.fra}</td><td data-label="Efter" style={{ wordBreak: "break-word" }}>{c.til}</td></tr>
               ))}
             </tbody>
           </table>
@@ -96,7 +96,7 @@ function Detail({ row, names, onClose }) {
   );
 }
 
-export default function AuditLogSection({ rows, names, loading, loadingMore, hasMore, loaded, error, load, loadMore }) {
+export default function AuditLogSection({ rows, names, total, loading, loadingMore, hasMore, loaded, error, load, loadMore }) {
   const isMobile = useIsMobile();
   const [f, setF] = useState(EMPTY);
   const [q, setQ] = useState(""); // søgeordet, der er sendt til serveren (udskudt, mens man skriver)
@@ -121,6 +121,17 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
   useEffect(() => {
     if (showFilters && opened.current) searchRef.current?.focus();
     opened.current = false;
+  }, [showFilters]);
+
+  // Tastaturet lukkes ved tryk uden for søgefeltet og ved scroll/træk i siden (kun brugerens egne bevægelser, så fokus ikke tabes ved scrollhop).
+  // Søgeordet bevares; det sendes straks, når feltet mister fokus.
+  useEffect(() => {
+    const blur = () => { if (document.activeElement === searchRef.current) searchRef.current.blur(); };
+    const onDown = (e) => { const box = searchRef.current && searchRef.current.closest(".todo-search"); if (box && !box.contains(e.target)) blur(); };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("touchmove", blur, { passive: true });
+    document.addEventListener("wheel", blur, { passive: true });
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("touchmove", blur); document.removeEventListener("wheel", blur); };
   }, [showFilters]);
 
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
@@ -213,8 +224,8 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
           <div className="audit-filter-search"><label htmlFor="a-q">Søg</label>
             <div className="todo-search">
               <span className="todo-search-icon" aria-hidden="true"><Icon name="search" size={16} color="var(--muted)" /></span>
-              <input id="a-q" ref={searchRef} type="search" className="admin-search" value={f.q} placeholder="Bruger, handling eller element…" enterKeyHint="search"
-                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} onChange={set("q")} />
+              <input id="a-q" ref={searchRef} type="search" inputMode="search" className="admin-search" value={f.q} placeholder="Bruger, handling eller element…" enterKeyHint="search"
+                onBlur={() => setQ(f.q)} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} onChange={set("q")} />
               {f.q && (
                 <button type="button" className="todo-search-clear" aria-label="Ryd søgning" onClick={() => { setF((x) => ({ ...x, q: "" })); searchRef.current?.focus(); }}>
                   <Icon name="x" size={16} />
@@ -251,6 +262,16 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
         </div>
       )}
 
+      {loaded && rows.length > 0 && !error?.denied && (() => {
+        const count = total != null ? total : hasMore ? null : rows.length;
+        return (
+          <div className="audit-results">
+            <span aria-live="polite">{count != null ? `${count.toLocaleString("da-DK")} ${count === 1 ? "aktivitet" : "aktiviteter"}` : ""}{filtered && count != null ? " · filtreret" : ""}</span>
+            <span>Nyeste først</span>
+          </div>
+        );
+      })()}
+
       {body}
 
       {hasMore && rows.length > 0 && !error?.denied && (
@@ -262,10 +283,10 @@ export default function AuditLogSection({ rows, names, loading, loadingMore, has
       )}
 
       <Disclosure title="Om aktivitetsloggen">
-        <p style={{ margin: "0 0 6px" }}><strong>Registreres:</strong> når en administrator opretter, ændrer, sletter, godkender eller afviser noget følsomt (produkter, leksikon, indsendelser, tickets, roller, profiler, allergier, familie og push-tekster), kører import eller genanalyse, eksporterer data, samt afviste og mislykkede forsøg.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Registreres:</strong> når en administrator opretter, ændrer, sletter, godkender eller afviser noget følsomt (produkter, leksikon, indsendelser, ticketstatus, roller, profiler, allergier, sletning af familiemedlemmer og invitationer, sletning af en andens konto og push-tekster), kører import eller genanalyse, eksporterer brugere (CSV), samt afviste og mislykkede forsøg.</p>
         <p style={{ margin: "0 0 6px" }}><strong>Opbevaring:</strong> 12 måneder. Afviste og mislykkede forsøg slettes efter 90 dage.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Gemmes ikke:</strong> adgangskoder, adgangsnøgler, e-mailadresser eller helbredsoplysninger. For produkter, leksikon og push-tekster gemmes før og efter (afkortet til 500 tegn); for profiler, allergier og familie kun feltnavne.</p>
-        <p style={{ margin: 0 }}><strong>Begrænsning:</strong> ændringer, der foretages direkte i databasen uden en administratorlogin, registreres ikke.</p>
+        <p style={{ margin: "0 0 6px" }}><strong>Gemmes ikke:</strong> adgangskoder, adgangsnøgler, e-mailadresser eller helbredsoplysninger. For produkter, leksikon og push-tekster gemmes før og efter (afkortet til 500 tegn, og kan indeholde den tekst, administratoren selv har skrevet); for profiler, allergier og familie kun feltnavne eller antal.</p>
+        <p style={{ margin: 0 }}><strong>Begrænsning:</strong> ændringer, der foretages direkte i databasen eller af systemprocesser uden en administratorlogin, registreres ikke (undtagen de edge-funktioner, der logger selv).</p>
       </Disclosure>
 
       {openRow && <Detail row={openRow} names={names} onClose={() => setOpen(null)} />}

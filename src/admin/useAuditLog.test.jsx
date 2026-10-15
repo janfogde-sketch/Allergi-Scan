@@ -50,4 +50,28 @@ describe("useAuditLog", () => {
     expect(result.current.rows).toEqual([]);
     expect(result.current.loaded).toBe(true);
   });
+  it("antallet kommer fra Content-Range (hele loggen), ikke fra de hentede rækker; opdateres ved nyt hent", async () => {
+    let total = "0-50/137";
+    apiCall.mockImplementation(async (url, opts) => {
+      if (url.includes("admin_audit_log")) {
+        expect(opts.headers.Prefer).toBe("count=exact");
+        opts.onResponse({ headers: { get: () => total } });
+        return page(100, 51);
+      }
+      return [];
+    });
+    const { result } = renderHook(() => useAuditLog("tok"));
+    await act(async () => { await result.current.load({}); });
+    expect(result.current.rows).toHaveLength(50);
+    expect(result.current.total).toBe(137);
+    total = "0-1/2";
+    await act(async () => { await result.current.load({ q: "x" }); });
+    expect(result.current.total).toBe(2);
+  });
+  it("mangler Content-Range, er antallet ukendt (ikke gættet)", async () => {
+    apiCall.mockImplementation(async (url, opts) => { if (url.includes("admin_audit_log")) { opts.onResponse({ headers: { get: () => null } }); return page(100, 51); } return []; });
+    const { result } = renderHook(() => useAuditLog("tok"));
+    await act(async () => { await result.current.load({}); });
+    expect(result.current.total).toBeNull();
+  });
 });
