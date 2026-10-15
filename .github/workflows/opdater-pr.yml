@@ -4,7 +4,8 @@ name: Opdater PR'er der er bagud
 # Når en PR går ind, kommer alle andre PR'er med automatisk merge "bagud". Denne kørsel opdaterer dem selv
 # og starter tjekkene på den nye version. Uden den ville de stå stille, til nogen opdaterede dem i hånden.
 # Opdatering med GITHUB_TOKEN starter ikke tjekkene af sig selv (GitHubs regel mod uendelige løkker).
-# Derfor starter vi dem bagefter med workflow_dispatch, som er undtaget fra reglen. Ingen ekstra nøgle nødvendig.
+# PR'ens egne kørsler står derfor som "action_required"; dem genkører vi bagefter, så de påkrævede tjek bliver grønne på selve PR'en.
+# workflow_dispatch-kopierne tæller ikke for regelsættet og er kun en ekstra sikkerhed. Ingen ekstra nøgle nødvendig.
 # En PR med konflikt rører vi ikke: ejeren skal flette main ind (CLAUDE.md afsnit 4).
 on:
   push:
@@ -47,6 +48,18 @@ jobs:
             gh api -X PUT "repos/$REPO/pulls/$nr/update-branch" --silent || { echo "::warning::Kunne ikke opdatere PR #$nr"; continue; }
             sleep 5
             ref=$(gh pr view "$nr" -R "$REPO" --json headRefName --jq .headRefName)
+            sha=$(gh pr view "$nr" -R "$REPO" --json headRefOid --jq .headRefOid)
+            # Vent op til ~90 sek. på, at PR'ens egne kørsler dukker op, og genkør dem, der står som "action_required".
+            for _ in 1 2 3 4 5 6; do
+              ids=$(gh api "repos/$REPO/actions/runs?head_sha=$sha&event=pull_request&per_page=50" \
+                --jq '.workflow_runs[] | select(.conclusion == "action_required") | .id')
+              [ -n "$ids" ] && break
+              sleep 15
+            done
+            for id in $ids; do
+              echo "PR #$nr: kørsel $id står som action_required, genkører."
+              gh run rerun "$id" -R "$REPO" || echo "::warning::Kunne ikke genkøre kørsel $id for PR #$nr"
+            done
             gh workflow run migration-versions.yml -R "$REPO" --ref "$ref"
             gh workflow run ci.yml -R "$REPO" --ref "$ref"
             gh workflow run post-merge-checks.yml -R "$REPO" --ref "$ref"
