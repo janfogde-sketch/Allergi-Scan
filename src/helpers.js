@@ -52,7 +52,7 @@ export const OFF_IMAGE_LICENSE_URL = "https://creativecommons.org/licenses/by-sa
 // Kildeangivelse til Open Food Facts-billeder (CC BY-SA). Kilden aflæses af
 // billedets adresse, så ingen kolonne er nødvendig. Andre kilder giver null.
 // Pålideligt produktbillede (9. okt. 2026, Bjørn): et Open Food Facts-billede vises kun, når stregkoden i billedadressen er produktets EAN.
-// Produkter uden en rigtig stregkode (fx "NEMLIG-123") kan ikke verificeres og får en neutral placeholder; billeder fra andre kilder
+// Produkter uden en rigtig stregkode (fx "ES-000123") kan ikke verificeres og får en neutral placeholder; billeder fra andre kilder
 // (producent, indsendt af bruger) vises som før. Intet slettes i databasen.
 export function verifiedImageUrl(product) {
   const url = product?.image_url;
@@ -159,9 +159,8 @@ export function addUniqueCustom(list, value) {
   return [...(list || []), v];
 }
 
-export const STORE_SOURCES = ["bilka", "nemlig"];
-// Butikkens navn i ejefald til forklaringsteksten ("Bilkas varekatalog")
-export const STORE_CATALOG_NAMES = { bilka: "Bilkas", nemlig: "Nemligs" };
+// Importerede varekataloger har den neutrale kilde "katalog" (butikken nævnes aldrig, 15. okt. 2026)
+export const STORE_SOURCES = ["katalog"];
 
 // Linjen om seneste kontrol af ingredienser/allergener mod emballagen. Kun en rigtig verificeringsdato vises;
 // en importdato er ikke en verificering, så uden dato står der tydeligt, at det ikke er kontrolleret.
@@ -178,7 +177,7 @@ export const verifiedBadge = (verified_status, source) => {
   // Open Food Facts — crowd-sourced
   if (source === "off" || source === "open_food_facts")
     return { label:"Open Food Facts", bg:"rgba(58,110,165,.10)", color:"#3A6EA5", dot:"#3A6EA5" };
-  // Importeret fra butikkernes varekataloger — ikke indsendt af en bruger
+  // Importeret fra et varekatalog — ikke indsendt af en bruger
   if (STORE_SOURCES.includes(source))
     return { label:"Produktdata", bg:"rgba(107,122,112,.12)", color:"#5C6A61", dot:"#5C6A61" };
   // Bruger-indsendt

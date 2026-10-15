@@ -1,5 +1,5 @@
 -- 30. sept. 2026: energy_kj var gemt med tusindtals-punktum læst som
--- decimal (fx 1.352 i stedet for 1352) på 4.876 produkter (4.581 bilka,
+-- decimal (fx 1.352 i stedet for 1352) på 4.876 produkter (4.581 katalog,
 -- 294 open_food_facts, 1 user). Kun rækker hvor kJ*1000 stemmer med
 -- kcal*4,184 (±15 %) er rettet — reelt små værdier (light-sodavand,
 -- sødemiddel) er urørte. Gamle værdier ligger i products_kj_backup_20260930

@@ -98,7 +98,7 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 
 ---
 
-**Stregkode- og navnehygiejne (8. okt. 2026):** triggeren `products_hygiene` (`normalize_product_ean`, `clean_product_name`) gør 11-/12-cifrede koder til 13 cifre (kun hvis resultatet er et gyldigt GTIN), rydder mellemrum og giver versalnavne normal skrift (korte enkeltord som IPA røres ikke). `products`-funktionen prøver også de andre skrivemåder af en kode (`eanVariants`). 4- og 6-cifrede Bilka-numre er butiksnumre, ikke stregkoder. Kendt og urettet: ca. 78 OFF-koder med forkert kontrolciffer. Før-billede: `products_hygiene_backup_20261008`. Test: `supabase/tests/product_hygiene.sql`.
+**Stregkode- og navnehygiejne (8. okt. 2026):** triggeren `products_hygiene` (`normalize_product_ean`, `clean_product_name`) gør 11-/12-cifrede koder til 13 cifre (kun hvis resultatet er et gyldigt GTIN), rydder mellemrum og giver versalnavne normal skrift (korte enkeltord som IPA røres ikke). `products`-funktionen prøver også de andre skrivemåder af en kode (`eanVariants`). Interne katalognumre hedder `ES-000001` osv. (kilde `katalog`, 15. okt. 2026); 4- og 6-cifrede numre er butiksnumre, ikke stregkoder. Kendt og urettet: ca. 78 OFF-koder med forkert kontrolciffer. Før-billede: `products_hygiene_backup_20261008`. Test: `supabase/tests/product_hygiene.sql`.
 
 ## 4. Edge Functions (Supabase)
 
@@ -113,7 +113,7 @@ fund). `prevent_role_self_escalation()` er revoked fra PUBLIC. `pg_trgm` ligger 
 | `feedback` | **NY** (30. sept. 2026, A4) — modtager feedback-tickets fra appen og admin-panelet. Uden login: 5/time pr. afsender (saltet IP-hash i `feedback_tickets.client_hash`) og 60/time i alt. Med login: 20/time. `submitted_by` sættes kun fra login-tokenet. Validering i `feedback/validate.js` (testet i `src/feedbackValidate.test.js`) |
 | `auto-import-off` | **NY** — importerer fra OFF dagligt kl. 02:00 UTC via pg_cron |
 | `admin-digest` | **NY** (17. sept. 2026) — ugentlig email til alle admins (`role='admin'`) med antal afventende indsendelser + åbne tickets + tilbagekaldelser uden stregkode (`needs_review`), kun sendt hvis der reelt er noget. pg_cron mandag kl. 08:00 UTC (jobid 4) |
-| `food-waste` | **I KØLESKABET** (17. sept. 2026) — tjekker om et EAN er nedsat pga. udløb i en nærliggende Netto/Føtex/Bilka, via Salling Groups officielle "Anti Food Waste"-API (`geo`-baseret opslag). Kræver bruger-login. Deployet og virker (testet live med `SALLING_API_TOKEN` sat) — men UI-knappen på `ResultScreen` er bevidst fjernet igen efter brugerens ønske. `useFoodWaste.js`-hooken ligger stadig i `src/`, klar til at blive genkoblet til en skærm når featuren skal genoptages — se punkt 13 |
+| `food-waste` | **LUKKET** (15. okt. 2026): svarer altid 410 og kalder ingen ekstern tjeneste; slettes i Supabase. Appen nævner ingen butikker (plan 15. okt. 2026 i projektmappen) |
 
 ### Test af edge-funktionernes handlere (8. okt. 2026)
 
@@ -176,7 +176,7 @@ On-device visning (profil → sprog → kompakt preview → "Åbn madpas" → fu
 
 | Punkt | Note |
 |---|---|
-| Madspild-tilbud ("i køleskabet") | `food-waste`-funktionen virker (Salling API, `SALLING_API_TOKEN`), men UI-knappen er fjernet fra `ResultScreen.jsx`. Genoptag ved at koble (hook slettet 13. okt. 2026, hent fra git) `useFoodWaste` (`src/useFoodWaste.js`) på en skærm igen (se git-historik omkring 17. sept. 2026 for den gamle UI) |
+| Madspild-tilbud | Fjernet 15. okt. 2026 (`food-waste` lukket). Tag ikke op igen uden Jans bestilling |
 | Leksikon 1000+ entries | Planlagt; i dag ca. 770 |
 | Desktop-admin | Alle faner er bygget (se §2). Den tidligere mobil-admin er fjernet (13. okt. 2026); dens Debug-fane (`getTraceLog()`) blev ikke porteret. Detaljer om hver fane og de tilhørende RLS-migrationer (`admin_can_write_user_allergens`, `admin_can_read_family_invites`, `admin_can_manage_family_data`) står i `.claude/HISTORY.md` |
 
