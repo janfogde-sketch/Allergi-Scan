@@ -19,7 +19,7 @@ afterEach(cleanup);
 
 const PEPERO = "Glasur (59%): 17% sukker, vegetabilsk olie (palme, solsikke, emulgator (E322 (SOJA)), antioxidant (E306)), 12% kakaotilberedning (85% sødmælkspulver, kakaomasse), kakaomasse, 4,3% laktose (MÆLK), MANDELpulver, emulgatorer (E322 (SOJA), E473), aroma, JORDNØDDEpulver. Kiksestænger (31%): 24% HVEDEMEL, 4,0% sukker, 0,75% sødmælkspulver, 0,62% smør (97% FLØDE, kokosolie), 0,29% fuldkornshvedemel, 0,42% BYGMALTEKSTRAKT, surhedsregulerende midler (E339, E500, E503), enzympræparat (fugtighedsbevarende middel (E422), vand, papayaekstrakt, konserveringsmiddel (E223 (SULFIT))), gær (gær, emulgator (E491)).";
 const profile = (allergens, extra = {}) => ({ id: "me", name: "Dig", allergens, custom: [], diets: [], levels: {}, eNumbers: [], ...extra });
-const product = (ingredients, over = {}) => ({ name: "Testprodukt", ingredients, allergen_flags: analyzeIngredients(ingredients), allergen_quality: "high", source: "bilka", ...over });
+const product = (ingredients, over = {}) => ({ name: "Testprodukt", ingredients, allergen_flags: analyzeIngredients(ingredients), allergen_quality: "high", source: "katalog", ...over });
 
 describe("allergenmotor: Lotte Pepero", () => {
   const f = analyzeIngredients(PEPERO);
@@ -118,7 +118,7 @@ function setup({ scan, allergens, shoppingList = [], toggleItem = vi.fn(), setNe
     </AuthProvider>
   );
 }
-const pepero = () => ({ code: "8718053593111", name: "Kiksestænger m. crunchy chokolade", brand: "Lotte pepero", ingredients: PEPERO, allergen_flags: analyzeIngredients(PEPERO), status: "danger", source: "bilka", allergen_quality: "high" });
+const pepero = () => ({ code: "8718053593111", name: "Kiksestænger m. crunchy chokolade", brand: "Lotte pepero", ingredients: PEPERO, allergen_flags: analyzeIngredients(PEPERO), status: "danger", source: "katalog", allergen_quality: "high" });
 const FIVE = ["hvede", "maelkeallergi", "noedder", "soja", "jordnoedder"];
 
 describe("produktsiden ved fem konflikter", () => {
@@ -170,14 +170,14 @@ describe("deklareret og udledt", () => {
     expect(screen.queryByLabelText(/Deklareret: gluten/i)).toBeNull();
   });
   it("sulfit uden deklareret ord og mængde vises som udledt 'mulige sulfitter', ikke som deklareret", () => {
-    const scan = { code: "1", name: "Slik", ingredients: "Sukker, konserveringsmiddel (E223)", allergen_flags: { ...analyzeIngredients("Sukker, konserveringsmiddel (E223)"), svovl: "unknown" }, status: "unknown", source: "bilka", allergen_quality: "high" };
+    const scan = { code: "1", name: "Slik", ingredients: "Sukker, konserveringsmiddel (E223)", allergen_flags: { ...analyzeIngredients("Sukker, konserveringsmiddel (E223)"), svovl: "unknown" }, status: "unknown", source: "katalog", allergen_quality: "high" };
     setup({ scan, allergens: ["soja"] });
     expect(screen.getByLabelText(/Udledt: mulige sulfitter \(e223\)/i)).toBeTruthy();
     expect(screen.queryByLabelText(/Deklareret: sulfitter/i)).toBeNull();
   });
   it("viser ingen tom undersektion", () => {
     const text = "Sukker, kakaosmør, SKUMMETMÆLKSPULVER";
-    setup({ scan: { code: "2", name: "Chokolade", ingredients: text, allergen_flags: analyzeIngredients(text), status: "safe", source: "bilka", allergen_quality: "high" }, allergens: ["soja"] });
+    setup({ scan: { code: "2", name: "Chokolade", ingredients: text, allergen_flags: analyzeIngredients(text), status: "safe", source: "katalog", allergen_quality: "high" }, allergens: ["soja"] });
     expect(screen.queryByText("Udledt af ingredienser")).toBeNull();
     expect(screen.queryByText("Sporoplysninger")).toBeNull();
   });
@@ -199,14 +199,14 @@ describe("Dine valg: rækkefølge og sammenfoldning", () => {
   });
   it("et enkelt grønt valg vises direkte, og sporadvarsler skjules ikke sammen med grønne", () => {
     const text = "Sukker, kakaosmør. Kan indeholde spor af mandler.";
-    setup({ scan: { code: "3", name: "Chokolade", ingredients: text, allergen_flags: analyzeIngredients(text), status: "warn", source: "bilka", allergen_quality: "high" }, allergens: ["noedder", "fisk"] });
+    setup({ scan: { code: "3", name: "Chokolade", ingredients: text, allergen_flags: analyzeIngredients(text), status: "warn", source: "katalog", allergen_quality: "high" }, allergens: ["noedder", "fisk"] });
     expect(screen.getByText(/Kan indeholde spor/, { selector: "span" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /øvrige fravalg/ })).toBeNull();
     expect(screen.getByText("Fisk")).toBeTruthy();
   });
   it("valg der ikke kan vurderes (blanding) bliver aldrig grønne", () => {
     const text = "HVEDEMEL, brun farin, sukker";
-    setup({ scan: { code: "4", name: "Krydderkage", ingredients: text, allergen_flags: analyzeIngredients(text), status: "safe", source: "bilka", allergen_quality: "high" }, allergens: ["aeg", "fisk"] });
+    setup({ scan: { code: "4", name: "Krydderkage", ingredients: text, allergen_flags: analyzeIngredients(text), status: "safe", source: "katalog", allergen_quality: "high" }, allergens: ["aeg", "fisk"] });
     expect(screen.queryByRole("button", { name: /øvrige fravalg/ })).toBeNull();
     expect(screen.getByRole("button", { name: /2 valg kan ikke kontrolleres/ })).toBeTruthy();
   });
@@ -235,9 +235,9 @@ describe("+N flere ved mange konflikter", () => {
 describe("ens vurdering på tværs og genberegning ved profilændring", () => {
   const cases = [
     ["konflikt", pepero(), ["soja"], STATUS_TEXT.danger],
-    ["spor", { code: "5", name: "Chokolade", ingredients: "Sukker. Kan indeholde spor af mandler.", allergen_flags: analyzeIngredients("Sukker. Kan indeholde spor af mandler."), source: "bilka", allergen_quality: "high" }, ["noedder"], STATUS_TEXT.warn],
-    ["blanding", { code: "6", name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker", allergen_flags: analyzeIngredients("HVEDEMEL, brun farin, sukker"), source: "bilka", allergen_quality: "high" }, ["aeg"], STATUS_TEXT.unknown],
-    ["ingen fund", { code: "7", name: "Chokolade", ingredients: "Sukker, kakaosmør", allergen_flags: analyzeIngredients("Sukker, kakaosmør"), source: "bilka", allergen_quality: "high" }, ["soja"], STATUS_TEXT.safe],
+    ["spor", { code: "5", name: "Chokolade", ingredients: "Sukker. Kan indeholde spor af mandler.", allergen_flags: analyzeIngredients("Sukker. Kan indeholde spor af mandler."), source: "katalog", allergen_quality: "high" }, ["noedder"], STATUS_TEXT.warn],
+    ["blanding", { code: "6", name: "Krydderkage", ingredients: "HVEDEMEL, brun farin, sukker", allergen_flags: analyzeIngredients("HVEDEMEL, brun farin, sukker"), source: "katalog", allergen_quality: "high" }, ["aeg"], STATUS_TEXT.unknown],
+    ["ingen fund", { code: "7", name: "Chokolade", ingredients: "Sukker, kakaosmør", allergen_flags: analyzeIngredients("Sukker, kakaosmør"), source: "katalog", allergen_quality: "high" }, ["soja"], STATUS_TEXT.safe],
   ];
   for (const [name, scan, allergens, label] of cases) {
     it(`${name}: produktsiden og den fælles vurdering er enige`, () => {
