@@ -302,13 +302,8 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       });
       return;
     }
-    if (link.kind === "tokens") {
-      let payload;
-      try { payload = decodeJwtPayload(link.access); } catch { showLoginInterrupted(); return; }
-      setPendingAuthLink({ ...link, email: payload.email || "" });
-    } else {
-      setPendingAuthLink(link);
-    }
+    if (link.kind !== "token_hash") return;
+    setPendingAuthLink(link);
     setAuthConfirmError(""); setAuthConfirmDone(false);
     setScreen(SCREENS.AUTHCONFIRM);
   }, []);
