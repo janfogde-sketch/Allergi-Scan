@@ -6,7 +6,7 @@
 -- 2) Sletning: opretter en bruger med data i alle tabeller, gentager delete-user's trin, forventer nul rester.
 -- 3) Opbevaring: gamle rækker ryddes af cleanup_notifications()/cleanup_family_invite_emails(), friske bliver.
 --
--- DELETE-STEPS: shopping_list_items,shopping_lists,shopping_list_access,scan_history,user_allergens,family_members,family_memberships,families,feedback_tickets,submissions,users
+-- DELETE-STEPS: shopping_list_items,shopping_lists,shopping_list_access,scan_history,user_allergens,family_members,feedback_tickets,submissions,users
 -- (listen over er delete-user's rækkefølge; src/accountDeletionGuard.test.js tjekker, at den følger supabase/functions/delete-user/index.ts)
 begin;
 
@@ -17,9 +17,11 @@ declare
     'admin_todo_activity.changed_by', -- fremmednøgle on delete set null; historikken slettes efter 12 mdr. (cleanup_notifications)
     'admin_todo_comments.author_id','admin_todos.assignee_id','admin_todos.completed_by','admin_todos.created_by',
     'api_usage.user_id','client_errors.user_id','consent_log.user_id','custom_allergens.created_by',
-    'families.created_by','family_invites.accepted_by','family_invites.invited_by','family_invites.invitee_email',
+    'families.created_by', -- on delete set null (gammel familiemodel, fjernes i S8 trin 2)
+    'family_invites.accepted_by','family_invites.invited_by','family_invites.invitee_email',
     'family_invites.requested_by','family_members.family_owner_id','family_members.user_id',
-    'family_memberships.user_id','favorites.user_id','feedback_tickets.submitted_by',
+    'family_memberships.user_id', -- on delete cascade (gammel familiemodel, fjernes i S8 trin 2)
+    'favorites.user_id','feedback_tickets.submitted_by',
     'notification_preferences.user_id','notification_push_overrides.updated_by','notifications.user_id',
     'push_tokens.user_id','recipes.reviewed_by','recipes.submitted_by','revision_log.changed_by',
     'scan_history.user_id','search_selections.user_id','security_reports.user_id',
@@ -123,8 +125,7 @@ begin
   delete from scan_history where user_id=uid;
   delete from user_allergens where user_id=uid;
   delete from family_members where user_id=uid;
-  delete from family_memberships where user_id=uid;
-  update families set created_by=null where created_by=uid;
+  -- family_memberships/families: ryddes af fremmednøglerne (cascade / set null), når profilen slettes
   delete from feedback_tickets where submitted_by=uid;
   delete from submissions where submitted_by=uid;
   delete from public.users where id=uid;

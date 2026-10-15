@@ -49,8 +49,11 @@ describe("edge: delete-user", () => {
     const tables = h.writes().filter((c) => c.kind === "delete" || c.kind === "update").map((c) => c.table);
     expect(tables).toEqual(expect.arrayContaining([
       "shopping_list_items", "shopping_lists", "shopping_list_access", "scan_history", "user_allergens",
-      "family_members", "family_memberships", "feedback_tickets", "submissions", "users",
+      "family_members", "feedback_tickets", "submissions", "users",
     ]));
+    // den gamle familiemodel ryddes af databasens fremmednøgler, ikke af funktionen (S8 trin 2)
+    expect(tables).not.toContain("family_memberships");
+    expect(tables).not.toContain("families");
     // users slettes sidst, og hver sletning er afgrænset til brugerens eget id
     expect(tables[tables.length - 1]).toBe("users");
     for (const w of h.writes()) {
