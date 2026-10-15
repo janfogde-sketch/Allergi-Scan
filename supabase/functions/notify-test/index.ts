@@ -10,7 +10,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAdminEvent, logAccessDenied } from "../_shared/adminAudit.ts";
-import { renderNotification, DEFINITIONS } from "../_shared/notificationContent.js";
+import { renderNotification, validatePushOverride, DEFINITIONS } from "../_shared/notificationContent.js";
 import { mockDataFor } from "../_shared/notificationMock.js";
 import { sendWebPush } from "../_shared/webpush.ts";
 import { parseApnsToken, apnsConfigFromEnv, sendApns } from "../_shared/apns.ts";
@@ -71,9 +71,13 @@ Deno.serve(async (req) => {
   const { data: target } = await db.from("users").select("id, name, email, role").eq("id", userId).maybeSingle();
   if (!target || target.role !== "admin") return json({ error: "Modtageren skal være en admin-bruger" }, 400);
 
+  // En ikke-gemt tekst fra panelet bruges uden at blive gemt (testen skal vise det, administratoren ser); ellers den gemte, ellers standard
+  const draft = body?.pushOverride && typeof body.pushOverride === "object"
+    ? { title: String(body.pushOverride.title ?? ""), body: String(body.pushOverride.body ?? "") } : null;
+  if (draft && !validatePushOverride(key, draft).ok) return json({ error: "Pushteksten er ugyldig" }, 400);
   const { data: ov } = await db.from("notification_push_overrides").select("title, body").eq("key", key).maybeSingle();
-  const r = renderNotification(key, mockDataFor(key), { pushOverride: ov ?? undefined });
-  const result: Record<string, unknown> = { key };
+  const r = renderNotification(key, mockDataFor(key), { pushOverride: draft ?? ov ?? undefined });
+  const result: Record<string, unknown> = { key, usedDraft: !!draft };
 
   if (channels.includes("push")) {
     const { data: tokens } = await db.from("push_tokens").select("token").eq("user_id", userId);

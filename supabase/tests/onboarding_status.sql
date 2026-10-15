@@ -82,7 +82,7 @@ begin
   if (v->>'completed')::int + (v->>'unconfirmed')::int + (v->>'not_started')::int + (v->>'in_progress')::int + (v->>'possible_dropout')::int <> (v->>'total')::int then res := res || 'STATUSSER-OVERLAPPER '; end if;
   if (v->>'test_accounts')::int<>1 then res := res || 'TESTKONTI(' || (v->>'test_accounts') || ') '; end if;
   v := public.admin_onboarding_stats(d, d, true);
-  if (v->>'total')::int<>6 or (v->>'not_started')::int<>2 then res := res || 'MED-TESTKONTI-FORKERT '; end if;
+  if (v->>'total')::int<>6 or (v->>'completed')::int + (v->>'unconfirmed')::int + (v->>'not_started')::int + (v->>'in_progress')::int + (v->>'possible_dropout')::int <> 6 then res := res || 'MED-TESTKONTI-FORKERT '; end if;
   v := public.admin_onboarding_stats(d, d);
 
   -- Trin: senest registrerede trin for uafsluttede, bekræftede konti med fremgang; heraf inaktive

@@ -125,3 +125,16 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
 - **Fjern medlem:** `admin_remove_family_member` kræver begrundelse og giver præcis én logpost (`familiemedlem_fjernet`). Administratorer har ikke længere direkte sletning på `family_members`/`family_invites`.
 - **Før migrationen er udgivet** vises "Familieoversigten er ikke udgivet endnu" (funktionerne giver 404), aldrig en tom liste.
 - **Ikke gjort:** ejerskifte for en familie og ændring af en families sammensætning. Kræver Jans ja (modellen "ingen kobling uden eget ja").
+
+## Notifikationer (16. okt. 2026)
+
+- **Opbygning:** foldbare kategorier (Indsendelser, Manglende produkter, Familie, Feedback, Produktændringer, Tilbagekaldelser, Delte lister) → valgt notifikation åbner en redigeringsvisning
+  (på mobil som egen visning med tilbagepil, fra 900 px ved siden af listen) med fanerne Push, Mail og Send test. Interne nøgler (`N2a:default`) vises kun under "Tekniske oplysninger" på Mail.
+  Tidligere viste to kategorier deres interne navne (`missing_product_found`, `feedback`).
+- **Gem push-tekst:** `admin_save_push_override` (migration `20261016140000`) afviser en gemning, hvis teksten er ændret siden, administratoren åbnede den (40001, "Teksten er ændret af en anden").
+  Før migrationen er udgivet, skrives direkte som hidtil (med versionstjek i panelet). Gendan standard kræver bekræftelse, når tilpasset tekst findes, og rører kun den ene notifikation.
+- **Tællere:** skabelonens længde mod grænsen (titel 60, besked 180, som serveren validerer), plus "ca. N med eksempeldata". Variabler indsættes ved markøren.
+- **Mail:** skrivebeskyttet i panelet (rettes i Resend). Forhåndsvisningen hentes fra den publicerede skabelon i Resend, vises i en ramme med intern scroll, lys/mørk efterligner skabelonens egen mørk-tilstand,
+  og logoet hentes fra den adresse, panelet selv ligger på (indholdsspærren `img-src 'self'` blokerede tidligere `https://www.eatsafe.dk/brand/...`, når panelet lå på en anden adresse, fx dev). Skabelonen ændres ikke.
+- **Send test:** bekræftelsesdialog, ét kald ad gangen, ikke-gemt pushtekst sendes med uden at blive gemt (`pushOverride` i `notify-test`, kræver deploy), resultat pr. kanal. "Delvist sendt" og "ikke sendt" vises som det, de er.
+  Kun administratorer kan være modtagere; testen opretter ingen besked i appen og udløser ikke hændelsen; loggen `testpush_sendt` rummer kun notifikation og kanaler.

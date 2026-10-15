@@ -35,13 +35,23 @@ const NOTIFICATION_NAMES = {
   "P6:updated": "Tilbagekaldelse ændret",
 };
 
+/** Brugerrettede kategorier i den rækkefølge, de vises. De interne navne (nøglerne) vises aldrig. */
 export const CATEGORY_LABELS = {
   submission_status: "Indsendelser",
+  missing_product_found: "Manglende produkter",
   family: "Familie",
-  ticket_status: "Tickets",
-  recalls: "Tilbagekaldelser",
+  feedback: "Feedback",
   product_changes: "Produktændringer",
+  recalls: "Tilbagekaldelser",
   shared_lists: "Delte lister",
+};
+
+/** Skabelonernes navne i Resend (til fanen Mail). */
+export const MAIL_TEMPLATE_NAMES = {
+  "N2a:default": "Produkt godkendt", "N2b:default": "Rettelse godkendt", "N3:default": "Indsendelse afvist", "N4:default": "Produkt tilføjet",
+  "N5:default": "Familieinvitation accepteret", "N6:in_progress": "Feedback (i gang)", "N6:resolved": "Feedback (løst)", "N6:reopened": "Feedback (genåbnet)",
+  "N6:reply": "Nyt svar på feedback", "P1:default": "Ændrede allergenoplysninger", "P2:default": "Invitation udløber", "P3:one": "Delt indkøbsliste", "P3:many": "Delt indkøbsliste",
+  "P6:default": "Tilbagekaldelse", "P6:cancelled": "Tilbagekaldelse", "P6:updated": "Tilbagekaldelse",
 };
 
 export const VARIABLE_LABELS = {
@@ -54,11 +64,12 @@ export const VARIABLE_LABELS = {
 export function listNotifications() {
   const groups = new Map();
   for (const [key, def] of Object.entries(DEFINITIONS)) {
-    const label = CATEGORY_LABELS[def.category] ?? def.category;
+    const label = CATEGORY_LABELS[def.category] ?? "Øvrige";
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push({ key, name: NOTIFICATION_NAMES[key] ?? key, def });
   }
-  return [...groups.entries()].map(([label, items]) => ({ label, items }));
+  const order = Object.values(CATEGORY_LABELS);
+  return [...groups.entries()].map(([label, items]) => ({ label, items })).sort((x, y) => (order.indexOf(x.label) + 1 || 99) - (order.indexOf(y.label) + 1 || 99));
 }
 
 export function defaultPush(key) {
@@ -74,4 +85,56 @@ export function previewPush(key, draft) {
 
 export function overrideIsActive(row) {
   return !!(row && (String(row.title ?? "").trim() || String(row.body ?? "").trim()));
+}
+
+/**
+ * Sætter {{variabel}} ind ved markørens placering (eller erstatter det markerede). Returnerer den nye tekst og markørens nye placering.
+ * @param {string} text @param {number} start @param {number} end @param {string} name
+ */
+export function insertVariableAt(text, start, end, name) {
+  const s = Math.max(0, Math.min(start ?? text.length, text.length));
+  const e = Math.max(s, Math.min(end ?? s, text.length));
+  const token = `{{${name}}}`;
+  return { text: text.slice(0, s) + token + text.slice(e), cursor: s + token.length };
+}
+
+/** Er tekstfelterne uændrede i forhold til det gemte (eller standarden)? @param {{title:string, body:string}} a @param {{title:string, body:string}} b */
+export function sameText(a, b) {
+  return a.title.trim() === b.title.trim() && a.body.trim() === b.body.trim();
+}
+
+/**
+ * Samlet resultat af en testafsendelse pr. kanal. En kanal er kun lykkedes, hvis noget faktisk blev sendt; hvis kun én lykkes, er det "delvist".
+ * @param {{ push?: { devices:number, sent:number, failed:number, errors?:string[] }, mail?: { sent:boolean, error?:string|null } } | null} res
+ * @param {string[]} channels
+ */
+export function summarizeTest(res, channels) {
+  if (!res) return { overall: "failed", lines: [{ channel: "all", ok: false, text: "Testen kunne ikke gennemføres." }] };
+  const lines = [];
+  if (channels.includes("push")) {
+    const p = res.push;
+    if (!p) lines.push({ channel: "push", ok: false, text: "Push: intet svar fra serveren." });
+    else if (p.devices === 0) lines.push({ channel: "push", ok: false, text: "Push: modtageren har ingen enhed med push slået til." });
+    else if (p.sent === 0) lines.push({ channel: "push", ok: false, text: `Push: ikke sendt${p.errors?.length ? ` (${p.errors.join("; ")})` : ""}.` });
+    else lines.push({ channel: "push", ok: p.failed === 0, partial: p.failed > 0, text: `Push: sendt til ${p.sent} af ${p.devices} enheder${p.failed ? ` (${p.errors?.join("; ") || "fejl"})` : ""}.` });
+  }
+  if (channels.includes("mail")) {
+    const m = res.mail;
+    if (!m) lines.push({ channel: "mail", ok: false, text: "Mail: intet svar fra serveren." });
+    else lines.push({ channel: "mail", ok: !!m.sent, text: m.sent ? "Mail: sendt." : `Mail: ikke sendt (${m.error || "ukendt fejl"}).` });
+  }
+  const oks = lines.filter((l) => l.ok).length;
+  const some = lines.some((l) => l.ok || l.partial);
+  return { overall: oks === lines.length ? "ok" : some ? "partial" : "failed", lines };
+}
+
+/**
+ * Gør mailens HTML klar til forhåndsvisning. Ændrer aldrig skabelonens design: logoet hentes fra den side, administrationen selv ligger på (indholdsspærren tillader kun
+ * egen adresse), og lys/mørk tilstand efterlignes ved at slå skabelonens egen mørk-tilstand til eller fra. 
+ * @param {string} html @param {"light"|"dark"} mode @param {string} origin
+ */
+export function prepareMailPreview(html, mode, origin) {
+  let out = String(html || "").replace(/https:\/\/(?:www\.)?eatsafe\.dk\/brand\//g, `${origin}/brand/`);
+  out = out.replace(/@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)/g, mode === "dark" ? "@media all" : "@media not all");
+  return out;
 }
