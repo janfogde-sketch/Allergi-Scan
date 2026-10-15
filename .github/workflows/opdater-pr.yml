@@ -65,8 +65,7 @@ jobs:
               echo "PR #$nr: ingen kørsler at genkøre, starter tjekkene direkte."
               gh workflow run migration-versions.yml -R "$REPO" --ref "$ref"
               gh workflow run ci.yml -R "$REPO" --ref "$ref"
-              if gh pr diff "$nr" -R "$REPO" --name-only | grep -qE '^(supabase/migrations/|supabase/tests/|supabase/functions/delete-user/|\.github/workflows/db-tests\.yml)'; then
-                gh workflow run db-tests.yml -R "$REPO" --ref "$ref"
-              fi
+              # DB-tests rapporterer altid på PR'er (springer selv tunge trin over), så de startes uden filter.
+              gh workflow run db-tests.yml -R "$REPO" --ref "$ref"
             fi
           done
