@@ -13,7 +13,7 @@ import { forgetPushTokenForDevice } from "./usePush.js";
 import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, restoreSession, endSession } from "./sessionStore.js";
 import { reportError } from "./errorReporter.js";
 import { clearOfflineCache } from "./useOffline.js";
-import { isNativeApp, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_RETURN } from "./nativeShell.js";
+import { isNativeApp, openInSystemBrowser, listenForAuthReturn, NATIVE_AUTH_REDIRECT } from "./nativeShell.js";
 import { nativeAppleAvailable, appleNativeAuthorize, exchangeAppleToken } from "./nativeApple.js";
 import { parseAuthLink, hasAuthLink, cleanAuthUrl, startPkce, takePkceVerifier, exchangeAuthCode, verifyEmailLink, discardSession } from "./authLink.js";
 
@@ -784,12 +784,12 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
         if ("cancelled" in a && a.cancelled) { setAuthLoading(false); return; }
         throw new Error(`apple-native: ${"reason" in a ? a.reason : ""}`);
       }
-      // I iPhone-rammen åbner login i telefonens egen browser og vender tilbage til appen via NATIVE_AUTH_RETURN.
+      // I iPhone-rammen åbner login i telefonens egen browser og vender tilbage til appen via NATIVE_AUTH_REDIRECT.
       const native = isNativeApp();
       // PKCE: kun fingeraftrykket sendes med; selve engangsnøglen bliver på enheden (authLink.js).
       const codeChallenge = await startPkce();
       const params = new URLSearchParams({
-        provider, redirect_to: native ? NATIVE_AUTH_RETURN : window.location.origin + "/",
+        provider, redirect_to: native ? NATIVE_AUTH_REDIRECT : window.location.origin + "/",
         code_challenge: codeChallenge, code_challenge_method: "s256",
         ...(provider === "google" ? { prompt: "select_account" } : {}),
       });

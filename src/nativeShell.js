@@ -2,9 +2,14 @@
 // iPhone-rammen (Capacitor, 14. okt. 2026): hjælpere, der kun gør noget, når appen kører inde i iOS-rammen.
 // I browseren og på Android findes window.Capacitor ikke (eller er ikke native), så alt her er uden virkning.
 
-/** Adressen, som login i systembrowseren sender tilbage til (skal stå under Redirect URLs i Supabase). */
+/** Appens egen adresse. Serveren (api/auth-retur.js) sender hertil, når iPhone ikke åbner appen direkte via Universal Link. */
 export const NATIVE_AUTH_RETURN = "dk.eatsafe.app://auth";
 const WEB_ORIGIN = "https://www.eatsafe.dk";
+/**
+ * Adressen, som login i systembrowseren sender tilbage til (sikkerhedsfund S5). Med Universal Link (Associated Domains +
+ * public/.well-known/apple-app-site-association) åbner iPhone appen direkte; ellers sender serveren videre til NATIVE_AUTH_RETURN.
+ */
+export const NATIVE_AUTH_REDIRECT = `${WEB_ORIGIN}/auth-retur`;
 
 /** @returns {any} */
 function cap() {
@@ -42,7 +47,10 @@ const RETURN_PARAMS = ["code", "error", "error_code", "error_description"];
  * @returns {string | null}
  */
 export function authReturnTarget(url) {
-  if (typeof url !== "string" || !(url === NATIVE_AUTH_RETURN || /^dk\.eatsafe\.app:\/\/auth([?#/]|$)/.test(url))) return null;
+  if (typeof url !== "string") return null;
+  const scheme = /^dk\.eatsafe\.app:\/\/auth([?#/]|$)/.test(url);
+  const universal = /^https:\/\/www\.eatsafe\.dk\/auth-retur\/?([?#]|$)/.test(url);
+  if (!scheme && !universal) return null;
   const h = url.indexOf("#");
   const hash = h >= 0 ? url.slice(h) : "";
   const beforeHash = h >= 0 ? url.slice(0, h) : url;

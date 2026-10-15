@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.dk.eatsafe.app"],
+        "components": [{ "/": "/auth-retur", "comment": "Retur fra login i iPhone-appen" }]
+      }
+    ]
+  }
+}
