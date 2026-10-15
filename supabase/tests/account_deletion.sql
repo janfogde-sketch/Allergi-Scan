@@ -53,6 +53,35 @@ end $$;
 
 do $$
 declare
+  -- Kopi-vagt (O1, 15. okt. 2026): kopier/arbejdstabeller med dato i navnet springes over af liste-vagten ovenfor.
+  -- De skal i stedet stå i backup_retention, og en kopi med brugerdata må højst ligge 30 dage (politikken §11).
+  -- Undtaget: tabeller uden persondata, som skal blive (removed_image_backup er Jans valg; resten er arbejdstabeller).
+  no_pd text[] := array['removed_image_backup_20261005','allergen_claude_long_20261008',
+                        'allergen_reanalysis_diff_20261006','allergen_reanalysis_down_20261006'];
+  r record; missing text := ''; too_long text := '';
+begin
+  for r in
+    select t.table_name,
+           (t.table_name ~ '^(users|auth_users|family)_'
+            or exists (select 1 from information_schema.columns c where c.table_schema='public' and c.table_name=t.table_name
+                         and c.column_name ~ '(^|_)(user_id|owner_id|created_by|submitted_by|added_by|invited_by|accepted_by|requested_by|author_id)$|email$')) as has_pd,
+           b.delete_after
+    from information_schema.tables t
+    left join public.backup_retention b on b.table_name=t.table_name
+    where t.table_schema='public' and t.table_type='BASE TABLE'
+      and (t.table_name ~ '_(backup|fix|diff|down|match|ids)_?[0-9]*$' or t.table_name ~ '_[0-9]{8}[a-z]?$')
+      and t.table_name <> all(no_pd)
+  loop
+    if r.delete_after is null then missing := missing || r.table_name || ' ';
+    elsif r.has_pd and r.delete_after > current_date + 30 then too_long := too_long || r.table_name || '(' || r.delete_after || ') ';
+    end if;
+  end loop;
+  if missing <> '' then raise exception 'KOPI-VAGT: kopier uden slettedato i backup_retention: %', missing; end if;
+  if too_long <> '' then raise exception 'KOPI-VAGT: kopier med brugerdata må højst ligge 30 dage: %', too_long; end if;
+end $$;
+
+do $$
+declare
   uid uuid := gen_random_uuid(); uid2 uuid := gen_random_uuid();
   em text := 'gdpr-' || substr(gen_random_uuid()::text,1,8) || '@example.invalid';
   lid uuid; fid uuid; nid uuid; r record; cnt int; res text := '';
@@ -132,7 +161,21 @@ begin
   insert into api_usage(user_id,kind,day) values (uid,'old',current_date-31),(uid,'new',current_date-29);
   insert into feedback_tickets(type,description,created_at) values ('bug','gammel anonym',now()-interval '13 months'),('bug','ny anonym',now()-interval '11 months');
   insert into feedback_tickets(type,description,submitted_by,created_at) values ('bug','gammel med konto',uid,now()-interval '13 months');
+  insert into feedback_tickets(type,description,submitted_by,status,created_at) values
+    ('bug','gammel afsluttet med konto',uid,'resolved',now()-interval '13 months'),('bug','ny afsluttet med konto',uid,'resolved',now()-interval '11 months');
+  insert into submissions(ean,submitted_by,status,reviewed_at) values
+    ('opb1'||substr(uid::text,1,6),uid,'approved',now()-interval '13 months'),('opb2'||substr(uid::text,1,6),uid,'rejected',now()-interval '13 months'),
+    ('opb3'||substr(uid::text,1,6),uid,'rejected',now()-interval '11 months'),('opb4'||substr(uid::text,1,6),uid,'pending',null);
+  insert into auth.sessions(id,user_id,created_at,updated_at,refreshed_at) values
+    (gen_random_uuid(),uid,now()-interval '8 months',now()-interval '7 months',null),
+    (gen_random_uuid(),uid,now()-interval '8 months',now()-interval '7 months',(now()-interval '1 month') at time zone 'UTC'),
+    (gen_random_uuid(),uid,now()-interval '1 month',now()-interval '1 month',null);
   perform public.cleanup_notifications();
+  select count(*) into n from feedback_tickets where description='gammel afsluttet med konto'; if n<>0 then raise exception 'OPBEVARING: afsluttet feedback med konto over 12 mdr. skulle slettes, fik %', n; end if;
+  select count(*) into n from feedback_tickets where description='ny afsluttet med konto'; if n<>1 then raise exception 'OPBEVARING: afsluttet feedback under 12 mdr. skulle blive, fik %', n; end if;
+  select count(*) into n from submissions where submitted_by=uid; if n<>2 then raise exception 'OPBEVARING: indsendelser forventet 2 (ny afvist + afventende), fik %', n; end if;
+  select count(*) into n from submissions where submitted_by=uid and ean like 'opb1%'; if n<>0 then raise exception 'OPBEVARING: godkendt indsendelse over 12 mdr. skulle slettes'; end if;
+  select count(*) into n from auth.sessions where user_id=uid; if n<>2 then raise exception 'OPBEVARING: loginsessioner forventet 2 (brugt for nylig), fik %', n; end if;
   select count(*) into n from feedback_tickets where description in ('gammel anonym'); if n<>0 then raise exception 'OPBEVARING: gammel anonym feedback skulle slettes, fik %', n; end if;
   select count(*) into n from feedback_tickets where description in ('ny anonym','gammel med konto'); if n<>2 then raise exception 'OPBEVARING: ny anonym og feedback med konto skulle blive, fik %', n; end if;
   select count(*) into n from notifications where user_id=uid; if n<>1 then raise exception 'OPBEVARING: notifications forventet 1 efter oprydning, fik %', n; end if;
