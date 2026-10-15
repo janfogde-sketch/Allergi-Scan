@@ -13,7 +13,7 @@ declare
   v_cur timestamptz;
   v_title text := nullif(trim(coalesce(p_title, '')), '');
   v_body text := nullif(trim(coalesce(p_body, '')), '');
-  v_now timestamptz := now();
+  v_now timestamptz := clock_timestamp();
 begin
   if not public.is_admin(v_admin) then
     raise exception 'Kun for administratorer' using errcode = '42501';
