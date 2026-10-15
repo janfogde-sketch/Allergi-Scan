@@ -17,10 +17,8 @@ declare
     'admin_todo_activity.changed_by', -- fremmednøgle on delete set null; historikken slettes efter 12 mdr. (cleanup_notifications)
     'admin_todo_comments.author_id','admin_todos.assignee_id','admin_todos.completed_by','admin_todos.created_by',
     'api_usage.user_id','client_errors.user_id','consent_log.user_id','custom_allergens.created_by',
-    'families.created_by', -- on delete set null (gammel familiemodel, fjernes i S8 trin 2)
     'family_invites.accepted_by','family_invites.invited_by','family_invites.invitee_email',
     'family_invites.requested_by','family_members.family_owner_id','family_members.user_id',
-    'family_memberships.user_id', -- on delete cascade (gammel familiemodel, fjernes i S8 trin 2)
     'favorites.user_id','feedback_tickets.submitted_by',
     'notification_preferences.user_id','notification_push_overrides.updated_by','notifications.user_id',
     'push_tokens.user_id','recipes.reviewed_by','recipes.submitted_by','revision_log.changed_by',
@@ -86,7 +84,7 @@ do $$
 declare
   uid uuid := gen_random_uuid(); uid2 uuid := gen_random_uuid();
   em text := 'gdpr-' || substr(gen_random_uuid()::text,1,8) || '@example.invalid';
-  lid uuid; fid uuid; nid uuid; r record; cnt int; res text := '';
+  lid uuid; nid uuid; r record; cnt int; res text := '';
 begin
   insert into auth.users(id,email,aud,role) values (uid,em,'authenticated','authenticated');
   insert into auth.users(id,email,aud,role) values (uid2,'ejer-'||substr(gen_random_uuid()::text,1,8)||'@example.invalid','authenticated','authenticated');
@@ -96,8 +94,6 @@ begin
   insert into api_usage(user_id,kind,day) values (uid,'ocr',current_date);
   insert into client_errors(user_id,fingerprint,message) values (uid,'fp'||uid,'m');
   insert into consent_log(user_id,kind,action,version) values (uid,'health','given','1');
-  insert into families(name,created_by) values ('F',uid) returning id into fid;
-  insert into family_memberships(family_id,user_id) values (fid,uid);
   insert into family_invites(invited_by,invitee_email) values (uid,'inv-'||em);
   insert into family_invites(invited_by,invitee_email,accepted_by,requested_by,status) values (uid2,em,uid,uid,'accepted');
   insert into family_members(name,user_id,family_owner_id) values ('Barn',uid,uid);
@@ -125,7 +121,6 @@ begin
   delete from scan_history where user_id=uid;
   delete from user_allergens where user_id=uid;
   delete from family_members where user_id=uid;
-  -- family_memberships/families: ryddes af fremmednøglerne (cascade / set null), når profilen slettes
   delete from feedback_tickets where submitted_by=uid;
   delete from submissions where submitted_by=uid;
   delete from public.users where id=uid;
@@ -187,23 +182,18 @@ begin
 end $$;
 
 do $$
-declare uid uuid := gen_random_uuid(); uid2 uuid := gen_random_uuid(); fid uuid; lid uuid; n int;
+declare uid uuid := gen_random_uuid(); uid2 uuid := gen_random_uuid(); lid uuid; n int;
 begin
   -- Direkte sletning af loginkontoen (uden delete-user) skal selv fjerne profilen og alt, der hænger på den.
   insert into auth.users(id,email,aud,role) values (uid,'cas-'||substr(uid::text,1,8)||'@example.invalid','authenticated','authenticated');
   insert into auth.users(id,email,aud,role) values (uid2,'cas2-'||substr(uid2::text,1,8)||'@example.invalid','authenticated','authenticated');
-  insert into families(name,created_by) values ('F',uid) returning id into fid;
-  insert into family_memberships(family_id,user_id) values (fid,uid),(fid,uid2);
   insert into shopping_lists(name,owner_id) values ('L',uid2) returning id into lid;
   insert into shopping_list_access(list_id,user_id) values (lid,uid);
   insert into user_allergens(user_id,allergen) values (uid,'gluten');
   delete from auth.users where id=uid;
   select count(*) into n from public.users where id=uid; if n<>0 then raise exception 'CASCADE: profil blev ikke slettet med loginkontoen'; end if;
   select count(*) into n from user_allergens where user_id=uid; if n<>0 then raise exception 'CASCADE: allergier blev ikke slettet'; end if;
-  select count(*) into n from family_memberships where user_id=uid; if n<>0 then raise exception 'CASCADE: familiemedlemskab blev ikke slettet'; end if;
   select count(*) into n from shopping_list_access where user_id=uid; if n<>0 then raise exception 'CASCADE: listeadgang blev ikke slettet'; end if;
-  select count(*) into n from families where id=fid and created_by is null; if n<>1 then raise exception 'CASCADE: familien skulle bestå uden opretter'; end if;
-  select count(*) into n from family_memberships where user_id=uid2; if n<>1 then raise exception 'CASCADE: andre medlemmer skulle blive'; end if;
 end $$;
 
 do $$
