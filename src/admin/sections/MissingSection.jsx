@@ -1,4 +1,5 @@
 // @ts-nocheck
+import RefreshButton from "../RefreshButton.jsx";
 import React, { useEffect } from "react";
 
 export default function MissingSection({ missingEans, missingEansLoading, loadMissingEans, deleteMissingEan }) {
@@ -19,7 +20,7 @@ export default function MissingSection({ missingEans, missingEansLoading, loadMi
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div style={{ fontSize: 13, color: "var(--muted)" }}>Produkter brugere har forsøgt at scanne, men ikke fundet — sorteret efter antal opslag.</div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={loadMissingEans}>Opdater</button>
+        <RefreshButton onClick={loadMissingEans} />
       </div>
 
       {topPrefixes.length > 0 && (
