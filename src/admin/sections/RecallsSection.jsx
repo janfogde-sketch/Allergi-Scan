@@ -1,4 +1,5 @@
 // @ts-nocheck
+import RefreshButton from "../RefreshButton.jsx";
 import React, { useState, useEffect } from "react";
 import {
   RECALL_STATUS_LABELS, RECALL_STATUS_PILL, RECALL_VIEWS,
@@ -180,7 +181,7 @@ export default function RecallsSection({ recalls, loading, load, searchProducts,
             </button>
           ))}
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => load()}>Opdater</button>
+        <RefreshButton onClick={() => load()} />
       </div>
       <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
         Tilbagekaldelser fra Fødevarestyrelsen hentes dagligt. Dem, hvor siden ikke har en gyldig stregkode, venter her, til du knytter produkter. Først da sendes en besked til de berørte brugere.

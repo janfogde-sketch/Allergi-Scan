@@ -114,7 +114,7 @@
   <div class="container">
     <h1>Privatlivspolitik</h1>
     <!-- LEGAL-BODY-START (genereret af scripts/build-legal-pages.mjs, ret i src/legalText/) -->
-    <div class="updated">Sidst opdateret: 14. oktober 2026</div>
+    <div class="updated">Sidst opdateret: 15. oktober 2026</div>
 
     <div class="draft-notice">
       Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt <a href="mailto:hej@eatsafe.dk">hej@eatsafe.dk</a>, hvis du har spørgsmål, indtil den endelige version er på plads.
@@ -209,6 +209,7 @@
     <p>Når du aktivt anvender en funktion, der analyserer et produktbillede, kan billedet blive sendt til en teknisk leverandør med henblik på analysen.</p>
     <p>EatSafe forsøger at begrænse de oplysninger, der sendes, til det, der er nødvendigt for den relevante funktion.</p>
     <p>Et produktbillede kan imidlertid selv indeholde personoplysninger, hvis sådanne oplysninger er synlige på billedet.</p>
+    <p>Billeder, du sender ind, er kun synlige for EatSafes administratorer, indtil de er godkendt. Godkendes et produktbillede, vises det offentligt på produktet. Billeder af ingredienslisten vises ikke offentligt.</p>
     <p>EatSafe anvender Anthropic API som kommerciel tjeneste til aflæsning af emballagebilleder og vurdering af ingredienstekst; der sendes aldrig konto-, profil- eller helbredsoplysninger til Anthropic. Anthropic oplyser aktuelt, at deres DPA med SCC’er indgår i Commercial Terms, og at inputs og outputs fra kommercielle produkter som udgangspunkt ikke bruges til modeltræning.</p>
 
     <h2>9. Leverandører og modtagere</h2>
@@ -251,11 +252,14 @@
       <li>tekniske fejllogs: slettes automatisk efter 90 dage og er ikke knyttet til din konto efter en sletning</li>
       <li>tællere for dagligt forbrug af tekniske funktioner (beskyttelse mod misbrug): slettes automatisk efter 30 dage og slettes med din konto</li>
       <li>e-mailadressen på en person, du har inviteret til din familie: slettes, så snart invitationen er besvaret eller udløbet (invitationen virker højst 24 timer, og oprydningen sker dagligt), og senest når du sletter din konto</li>
-      <li>feedback og fejlmeldinger sendt uden at være logget ind: slettes automatisk 12 måneder efter, at du sendte dem (sendt som logget ind slettes de med din konto)</li>
+      <li>feedback og fejlmeldinger sendt uden at være logget ind: slettes automatisk 12 måneder efter, at du sendte dem</li>
+      <li>feedback og fejlmeldinger sendt som logget ind: slettes med din konto, og ellers automatisk 12 måneder efter, at du sendte dem, når sagen er afsluttet</li>
+      <li>produktindsendelser: slettes med din konto, og ellers automatisk 12 måneder efter, at de er godkendt eller afvist. Et godkendt produkt bliver i EatSafes produktdatabase sammen med det produktbillede, produktet bruger</li>
+      <li>loginsessioner (med IP-adresse og enhedstype, til sikkerhed og fejlfinding): slettes, når du logger ud, og ellers automatisk efter 6 måneder uden brug; derefter skal du logge ind igen</li>
       <li>adminlog (hvilken administrator der har ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår; kun hvilke felter der er ændret, ingen helbredsoplysninger): slettes automatisk efter 12 måneder</li>
       <li>sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder</li>
       <li>logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister</li>
-      <li>sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Hver kopi slettes automatisk efter 7 dage, så oplysninger, du har slettet, også er væk fra kopierne senest 7 dage efter.</li>
+      <li>sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Hver kopi slettes automatisk efter 7 dage, så oplysninger, du har slettet, også er væk fra kopierne senest 7 dage efter. Midlertidige kopier, som vi laver ved vedligehold af databasen, slettes automatisk senest 30 dage efter.</li>
     </ul>
 
     <h2>12. Cookies, lokal lagring og lignende teknologier</h2>

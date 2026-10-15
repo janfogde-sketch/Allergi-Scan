@@ -1,10 +1,10 @@
 // supabase/functions/cleanup-orphan-images/index.ts
-// Sletter billeder i bøtten product-images, som hverken en indsendelse eller et produkt peger på (fx efter en kontosletning,
+// Sletter billeder i bøtterne product-images og submission-images, som hverken en indsendelse eller et produkt peger på (fx efter en kontosletning,
 // eller et upload der aldrig blev til en indsendelse), og skærmbilleder i feedback-screenshots uden ticket. Kaldes dagligt af pg_cron (cleanup_orphan_images()), kun med service-role-nøglen.
 // Body {"dry_run": true} viser kun listen og sletter intet.
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
-import { PRODUCT_IMAGES_BUCKET } from "../_shared/productImages.js";
+import { PRODUCT_IMAGES_BUCKET, SUBMISSION_IMAGES_BUCKET } from "../_shared/productImages.js";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
 
     const targets = [
       { bucket: PRODUCT_IMAGES_BUCKET, rpc: "orphan_product_images" },
+      { bucket: SUBMISSION_IMAGES_BUCKET, rpc: "orphan_submission_images" },
       { bucket: "feedback-screenshots", rpc: "orphan_feedback_screenshots" },
     ];
     const orphans: Record<string, string[]> = {};

@@ -15,6 +15,9 @@ permissions:
 jobs:
   hent:
     runs-on: ubuntu-latest
+    # Nøglen ligger i miljøet "produktion", som kun main må bruge (sikkerhedsgennemgang 15. okt. 2026, S1).
+    if: github.ref == 'refs/heads/main'
+    environment: produktion
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT_REF: jegrpcflyguadyxialkm

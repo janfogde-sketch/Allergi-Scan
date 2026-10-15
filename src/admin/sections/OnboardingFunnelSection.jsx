@@ -1,4 +1,5 @@
 // @ts-nocheck
+import RefreshButton from "../RefreshButton.jsx";
 import React from "react";
 import { summarizeFunnel } from "../onboardingFunnelLogic.js";
 
@@ -12,7 +13,7 @@ export default function OnboardingFunnelSection({ data, loading, load }) {
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
           Hvor langt nye brugere når i første start. Kun samlede tal, ingen data pr. bruger.
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>Opdater</button>
+        <RefreshButton onClick={load} />
       </div>
 
       {loading ? (
