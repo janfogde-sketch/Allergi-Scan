@@ -40,7 +40,6 @@ export default function AiUsageSection({ rows, loading, load }) {
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
           Forbrug på Claude Haiku (læsning af fotos, allergen-tjek, kategorisering). Kun samlede tal, ingen data pr. bruger.
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>Opdater</button>
       </div>
 
       {loading ? (

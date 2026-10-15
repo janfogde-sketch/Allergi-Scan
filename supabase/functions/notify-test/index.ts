@@ -9,6 +9,7 @@
 //       POST { action: "preview", key, userId? }              → mailens HTML fra Resend med eksempeldata
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied } from "../_shared/adminAudit.ts";
 import { renderNotification, DEFINITIONS } from "../_shared/notificationContent.js";
 import { mockDataFor } from "../_shared/notificationMock.js";
 import { sendWebPush } from "../_shared/webpush.ts";
@@ -34,7 +35,10 @@ Deno.serve(async (req) => {
 
   const db = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
   const { data: me } = await db.from("users").select("role").eq("id", caller.id).maybeSingle();
-  if (me?.role !== "admin") return json({ error: "Kun admins kan sende test" }, 403);
+  if (me?.role !== "admin") {
+    await logAccessDenied(db, caller.id, "notify-test");
+    return json({ error: "Kun admins kan sende test" }, 403);
+  }
 
   const body = await req.json().catch(() => ({}));
   const key = String(body?.key ?? "");
@@ -119,5 +123,10 @@ Deno.serve(async (req) => {
       result.mail = { sent: m.ok, error: m.ok ? null : m.error };
     }
   }
+  // Adminloggen: kun hvilken notifikation og hvilke kanaler, aldrig modtager eller indhold
+  const push = result.push as { sent?: number } | undefined, mail = result.mail as { sent?: boolean } | undefined;
+  const anySent = (push?.sent ?? 0) > 0 || !!mail?.sent;
+  await logAdminEvent(db, caller.id, "testpush_sendt", "edge_function", "notify-test",
+    { funktion: "notify-test", notifikation: key, kanaler: channels.filter((c) => c === "push" || c === "mail") }, anySent ? "ok" : "mislykket");
   return json(result);
 });

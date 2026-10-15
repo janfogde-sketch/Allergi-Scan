@@ -59,6 +59,8 @@ jobs:
   serverfunktioner:
     name: Tjek af serverfunktioner
     runs-on: ubuntu-latest
+    # Typetjekket hang 15. okt. 2026 (hentning af pakker) og blokerede en PR i over 10 min.
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5

@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 import { analyzeIngredients, liftGlutenFromWheat, stripHtml } from "../_shared/allergenEngine.js";
 
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
@@ -60,6 +61,27 @@ const CATEGORY_MAP: Record<string, string> = {
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Slår én kode op på OFF. 404 med status 0 = "findes ikke" (returnerer null). Alt andet end
+// et gyldigt JSON-svar er en midlertidig fejl: prøv op til 3 gange, og kast derefter.
+async function fetchOff(ean: string): Promise<any> {
+  let lastErr: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await sleep(1500 * attempt);
+    try {
+      const res = await fetch(
+        `${OFF_API}/${ean}.json?fields=${OFF_FIELDS}`,
+        { headers: { "User-Agent": "EatSafe/1.0 (hej@eatsafe.dk)" }, signal: AbortSignal.timeout(15000) }
+      );
+      if (res.status >= 500 || res.status === 429) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data.status === 1 ? data.product : null;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
 }
 
 function buildAllergenFlags(product: any): Record<string, string> {
@@ -134,6 +156,7 @@ Deno.serve(async (req) => {
   // ukontrollerede OFF-importer (og OFF-rate-limit-belastning) på vores vegne.
   const authHeader = req.headers.get("Authorization");
   const isCron = !!SUPABASE_SERVICE_KEY && authHeader === `Bearer ${SUPABASE_SERVICE_KEY}`;
+  let actorId = ""; // admin bag en manuel kørsel (adminloggen); tom ved cron
   if (!isCron) {
     if (!authHeader) return Response.json({ error: "Ikke autoriseret" }, { status: 401 });
     const userClient = createClient(
@@ -145,8 +168,16 @@ Deno.serve(async (req) => {
     if (!caller) return Response.json({ error: "Ugyldig token" }, { status: 401 });
     const { data: callerProfile } = await supabase
       .from("users").select("role").eq("id", caller.id).single();
-    if (callerProfile?.role !== "admin") return Response.json({ error: "Adgang nægtet — kun admin" }, { status: 403 });
+    if (callerProfile?.role !== "admin") {
+      await logAccessDenied(supabase, caller.id, "auto-import-off");
+      return Response.json({ error: "Adgang nægtet — kun admin" }, { status: 403 });
+    }
+    actorId = caller.id;
   }
+  const logRun = (outcome: "ok" | "mislykket", extra: Record<string, unknown> = {}) => actorId
+    ? logAdminEvent(supabase, actorId, "import_koert", "edge_function", "auto-import-off",
+        { funktion: "auto-import-off", antal: stats.imported, fejl_antal: stats.error, ...extra }, outcome)
+    : Promise.resolve();
 
   const stats = { imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
   const log: string[] = [];
@@ -168,7 +199,9 @@ Deno.serve(async (req) => {
 
     log.push(`Fandt ${missing.length} EAN'er i missing_ean_log`);
 
+    const startedAt = Date.now();
     for (const row of missing) {
+      if (Date.now() - startedAt > 110000) { log.push("Stoppet tidligt (tidsgrænse); resten tages i nat"); break; }
       const ean = row.ean;
 
       // 2. Tjek om den allerede eksisterer
@@ -189,14 +222,11 @@ Deno.serve(async (req) => {
       await sleep(DELAY_MS);
       let product: any = null;
       try {
-        const res = await fetch(
-          `${OFF_API}/${ean}.json?fields=${OFF_FIELDS}`,
-          { headers: { "User-Agent": "EatSafe/1.0 (hej@eatsafe.dk)" } }
-        );
-        const data = await res.json();
-        if (data.status === 1) product = data.product;
-      } catch {
+        product = await fetchOff(ean);
+      } catch (e: any) {
+        // Midlertidig fejl hos OFF (netværk, 5xx, ikke-JSON): kode forbliver utjekket og tages igen i nat.
         stats.error++;
+        log.push(`OFF-fejl ved ${ean}: ${e?.message ?? e}`);
         continue;
       }
 
@@ -258,8 +288,10 @@ Deno.serve(async (req) => {
       }
     }
   } catch (e: any) {
+    await logRun("mislykket", { fejl: fejlkode(e) });
     return Response.json({ ok: false, error: e.message, stats }, { status: 500 });
   }
 
+  await logRun("ok");
   return Response.json({ ok: true, stats, log });
 });

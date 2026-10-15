@@ -1,14 +1,17 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 import { normalizeNutrition } from "../_shared/nutrition.js";
 import { reportLimitHit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor, getCaller } from "../_shared/http.ts";
+import { PRODUCT_IMAGES_BUCKET, SUBMISSION_IMAGES_BUCKET, privateImagePath, submissionImageRef } from "../_shared/productImages.js";
 
 const corsHeaders = corsFor("GET, POST, PATCH, DELETE, OPTIONS");
 
 const MAX_EXTRA_IMAGES = 6;
 const MAX_IMAGE_BASE64_LENGTH = 8_000_000; // samme loft som ocr-funktionen
 
-// ── Upload base64 billede til Supabase Storage ─────────────────────────────
+// ── Upload base64 billede til den private bøtte (kun admin og serveren kan se det) ──
+// Returnerer en henvisning ("storage:submission-images/<sti>"), ikke en offentlig URL.
 async function uploadImageToStorage(
   // deno-lint-ignore no-explicit-any
   supabase: any,
@@ -31,7 +34,7 @@ async function uploadImageToStorage(
 
     const path = `${folder}/${filename}.${ext}`;
     const { error } = await supabase.storage
-      .from("product-images")
+      .from(SUBMISSION_IMAGES_BUCKET)
       .upload(path, bytes, { contentType, upsert: true });
 
     if (error) {
@@ -39,10 +42,31 @@ async function uploadImageToStorage(
       return null;
     }
 
-    const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-    return data.publicUrl;
+    return submissionImageRef(path);
   } catch (e) {
     console.error("uploadImageToStorage fejl:", e);
+    return null;
+  }
+}
+
+// ── Gør et indsendt produktbillede offentligt ved godkendelse ──────────────
+// Et privat billede kopieres til den offentlige bøtte product-images, og produktet får den offentlige URL.
+// Andre adresser (ældre offentlige URL'er, OFF) bruges som de er. Fejler kopieringen, oprettes produktet uden billede.
+// deno-lint-ignore no-explicit-any
+async function publishSubmissionImage(supabase: any, url: string | null): Promise<string | null> {
+  if (!url) return null;
+  const path = privateImagePath(url);
+  if (!path) return url;
+  try {
+    const { data: blob, error: dlError } = await supabase.storage.from(SUBMISSION_IMAGES_BUCKET).download(path);
+    if (dlError || !blob) throw new Error(dlError?.message ?? "intet billede");
+    const { error: upError } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: true });
+    if (upError) throw new Error(upError.message);
+    return supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
+  } catch (e) {
+    console.error("publishSubmissionImage fejl:", (e as Error).message);
     return null;
   }
 }
@@ -92,6 +116,7 @@ Deno.serve(async (req) => {
   const parts = url.pathname.split("/").filter(Boolean);
   const identifier = parts[parts.length - 1];
   const method = req.method;
+  let reviewing: { status?: string } | null = null; // sat under godkend/afvis (adminloggen ved fejl)
 
   try {
 
@@ -209,7 +234,7 @@ Deno.serve(async (req) => {
         .insert({
           ean,
           submitted_by,
-          raw_label_image: labelImageUrl,   // URL i stedet for base64
+          raw_label_image: labelImageUrl,   // henvisning til den private bøtte i stedet for base64
           ocr_raw_text: ocr_raw_text ?? null,
           ai_parsed_data: parsedData,
           user_confirmed: user_confirmed ?? false,
@@ -236,10 +261,13 @@ Deno.serve(async (req) => {
 
     // ── GET — hent alle submissions (admin) ────────────────────────────────
     if (method === "GET" && identifier === "submissions") {
-      if (!(await callerIsAdmin())) return new Response(
-        JSON.stringify({ error: "Kun admins kan se alle indsendelser" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (!(await callerIsAdmin())) {
+        await logAccessDenied(supabase, caller.id, "submissions");
+        return new Response(
+          JSON.stringify({ error: "Kun admins kan se alle indsendelser" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const status = url.searchParams.get("status") ?? "pending";
       const { data: submissions, error } = await supabase
         .from("submissions").select("*").eq("status", status)
@@ -262,12 +290,16 @@ Deno.serve(async (req) => {
 
     // ── PATCH — godkend eller afvis (admin) ────────────────────────────────
     if (method === "PATCH" && identifier !== "submissions") {
-      if (!(await callerIsAdmin())) return new Response(
-        JSON.stringify({ error: "Kun admins kan godkende eller afvise indsendelser" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (!(await callerIsAdmin())) {
+        await logAccessDenied(supabase, caller.id, "submissions");
+        return new Response(
+          JSON.stringify({ error: "Kun admins kan godkende eller afvise indsendelser" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const body = await req.json();
       const { status, review_note } = body;
+      reviewing = { status };
       // Revisionsspor: den der godkender er altid kalderen, aldrig en værdi fra klienten.
       const reviewed_by = caller.id;
 
@@ -335,7 +367,10 @@ Deno.serve(async (req) => {
         if (body.name?.trim()) updateFields.name = body.name.trim();
         if (body.brand?.trim()) updateFields.brand = body.brand.trim();
         if (body.ingredients_text?.trim()) updateFields.ingredients_text = body.ingredients_text.trim();
-        if (body.image_url) updateFields.image_url = body.image_url;
+        if (body.image_url) {
+          const publicUrl = await publishSubmissionImage(supabase, body.image_url);
+          if (publicUrl) updateFields.image_url = publicUrl;
+        }
         if (body.allergen_flags && Object.keys(body.allergen_flags).length > 0) updateFields.allergen_flags = body.allergen_flags;
 
         // Ingredienslisten ændres uden en ny allergen-analyse ved siden af —
@@ -393,7 +428,9 @@ Deno.serve(async (req) => {
         const name              = body.name             ?? parsed.name             ?? "Ukendt produkt";
         const brand             = body.brand            ?? parsed.brand            ?? null;
         const category          = body.category         ?? parsed.category         ?? null;
-        const image_url         = body.image_url        ?? parsed.product_image_url ?? submission.raw_label_image ?? null;
+        // Kun produktbilledet vises offentligt; fotoet af ingredienslisten forbliver privat (ældre offentlige etiketbilleder bruges som før).
+        const legacyLabel       = privateImagePath(submission.raw_label_image) ? null : submission.raw_label_image;
+        const image_url         = await publishSubmissionImage(supabase, body.image_url ?? parsed.product_image_url ?? legacyLabel ?? null);
         const ingredients_text  = body.ingredients_text ?? submission.ocr_raw_text  ?? null;
         const finalFlags        = Object.keys(body.allergen_flags ?? {}).length > 0 ? body.allergen_flags : allergenFlags;
         // Admin kan have rettet tallene under gennemsyn (body.nutrition); ellers brugerens egne. Normaliseres til det format, resultatsiden læser.
@@ -454,6 +491,10 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "Ikke fundet" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
+    if (reviewing) {
+      await logAdminEvent(supabase, caller.id, reviewing.status === "approved" ? "indsendelse_godkendt" : "indsendelse_afvist",
+        "submissions", identifier, { fejl: fejlkode(err) }, "mislykket");
+    }
     return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

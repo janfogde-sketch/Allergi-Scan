@@ -41,7 +41,6 @@ export default function ErrorsSection({ errors, loading, filter, setFilter, load
             </button>
           ))}
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={load}>Opdater</button>
       </div>
       <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
         Fejl, som appen selv har registreret hos brugerne. Samme fejl inden for en time tælles sammen i én række. En løst fejl åbnes igen, hvis den sker igen.

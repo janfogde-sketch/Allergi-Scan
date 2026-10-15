@@ -180,7 +180,6 @@ export default function RecallsSection({ recalls, loading, load, searchProducts,
             </button>
           ))}
         </div>
-        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => load()}>Opdater</button>
       </div>
       <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
         Tilbagekaldelser fra Fødevarestyrelsen hentes dagligt. Dem, hvor siden ikke har en gyldig stregkode, venter her, til du knytter produkter. Først da sendes en besked til de berørte brugere.

@@ -9,6 +9,7 @@ import {
   submissionAllergenFlags, allergenSummary, allergenLine, nameAllergenMismatch,
   SUBMISSION_STATUS_LABELS, SUBMISSION_ACTION_LABELS, submissionTypeLabel,
 } from "../submissionLogic.js";
+import { privateImagePath, SUBMISSION_IMAGES_BUCKET } from "../../../supabase/functions/_shared/productImages.js";
 
 const fmtDate = (d) => new Intl.DateTimeFormat("da-DK", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", year: "numeric" }).format(new Date(d));
 const productName = (s) => s.ai_parsed_data?.name || s.product_name || "Ukendt produkt";
@@ -33,6 +34,37 @@ function useStatusCounts(accessToken, refreshKey) {
     return () => { alive = false; };
   }, [accessToken, refreshKey]);
   return counts;
+}
+
+// Indsendte fotos ligger i den private bøtte submission-images; admin får et link, der udløber efter en time.
+// Ældre indsendelser har en almindelig offentlig URL, som vises direkte. Bruges med key={url}, så et nyt billede starter forfra.
+function SubmissionImage({ label, url, accessToken }) {
+  const path = privateImagePath(url);
+  const [src, setSrc] = useState(path ? null : url);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!path) return undefined;
+    let alive = true;
+    apiCall(`${SUPABASE_URL}/storage/v1/object/sign/${SUBMISSION_IMAGES_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`, {
+      method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify({ expiresIn: 3600 }),
+    }).then((data) => {
+      const signed = data?.signedURL || data?.signedUrl;
+      if (!signed) throw new Error("Intet link");
+      if (alive) setSrc(signed.startsWith("http") ? signed : `${SUPABASE_URL}/storage/v1${signed}`);
+    }).catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [path, accessToken]);
+  return (
+    <div className="admin-field">
+      <label className="admin-label">{label}</label>
+      {failed ? <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Billedet kunne ikke hentes.</div>
+        : src ? (
+          <a href={src} target="_blank" rel="noreferrer">
+            <img src={src} alt={label} style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 8, background: "var(--surface2)" }} />
+          </a>
+        ) : <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Henter billede…</div>}
+    </div>
+  );
 }
 
 function AllergenText({ s }) {
@@ -281,12 +313,7 @@ export default function SubmissionsSection({
               ...(openSubmission.ai_parsed_data?.images || []).map(img => ({ label: img.kind === "nutrition" ? "Foto af næringstabellen" : "Foto indsendt af brugeren", url: img.url })),
               openSubmission.ai_parsed_data?.product_image_url && { label: "Foto af produktet", url: openSubmission.ai_parsed_data.product_image_url },
             ].filter(Boolean).map((img, i) => (
-              <div className="admin-field" key={i}>
-                <label className="admin-label">{img.label}</label>
-                <a href={img.url} target="_blank" rel="noreferrer">
-                  <img src={img.url} alt={img.label} style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 8, background: "var(--surface2)" }} />
-                </a>
-              </div>
+              <SubmissionImage key={`${i}-${img.url}`} label={img.label} url={img.url} accessToken={accessToken} />
             ))}
 
             {editingSubmission.nutrition && openSubmission.type !== "edit" && (

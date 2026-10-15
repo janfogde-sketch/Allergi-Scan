@@ -33,10 +33,20 @@ const ACTION_TEMPLATE: Record<string, string> = {
 /** Typer, der bruger et bekræftelseslink (reauthentication er kun en kode). */
 const NEEDS_LINK = new Set(["signup", "invite", "magiclink", "email", "recovery", "email_change"]);
 
-export function confirmationUrl(supabaseUrl: string, tokenHash: string, type: string, redirectTo?: string): string {
-  const base = supabaseUrl.replace(/\/+$/, "");
-  const q = `token=${encodeURIComponent(tokenHash)}&type=${encodeURIComponent(type)}`;
-  return `${base}/auth/v1/verify?${q}${redirectTo ? `&redirect_to=${encodeURIComponent(redirectTo)}` : ""}`;
+/** Appens adresser, som et mail-link må føre til. Login startet andre steder (fx iPhone-appen) lander på www. */
+const APP_ORIGINS = ["https://www.eatsafe.dk", "https://dev.eatsafe.dk"];
+
+/**
+ * Linket i mailen (15. okt. 2026, sikkerhedsfund S4): fører direkte til appens "Fortsæt som"-side, som først bruger linket,
+ * når brugeren har set kontoens e-mail og trykket Fortsæt (src/authLink.js). Før gik linket til Supabases /verify, som
+ * loggede ind med det samme og lagde nøglerne i adressen; det kunne bruges til at logge en anden ind på en fremmed konto,
+ * og mailprogrammers virustjek kunne bruge engangslinket op.
+ */
+export function confirmationUrl(tokenHash: string, type: string, email: string, redirectTo?: string): string {
+  let origin = APP_ORIGINS[0];
+  try { const o = new URL(redirectTo ?? "").origin; if (APP_ORIGINS.includes(o)) origin = o; } catch { /* ugyldig: www */ }
+  const q = new URLSearchParams({ token_hash: tokenHash, type, email });
+  return `${origin}/?${q.toString()}`;
 }
 
 /** Erstatter Go-skabelon-pladsholdere ({{ .Navn }}) med HTML-escapede værdier; ukendte bliver tomme. */
@@ -64,7 +74,7 @@ function make(template: string, to: string, vars: Record<string, string | undefi
  * og til den nye (token_new + token_hash) — feltnavnene er byttet om af hensyn til bagudkompatibilitet (Supabase-dokumentationen).
  * extra.ReportURL (kun recovery): signeret "Det var ikke mig"-link; uden det udelades linket i mailen.
  */
-export function buildAuthMails(payload: AuthHookPayload, supabaseUrl: string, extra: { ReportURL?: string } = {}): AuthMail[] {
+export function buildAuthMails(payload: AuthHookPayload, _supabaseUrl: string, extra: { ReportURL?: string } = {}): AuthMail[] {
   const user = payload?.user;
   const data = payload?.email_data;
   if (!user || !data) throw new AuthMailError("Ugyldig nyttelast");
@@ -73,9 +83,9 @@ export function buildAuthMails(payload: AuthHookPayload, supabaseUrl: string, ex
   if (!template) return []; // fx notifikationer: ingen skabelon, intet at sende
   if (!isEmail(user.email)) throw new AuthMailError("Mangler modtager");
 
-  const link = (hash?: string) => {
+  const link = (hash: string | undefined, to: string) => {
     if (!hash) throw new AuthMailError("Mangler token_hash");
-    return confirmationUrl(supabaseUrl, hash, type, data.redirect_to);
+    return confirmationUrl(hash, type, to, data.redirect_to);
   };
   const base = { Email: user.email, NewEmail: user.new_email ?? "", SiteURL: data.site_url ?? "" };
 
@@ -83,16 +93,16 @@ export function buildAuthMails(payload: AuthHookPayload, supabaseUrl: string, ex
     if (!isEmail(user.new_email)) throw new AuthMailError("Mangler ny e-mailadresse");
     if (data.token_hash_new && data.token_new) {
       return [
-        make(template, user.email, { ...base, Token: data.token, ConfirmationURL: link(data.token_hash_new) }),
-        make(template, user.new_email, { ...base, Token: data.token_new, ConfirmationURL: link(data.token_hash) }),
+        make(template, user.email, { ...base, Token: data.token, ConfirmationURL: link(data.token_hash_new, user.email) }),
+        make(template, user.new_email, { ...base, Token: data.token_new, ConfirmationURL: link(data.token_hash, user.new_email) }),
       ];
     }
     // Uden "Secure email change" sendes én mail til den nye adresse
     const hash = data.token_hash || data.token_hash_new;
-    return [make(template, user.new_email, { ...base, Token: data.token || data.token_new, ConfirmationURL: link(hash) })];
+    return [make(template, user.new_email, { ...base, Token: data.token || data.token_new, ConfirmationURL: link(hash, user.new_email) })];
   }
 
-  const vars = { ...base, Token: data.token, ConfirmationURL: NEEDS_LINK.has(type) ? link(data.token_hash) : "", ReportURL: type === "recovery" ? extra.ReportURL : undefined };
+  const vars = { ...base, Token: data.token, ConfirmationURL: NEEDS_LINK.has(type) ? link(data.token_hash, user.email) : "", ReportURL: type === "recovery" ? extra.ReportURL : undefined };
   if (type === "reauthentication" && !data.token) throw new AuthMailError("Mangler kode");
   return [make(template, user.email, vars)];
 }

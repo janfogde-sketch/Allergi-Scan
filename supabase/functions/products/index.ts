@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { logAdminEvent, logAccessDenied, fejlkode, feltAendringer } from "../_shared/adminAudit.ts";
 import { withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
 import { eanVariants } from "../_shared/recallParser.js";
@@ -320,6 +321,7 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    let adminId = ""; // sættes for admin-skrivninger (adminloggen, plan-aktivitetslog del B)
     if (method === "POST" || method === "PATCH" || method === "DELETE") {
       // Skriveoperationer kræver admin — verificér via en klient bundet til
       // den kaldende brugers eget Authorization-token (samme mønster som
@@ -342,10 +344,14 @@ Deno.serve(async (req) => {
       );
       const { data: callerProfile } = await supabase
         .from("users").select("role").eq("id", caller.id).single();
-      if (callerProfile?.role !== "admin") return new Response(
-        JSON.stringify({ error: "Adgang nægtet — kun admin" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (callerProfile?.role !== "admin") {
+        await logAccessDenied(supabase, caller.id, "products");
+        return new Response(
+          JSON.stringify({ error: "Adgang nægtet — kun admin" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      adminId = caller.id;
     }
 
     if (method === "POST") {
@@ -357,8 +363,12 @@ Deno.serve(async (req) => {
       const { data: product, error } = await supabase.from("products")
         .insert({ ean, name, brand, category, image_url, label_image_url, source, country: "DK" })
         .select().single();
-      if (error) return new Response(JSON.stringify({ error: error.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (error) {
+        await logAdminEvent(supabase, adminId, "produkt_oprettet", "products", null, { ean, fejl: fejlkode(error) }, "mislykket");
+        return new Response(JSON.stringify({ error: error.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      await logAdminEvent(supabase, adminId, "produkt_oprettet", "products", String(product.id), { navn: product.name, ean: product.ean });
 
       return new Response(JSON.stringify({ success: true, product }),
         { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -366,18 +376,33 @@ Deno.serve(async (req) => {
 
     if (method === "PATCH" && identifier) {
       const body = await req.json();
+      const { data: before } = await supabase.from("products").select("*").eq("id", identifier).maybeSingle();
       const { data: product, error } = await supabase.from("products")
         .update({ ...body, updated_at: new Date() }).eq("id", identifier).select().single();
-      if (error) return new Response(JSON.stringify({ error: error.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (error) {
+        await logAdminEvent(supabase, adminId, "produkt_rettet", "products", identifier,
+          { navn: before?.name ?? null, ean: before?.ean ?? null, fejl: fejlkode(error) }, "mislykket");
+        return new Response(JSON.stringify({ error: error.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const changes = feltAendringer(before, product, ["updated_at", "reparsed_at"]);
+      if (changes.felter.length) {
+        await logAdminEvent(supabase, adminId, "produkt_rettet", "products", identifier, { ...changes, navn: product.name, ean: product.ean });
+      }
       return new Response(JSON.stringify({ success: true, product }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (method === "DELETE" && identifier) {
+      const { data: before } = await supabase.from("products").select("name, ean").eq("id", identifier).maybeSingle();
       const { error } = await supabase.from("products").delete().eq("id", identifier);
-      if (error) return new Response(JSON.stringify({ error: error.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const who = { navn: before?.name ?? null, ean: before?.ean ?? null };
+      if (error) {
+        await logAdminEvent(supabase, adminId, "produkt_slettet", "products", identifier, { ...who, fejl: fejlkode(error) }, "mislykket");
+        return new Response(JSON.stringify({ error: error.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (before) await logAdminEvent(supabase, adminId, "produkt_slettet", "products", identifier, who);
       return new Response(JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useIsMobile } from "./useIsMobile.js";
 import { watchTableCells } from "./tableCards.js";
 import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
+import RefreshButton from "./RefreshButton.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
 import { NAV_GROUPS, NAV_ITEMS, BADGE_INFO, groupOfSection, formatBadge, worstTone } from "./navLogic.js";
 
@@ -15,7 +16,7 @@ function NavBadge({ count, tone }) {
   return <span className={`badge ${tone}`} aria-hidden="true">{text}</span>;
 }
 
-export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, todoOverdue, pendingRecalls, topbarExtra, children }) {
+export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, todoOverdue, pendingRecalls, topbarExtra, onRefresh, refreshing = false, children }) {
   const counts = { pendingSubmissions, openTickets, todoAttention, pendingRecalls };
   const toneOf = (key) => (key === "todoAttention" && Number(todoOverdue) > 0 ? "crit" : BADGE_INFO[key].tone);
   const [navOpen, setNavOpen] = useState(false);
@@ -150,7 +151,10 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
           </button>
           <h1>{NAV_ITEMS.find((i) => i.id === section)?.label || "Admin"}</h1>
-          {topbarExtra}
+          <div className="admin-topbar-actions">
+            {onRefresh && <RefreshButton variant="header" loading={refreshing} onClick={onRefresh} />}
+            {topbarExtra}
+          </div>
         </div>
         <div className="admin-content" ref={contentRef}>{children}</div>
       </div>
