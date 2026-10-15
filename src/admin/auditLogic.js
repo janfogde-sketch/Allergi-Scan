@@ -143,38 +143,41 @@ export function auditTargetText(row, names) {
 export const AUDIT_TYPES = {
   created: { label: "Oprettet", pill: "admin-pill-neutral", icon: "plus" },
   changed: { label: "Ændret", pill: "admin-pill-neutral", icon: "edit" },
-  processed: { label: "Behandlet", pill: "admin-pill-neutral", icon: "check" },
   deleted: { label: "Slettet", pill: "admin-pill-red", icon: "trash" },
+  approved: { label: "Godkendt", pill: "admin-pill-neutral", icon: "check" },
+  rejected: { label: "Afvist", pill: "admin-pill-neutral", icon: "block" },
   exported: { label: "Eksporteret", pill: "admin-pill-neutral", icon: "download" },
-  failed: { label: "Mislykket/afvist", pill: "admin-pill-red", icon: "warning" },
+  run: { label: "Kørsel", pill: "admin-pill-neutral", icon: "refresh" },
+  security: { label: "Sikkerhedshændelse", pill: "admin-pill-neutral", icon: "shield" },
+  failed: { label: "Mislykket / nægtet", pill: "admin-pill-red", icon: "warning" },
 };
 
-/** @type {Record<string, { type: string, category: string, verb: string }>} */
+/** @type {Record<string, { type: string, category: string, verb: string, by: string }>} */
 const ACTION_META = {
-  rolle_aendret: { type: "changed", category: "Sikkerhed", verb: "ændrede rollen for" },
-  bruger_slettet: { type: "deleted", category: "Brugere", verb: "slettede" },
-  ticketstatus_aendret: { type: "changed", category: "Tickets", verb: "ændrede status på" },
-  indsendelse_behandlet: { type: "processed", category: "Indsendelser", verb: "behandlede" },
-  indsendelse_godkendt: { type: "processed", category: "Indsendelser", verb: "godkendte" },
-  indsendelse_afvist: { type: "processed", category: "Indsendelser", verb: "afviste" },
-  produkt_slettet: { type: "deleted", category: "Produkter", verb: "slettede" },
-  produkt_rettet: { type: "changed", category: "Produkter", verb: "rettede" },
-  vidensindgang_slettet: { type: "deleted", category: "Leksikon", verb: "slettede" },
-  brugerprofil_aendret: { type: "changed", category: "Allergier og profiler", verb: "ændrede profilen for" },
-  brugerallergier_aendret: { type: "changed", category: "Allergier og profiler", verb: "ændrede allergierne for" },
-  familiemedlem_slettet: { type: "deleted", category: "Familie", verb: "slettede" },
-  invitation_annulleret: { type: "deleted", category: "Familie", verb: "annullerede" },
-  pushtekst_aendret: { type: "changed", category: "Push-tekster", verb: "ændrede" },
-  csv_eksport: { type: "exported", category: "Eksport", verb: "eksporterede" },
-  produkt_oprettet: { type: "created", category: "Produkter", verb: "oprettede" },
-  vidensindgang_oprettet: { type: "created", category: "Leksikon", verb: "oprettede" },
-  vidensindgang_rettet: { type: "changed", category: "Leksikon", verb: "rettede" },
-  allergener_gemt: { type: "changed", category: "Produkter", verb: "gemte allergener på" },
-  genanalyse_koert: { type: "processed", category: "Kørsler", verb: "kørte genanalyse via" },
-  import_koert: { type: "processed", category: "Kørsler", verb: "kørte import via" },
-  testpush_sendt: { type: "processed", category: "Push-tekster", verb: "sendte en test-push via" },
-  adgang_naegtet: { type: "processed", category: "Sikkerhed", verb: "blev nægtet adgang til" },
-  sikkerhedsmelding: { type: "processed", category: "Sikkerhed", verb: "meldte “Det var ikke mig” for" },
+  rolle_aendret: { type: "changed", category: "Sikkerhed", verb: "ændrede rollen for", by: "Ændret af" },
+  bruger_slettet: { type: "deleted", category: "Brugere", verb: "slettede", by: "Slettet af" },
+  ticketstatus_aendret: { type: "changed", category: "Tickets", verb: "ændrede status på", by: "Ændret af" },
+  indsendelse_behandlet: { type: "approved", category: "Indsendelser", verb: "behandlede", by: "Behandlet af" },
+  indsendelse_godkendt: { type: "approved", category: "Indsendelser", verb: "godkendte", by: "Godkendt af" },
+  indsendelse_afvist: { type: "rejected", category: "Indsendelser", verb: "afviste", by: "Afvist af" },
+  produkt_slettet: { type: "deleted", category: "Produkter", verb: "slettede", by: "Slettet af" },
+  produkt_rettet: { type: "changed", category: "Produkter", verb: "rettede", by: "Rettet af" },
+  vidensindgang_slettet: { type: "deleted", category: "Leksikon", verb: "slettede", by: "Slettet af" },
+  brugerprofil_aendret: { type: "changed", category: "Allergier og profiler", verb: "ændrede profilen for", by: "Ændret af" },
+  brugerallergier_aendret: { type: "changed", category: "Allergier og profiler", verb: "ændrede allergierne for", by: "Ændret af" },
+  familiemedlem_slettet: { type: "deleted", category: "Familie", verb: "slettede", by: "Slettet af" },
+  invitation_annulleret: { type: "deleted", category: "Familie", verb: "annullerede", by: "Annulleret af" },
+  pushtekst_aendret: { type: "changed", category: "Push-tekster", verb: "ændrede", by: "Ændret af" },
+  csv_eksport: { type: "exported", category: "Eksport", verb: "eksporterede", by: "Eksporteret af" },
+  produkt_oprettet: { type: "created", category: "Produkter", verb: "oprettede", by: "Oprettet af" },
+  vidensindgang_oprettet: { type: "created", category: "Leksikon", verb: "oprettede", by: "Oprettet af" },
+  vidensindgang_rettet: { type: "changed", category: "Leksikon", verb: "rettede", by: "Rettet af" },
+  allergener_gemt: { type: "changed", category: "Produkter", verb: "gemte allergener på", by: "Gemt af" },
+  genanalyse_koert: { type: "run", category: "Kørsler", verb: "kørte genanalyse via", by: "Kørt af" },
+  import_koert: { type: "run", category: "Kørsler", verb: "kørte import via", by: "Kørt af" },
+  testpush_sendt: { type: "run", category: "Push-tekster", verb: "sendte en test-push via", by: "Sendt af" },
+  adgang_naegtet: { type: "security", category: "Sikkerhed", verb: "blev nægtet adgang til", by: "Forsøgt af" },
+  sikkerhedsmelding: { type: "security", category: "Sikkerhed", verb: "meldte “Det var ikke mig” for", by: "Meldt af" },
 };
 
 const ARTICLES = {
@@ -184,7 +187,7 @@ const ARTICLES = {
 };
 
 export const AUDIT_CATEGORIES = [...new Set(Object.values(ACTION_META).map((m) => m.category))];
-export const AUDIT_PERIODS = { all: "Hele perioden", day: "Seneste 24 timer", week: "Seneste 7 dage", month: "Seneste 30 dage" };
+export const AUDIT_PERIODS = { all: "Hele perioden", today: "I dag", week: "Seneste 7 dage", month: "Seneste 30 dage", custom: "Brugerdefineret periode" };
 
 /** Typen til mærket; en mislykket eller afvist række vises altid som "Mislykket/afvist". @param {string} action @param {string|null} [outcome] */
 export const auditActionType = (action, outcome) => (outcome && outcome !== "ok" ? "failed" : (ACTION_META[action] || { type: "changed" }).type);
@@ -213,11 +216,27 @@ export const cleanSearch = (/** @type {string} */ q) => String(q || "").replace(
 
 /**
  * Forespørgslen til adminloggen (PostgREST). Nøgle-paginering på (created_at, id): ingen huller eller dubletter, selv om nye rækker kommer til.
- * @param {{ type?: string, category?: string, period?: string, q?: string, cursor?: { created_at: string, id: number } | null, limit?: number,
+ * @param {{ type?: string, category?: string, period?: string, from?: string, to?: string, q?: string, cursor?: { created_at: string, id: number } | null, limit?: number,
  *   matchIds?: string[] }} o
  * @param {Date} [now]
  * @returns {string | null} null, når filtrene udelukker alt (fx type og kategori uden fælles handling)
  */
+/** @param {any} v */
+const isDateKey = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+/** Dagens dato (YYYY-MM-DD) i dansk tid. @param {Date} d */
+const copenhagenDateKey = (d) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Copenhagen" }).format(d);
+/** Midnat i dansk tid ved starten af en dato (plus et antal dage). @param {string} key @param {number} [plusDays] */
+function copenhagenDayStart(key, plusDays = 0) {
+  const base = new Date(`${key}T12:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + plusDays);
+  const day = base.toISOString().slice(0, 10);
+  for (const off of ["+02:00", "+01:00"]) {
+    const t = new Date(`${day}T00:00:00${off}`);
+    if (copenhagenDateKey(t) === day && new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Copenhagen", hour: "2-digit", hourCycle: "h23" }).format(t) === "00") return t;
+  }
+  return new Date(`${day}T00:00:00Z`);
+}
+
 export function buildAuditQuery(o, now = new Date()) {
   const { type = "", category = "", period = "all", q = "", cursor = null, limit = 50, matchIds = [] } = o;
   const parts = ["select=id,created_at,admin_id,action,target_table,target_id,details,outcome", "order=created_at.desc,id.desc", `limit=${limit}`];
@@ -240,14 +259,48 @@ export function buildAuditQuery(o, now = new Date()) {
   if (ors.length) parts.push(`and=(${ors.join(",")})`);
   if (actions) parts.push(`action=in.(${actions.join(",")})`);
   if (type === "failed") parts.push("outcome=neq.ok");
-  const since = { day: 1, week: 7, month: 30 }[/** @type {"day"|"week"|"month"} */ (period)];
+  const since = { week: 7, month: 30 }[/** @type {"week"|"month"} */ (period)];
   if (since) parts.push(`created_at=gte.${encodeURIComponent(new Date(now.getTime() - since * 86400_000).toISOString())}`);
+  if (period === "today") parts.push(`created_at=gte.${encodeURIComponent(copenhagenDayStart(copenhagenDateKey(now)).toISOString())}`);
+  if (period === "custom") {
+    if (isDateKey(o.from)) parts.push(`created_at=gte.${encodeURIComponent(copenhagenDayStart(o.from).toISOString())}`);
+    if (isDateKey(o.to)) parts.push(`created_at=lt.${encodeURIComponent(copenhagenDayStart(o.to, 1).toISOString())}`); // til og med den valgte dag
+  }
   return parts.join("&");
 }
 
 /** Antal aktive filtre (ud over søgeordet). */
 export const auditFilterCount = (/** @type {{ type?: string, category?: string, period?: string }} */ f) =>
   [f.type, f.category, f.period && f.period !== "all" ? f.period : ""].filter(Boolean).length;
+
+/** Kategorien, den korte handlingslinje ("Afvist af jafo"), målet og datoen til et aktivitetskort. */
+export function auditCardParts(row, names) {
+  const meta = ACTION_META[row.action || ""];
+  const parts = auditTargetParts(row, names || {});
+  return {
+    category: meta ? meta.category : "Andet",
+    title: auditActionLabel(row.action),
+    by: `${meta ? meta.by : "Udført af"} ${auditActorText(row, names && names.users)}`,
+    target: parts.what ? `${parts.label}: ${parts.what}` : parts.label,
+    date: fmtAuditDateTime(row.created_at),
+  };
+}
+
+/** Begrundelsen, hvis loggen har en (kun hvad der faktisk er registreret). @param {{ details?: any }} row */
+export const auditReason = (row) => (row && row.details && typeof row.details.begrundelse === "string" && row.details.begrundelse.trim()) || "";
+
+/** Tekniske oplysninger til den foldbare sektion: kun felter, der findes. */
+export function auditTechRows(row) {
+  const d = row.details || {};
+  return [
+    ["Log-ID", row.id != null ? String(row.id) : ""],
+    ["Bruger-ID", row.admin_id || ""],
+    ["Reference-ID", row.target_id || ""],
+    ["Måltabel", row.target_table || ""],
+    ["Handlingskode", row.action || ""],
+    ["Funktion", typeof d.funktion === "string" ? d.funktion : ""],
+  ].filter(([, v]) => v);
+}
 
 /** Målet delt i type og navn: { label: "Produkt", what: "Havredrik (570)" }. */
 export function auditTargetParts(row, names) {

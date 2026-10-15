@@ -16,7 +16,7 @@ function NavBadge({ count, tone }) {
   return <span className={`badge ${tone}`} aria-hidden="true">{text}</span>;
 }
 
-export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, todoOverdue, pendingRecalls, topbarExtra, onRefresh, refreshing = false, children }) {
+export default function AdminLayout({ section, setSection, userEmail, userId, accessToken, logout, pendingSubmissions, openTickets, todoAttention, todoOverdue, pendingRecalls, topbarExtra, onRefresh, refreshing = false, refreshLabel, children }) {
   const counts = { pendingSubmissions, openTickets, todoAttention, pendingRecalls };
   const toneOf = (key) => (key === "todoAttention" && Number(todoOverdue) > 0 ? "crit" : BADGE_INFO[key].tone);
   const [navOpen, setNavOpen] = useState(false);
@@ -152,7 +152,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
           </button>
           <h1>{NAV_ITEMS.find((i) => i.id === section)?.label || "Admin"}</h1>
           <div className="admin-topbar-actions">
-            {onRefresh && <RefreshButton variant="header" loading={refreshing} onClick={onRefresh} />}
+            {onRefresh && <RefreshButton variant="header" label={refreshLabel} loading={refreshing} onClick={onRefresh} />}
             {topbarExtra}
           </div>
         </div>

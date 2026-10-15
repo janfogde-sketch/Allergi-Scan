@@ -131,3 +131,36 @@ describe("før/efter, oprettelser og afviste forsøg", () => {
     expect(changeText({ details: { funktion: "products", fejl: "db_fejl" } })).toBe("Funktion: products · Fejl: db_fejl");
   });
 });
+
+import { buildAuditQuery as bq, auditCardParts, auditReason, auditTechRows, AUDIT_TYPES } from "./auditLogic.js";
+
+describe("periode, kort og tekniske oplysninger", () => {
+  const NOW = new Date("2026-10-15T10:00:00Z");
+  it("'I dag' starter ved midnat i dansk tid", () => {
+    expect(bq({ period: "today" }, NOW)).toContain("created_at=gte.2026-10-14T22%3A00%3A00.000Z");
+  });
+  it("en brugerdefineret periode er fra starten af første dag til og med sidste dag (dansk tid)", () => {
+    const q = bq({ period: "custom", from: "2026-10-01", to: "2026-10-10" }, NOW);
+    expect(q).toContain("created_at=gte.2026-09-30T22%3A00%3A00.000Z");
+    expect(q).toContain("created_at=lt.2026-10-10T22%3A00%3A00.000Z");
+    expect(bq({ period: "custom", from: "", to: "" }, NOW)).not.toContain("created_at=");
+  });
+  it("vinter- og sommertid håndteres (29. okt. er sommertid, 26. okt. skifter)", () => {
+    expect(bq({ period: "custom", from: "2026-11-02" }, NOW)).toContain("created_at=gte.2026-11-01T23%3A00%3A00.000Z");
+  });
+  it("afvist er en egen type, og 'Behandlet' findes ikke mere", () => {
+    expect(auditActionType("indsendelse_afvist")).toBe("rejected");
+    expect(auditActionType("indsendelse_godkendt")).toBe("approved");
+    expect(auditActionType("adgang_naegtet", "afvist")).toBe("failed");
+    expect(Object.values(AUDIT_TYPES).map((t) => t.label)).not.toContain("Behandlet");
+  });
+  it("kortets dele: kategori, hvem, element og dato", () => {
+    const c = auditCardParts({ action: "indsendelse_afvist", admin_id: "a", target_table: "submissions", details: { ean: "570" }, created_at: "2026-10-15T14:36:00Z" }, { users: { a: { name: "jafo" } } });
+    expect(c).toEqual({ category: "Indsendelser", title: "Indsendelse afvist", by: "Afvist af jafo", target: "Indsendelse: EAN 570", date: "15. oktober 2026 · 16.36" });
+  });
+  it("begrundelse og tekniske oplysninger vises kun, når de findes", () => {
+    expect(auditReason({ details: { begrundelse: " Findes allerede " } })).toBe("Findes allerede");
+    expect(auditReason({ details: {} })).toBe("");
+    expect(auditTechRows({ id: 5, admin_id: "u1", target_id: null, target_table: "products", action: "produkt_rettet", details: null }).map((x) => x[0])).toEqual(["Log-ID", "Bruger-ID", "Måltabel", "Handlingskode"]);
+  });
+});

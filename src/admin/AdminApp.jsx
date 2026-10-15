@@ -207,7 +207,7 @@ export default function AdminApp() {
       todoAttention={todos.loaded ? myOpenCount(todos.todos, userId) : undefined}
       todoOverdue={todos.loaded ? todos.todos.filter((t) => isOverdue(t) && t.assignee_id === userId).length : undefined}
       pendingRecalls={needsReviewCount(recalls.recalls)}
-      onRefresh={REFRESHERS[section] ? refreshCurrent : undefined} refreshing={refreshing}
+      onRefresh={REFRESHERS[section] ? refreshCurrent : undefined} refreshing={refreshing} refreshLabel={section === "audit" ? "Opdater aktivitetslog" : undefined}
       topbarExtra={
         <GlobalSearchBox
           globalSearch={admin.globalSearch} setGlobalSearch={admin.setGlobalSearch}
