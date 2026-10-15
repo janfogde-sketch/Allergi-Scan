@@ -139,9 +139,9 @@ export function countByView(list, userId, { doneCount = null, doneLoaded = true 
 /** "Færdige"/"Alle" er de to visninger, der kræver, at de færdige opgaver hentes. */
 export const viewNeedsDone = (view) => view === "done" || view === "all";
 
-/** Antal åbne opgaver, der kræver handling nu: høj prioritet og ikke venter, eller overskredet frist. */
-export function attentionCount(list, today = todayKey()) {
-  return list.filter((t) => isOpen(t) && t.status !== "blocked" && (t.priority === "high" || isOverdue(t, today))).length;
+/** Antal åbne opgaver, der er tildelt den indloggede admin (samme tal som "Mine" i Opgaver). */
+export function myOpenCount(list, userId) {
+  return list.filter((t) => matchesView(t, "mine", userId)).length;
 }
 
 export function personName(admins, id) {
