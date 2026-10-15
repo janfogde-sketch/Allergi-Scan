@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { validOffImagePath, fetchOffImage } from "../api/_offImageLogic.js";
+import { validOffImagePath, fetchOffImage, checkOffImageAccess, isOwnPageRequest, clientIp, resetRateLimit, RATE_MAX } from "../api/_offImageLogic.js";
 import { displayImageUrl, verifiedImageUrl, imageAttribution } from "./helpers.js";
 
 const OK = "images/products/570/123/456/7890/front_da.400.jpg";
@@ -38,6 +38,33 @@ describe("api/off-image — hentning", () => {
     expect((await fetchOffImage(OK, mk(404, "image/jpeg"))).status).toBe(404);
     expect((await fetchOffImage(OK, async () => { throw new Error("x"); })).status).toBe(502);
     expect((await fetchOffImage("bad", mk(200, "image/jpeg"))).status).toBe(400);
+  });
+});
+
+describe("api/off-image — spærring mod misbrug (S6)", () => {
+  const own = { "sec-fetch-site": "same-origin", "x-forwarded-for": "1.2.3.4, 10.0.0.1" };
+  it("tillader kun kald fra vores egne sider", () => {
+    expect(isOwnPageRequest({ "sec-fetch-site": "same-origin" })).toBe(true);
+    expect(isOwnPageRequest({ "sec-fetch-site": "same-site" })).toBe(true);
+    expect(isOwnPageRequest({ "sec-fetch-site": "cross-site", referer: "https://www.eatsafe.dk/" })).toBe(false);
+    expect(isOwnPageRequest({ "sec-fetch-site": "none" })).toBe(false);
+    expect(isOwnPageRequest({ referer: "https://dev.eatsafe.dk/x" })).toBe(true);
+    expect(isOwnPageRequest({ referer: "https://www.eatsafe.dk.evil.com/" })).toBe(false);
+    expect(isOwnPageRequest({})).toBe(false);
+    expect(checkOffImageAccess({ "x-forwarded-for": "9.9.9.9" }).status).toBe(403);
+  });
+  it("bruger første IP i x-forwarded-for", () => {
+    expect(clientIp(own)).toBe("1.2.3.4");
+    expect(clientIp({ "x-real-ip": "5.6.7.8" })).toBe("5.6.7.8");
+  });
+  it(`giver 429 efter ${RATE_MAX} nye billeder i minuttet pr. IP og åbner igen efter et minut`, () => {
+    resetRateLimit();
+    const t = 1_000_000;
+    for (let i = 0; i < RATE_MAX; i++) expect(checkOffImageAccess(own, t + i)).toBeNull();
+    expect(checkOffImageAccess(own, t + 500)).toEqual({ status: 429, error: "for mange billeder", retryAfter: 60 });
+    expect(checkOffImageAccess({ ...own, "x-forwarded-for": "4.4.4.4" }, t + 500)).toBeNull();
+    expect(checkOffImageAccess(own, t + 60_000)).toBeNull();
+    resetRateLimit();
   });
 });
 
