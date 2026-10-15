@@ -65,7 +65,7 @@ mod brugerens (og familiens) profil og viser sikkert/farligt/usikkert med begrun
 
 - React 18 + Vite 5, almindelig JSX (`// @ts-nocheck` øverst i `.jsx`). Supabase (Postgres, Edge Functions i Deno, Auth; Realtime kun til indkøbslisten).
   Claude Haiku som allergen-fallback og OCR (`ANTHROPIC_API_KEY`). Open Food Facts og TheMealDB.
-- Klik-tests (Playwright, `e2e/`): `npm run build && npm run test:e2e`; kører i CI som eget tjek "Klik-tests", der kun viser fejl og ikke stopper merge. Detaljer: `docs/arbejdsgang.md`.
+- Klik-tests (Playwright, `e2e/`): `npm run build && npm run test:e2e`; kører på PR'er mod main som tjek "Klik-tests", der kun viser fejl. Detaljer: `docs/arbejdsgang.md`.
 - Test: `npx vitest run` (alle skal være grønne). Lint: `npm run lint`. Typetjek: `npm run typecheck` (kører i CI; filerne i `tsconfig.check.json`
   har `// @ts-check`, udvid listen gradvist).
 - Styling: ingen CSS-filer. Al CSS er én streng i `src/theme.jsx` (`appCss`). Kun CSS-variabler i komponenter, ingen hardkodede farver.
@@ -128,10 +128,11 @@ med workflowet, eller af sessionen selv, hvis ingen er udpeget. Ved færdig opga
 **Ingen CVR-krævende forslag** og ingen betalte planer uden Jans ja. **Alle iPhone-tests lægges som to do hos Bjørn**, aldrig hos Jan.
 Supabase-dialoger er usynlige: brug kun læsning dér.
 
-**Vercel (Pro, ingen dagsgrænse): push/merge helst kun ved funktions- og dataændringer (sparer byggetid).** Rene design- og dokumentændringer committes, men pushes
+**Vercel (Pro): push/merge helst kun ved funktions- og dataændringer.** Rene design- og dokumentændringer committes, men pushes
 med næste funktionsændring eller på bestilling. Udebliver et deploy, aldrig en tom commit (`docs/arbejdsgang.md`).
 
 **Dev-gren (slået til 14. okt. 2026, testadresse dev.eatsafe.dk):** frontend (skærme, knapper) går som PR mod `dev`; migrationer, edge-funktioner, workflows, admin og hotfix direkte mod `main` (bagudkompatible; derefter merges `main` ind i `dev`). Dev deler database med produktion. Jans "udgiv" = én PR `dev` → `main`.
+**Testminutter (Jan 15. okt.):** PR mod `dev` får kun CI; fuld runde på PR mod `main`. Nye workflows skal have `paths` (`docs/arbejdsgang.md`).
 
 **Design** verificeres i en Artifact-preview i stedet for deploy (`docs/arbejdsgang.md`).
 

@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-  workflow_dispatch: # startes af opdater-pr.yml efter en automatisk opdatering af PR'en
+  workflow_dispatch:
   push:
-    branches: [main, dev]
+    branches: [main] # dev testes i selve PR'en; ved "udgiv" testes PR'en dev -> main
 
 jobs:
   build-and-test:
@@ -23,6 +23,28 @@ jobs:
             echo "CLAUDE.md er for stor ($size bytes, grænsen er 15000). Flyt detaljer til en fil i docs/."
             exit 1
           fi
+
+      # Flyttet hertil fra "Tjek efter merge" 15. okt. 2026 (sparer en maskine pr. kørsel).
+      - name: Ødelagte danske tegn (kyrilliske tegn i stedet for æ/ø/å)
+        run: |
+          python3 - <<'PY'
+          import re, subprocess, sys
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          exts = (".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".html", ".css", ".sql", ".toml", ".yml", ".yaml", ".txt")
+          bad = 0
+          for p in files:
+              if not p.endswith(exts):
+                  continue
+              try:
+                  text = open(p, encoding="utf-8").read()
+              except (UnicodeDecodeError, FileNotFoundError):
+                  continue
+              for m in re.finditer(r"[Ѐ-ӿ]{2,}", text):
+                  line = text.count("\n", 0, m.start()) + 1
+                  print(f"::error file={p},line={line}::Mulig tegnfejl: {m.group()}")
+                  bad += 1
+          sys.exit(1 if bad else 0)
+          PY
 
       # Rene to do-/dokumentændringer (se changed-scope.sh) springer de tunge trin over; jobbet består stadig,
       # så det kan være påkrævet i GitHub. Ved tvivl kører alt som før.

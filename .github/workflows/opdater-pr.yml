@@ -5,13 +5,13 @@ name: Opdater PR'er der er bagud
 # og starter tjekkene på den nye version. Uden den ville de stå stille, til nogen opdaterede dem i hånden.
 # Opdatering med GITHUB_TOKEN starter ikke tjekkene af sig selv (GitHubs regel mod uendelige løkker).
 # PR'ens egne kørsler står derfor som "action_required"; dem genkører vi bagefter, så de påkrævede tjek bliver grønne på selve PR'en.
-# workflow_dispatch-kopierne tæller ikke for regelsættet og er kun en ekstra sikkerhed. Ingen ekstra nøgle nødvendig.
+# workflow_dispatch bruges kun som reserve, hvis der ikke er noget at genkøre (15. okt. 2026: kopierne fordoblede testminutterne).
 # En PR med konflikt rører vi ikke: ejeren skal flette main ind (CLAUDE.md afsnit 4).
 on:
   push:
     branches: [main]
   schedule:
-    - cron: "*/15 * * * *" # sikkerhedsnet, hvis en kørsel ved push blev misset
+    - cron: "7 * * * *" # sikkerhedsnet en gang i timen, hvis en kørsel ved push blev misset
   workflow_dispatch:
 
 concurrency:
@@ -60,11 +60,13 @@ jobs:
               echo "PR #$nr: kørsel $id står som action_required, genkører."
               gh run rerun "$id" -R "$REPO" || echo "::warning::Kunne ikke genkøre kørsel $id for PR #$nr"
             done
-            gh workflow run migration-versions.yml -R "$REPO" --ref "$ref"
-            gh workflow run ci.yml -R "$REPO" --ref "$ref"
-            gh workflow run post-merge-checks.yml -R "$REPO" --ref "$ref"
-            # DB-tests er tunge: kun hvis PR'en rører migrationer eller tests (som db-tests.yml selv skriver).
-            if gh pr diff "$nr" -R "$REPO" --name-only | grep -qE '^(supabase/migrations/|supabase/tests/|supabase/functions/delete-user/|\.github/workflows/db-tests\.yml)'; then
-              gh workflow run db-tests.yml -R "$REPO" --ref "$ref"
+            # Kun hvis ingen kørsler dukkede op: start tjekkene direkte som reserve (før skete det altid og fordoblede minutterne).
+            if [ -z "$ids" ]; then
+              echo "PR #$nr: ingen kørsler at genkøre, starter tjekkene direkte."
+              gh workflow run migration-versions.yml -R "$REPO" --ref "$ref"
+              gh workflow run ci.yml -R "$REPO" --ref "$ref"
+              if gh pr diff "$nr" -R "$REPO" --name-only | grep -qE '^(supabase/migrations/|supabase/tests/|supabase/functions/delete-user/|\.github/workflows/db-tests\.yml)'; then
+                gh workflow run db-tests.yml -R "$REPO" --ref "$ref"
+              fi
             fi
           done
