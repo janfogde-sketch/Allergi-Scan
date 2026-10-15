@@ -10,7 +10,7 @@
 // token-refresh effects, which need real timers and are lower-risk.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useAuth } from "./useAuth.js";
 import * as sessionStore from "./sessionStore.js";
@@ -370,5 +370,90 @@ describe("useAuth — app-start overskriver ikke en besked åbnet fra push", () 
       expect(updaters.some((fn) => fn("login") === "home")).toBe(false);
       expect(setScreen.mock.calls.some(([x]) => x === "login")).toBe(true);
     } finally { vi.useRealTimers(); }
+  });
+});
+
+// Login via links (15. okt. 2026, sikkerhedsfund S4/S5).
+describe("useAuth — login via links logger kun ind efter bekræftelse", () => {
+  const jwt = (p) => `h.${btoa(JSON.stringify(p)).replace(/=+$/, "")}.s`;
+  const atUrl = (u) => window.history.replaceState({}, "", u);
+  const json = (body, ok = true, status = 200) => ({ ok, status, json: async () => body, text: async () => JSON.stringify(body) });
+  const flush = async () => { await act(async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); }); };
+  afterEach(() => atUrl("/"));
+
+  it("en fremmed #access_token gemmes ikke, før brugeren trykker Fortsæt", async () => {
+    const access = jwt({ sub: "evil", email: "angriber@x.dk" });
+    atUrl(`/#access_token=${access}&refresh_token=r`);
+    const { result, setScreen } = setup();
+    await flush();
+    expect(setScreen).toHaveBeenCalledWith("authconfirm");
+    expect(result.current.pendingAuthLink.email).toBe("angriber@x.dk");
+    expect(sessionStore.persistRefreshToken).not.toHaveBeenCalled();
+    expect(result.current.accessToken).toBeNull();
+    expect(window.location.hash).toBe("");
+  });
+
+  it("mail-link: afviser en konto, der ikke passer til e-mailen i linket", async () => {
+    atUrl("/?token_hash=h&type=recovery&email=offer%40x.dk");
+    const { result, setScreen } = setup();
+    await flush();
+    expect(setScreen).toHaveBeenCalledWith("authconfirm");
+    global.fetch.mockResolvedValue(json({ access_token: jwt({ sub: "evil", email: "angriber@x.dk" }), refresh_token: "r" }));
+    await act(async () => { await result.current.confirmAuthLink(); });
+    expect(result.current.accessToken).toBeNull();
+    expect(setScreen).toHaveBeenLastCalledWith("login");
+    expect(result.current.authError).toMatch(/passer ikke/);
+  });
+
+  it("mail-link: logger ind og åbner Vælg ny adgangskode, når kontoen passer", async () => {
+    atUrl("/?token_hash=h&type=recovery&email=Offer%40x.dk");
+    const { result, setScreen } = setup();
+    await flush();
+    const access = jwt({ sub: "u1", email: "offer@x.dk" });
+    global.fetch.mockResolvedValue(json({ access_token: access, refresh_token: "r" }));
+    await act(async () => { await result.current.confirmAuthLink(); });
+    expect(result.current.accessToken).toBe(access);
+    expect(setScreen).toHaveBeenLastCalledWith("resetpassword");
+  });
+
+  it("udløbet mail-link giver den kendte besked", async () => {
+    atUrl("/?token_hash=h&type=signup&email=a%40b.dk");
+    const { result, setScreen } = setup();
+    await flush();
+    global.fetch.mockResolvedValue(json({ error_code: "otp_expired" }, false, 403));
+    await act(async () => { await result.current.confirmAuthLink(); });
+    expect(setScreen).toHaveBeenLastCalledWith("login");
+    expect(result.current.authError).toMatch(/udløbet/);
+  });
+
+  it("?code= uden engangsnøgle på enheden logger ikke ind", async () => {
+    atUrl("/?code=fremmed");
+    const { result, setScreen } = setup();
+    await flush();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(setScreen).toHaveBeenLastCalledWith("login");
+    expect(result.current.authError).toMatch(/afbrudt/);
+  });
+
+  it("social login sender kun fingeraftrykket med, og retur-koden veksles med nøglen", async () => {
+    const { result } = setup();
+    const assign = vi.fn();
+    const orig = window.location;
+    delete window.location;
+    window.location = { ...orig, origin: "https://www.eatsafe.dk", set href(v) { assign(v); } };
+    try { await act(async () => { await result.current.handleOAuth("google"); }); } finally { window.location = orig; }
+    const url = new URL(assign.mock.calls[0][0]);
+    expect(url.searchParams.get("code_challenge_method")).toBe("s256");
+    expect(url.searchParams.get("code_challenge")).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(localStorage.getItem("as_pkce_verifier")).toBeTruthy();
+
+    const access = jwt({ sub: "u1", email: "a@b.dk" });
+    global.fetch.mockResolvedValueOnce(json({ access_token: access, refresh_token: "r" })).mockResolvedValue(json([{ onboarding_completed: true }]));
+    atUrl("/?code=egen");
+    const second = setup();
+    await flush();
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body).auth_code).toBe("egen");
+    expect(second.result.current.accessToken).toBe(access);
+    expect(localStorage.getItem("as_pkce_verifier")).toBeNull();
   });
 });

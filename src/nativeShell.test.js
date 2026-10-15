@@ -20,9 +20,11 @@ describe("nativeShell", () => {
     expect(await openInSystemBrowser("https://x/y")).toBe(true);
     expect(open).toHaveBeenCalledWith({ url: "https://x/y" });
   });
-  it("oversætter retur-adressen og bevarer hashen", () => {
-    expect(authReturnTarget(`${NATIVE_AUTH_RETURN}#access_token=a&refresh_token=b`))
-      .toBe("https://www.eatsafe.dk/?src=store#access_token=a&refresh_token=b");
+  it("oversætter retur-adressen og sender kun engangskoden og fejl videre", () => {
+    expect(authReturnTarget(`${NATIVE_AUTH_RETURN}?code=abc&evil=1`)).toBe("https://www.eatsafe.dk/?src=store&code=abc");
+    expect(authReturnTarget(`${NATIVE_AUTH_RETURN}?error=access_denied&error_code=x`))
+      .toBe("https://www.eatsafe.dk/?src=store&error=access_denied&error_code=x");
+    expect(authReturnTarget(`${NATIVE_AUTH_RETURN}#error=x`)).toBe("https://www.eatsafe.dk/?src=store#error=x");
     expect(authReturnTarget(NATIVE_AUTH_RETURN)).toBe("https://www.eatsafe.dk/?src=store");
   });
   it("afviser fremmede adresser", () => {

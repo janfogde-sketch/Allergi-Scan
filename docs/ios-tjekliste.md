@@ -45,7 +45,7 @@ Plan: `/mnt/project-files/eatsafe/ios-skal-plan-2026-10-14.md`. iOS-rammen er en
 ## Indbygget "Fortsæt med Apple" (trin 6)
 - I iPhone-rammen viser knappen "Fortsæt med Apple" (som før kun når Apple er slået til i Supabase, `useOAuthProviders`) Apples egen dialog i appen
   (`src/nativeApple.js`, plugin `@capacitor-community/apple-sign-in`). Id-tokenet veksles hos Supabase (`/auth/v1/token?grant_type=id_token`) til en
-  session, som den eksisterende modtagelse af `#access_token` tager imod. Annullerer brugeren, sker der intet. Findes pluginet ikke, åbner Apple i
+  session, som gemmes direkte (`completeLinkLogin` i `useAuth.js`). Annullerer brugeren, sker der intet. Findes pluginet ikke, åbner Apple i
   systembrowseren som Google/Facebook. Browseren og Android er uændrede, og knappens udseende er uændret.
 - **Hos Apple/Supabase, når kontoen findes** (`docs/apple-login-opsaetning.md`): Supabase → Authentication → Providers → Apple → **Client IDs** skal
   indeholde både Services ID (web) og bundle-id'et `dk.eatsafe.app`, kommasepareret; ellers afviser Supabase tokenet fra appen.
