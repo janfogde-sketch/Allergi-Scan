@@ -5,7 +5,7 @@
 //    på enheden. En fremmed eller snuppet kode er derfor værdiløs.
 //  - Mail-links (bekræft e-mail, glemt adgangskode, skift e-mail, invitation) bærer ?token_hash=...&type=...; de veksles først,
 //    når brugeren har trykket "Fortsæt" på bekræftelsessiden (AuthConfirmScreen.jsx).
-//  - Den gamle form med nøglerne i adressen (#access_token=...) tages kun imod efter samme bekræftelse.
+//  - Den gamle form med nøglerne i adressen (#access_token=...) logger aldrig ind (del C, 15. okt.); den vises som et udløbet link.
 
 const VERIFIER_KEY = "as_pkce_verifier";
 const VERIFIER_MAX_AGE_MS = 10 * 60 * 1000;
@@ -52,7 +52,8 @@ export function takePkceVerifier(now = Date.now()) {
  * @typedef {{ kind: "error", errorCode: string }
  *   | { kind: "code", code: string }
  *   | { kind: "token_hash", tokenHash: string, type: string, email: string }
- *   | { kind: "tokens", access: string, refresh: string, type: string }} AuthLink
+ *   | { kind: "tokens", access: string, refresh: string, type: string, email?: string }} AuthLink
+ * "tokens" kommer aldrig fra adressen; det er kun en session, som appen selv har fået fra Supabase og viser til bekræftelse.
  */
 
 /**
@@ -70,9 +71,8 @@ export function parseAuthLink(loc) {
   const tokenHash = query.get("token_hash");
   const type = query.get("type") || "";
   if (tokenHash && EMAIL_LINK_TYPES.includes(type)) return { kind: "token_hash", tokenHash, type, email: query.get("email") || "" };
-  const access = hash.get("access_token");
-  const refresh = hash.get("refresh_token");
-  if (access && refresh) return { kind: "tokens", access, refresh, type: hash.get("type") || "" };
+  // Gammel form: tages aldrig imod, men fjernes fra adressen og vises som et udløbet link.
+  if (hash.get("access_token")) return { kind: "error", errorCode: "legacy_token_link" };
   return null;
 }
 

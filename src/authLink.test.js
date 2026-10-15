@@ -11,14 +11,13 @@ describe("parseAuthLink", () => {
     expect(parseAuthLink({ search: "?token_hash=h&type=recovery&email=a%40b.dk" }))
       .toEqual({ kind: "token_hash", tokenHash: "h", type: "recovery", email: "a@b.dk" });
     expect(parseAuthLink({ hash: "#access_token=a&refresh_token=r&type=signup" }))
-      .toEqual({ kind: "tokens", access: "a", refresh: "r", type: "signup" });
+      .toEqual({ kind: "error", errorCode: "legacy_token_link" });
     expect(parseAuthLink({ hash: "#error=access_denied&error_code=otp_expired" })).toEqual({ kind: "error", errorCode: "otp_expired" });
     expect(parseAuthLink({ search: "?error=access_denied" })).toEqual({ kind: "error", errorCode: "access_denied" });
   });
   it("ignorerer almindelige adresser og ukendte linktyper", () => {
     expect(parseAuthLink({ search: "?src=store", hash: "" })).toBeNull();
     expect(parseAuthLink({ search: "?token_hash=h&type=hack" })).toBeNull();
-    expect(parseAuthLink({ hash: "#access_token=a" })).toBeNull();
     expect(hasAuthLink({ search: "?invite=x" })).toBe(false);
     expect(hasAuthLink({ search: "?src=store&code=x" })).toBe(true);
   });

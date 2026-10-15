@@ -20,7 +20,7 @@ Detaljer bag afsnit 3 i `CLAUDE.md`.
 ## Login via links (15. okt. 2026, sikkerhedsfund S4/S5)
 - Google/Facebook/Apple (web og systembrowser i iPhone-appen) bruger PKCE: `src/authLink.js` laver engangsnøglen, retur er `?code=`, som kun
   veksles med nøglen fra samme enhed. iPhone-returen `dk.eatsafe.app://auth?code=` sendes videre af `authReturnTarget` (`nativeShell.js`).
-- Mail-links (`?token_hash=&type=&email=`) og den gamle form (`#access_token=`) logger først ind efter "Fortsæt" på `AuthConfirmScreen.jsx`.
+- Mail-links (`?token_hash=&type=&email=`) logger først ind efter "Fortsæt" på `AuthConfirmScreen.jsx`. Den gamle form (`#access_token=`) logger aldrig ind; den fjernes fra adressen og vises som et udløbet link.
   Passer kontoen ikke til e-mailen i linket, afvises den. Plan: `/mnt/project-files/eatsafe/plan-sikrere-login-2026-10-15.md`.
 
 ## Allergenmotor: matchningsregler
