@@ -74,12 +74,3 @@ export async function exchangeAppleToken(supabaseUrl, anonKey, idToken, nonce, f
     return { ok: false, reason: String(e?.message ?? e) };
   }
 }
-
-/**
- * Adressen, appen åbnes på, så den eksisterende modtagelse af #access_token tager imod sessionen.
- * @param {string} access @param {string} refresh
- */
-export function sessionTarget(access, refresh) {
-  const p = new URLSearchParams({ access_token: access, refresh_token: refresh, token_type: "bearer" });
-  return `${WEB_ORIGIN}/?src=store#${p.toString()}`;
-}

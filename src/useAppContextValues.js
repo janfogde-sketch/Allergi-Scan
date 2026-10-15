@@ -12,7 +12,8 @@ export function useAppContextValues(v) {
     setRememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
     verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
     checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError, resetLoading,
-    resetDone, setResetError, submitNewPassword, continueAfterReset, allergens, setAllergens,
+    resetDone, setResetError, submitNewPassword, continueAfterReset,
+    pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink, allergens, setAllergens,
     customAllerg, setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles,
     scanFamily, household, setHousehold, householdLoading, loadHousehold, profileLoadStatus,
     retryProfileLoad,
@@ -46,8 +47,10 @@ export function useAppContextValues(v) {
     verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
     checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
     resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
+    pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink,
   }), [user, userId, setUserId, accessToken, loginEmail, loginPassword, authError, authInfo, emailTakenError, emailError, passwordError, authLoading, authTab, isOAuth, rememberMe, handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth,
-       verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset]);
+       verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
+       pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink]);
 
   const profileContextValue = useMemo(() => ({
     allergens, setAllergens, customAllerg, setCustomAllerg,

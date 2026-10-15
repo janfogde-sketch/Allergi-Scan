@@ -10,7 +10,7 @@ import { SCREENS } from "./constants.jsx";
 
 // Skærme, hvor modalen aldrig vises: login/onboarding (samtykket gives dér) og selve politik-siderne (så brugeren kan læse dem først).
 const HIDDEN_ON = new Set([
-  SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.BOOT, SCREENS.VERIFYEMAIL, SCREENS.RESETPASSWORD, SCREENS.TERMS, SCREENS.PRIVACY,
+  SCREENS.WELCOME, SCREENS.LOGIN, SCREENS.ONBOARD, SCREENS.BOOT, SCREENS.VERIFYEMAIL, SCREENS.RESETPASSWORD, SCREENS.AUTHCONFIRM, SCREENS.TERMS, SCREENS.PRIVACY,
 ]);
 
 export default function ConsentRenewalModal({ screen, onboarded, openLegal }) {

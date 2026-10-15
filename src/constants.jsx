@@ -63,6 +63,8 @@ export const SCREENS = {
   VERIFYEMAIL:"verifyemail", BOOT:"boot",
   // RESETPASSWORD: "Vælg ny adgangskode" efter linket i "Glemt adgangskode"-mailen.
   RESETPASSWORD:"resetpassword",
+  // AUTHCONFIRM: "Fortsæt som x@y.dk", før et link fra en mail logger ind (15. okt. 2026, sikkerhedsfund S4).
+  AUTHCONFIRM:"authconfirm",
   HOME:"home",
   LIST:"list", PROFILE:"profile", FAMILY:"family",
   RESULT:"result", HISTORY:"history",

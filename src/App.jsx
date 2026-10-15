@@ -47,6 +47,7 @@ import { useHistory } from './useHistory.js';
 import { useAuth, markOnboardedLocally, ONBOARDED_KEY, PENDING_VERIFY_KEY } from './useAuth.js';
 const VerifyEmailScreen = React.lazy(() => import('./VerifyEmailScreen.jsx'));
 const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen.jsx'));
+const AuthConfirmScreen = React.lazy(() => import('./AuthConfirmScreen.jsx'));
 import { useOnboarding } from './useOnboarding.js';
 import { useDeleteAccount } from './useDeleteAccount.js';
 import { useScanner } from './useScanner.js';
@@ -73,12 +74,15 @@ import { useFamilyLinkRequests } from "./useFamilyLinkRequests.js";
 import { useNotifications } from "./useNotifications.js";
 import { useLoadUserData } from "./useLoadUserData.js";
 import { hasStoredSession } from "./sessionStore.js";
+import { hasAuthLink } from "./authLink.js";
 
 // Startskærm (30. sept. 2026): kun en enhed, der har set onboarding færdig
 // (ONBOARDED_KEY), starter direkte på forsiden. Andre med en session venter
 // på den rigtige status (BOOT → useAuth.resolveOnboardingRoute), og en
 // oprettet, ubekræftet konto åbner bekræftelsesskærmen igen.
 function initialScreen() {
+  // Et login-link venter på useAuth (bekræftelse eller veksling); vis ikke en gammel sessions forside imens.
+  if (hasAuthLink(window.location)) return SCREENS.BOOT;
   try {
     if (hasStoredSession()) return localStorage.getItem(ONBOARDED_KEY) ? SCREENS.HOME : SCREENS.BOOT;
     if (localStorage.getItem(PENDING_VERIFY_KEY)) return SCREENS.VERIFYEMAIL;
@@ -307,6 +311,7 @@ export default function EatSafe() {
     verifyEmail, verifyStatus, verifyError, verifyNotice, verifyLoading, resendCooldown,
     checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify,
     resetError, resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
+    pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink,
   } = useAuth({ setScreen, setUser, setAllergens, setCustomAllerg, setOnboardStep });
 
   const {
@@ -684,7 +689,8 @@ export default function EatSafe() {
     passwordError, setPasswordError, authLoading, authTab, setAuthTab, isOAuth, rememberMe, setRememberMe,
     handleLogin, handleSignup, handleOAuth, handleForgotPassword, clearAuth, verifyEmail, verifyStatus, verifyError,
     verifyNotice, verifyLoading, resendCooldown, checkEmailVerified, resendVerification, changeVerifyEmail, continueAfterVerify, resetError,
-    resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset, allergens, setAllergens, customAllerg,
+    resetLoading, resetDone, setResetError, submitNewPassword, continueAfterReset,
+    pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink, allergens, setAllergens, customAllerg,
     setCustomAllerg, family, setFamily, activeProfiles, setActiveProfiles, scanFamily, household, setHousehold,
     householdLoading, loadHousehold, profileLoadStatus, retryProfileLoad, screen, setScreen, openLegal, legalReturnScreen, history,
     setHistory, historyLoading, historyScope, historyError, favoritesError, favorites, favoritesScope, loadHistory,
@@ -722,7 +728,7 @@ export default function EatSafe() {
             theme.jsx. Selvstændigt lag OVEN PÅ det nu universelle baggrunds-
             billede, i stedet for at ændre .app-bg selv, så resten af appen
             beholder sin nuværende intensitet. */}
-        {(screen === SCREENS.LOGIN || screen === SCREENS.VERIFYEMAIL || screen === SCREENS.RESETPASSWORD) && <div className="app-bg-dim" aria-hidden="true" />}
+        {(screen === SCREENS.LOGIN || screen === SCREENS.VERIFYEMAIL || screen === SCREENS.RESETPASSWORD || screen === SCREENS.AUTHCONFIRM) && <div className="app-bg-dim" aria-hidden="true" />}
         {/* Mens kameraet er åbent, tones madvarebilledet lidt ned, så scanneren er sidens tydelige hovedelement (Bjørn, 8. okt. 2026). */}
         {screen === SCREENS.HOME && cameraActive && <div className="app-bg-dim scan-bg-dim" aria-hidden="true" />}
         {/* Indkøbsliste-polish (25. sept. 2026, brugerfeedback): "fjern
@@ -784,6 +790,15 @@ export default function EatSafe() {
           <Suspense fallback={LazyFallback}>
             <ErrorBoundary screen="Ny adgangskode">
             <ResetPasswordScreen />
+            </ErrorBoundary>
+          </Suspense>
+        )}
+
+        {/* ══ FORTSÆT SOM (login via link) ══ */}
+        {screen === SCREENS.AUTHCONFIRM && (
+          <Suspense fallback={LazyFallback}>
+            <ErrorBoundary screen="Log ind via link">
+            <AuthConfirmScreen />
             </ErrorBoundary>
           </Suspense>
         )}
