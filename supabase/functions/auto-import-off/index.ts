@@ -62,6 +62,27 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Slår én kode op på OFF. 404 med status 0 = "findes ikke" (returnerer null). Alt andet end
+// et gyldigt JSON-svar er en midlertidig fejl: prøv op til 3 gange, og kast derefter.
+async function fetchOff(ean: string): Promise<any> {
+  let lastErr: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await sleep(1500 * attempt);
+    try {
+      const res = await fetch(
+        `${OFF_API}/${ean}.json?fields=${OFF_FIELDS}`,
+        { headers: { "User-Agent": "EatSafe/1.0 (hej@eatsafe.dk)" }, signal: AbortSignal.timeout(15000) }
+      );
+      if (res.status >= 500 || res.status === 429) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data.status === 1 ? data.product : null;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
+
 function buildAllergenFlags(product: any): Record<string, string> {
   const flags: Record<string, string> = Object.fromEntries(
     Object.values(ALLERGEN_MAP).map(v => [v, "no"])
@@ -168,7 +189,9 @@ Deno.serve(async (req) => {
 
     log.push(`Fandt ${missing.length} EAN'er i missing_ean_log`);
 
+    const startedAt = Date.now();
     for (const row of missing) {
+      if (Date.now() - startedAt > 110000) { log.push("Stoppet tidligt (tidsgrænse); resten tages i nat"); break; }
       const ean = row.ean;
 
       // 2. Tjek om den allerede eksisterer
@@ -189,14 +212,11 @@ Deno.serve(async (req) => {
       await sleep(DELAY_MS);
       let product: any = null;
       try {
-        const res = await fetch(
-          `${OFF_API}/${ean}.json?fields=${OFF_FIELDS}`,
-          { headers: { "User-Agent": "EatSafe/1.0 (hej@eatsafe.dk)" } }
-        );
-        const data = await res.json();
-        if (data.status === 1) product = data.product;
-      } catch {
+        product = await fetchOff(ean);
+      } catch (e: any) {
+        // Midlertidig fejl hos OFF (netværk, 5xx, ikke-JSON): kode forbliver utjekket og tages igen i nat.
         stats.error++;
+        log.push(`OFF-fejl ved ${ean}: ${e?.message ?? e}`);
         continue;
       }
 
