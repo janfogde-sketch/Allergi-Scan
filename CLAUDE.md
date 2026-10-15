@@ -120,6 +120,7 @@ sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på
 - Når godkendt: én PR (dansk body, PR-template, session-link) → squash-merge → resync branch (`.claude/commands/resync-branch.md`).
 - **Godkendt plan:** bygget præcis efter Jans ja (ingen afvigelser) og CI grøn: push og merge uden at spørge igen, kort status til koordinatoren. Afviger noget: spørg Jan.
 - **Merge uden ventetid (14. okt.):** auto-merge sættes, tråden venter ikke på CI, lukketråden følger op; `opdater-pr.yml` opdaterer bagud-PR'er, ved konflikt flettes main ind. `docs/arbejdsgang.md`.
+- **Tjek selv tests (Jan, 15. okt.):** en tråd, der venter på tests/CI, afslutter aldrig sin tur uden enten automatisk merge sat på PR'en eller en `send_later`-påmindelse hvert 3. minut, der tjekker PR'ens checks direkte. Stol ikke på, at en GitHub-besked vækker tråden. Fortsæt til grøn (merge/meld) eller rød (ret/meld). `docs/arbejdsgang.md`.
 - **Grøn før merge:** PR'er merges kun, når CI og DB-tests er grønne i PR'en. Tjek DB-tests på main bagefter. Main kræver opdateret branch.
   Kun én session retter en rød `main`; de andre venter.
 - **Kritiske produktionsfejl** (fx crashende skærm): straks isoleret hotfix uden at vente på godkendelse.
