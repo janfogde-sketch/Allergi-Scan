@@ -150,7 +150,7 @@ Alle detaljer og begrundelser: `docs/produktbeslutninger.md` (læs kun det afsni
   rød = registreret konflikt; grå "Kan ikke vurderes" ved for lidt data. Manglende oplysninger er aldrig sikkerhed. "Allergi" kun om en specifik allergi.
   Cøliaki er et eget valg, aldrig udledt af gluten/hvede.
 - **Fjernet, tag ikke op igen uden bestilling:** dark mode, kostpræferencer, Opskrifter, Restaurantguiden, "Tilslut via invitationslink" på Familie,
-  link/QR/PDF-deling i Madpas, "Husk mig", risikoniveauer i Allergileksikon, billeder fra nemlig/Bilka (må aldrig vises).
+  link/QR/PDF-deling i Madpas, "Husk mig", risikoniveauer i Allergileksikon, scrapede butiksbilleder (må aldrig vises).
 - **Profil og familie:** "Rediger profil" ændrer kun navn. Alder og køn er obligatoriske i onboarding. Appen bruger kun ordet "Familie".
   Voksne har egen konto og inviteres; underprofiler uden konto er kun til børn under 18 ("Børneprofil"). Forbindelsen er ikke transitiv, og intet
   kobles uden eget ja. Modellen ændres ikke uden Jans ja.

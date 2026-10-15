@@ -16,7 +16,7 @@ Opdateret 10. okt. 2026 (kvalitetssikring med Lotte Pepero Kiksestænger som udg
   tilsatte ingredienser (fx æg). Heuristik (`ingredientsLookIncomplete()`), kan give falske "kan ikke vurderes" på færdige kager uden æg.
 - **Spor:** et ord i en "Kan indeholde spor af"-sætning markeres kun mod spor-regler. En bruger med direkte nødder (rød) ser derfor ikke "mandler" i en
   sporsætning markeret.
-- **Næring:** kulhydrat og mættet fedt mangler i databasen for næsten alle Bilka-/Nemlig-produkter (importerne gemte dem aldrig). Appen viser kun
+- **Næring:** kulhydrat og mættet fedt mangler i databasen for næsten alle katalogprodukter (importerne gemte dem aldrig). Appen viser kun
   registrerede værdier (se to do om import).
 - **Produktkategorier:** underkategorien "Kiks & kager" rummer også slik (fx lollipops). Alternativer kræver derfor et fælles navneord eller en dyb
   kategori-sti, ikke blot samme underkategori. Selve produktdata er ikke ændret.

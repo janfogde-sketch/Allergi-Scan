@@ -153,9 +153,9 @@ describe("verifiedBadge", () => {
     expect(verifiedBadge(null, "off").label).toBe("Open Food Facts");
   });
 
-  it("marks Bilka/nemlig imports as store data, not user-submitted", () => {
-    expect(verifiedBadge(null, "bilka").label).toBe("Produktdata");
-    expect(verifiedBadge("unverified", "nemlig").label).toBe("Produktdata");
+  it("marks catalogue imports as store data, not user-submitted", () => {
+    expect(verifiedBadge(null, "katalog").label).toBe("Produktdata");
+    expect(verifiedBadge("unverified", "katalog").label).toBe("Produktdata");
   });
 
   it("falls back to user-submitted for anything else", () => {
@@ -349,10 +349,10 @@ describe("verifiedImageUrl", () => {
     expect(verifiedImageUrl({ ean: "5711018037951", image_url: off })).toBeNull();
   });
   it("kan ikke verificere produkter uden rigtig stregkode", () => {
-    expect(verifiedImageUrl({ ean: "NEMLIG-5063887", image_url: off })).toBeNull();
+    expect(verifiedImageUrl({ ean: "ES-005063", image_url: off })).toBeNull();
   });
   it("lader billeder fra andre kilder passere og håndterer tomme", () => {
-    expect(verifiedImageUrl({ ean: "NEMLIG-1", image_url: "https://example.com/a.jpg" })).toBe("https://example.com/a.jpg");
+    expect(verifiedImageUrl({ ean: "ES-000001", image_url: "https://example.com/a.jpg" })).toBe("https://example.com/a.jpg");
     expect(verifiedImageUrl({ ean: "1", image_url: "" })).toBeNull();
   });
 });
