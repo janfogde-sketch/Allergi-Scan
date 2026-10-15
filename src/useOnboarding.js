@@ -122,7 +122,12 @@ export function useOnboarding({ accessToken, userId, user, loginEmail, screen,
         if (!Array.isArray(rows) || rows[0]?.onboarding_completed !== true) throw new Error("Onboarding blev ikke gemt");
       } catch (e) {
         console.error("finishOnboard fejl:", e);
-        showToast("Opsætningen kunne ikke afsluttes. Tjek din forbindelse, og prøv igen.", "error");
+        // Serveren afviser, hvis de obligatoriske trin ikke er opfyldt (navn, alder og køn; samtykke ved helbredsoplysninger): 23514
+        let code = "";
+        try { code = JSON.parse(/** @type {any} */ (e)?.body || "{}").code || ""; } catch { /* ingen kode */ }
+        showToast(code === "23514"
+          ? "Opsætningen mangler oplysninger. Gå tilbage, og udfyld navn, alder og køn, og giv samtykke, hvis du har valgt allergier."
+          : "Opsætningen kunne ikke afsluttes. Tjek din forbindelse, og prøv igen.", "error");
         return false;
       }
     }

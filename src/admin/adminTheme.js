@@ -201,6 +201,8 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .ai-progress>span{display:block;height:100%;border-radius:999px;background:var(--green);}
 .ai-progress.warn>span{background:var(--amber);}
 .ai-progress.over>span{background:var(--red);}
+.ai-progress.muted>span{background:var(--muted2);}
+.onb-row.zero{opacity:.55;}
 .ai-fn{margin-bottom:10px;}
 .ai-fn:last-child{margin-bottom:0;}
 .ai-fn-top{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;margin-bottom:4px;}

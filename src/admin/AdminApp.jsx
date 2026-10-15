@@ -116,7 +116,6 @@ export default function AdminApp() {
     if (section === "family") admin.loadFamilyOverview();
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
-    if (section === "onboarding") onboardingFunnel.load();
     if (section === "todo") todos.load();
     if (section === "recalls") recalls.load();
     if (section === "notifications") notifications.load();
