@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React, { useState } from "react";
 import { showToast } from "../../SharedComponents.jsx";
 
@@ -27,6 +28,7 @@ function buildErrorPrompt(e) {
 }
 
 export default function ErrorsSection({ errors, loading, filter, setFilter, load, setStatus }) {
+  const showSpinner = useShowSpinner(loading, errors.length > 0);
   const [openId, setOpenId] = useState(null);
   const filtered = errors.filter(e => filter === "all" || e.status === filter);
   const count = (s) => (s === "all" ? errors.length : errors.filter(e => e.status === s).length);
@@ -47,7 +49,7 @@ export default function ErrorsSection({ errors, loading, filter, setFilter, load
       </div>
 
       <div className="admin-table-wrap">
-        {loading ? (
+        {showSpinner ? (
           <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
         ) : filtered.length === 0 ? (
           <div className="admin-table-empty">Ingen fejl her</div>

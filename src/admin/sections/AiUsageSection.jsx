@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useShowSpinner } from "../RefreshContext.js";
 import React, { useState } from "react";
 import {
   HAIKU_USD_PER_M_INPUT, HAIKU_USD_PER_M_OUTPUT, USD_TO_DKK, FUNCTION_LABELS,
@@ -28,6 +29,7 @@ function UsageTable({ title, firstCol, items, labelFn }) {
 }
 
 export default function AiUsageSection({ rows, loading, load }) {
+  const showSpinner = useShowSpinner(loading, rows.length > 0);
   const [now] = useState(() => Date.now());
   const today = new Date(now).toISOString().slice(0, 10);
   const month = totals(currentMonthRows(rows, today));
@@ -42,7 +44,7 @@ export default function AiUsageSection({ rows, loading, load }) {
         </div>
       </div>
 
-      {loading ? (
+      {showSpinner ? (
         <div className="admin-loading-row"><div className="admin-spinner" /> Henter…</div>
       ) : rows.length === 0 ? (
         <div className="admin-table-empty">Ingen kald registreret endnu. Optællingen begynder med det første kald efter udgivelsen.</div>
