@@ -7,7 +7,7 @@ import UsersSection from "./UsersSection.jsx";
 afterEach(cleanup);
 const U = (o) => ({ id: "u1", name: "Anne Hansen", email: "anne@example.dk", role: "user", created_at: "2026-10-03T10:00:00Z", onboarding_completed: true, ...o });
 const DETAIL = { id: "u1", name: "Anne Hansen", email: "anne@example.dk", role: "user", created_at: "2026-10-03T10:00:00Z", onboarding_completed: true, birth_year: 1985, gender: "Kvinde", version: "v1" };
-const PREFS = { ...DETAIL, allergens: ["milk"], custom: ["kanel"], e_numbers: ["E220"], allergen_levels: { milk: "direct_only" } };
+const PREFS = { ...DETAIL, allergens: ["noedder", "laktose", "jordnoedder"], custom: ["kanel"], e_numbers: ["E220"], allergen_levels: { noedder: "direct_only" } };
 const base = () => ({
   rows: [U(), U({ id: "u2", name: "Bo Admin", email: "bo@example.dk", role: "admin", onboarding_completed: false })], total: 2, counts: { all: 12, admin: 2, incomplete: 1 },
   loading: false, loadingMore: false, hasMore: false, loaded: true, error: null, load: vi.fn(), loadMore: vi.fn(),
@@ -143,8 +143,13 @@ describe("Brugere: præferencer", () => {
     const p = base();
     await toPrefs(p);
     expect(p.getUser).toHaveBeenCalledWith("u1", true);
-    expect(screen.getByText("Advar ved spor")).toBeTruthy();
-    expect(screen.getByText("Kun direkte indhold")).toBeTruthy();
+    expect(screen.getByText("Allergier og intolerancer")).toBeTruthy();
+    expect(screen.queryByText("Allergener")).toBeNull();
+    expect(screen.getByText("Sporadvarsler")).toBeTruthy();
+    // Kun slåede til sporadvarsler vises: Jordnødder (standard = også spor); Nødder er 'kun direkte', og Laktose har ingen sporlogik
+    const traces = [...document.querySelectorAll(".usr-traces li")].map((li) => li.textContent);
+    expect(traces).toEqual(["JordnødderAktiveret"]);
+    expect(screen.getByText("Egne valg")).toBeTruthy();
     expect(screen.getByText("kanel")).toBeTruthy();
     expect(screen.getByText("E220")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Tilføj$/ })).toBeNull();
@@ -157,7 +162,7 @@ describe("Brugere: præferencer", () => {
     fireEvent.click(screen.getByRole("button", { name: /Æg/ })); // tilføjer et allergen
     fireEvent.click(screen.getByRole("button", { name: "Se ændringer" }));
     expect(screen.getByText("Disse ændringer påvirker brugerens vurderinger")).toBeTruthy();
-    expect(screen.getByText(/Tilføjer allergen/)).toBeTruthy();
+    expect(screen.getByText(/Tilføjer allergi\/intolerance/)).toBeTruthy();
     const save = screen.getByRole("button", { name: "Gem ændringer" });
     expect(save.disabled).toBe(true); // begrundelse mangler
     fireEvent.change(screen.getByLabelText("Begrundelse (påkrævet)"), { target: { value: "  Support  " } });
@@ -165,8 +170,8 @@ describe("Brugere: præferencer", () => {
     await waitFor(() => expect(p.saveProfile).toHaveBeenCalledTimes(1));
     const [, args] = p.saveProfile.mock.calls[0];
     expect(args.reason).toBe("Support");
-    expect(args.allergens).toEqual(expect.arrayContaining(["milk"]));
-    expect(args.allergens.length).toBe(2);
+    expect(args.allergens).toEqual(expect.arrayContaining(["noedder", "laktose", "jordnoedder"]));
+    expect(args.allergens.length).toBe(4);
     expect(args.custom).toEqual(["kanel"]);
     expect(args.profile.e_numbers).toEqual(["E220"]);
     expect(args.version).toBe("v1");
@@ -174,9 +179,10 @@ describe("Brugere: præferencer", () => {
   it("spor-valget er en rigtig checkbox med synlig tekst, og E-numre og egne allergier valideres som chips", async () => {
     await toPrefs(base());
     fireEvent.click(screen.getByText("Rediger præferencer"));
-    const box = screen.getByRole("checkbox", { name: /advar også ved spor/ });
-    expect(box.checked).toBe(false); // milk er 'kun direkte'
-    expect(box.closest("label").textContent).toMatch(/advar også ved spor/);
+    expect(screen.queryByRole("checkbox", { name: /Laktose/ })).toBeNull(); // laktoseintolerance har ingen sporadvarsel
+    const box = screen.getByRole("checkbox", { name: /Nødder: sporadvarsel/ });
+    expect(box.checked).toBe(false); // Nødder er 'kun direkte'
+    expect(box.closest("label").textContent).toMatch(/sporadvarsel/);
     fireEvent.click(box);
     expect(box.checked).toBe(true);
     const input = screen.getByLabelText("Overvågede E-numre");
@@ -208,14 +214,15 @@ describe("Brugere: administration", () => {
   it("rolleskift kræver bekræftelse og kalder serverfunktionen; egen rolle kan ikke ændres", async () => {
     const p = base();
     await toAdmin(p);
-    fireEvent.click(screen.getByRole("button", { name: "Ændre brugerrolle" }));
-    expect(screen.getByText(/Ændre rolle til administrator\?/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ændr brugerrolle" }));
+    expect(screen.getByText(/Ændr rolle til administrator\?/)).toBeTruthy();
+    expect(screen.getByText(/Nuværende rolle:/).textContent).toMatch(/Bruger.*Ny rolle: Administrator/);
     fireEvent.click(screen.getByRole("button", { name: "Skift rolle" }));
     await waitFor(() => expect(p.setRole).toHaveBeenCalledWith("u1", "admin"));
     cleanup();
     const me = { ...base(), currentUserId: "u1" };
     await toAdmin(me);
-    expect(screen.getByRole("button", { name: "Ændre brugerrolle" }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Ændr brugerrolle" }).disabled).toBe(true);
     expect(screen.getByText("Du kan ikke ændre din egen rolle.")).toBeTruthy();
     expect(screen.getByText(/Du kan ikke slette din egen konto herfra/)).toBeTruthy();
   });
@@ -223,10 +230,10 @@ describe("Brugere: administration", () => {
     const p = base();
     p.setRole.mockResolvedValue({ ok: false, error: "Du har ikke rettighed til at udføre handlingen." });
     await toAdmin(p);
-    fireEvent.click(screen.getByRole("button", { name: "Ændre brugerrolle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ændr brugerrolle" }));
     fireEvent.click(screen.getByRole("button", { name: "Skift rolle" }));
     await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/rettighed/));
-    expect(screen.getByRole("alertdialog", { name: "Ændre brugerrolle" })).toBeTruthy(); // bekræftelsen står stadig, rollen er uændret
+    expect(screen.getByRole("alertdialog", { name: "Ændr brugerrolle" })).toBeTruthy(); // bekræftelsen står stadig, rollen er uændret
   });
   it("sletning viser konsekvenserne, kræver en afkrydsning og sletter først derefter", async () => {
     const p = base();
@@ -263,19 +270,31 @@ describe("Brugere: administration", () => {
 });
 
 describe("Brugere: detaljer når databasefunktionerne mangler, og fejltilstande", () => {
-  it("læsning virker, men redigering, rolleændring og sletning er slået fra med en forklaring", async () => {
+  it("uden databasefunktioner er alt skrivebeskyttet: én kort besked kun under Administration, ingen rolleknap og ingen Slet bruger", async () => {
     const p = base();
     p.getUser = vi.fn(async (id, withPrefs) => ({ ok: true, user: { ...(withPrefs ? PREFS : DETAIL), version: null, legacy: true } }));
     await openUser(p);
     expect(screen.queryByRole("button", { name: "Rediger oplysninger" })).toBeNull();
-    expect(screen.getByText(/Redigering er slået fra/)).toBeTruthy();
+    expect(screen.queryByText(/midlertidigt utilgængelige/)).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "Præferencer" }));
     await waitFor(() => screen.getByText("Overvågede E-numre"));
     expect(screen.queryByRole("button", { name: "Rediger præferencer" })).toBeNull();
+    expect(screen.queryByText(/midlertidigt utilgængelige/)).toBeNull();
     fireEvent.click(screen.getByRole("tab", { name: "Administration" }));
-    expect(screen.getByRole("button", { name: "Ændre brugerrolle" }).disabled).toBe(true);
-    expect(screen.queryByRole("button", { name: "Slet bruger" })).toBeNull();
-    expect(screen.getByText(/Sletning er slået fra/)).toBeTruthy();
+    expect(screen.getAllByText(/Administrative ændringer er midlertidigt utilgængelige/)).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Ændr brugerrolle" })).toBeNull();
+    expect(screen.queryByText("Slet bruger")).toBeNull();
+    expect(screen.queryByText(/slået fra, til den seneste databaseopdatering/)).toBeNull();
+    expect(screen.getByText("Bruger", { selector: ".usr-line span" })).toBeTruthy(); // rollen vises skrivebeskyttet
+  });
+  it("e-mailbekræftelse vises kun, når oplysningen findes", async () => {
+    const p = base();
+    p.getUser = vi.fn(async () => ({ ok: true, user: { ...DETAIL, email_confirmed: true } }));
+    await openUser(p);
+    expect(screen.getByText("E-mail bekræftet")).toBeTruthy();
+    cleanup();
+    await openUser(base());
+    expect(screen.queryByText("E-mail bekræftet")).toBeNull();
   });
   it("fejl i hele detaljen viser den fælles fejltilstand med Prøv igen, og visningen forbliver åben", async () => {
     const p = base();

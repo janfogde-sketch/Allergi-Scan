@@ -59,6 +59,7 @@ begin
   v := public.admin_get_user(usr);
   if v ? 'allergens' or v ? 'custom' or v ? 'e_numbers' or v ? 'allergen_levels' then res := res || 'PRAEFERENCER-UDEN-BEHOV '; end if;
   if v->>'name' <> 'Bruger Et' or (v->>'onboarding_completed')::boolean is not false then res := res || 'BRUGER-FORKERT '; end if;
+  if jsonb_typeof(v->'email_confirmed') <> 'boolean' then res := res || 'EMAIL-BEKRAEFTET-MANGLER '; end if;
   ver := v->>'version';
   v := public.admin_get_user(usr, true);
   if v->'allergens' <> '["milk"]'::jsonb or v->'custom' <> '["kanel"]'::jsonb then res := res || 'PRAEFERENCER-FORKERTE '; end if;
