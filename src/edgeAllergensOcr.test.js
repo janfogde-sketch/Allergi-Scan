@@ -61,6 +61,17 @@ describe("edge: allergens", () => {
     for (const v of Object.values(r.json.allergen_flags)) expect(["yes", "traces", "no", "unknown"]).toContain(v);
   });
 
+  it("en forklaring fra billedlæsningen giver 'unknown' for alt, aldrig 'no', og Claude kaldes ikke (16. okt. 2026)", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const h = await loadHandler("allergens", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
+    const r = await h.call("POST", "/allergens", { token: "a", body: { text: "Jeg kan desværre ikke læse ingredienslisten klart nok på dette billede. Teksten er fotograferet i en vinkel, der gør den svær at læse tydeligt.\n\nFor at give dig et nøjagtigt svar, ville jeg have brug for et klarere, mere direkte billede af ingredienslisten.", force_ai: true } });
+    expect(r.status).toBe(200);
+    expect(r.json.method).toBe("unreadable");
+    expect(Object.values(r.json.allergen_flags).every(v => v === "unknown")).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("Claude-fejl giver stadig et svar fra nøgleordsmotoren", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("fejl", { status: 500 })));
     const h = await loadHandler("allergens", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
@@ -157,6 +168,15 @@ describe("edge: ocr", () => {
     }
     expect(new Set(sent.slice(0, 4)).size).toBe(4);
     expect(sent[4]).toBe(sent[3]);
+  });
+
+  it("ulæselig ingrediensliste: forklaringen sendes aldrig videre som tekst, men som unreadable (16. okt. 2026)", async () => {
+    for (const reply of ["ULÆSELIG", "Jeg kan desværre ikke læse ingredienslisten klart nok på dette billede. Teksten er fotograferet i en vinkel, der gør den svær at læse tydeligt.\n\nFor at give dig et nøjagtigt svar, ville jeg have brug for et klarere, mere direkte billede af ingredienslisten."]) {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ content: [{ text: reply }], usage: {} }), { status: 200 })));
+      const h = await loadHandler("ocr", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
+      const r = await h.call("POST", "/ocr", { token: "a", body });
+      expect(r.json).toMatchObject({ success: true, text: "", unreadable: true });
+    }
   });
 
   it("Claude-fejl giver 502, og manglende nøgle giver 500 uden at lække noget", async () => {

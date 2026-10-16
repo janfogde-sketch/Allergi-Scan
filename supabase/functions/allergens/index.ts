@@ -2,6 +2,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage, type AiOrigin } from "../_shared/aiCost.ts";
 import { reportLimitHit, withinGlobalLimit, withinTotalAiLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
+import { isUnreadableOcrText } from "../_shared/ocrText.js";
 import { logAdminEvent, logAccessDenied, fejlkode, feltAendringer } from "../_shared/adminAudit.ts";
 import {
   ALL_ALLERGENS,
@@ -126,6 +127,17 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "text er for lang" }),
         { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // En forklaring fra billedlæsningen ("Jeg kan ikke læse ingredienslisten ...") er ingen ingrediensliste:
+    // alt er "unknown", aldrig "no", og AI'en kaldes ikke (16. okt. 2026, fejlrapport fra "Produkt ikke fundet").
+    if (isUnreadableOcrText(text)) {
+      const unknownFlags: Record<string, string> = {};
+      for (const a of ALL_ALLERGENS) unknownFlags[a] = "unknown";
+      return new Response(
+        JSON.stringify({ success: true, allergen_flags: unknownFlags, method: "unreadable", saved: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

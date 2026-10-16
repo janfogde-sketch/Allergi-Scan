@@ -4,6 +4,7 @@ import { ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { Icon, Loader, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
+import { OcrUnreadableNotice, PhotoVerdictCard } from "./NotFoundParts.jsx";
 
 const S = {
   none:             { display:"none" },
@@ -78,6 +79,7 @@ export default function NotFoundScreen({
   proposedNutrition, setProposedNutrition,
   proposedNotes, setProposedNotes,
   ocrLoading, ocrText, setOcrText,
+  ocrUnreadable, scanProfiles,
   nutritionOcrLoading, handleNutritionCapture,
   productImagePreview,
   submitting, submitProduct,
@@ -228,9 +230,11 @@ export default function NotFoundScreen({
               ))}
             </div>
 
+            {ocrUnreadable && <OcrUnreadableNotice />}
+
             <label className="btn btn-primary btn-full" style={{ marginBottom:10 }}>
               <Icon name="camera" size={18} color="var(--on-green)" />
-              Fotografér ingredienslisten
+              {ocrUnreadable ? "Tag nyt billede" : "Fotografér ingredienslisten"}
               <input type="file" accept="image/*" capture="environment" style={S.none} onChange={handleImageCapture} />
             </label>
             <label className="btn btn-outline btn-full" style={{ marginBottom:4 }}>
@@ -249,6 +253,7 @@ export default function NotFoundScreen({
         {/* ── TRIN 3: Næringsindhold ── */}
         {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
           <div className="fade-in">
+            <PhotoVerdictCard profiles={scanProfiles} flags={proposedFlags} ingredientsText={ocrText} />
             <StepHead step={3} optional title="Næringsindhold" help="Fotografér eller skriv næringsdeklarationen. Du kan gå videre uden at udfylde noget." />
 
             {/* Når felterne allerede er aflæst, er billedknapperne sekundære ("igen"), så det ikke ligner, at man skal fotografere forfra. */}
@@ -349,6 +354,10 @@ export default function NotFoundScreen({
           <div className="fade-in">
             <StepHead step={5} title="Gennemse og send" />
 
+            {/* Ingredienslisten kunne ikke læses: sig det, før brugeren sender, med gode råd til et nyt billede (Jan, 16. okt. 2026) */}
+            {ocrUnreadable && ingItems.length === 0 && <OcrUnreadableNotice onCapture={handleImageCapture} />}
+            <PhotoVerdictCard profiles={scanProfiles} flags={proposedFlags} ingredientsText={ingItems.length > 0 ? ingToText(ingItems) : ocrText} />
+
             {/* Produktkort */}
             <div style={UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb12}>
               <div style={S.rowBetweenMb10}>
@@ -388,7 +397,7 @@ export default function NotFoundScreen({
                 </div>
               </div>
 
-              {!ocrText && ingItems.length === 0 && (
+              {!ocrText && ingItems.length === 0 && !ocrUnreadable && (
                 <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"center", gap:6 }}>
                   <Icon name="warning" size={12} color="var(--amber)" /> Ingen ingredienser endnu — tag et billede eller skriv dem herunder
                 </div>
@@ -431,7 +440,7 @@ export default function NotFoundScreen({
                 <div style={S.sub11}>Tryk for at slå til eller fra</div>
               </div>
               <div style={UI.wrapGap7}>
-                {PRODUCT_ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id)).map(a => {
+                {PRODUCT_ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id) || ["yes","traces",true].includes(proposedFlags?.[a.id])).map(a => {
                   const val = proposedFlags?.[a.id];
                   const isOn = val === "yes" || val === true;
                   const isTrace = val === "traces";
