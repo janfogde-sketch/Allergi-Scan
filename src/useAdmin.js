@@ -26,9 +26,6 @@ export function useAdmin(accessToken, userId) {
   // Standard: kun aktive tickets (åbne og i gang). Løste hentes først, når nogen beder om det.
   const [adminTicketFilter, setAdminTicketFilter] = useState("active");
   const [ticketsIncludeDone, setTicketsIncludeDone] = useState(false);
-  const [revisionLog, setRevisionLog] = useState([]);
-  const [revisionLogLoading, setRevisionLogLoading] = useState(false);
-  const [revisionLogFilter, setRevisionLogFilter] = useState("all");
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState(null);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
@@ -283,44 +280,6 @@ export function useAdmin(accessToken, userId) {
     return signed.startsWith("http") ? signed : `${SUPABASE_URL}/storage/v1${signed}`;
   };
 
-  // ── Ændringshistorik (revision_log) — read-only viewer ─────────────────────
-  // Bliver allerede skrevet til (submissions-godkendelse, produkt-redigering)
-  // men havde ingen visning. Product/bruger-navne på rækkerne findes ikke i
-  // selve revision_log (kun uuid'er), så de slås op i to batch-kald efter
-  // hovedlisten er hentet i stedet for én ekstra roundtrip pr. række.
-  const loadRevisionLog = async (filter) => {
-    setRevisionLogLoading(true);
-    try {
-      const f = filter ?? revisionLogFilter;
-      const typeFilter = f && f !== "all" ? `change_type=eq.${f}&` : "";
-      const rows = await apiCall(
-        `${SUPABASE_URL}/rest/v1/revision_log?${typeFilter}order=created_at.desc&limit=100`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      const entries = Array.isArray(rows) ? rows : [];
-      const productIds = [...new Set(entries.map(r => r.product_id).filter(Boolean))];
-      const userIds = [...new Set(entries.map(r => r.changed_by).filter(Boolean))];
-      const [productRows, userRows] = await Promise.all([
-        productIds.length
-          ? apiCall(`${SUPABASE_URL}/rest/v1/products?id=in.(${productIds.join(",")})&select=id,name,ean`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
-          : [],
-        userIds.length
-          ? apiCall(`${SUPABASE_URL}/rest/v1/users?id=in.(${userIds.join(",")})&select=id,name,email`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
-          : [],
-      ]);
-      const productMap = Object.fromEntries((Array.isArray(productRows) ? productRows : []).map(p => [p.id, p]));
-      const userMap = Object.fromEntries((Array.isArray(userRows) ? userRows : []).map(u => [u.id, u]));
-      setRevisionLog(entries.map(r => ({
-        ...r,
-        product: r.product_id ? productMap[r.product_id] : null,
-        user: r.changed_by ? userMap[r.changed_by] : null,
-      })));
-    } catch (e) {
-      setRevisionLog([]);
-      showToast("Kunne ikke hente ændringshistorik: " + e.message, "error");
-    }
-    setRevisionLogLoading(false);
-  };
 
   // ── Global søgning ──────────────────────────────────────────────────────────
   // Søger på tværs af brugere/produkter/tickets i ét kald hver, ikke via en
@@ -689,7 +648,6 @@ export function useAdmin(accessToken, userId) {
     productFilters, setProductFilters, productTotal, productHasMore, productsError, productsLoadingMore,
     openProduct, setOpenProduct, editingProduct, setEditingProduct,
     productActionLoading, openProductForEdit, saveProductEdit, deleteProduct, loadProductHistory,
-    revisionLog, revisionLogLoading, revisionLogFilter, setRevisionLogFilter, loadRevisionLog,
     selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
     bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
     globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
