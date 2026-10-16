@@ -15,6 +15,7 @@ import ImportSection from "./sections/ImportSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import { useAdminKnowledge } from "./useAdminKnowledge.js";
+import { useAdminMissing } from "./useAdminMissing.js";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
@@ -49,6 +50,7 @@ export default function AdminApp() {
   const [refreshing, setRefreshing] = useState(false);
   const clientErrors = useClientErrors(accessToken);
   const knowledge = useAdminKnowledge(isAdmin ? accessToken : null);
+  const missing = useAdminMissing(isAdmin ? accessToken : null);
   const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -61,34 +63,6 @@ export default function AdminApp() {
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
-
-  // ── Manglende EAN'er (porteret fra App.jsx — samme logik) ────────────────
-  const [missingEans, setMissingEans] = useState([]);
-  const [missingEansLoading, setMissingEansLoading] = useState(false);
-  const loadMissingEans = async () => {
-    setMissingEansLoading(true);
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?select=ean,count,first_seen,last_seen&order=count.desc&limit=100`,
-        { headers: makeHeaders(accessToken) }
-      );
-      if (Array.isArray(data)) setMissingEans(data);
-    } catch (e) {
-      showToast("Kunne ikke hente manglende EAN'er: " + e.message, "error");
-    }
-    setMissingEansLoading(false);
-  };
-  const deleteMissingEan = async (ean) => {
-    try {
-      await apiCall(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?ean=eq.${encodeURIComponent(ean)}`,
-        { method: "DELETE", headers: makeHeaders(accessToken) }
-      );
-      setMissingEans(prev => prev.filter(r => r.ean !== ean));
-    } catch (e) {
-      showToast("Kunne ikke slette EAN: " + e.message, "error");
-    }
-  };
 
   // ── OFF-import (porteret fra App.jsx — samme logik) ───────────────────────
   const [importLog, setImportLog] = useState(null);
@@ -114,7 +88,7 @@ export default function AdminApp() {
     if (section === "dashboard") admin.loadAdminStats();
     if (section === "submissions") admin.loadSubmissions(admin.submissionFilter);
     if (section === "tickets") admin.loadTickets();
-    if (section === "missing") loadMissingEans();
+    if (section === "missing") missing.load({});
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") knowledge.load({});
     if (section === "history") admin.loadRevisionLog();
@@ -136,7 +110,7 @@ export default function AdminApp() {
     tickets: () => admin.loadTickets(),
     products: () => admin.loadProducts(),
     knowledge: () => knowledge.load({}),
-    missing: () => loadMissingEans(),
+    missing: () => missing.load({}),
     history: () => admin.loadRevisionLog(),
     users: () => adminUsers.load(),
     family: () => adminFamily.load(),
@@ -259,10 +233,7 @@ export default function AdminApp() {
         />
       )}
       {section === "missing" && (
-        <MissingSection
-          missingEans={missingEans} missingEansLoading={missingEansLoading}
-          loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
-        />
+        <MissingSection missing={missing} onOpenProduct={(ean) => { admin.setProductSearch(ean); admin.loadProducts(ean); setSection("products"); }} />
       )}
       {section === "import" && (
         <ImportSection

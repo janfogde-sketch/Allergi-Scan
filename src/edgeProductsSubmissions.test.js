@@ -72,6 +72,30 @@ describe("edge: products", () => {
     expect(h.state.calls.some((c) => c.rpc === "log_missing_ean")).toBe(true);
   });
 
+  for (const [navn, stub] of [
+    ["netværksfejl", () => vi.fn(async () => { throw new TypeError("fetch failed"); })],
+    ["serverfejl (503)", () => vi.fn(async () => new Response("nede", { status: 503 }))],
+    ["for mange opslag (429)", () => vi.fn(async () => new Response("slow down", { status: 429 }))],
+  ]) {
+    it(`teknisk fejl hos Open Food Facts (${navn}) registreres ikke som manglende stregkode og markeres som mislykket opslag`, async () => {
+      vi.stubGlobal("fetch", stub());
+      const h = await loadHandler("products", { tokens, resolver: resolver() });
+      const r = await h.call("GET", "/products/5701234567890", { token: "a" });
+      expect(r.json).toEqual({ found: false, product: null, lookup_failed: true });
+      await new Promise((res) => setTimeout(res, 0));
+      expect(h.state.calls.some((c) => c.rpc === "log_missing_ean")).toBe(false);
+    });
+  }
+
+  it("404 fra Open Food Facts er et rigtigt 'findes ikke' og registreres", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 404 })));
+    const h = await loadHandler("products", { tokens, resolver: resolver() });
+    const r = await h.call("GET", "/products/5701234567890", { token: "a" });
+    expect(r.json).toEqual({ found: false, product: null });
+    await new Promise((res) => setTimeout(res, 0));
+    expect(h.state.calls.some((c) => c.rpc === "log_missing_ean")).toBe(true);
+  });
+
   for (const [method, path] of [["POST", "/products"], ["PATCH", "/products/p1"], ["DELETE", "/products/p1"]]) {
     it(`${method} kræver login (401) og admin (403): almindelig bruger kan ikke ændre produktdata`, async () => {
       const h = await loadHandler("products", { tokens, resolver: resolver() });
