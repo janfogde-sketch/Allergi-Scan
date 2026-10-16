@@ -453,11 +453,11 @@ export default function ResultScreen({
 
       {/* Kan ikke vurderes: hjælp med de manglende oplysninger er den vigtigste handling, og indkøbslisten bliver sekundær nederst */}
       {cannotAssess && nothingChosen && (activeProfiles.includes("me")
-        ? <StateBox icon="info" title="Du har ikke valgt nogen allergier"
-            text="Derfor har vi ikke tjekket produktet for noget. Vælg dine allergier, så vurderer vi produktet for dig."
-            actionLabel="Vælg allergier" onAction={() => setScreen(SCREENS.EDITPREFERENCES)} />
-        : <StateBox icon="info" title="Ingen allergier valgt"
-            text="Den valgte person har ingen allergier valgt, så vi har ikke tjekket produktet for noget. Du kan vælge dem under Familie."
+        ? <StateBox icon="info" title="Ingen fødevarehensyn valgt"
+            text="Du har endnu ikke valgt, hvad EatSafe skal kontrollere for. Tilføj dine allergier, intolerancer eller andre fødevarehensyn for at få en personlig vurdering."
+            actionLabel="Vælg fødevarehensyn" onAction={() => setScreen(SCREENS.EDITPREFERENCES)} />
+        : <StateBox icon="info" title="Ingen fødevarehensyn valgt"
+            text="Den valgte person har endnu ikke registreret nogen fødevarehensyn. Du kan tilføje dem under Familie."
             actionLabel="Gå til Familie" onAction={() => setScreen(SCREENS.FAMILY)} />)}
       {cannotAssess && !nothingChosen && renderMissingData()}
       {!cannotAssess && renderAddToList()}

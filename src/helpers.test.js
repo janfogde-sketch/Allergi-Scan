@@ -340,7 +340,7 @@ describe("evaluateProductForProfiles (fælles statussystem)", () => {
   it("tom profil uden valg er aldrig grøn (generalprøven 15. okt. 2026)", () => {
     const ev = evaluateProductForProfiles([prof({ allergens: [] })], { name: "Peanutbar", ingredients_text: "Jordnødder", allergen_flags: { jordnoedder: "yes" } });
     expect(ev.level).toBe("unknown");
-    expect(ev.missing).toContain("Ingen allergier valgt");
+    expect(ev.missing).toContain("Ingen fødevarehensyn valgt");
   });
 });
 
@@ -726,12 +726,12 @@ describe("historik: scanninger og søgninger holdes adskilt", () => {
 describe("ingredientsVerifiedText", () => {
   it("viser dato, når produktet er kontrolleret", async () => {
     const { ingredientsVerifiedText } = await import("./helpers.js");
-    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z")).toBe("Ingredienser kontrolleret 12. oktober 2026");
+    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z")).toBe("Ingrediensoplysninger kontrolleret mod emballagen den 12. oktober 2026.");
   });
   it("siger tydeligt, at det ikke er kontrolleret, uden dato", async () => {
     const { ingredientsVerifiedText } = await import("./helpers.js");
-    expect(ingredientsVerifiedText(null)).toBe("Ikke kontrolleret mod emballagen endnu");
-    expect(ingredientsVerifiedText("ugyldig")).toBe("Ikke kontrolleret mod emballagen endnu");
+    expect(ingredientsVerifiedText(null)).toBe("Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.");
+    expect(ingredientsVerifiedText("ugyldig")).toBe("Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.");
   });
 });
 

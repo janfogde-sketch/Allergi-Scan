@@ -177,7 +177,7 @@ export default function ProductEditor({ product, draft, setDraft, busy, onSave, 
               </div>
               <dl className="audit-detail">
                 <div className="audit-detail-row"><dt>Allergendata</dt><dd>{labelOr(QUALITY_LABELS, draft.meta?.allergen_quality)}{draft.meta?.allergen_source_method ? ` · ${labelOr(METHOD_LABELS, draft.meta.allergen_source_method)}` : ""}</dd></div>
-                {draft.meta?.ingredients_verified_at && <div className="audit-detail-row"><dt>Ingredienser kontrolleret</dt><dd>{fmtAuditDateTime(draft.meta.ingredients_verified_at, true)}</dd></div>}
+                {draft.meta?.ingredients_verified_at && <div className="audit-detail-row"><dt>Ingrediensoplysninger kontrolleret</dt><dd>{fmtAuditDateTime(draft.meta.ingredients_verified_at, true)}</dd></div>}
               </dl>
               <Disclosure title="Rettelseshistorik">
                 <History loadHistory={loadHistory} productId={product.id} />

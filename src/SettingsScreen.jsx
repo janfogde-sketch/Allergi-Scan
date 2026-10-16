@@ -365,9 +365,10 @@ export default function SettingsScreen({
                   onClick={() => setConfirmWithdraw(true)}>{withdrawing ? "Sletter…" : "Træk samtykke tilbage"}</button>
                 {/* Appens egen bekræftelse i stedet for window.confirm (F2-8): handlingen sletter helbredsdata permanent. */}
                 {confirmWithdraw && (
-                  <ConfirmDialog title="Træk samtykket tilbage?"
-                    message="Dine allergi- og helbredsoplysninger og din scanningshistorik slettes permanent."
-                    confirmLabel="Træk tilbage og slet"
+                  <ConfirmDialog title="Vil du trække dit samtykke tilbage?"
+                    message="Hvis du trækker dit samtykke tilbage, sletter vi de oplysninger, der behandles på grundlag af samtykket, herunder dine allergi- og helbredsoplysninger og din scanningshistorik. Sletningen gennemføres efter de frister, der er beskrevet i privatlivspolitikken."
+                    confirmLabel="Træk samtykke tilbage og slet"
+                    cancelLabel="Behold mit samtykke"
                     onCancel={() => setConfirmWithdraw(false)}
                     onConfirm={async () => {
                     setConfirmWithdraw(false);

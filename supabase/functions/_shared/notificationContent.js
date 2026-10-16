@@ -149,7 +149,7 @@ export const DEFINITIONS = {
       P("Tak, fordi du har indsendt oplysninger om **{{productName}}**."),
       P("Vores team har gennemgået din indsendelse, men har ikke kunnet godkende den på det nuværende grundlag."),
       PANEL("Begrundelse fra vores team", [P("{{reason}}", { multiline: true })]),
-      P("Du er velkommen til at indsende oplysningerne igen, når du har rettet det, som begrundelsen nævner. Sørg gerne for, at billederne tydeligt viser produktets stregkode og hele ingredienslisten."),
+      P("Du er velkommen til at indsende oplysningerne igen, når du har rettet de forhold, der er nævnt i begrundelsen. Sørg for, at billederne tydeligt viser produktets stregkode og hele ingredienslisten."),
       P("Tak for din hjælp. Selvom denne indsendelse ikke blev godkendt, sætter vi pris på, at du bidrager til at gøre EatSafe bedre."),
       P("Hvis du har spørgsmål til vores svar, kan du kontakte os via feedbackknappen i appen."),
       DISC,
@@ -381,14 +381,14 @@ export const DEFINITIONS = {
   // Kun push og besked i appen (ingen ny mailskabelon), samme opbygning og tone som P6:default.
   "P6:cancelled": {
     type: "P6", variant: "cancelled", category: "recalls", version: 1, ttl: 86400,
-    push: { title: "Tilbagekaldelsen er annulleret", body: "Fødevarestyrelsen har annulleret tilbagekaldelsen for {{productName}}." },
+    push: { title: "Tilbagekaldelsen er annulleret", body: "Fødevarestyrelsen har annulleret en tilbagekaldelse, der muligvis vedrørte {{productName}}." },
     mail: null,
     vars: { ...PRODUCT_VARS, recallUrl: { fallback: "" } },
     required: ["recallUrl"],
     blocks: [
       H("Tilbagekaldelsen er annulleret"),
-      P("Fødevarestyrelsen har annulleret en tilbagekaldelse, som kunne vedrøre **{{productName}}**, du har scannet eller gemt i EatSafe."),
-      P("Læs Fødevarestyrelsens side for den præcise forklaring, og følg altid deres seneste anvisninger."),
+      P("Fødevarestyrelsen har annulleret en tilbagekaldelse, der muligvis vedrørte **{{productName}}**, som du tidligere har scannet eller gemt i EatSafe."),
+      P("Du kan læse den officielle meddelelse for at se, hvorfor tilbagekaldelsen er annulleret."),
       LINK("Læs den officielle meddelelse", "{{recallUrl}}"),
       DISC,
     ],
@@ -396,7 +396,7 @@ export const DEFINITIONS = {
   },
   "P6:updated": {
     type: "P6", variant: "updated", category: "recalls", version: 1, ttl: 86400,
-    push: { title: "Tilbagekaldelsen er ændret", body: "Fødevarestyrelsen har ændret tilbagekaldelsen for {{productName}}. Læs den igen." },
+    push: { title: "Tilbagekaldelsen er opdateret", body: "Fødevarestyrelsen har opdateret en tilbagekaldelse, der muligvis vedrører {{productName}}." },
     mail: null,
     vars: {
       ...PRODUCT_VARS,
@@ -407,13 +407,12 @@ export const DEFINITIONS = {
     },
     required: ["recallUrl"],
     blocks: [
-      H("Tilbagekaldelsen er ændret"),
-      P("Fødevarestyrelsen har ændret en tilbagekaldelse, som kan vedrøre **{{productName}}**, du har scannet eller gemt i EatSafe."),
+      H("Tilbagekaldelsen er opdateret"),
+      P("Fødevarestyrelsen har ændret oplysningerne om en tilbagekaldelse, der muligvis vedrører **{{productName}}**. Læs den opdaterede meddelelse, og kontrollér, om dit produkt er omfattet."),
       PANEL("Årsag til tilbagekaldelsen", [P("{{recallReason}}", { multiline: true })]),
       PANEL("Berørte varer og partier", [P("{{affectedBatches}}", { multiline: true })]),
       P("{{recallAction}}"),
-      P("Sammenlign oplysningerne med emballagen på dit produkt. Ændringen kan gælde partier, datoer eller anvisninger."),
-      LINK("Læs den opdaterede tilbagekaldelse", "{{recallUrl}}"),
+      LINK("Se den opdaterede tilbagekaldelse", "{{recallUrl}}"),
       DISC,
     ],
     action: PRODUCT_ACTION, entity: { type: "recall", idFrom: "recallId" },

@@ -58,7 +58,7 @@ function GamificationCard({ history, setScreen, SCREENS }) {
     { icon:"flame",  value: streak,  label:"Dage i træk",        color:"#f97316", bg:"rgba(249,115,22,.12)", border:"rgba(249,115,22,.25)" },
     { icon:"search", value: total,   label:"Scanninger i alt",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
     { icon:"warning",value: dangers, label:"Advarsler fanget",   color:"var(--red)", bg:"var(--red-lt)", border:"var(--red-md)" },
-    { icon:"check",  value: safes,   label:"Uden konflikter",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
+    { icon:"check",  value: safes,   label:"Ingen fundne konflikter",   color:"var(--green)", bg:"var(--green-lt)", border:"var(--green-mid)" },
   ];
 
   return (

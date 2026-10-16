@@ -60,18 +60,18 @@ describe("ResultScreen uden hentet profil", () => {
 });
 
 describe("ResultScreen uden valgte allergier (generalprøven 15. okt. 2026)", () => {
-  it("viser aldrig grønt, men beder brugeren vælge allergier", () => {
+  it("viser aldrig grønt, men beder brugeren vælge fødevarehensyn", () => {
     profileCtx = { scanFamily: [], allergens: [], customAllerg: [], activeProfiles: ["me"], profileLoadStatus: "ok", retryProfileLoad: () => {} };
     render(<ResultScreen scanResult={{ ...scanResult, name: "Peanutbar", ingredients: "jordnødder, sukker", allergen_flags: { jordnoedder: "yes" } }} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
-    expect(screen.getByText("Du har ikke valgt nogen allergier")).toBeTruthy();
-    expect(screen.getByText("Vælg allergier")).toBeTruthy();
+    expect(screen.getByText("Ingen fødevarehensyn valgt")).toBeTruthy();
+    expect(screen.getByText("Vælg fødevarehensyn")).toBeTruthy();
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 
   it("siger det samme for et valgt familiemedlem uden allergier", () => {
     profileCtx = { scanFamily: [{ id: "barn", name: "Oskar", allergens: [] }], allergens: ["noedder"], customAllerg: [], activeProfiles: ["barn"], profileLoadStatus: "ok", retryProfileLoad: () => {} };
     render(<ResultScreen scanResult={scanResult} activeENumbers={[]} selectedENumbers={[]} alternatives={[]} altLoading={false} />);
-    expect(screen.getByText("Ingen allergier valgt")).toBeTruthy();
+    expect(screen.getByText("Ingen fødevarehensyn valgt")).toBeTruthy();
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 });

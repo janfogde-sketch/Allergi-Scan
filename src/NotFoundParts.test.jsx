@@ -20,7 +20,7 @@ describe("PhotoVerdictCard", () => {
 
   it("er aldrig grøn, når intet er fundet", () => {
     render(<PhotoVerdictCard profiles={[me()]} flags={{ maelkeallergi: "no" }} ingredientsText="Sukker, kakao" />);
-    expect(screen.getByText("Vi fandt ingen af dine allergier på billedet")).toBeTruthy();
+    expect(screen.getByText("Ingen konflikter fundet i den aflæste tekst")).toBeTruthy();
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 
@@ -37,7 +37,7 @@ describe("OcrUnreadableNotice", () => {
   it("siger, at listen ikke kunne læses, med gode råd og en knap til nyt billede", () => {
     render(<OcrUnreadableNotice onCapture={() => {}} />);
     expect(screen.getByText("Vi kunne ikke læse ingredienslisten")).toBeTruthy();
-    expect(screen.getByText(/ikke på skrå/)).toBeTruthy();
+    expect(screen.getByText(/Hold telefonen lige over teksten/)).toBeTruthy();
     expect(screen.getByText("Tag nyt billede")).toBeTruthy();
   });
 });

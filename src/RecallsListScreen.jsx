@@ -23,7 +23,7 @@ export default function RecallsListScreen({ onBack }) {
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Aktuelle tilbagekaldelser</div>
       </div>
       <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginBottom:14 }}>
-        Listen kommer fra Fødevarestyrelsen. Tjek altid emballagens parti og dato.
+        Her finder du de seneste registrerede tilbagekaldelser fra Fødevarestyrelsen. Kontrollér altid produktets parti- og datooplysninger på emballagen.
       </div>
 
       {error && <LoadErrorBox what="Tilbagekaldelserne" onRetry={reload} />}
@@ -31,7 +31,7 @@ export default function RecallsListScreen({ onBack }) {
       {!error && !loading && items.length === 0 && (
         <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="warning" size={23} color="var(--muted)" /></span>
-          <div className="empty-txt">Ingen tilbagekaldelser de seneste 60 dage.</div>
+          <div className="empty-txt">Ingen tilbagekaldelser registreret på listen for de seneste 60 dage.</div>
         </div>
       )}
 
@@ -51,7 +51,7 @@ export default function RecallsListScreen({ onBack }) {
             {isOpen && (
               <div>
                 {r.reason && <div style={line}><b>Årsag:</b> {r.reason}</div>}
-                {r.action && <div style={line}><b>Hvad skal du gøre:</b> {r.action}</div>}
+                {r.action && <div style={line}><b>Hvad skal du gøre?</b> {r.action}</div>}
                 {isOfficialRecallUrl(r.source_url) && (
                   <a href={r.source_url} target="_blank" rel="noopener noreferrer"
                     style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, fontSize:13, fontWeight:700, color:"var(--red)" }}>
