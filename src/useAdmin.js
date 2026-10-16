@@ -1,6 +1,6 @@
 // @ts-check
 import { submissionAllergenFlags, cleanIngredientText, submissionMissingFields } from "./admin/submissionLogic.js";
-import { changedFields } from "./admin/productsLogic.js";
+import { changedFields, buildProductsQuery, PRODUCT_PAGE } from "./admin/productsLogic.js";
 import { useState, useRef } from "react";
 import { SUPABASE_URL, ALLERGENS } from "./constants.jsx";
 import { makeHeaders, apiCall, stripExcludedENumbers } from "./helpers.js";
@@ -52,6 +52,13 @@ export function useAdmin(accessToken, userId) {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
+  const [productFilters, setProductFiltersState] = useState({ category: "", source: "", status: "", sort: "updated_desc" });
+  const productFiltersRef = useRef({ category: "", source: "", status: "", sort: "updated_desc" });
+  const productSeq = useRef(0);
+  const [productTotal, setProductTotal] = useState(null);
+  const [productHasMore, setProductHasMore] = useState(false);
+  const [productsError, setProductsError] = useState(false);
+  const [productsLoadingMore, setProductsLoadingMore] = useState(false);
   const [openProduct, setOpenProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productActionLoading, setProductActionLoading] = useState(false);
@@ -148,23 +155,39 @@ export function useAdmin(accessToken, userId) {
   // Uden søgeord vises de senest opdaterede produkter — 20.000+ rækker i
   // tabellen gør det urealistisk at vise "alle", og en tom liste ville se ud
   // som en fejl i stedet for "søg for at finde noget".
-  const loadProducts = async (query) => {
-    setProductsLoading(true);
+  const loadProducts = async (query, filtersOverride, append = false) => {
+    const mine = ++productSeq.current;
+    if (append) setProductsLoadingMore(true); else setProductsLoading(true);
+    setProductsError(false);
     try {
       const q = (query ?? productSearch).trim();
-      const filter = q
-        ? `or=(name.ilike.*${encodeURIComponent(q)}*,brand.ilike.*${encodeURIComponent(q)}*,ean.eq.${encodeURIComponent(q)})&`
-        : "";
+      const f = filtersOverride || productFiltersRef.current;
+      let count = null;
+      const offset = append ? products.length : 0;
       const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/products?${filter}select=id,ean,name,brand,category,source,verified_status,updated_at&order=updated_at.desc.nullslast&limit=50`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
+        `${SUPABASE_URL}/rest/v1/products?${buildProductsQuery({ q, ...f, offset })}`,
+        { headers: { ...makeHeaders(accessToken), "Accept": "application/json", Prefer: "count=exact" },
+          onResponse: (res) => { const v = Number((res.headers.get("content-range") || "").split("/")[1]); count = Number.isFinite(v) ? v : null; } }
       );
-      setProducts(Array.isArray(data) ? data : []);
+      if (mine !== productSeq.current) return;
+      const list = Array.isArray(data) ? data : [];
+      const page = list.slice(0, PRODUCT_PAGE);
+      setProducts(append ? (prev) => [...prev, ...page.filter((r) => !prev.some((x) => x.id === r.id))] : page);
+      setProductHasMore(list.length > PRODUCT_PAGE);
+      setProductTotal(count);
     } catch (e) {
-      setProducts([]);
-      showToast("Kunne ikke hente produkter: " + e.message, "error");
+      if (mine !== productSeq.current) return;
+      // En fejl er aldrig en tom liste: de gamle rækker bliver stående, og siden viser en fejltilstand
+      setProductsError(true);
     }
-    setProductsLoading(false);
+    if (mine === productSeq.current) { setProductsLoading(false); setProductsLoadingMore(false); }
+  };
+
+  const setProductFilters = (patch) => {
+    const next = { ...productFiltersRef.current, ...patch };
+    productFiltersRef.current = next;
+    setProductFiltersState(next);
+    loadProducts(undefined, next);
   };
 
   // Listen henter kun let-vægt felter (se loadProducts) — ingredients_text kan
@@ -823,6 +846,7 @@ export function useAdmin(accessToken, userId) {
     cleanOcrWithAI,
     reparseLoading, reparseLog, runReparse,
     products, productsLoading, productSearch, setProductSearch, loadProducts,
+    productFilters, setProductFilters, productTotal, productHasMore, productsError, productsLoadingMore,
     openProduct, setOpenProduct, editingProduct, setEditingProduct,
     productActionLoading, openProductForEdit, saveProductEdit, deleteProduct, loadProductHistory,
     knowledgeEntries, knowledgeLoading, knowledgeSearch, setKnowledgeSearch,

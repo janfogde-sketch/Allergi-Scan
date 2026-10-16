@@ -188,3 +188,10 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
 - **Verificering:** "Verificeret" kan ikke vælges, før ingrediensliste, kendte allergener og ingen konflikter. Databasen afviser desuden `verified` uden ingrediensliste (migration `20261016170000`, ændrer ingen eksisterende rækker). Statusnavne vises på dansk; værdierne er uændrede.
 - **Gem:** kun ændrede felter sendes, og kun hvis produktet ikke er ændret siden åbning (`updated_at`). Kunne produktet ikke hentes, vises en fejl, og der kan ikke gemmes (før kunne en tom formular overskrive ingredienser og allergener).
 - **Sporbarhed:** datakilde og allergendata-kvalitet vises; rettelseshistorikken læses fra aktivitetsloggen (`produkt_rettet`). EAN er unik i databasen (ingen dubletter kan oprettes); formularen viser en EAN-kontrol (format og kontrolciffer). 6.755 af 20.182 EAN'er har ikke et standardformat (8, 12, 13 eller 14 cifre); de er ikke rettet.
+
+### Produkter: oversigt (16. okt. 2026)
+
+- **Kort:** produktnavn som overskrift (ombrydes), derefter brand og EAN, og en linje med verificering (dansk), kategori, kilde og dato. Chevron åbner redigering.
+- **Søgning, filtre og sortering kører på serveren** (hele tabellen, ikke kun de viste): navn og brand (tekst) samt EAN (cifre søger i begyndelsen af EAN); kategori, kilde (Open Food Facts omfatter `open_food_facts` og `off_import`) og verificering; sortering efter opdatering eller navn. Tegn med betydning i filtre (komma, parenteser m.m.) fjernes; før kunne et komma i søgningen ødelægge forespørgslen.
+- **Antal** kommer fra serveren (`Content-Range`). En fejl vises som fejltilstand med "Prøv igen", aldrig som en tom liste; gamle rækker bliver stående med markering ved mislykket opdatering.
+- **CSV** ligger i menuen "Flere handlinger" og eksporterer de viste rækker med danske kilde- og statusnavne (formelinjektion er forhindret af `csvExport`).
