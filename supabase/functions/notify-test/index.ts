@@ -14,7 +14,8 @@ import { renderNotification, validatePushOverride, DEFINITIONS } from "../_share
 import { mockDataFor } from "../_shared/notificationMock.js";
 import { sendWebPush } from "../_shared/webpush.ts";
 import { parseApnsToken, apnsConfigFromEnv, sendApns } from "../_shared/apns.ts";
-import { RESEND_TEMPLATES, buildMailVariables, sendTemplateMail } from "../_shared/mailSend.ts";
+import { RESEND_TEMPLATES, buildMailVariables, sendTemplateMail, sendHtmlMail } from "../_shared/mailSend.ts";
+import { LIST_MAIL_KEYS, renderListMail } from "../_shared/listMail.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const APP_URL = "https://www.eatsafe.dk";
@@ -50,17 +51,20 @@ Deno.serve(async (req) => {
     const def = DEFINITIONS[key as keyof typeof DEFINITIONS];
     const templateId = RESEND_TEMPLATES[key];
     if (!def) return json({ error: "Ukendt notifikation" }, 400);
+    const { data: who } = userId ? await db.from("users").select("name").eq("id", userId).maybeSingle() : { data: null };
+    const r = renderNotification(key, mockDataFor(key));
+    if (!r.mail) return json({ error: "Denne notifikation har ingen mail" }, 404);
+    const vars = buildMailVariables(r.mailVars as Record<string, string>, who?.name || "Maria");
+    // Delt indkøbsliste (P3) sendes som HTML fra repoet, ikke via Resend-skabelonen: vis det, der faktisk sendes
+    if (LIST_MAIL_KEYS.has(key)) return json({ html: renderListMail(vars), subject: r.mail.subject, source: "repo", templateId: null, status: null });
     if (!templateId) return json({ error: "Denne notifikation har ingen mail" }, 404);
     const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
     if (!apiKey) return json({ error: "RESEND_API_KEY mangler" }, 500);
     const res = await fetch(`https://api.resend.com/templates/${templateId}`, { headers: { Authorization: `Bearer ${apiKey}` } });
     const tpl = await res.json().catch(() => ({}));
     if (!res.ok || !tpl?.html) return json({ error: `Kunne ikke hente skabelonen fra Resend (HTTP ${res.status})` }, 502);
-    const { data: who } = userId ? await db.from("users").select("name").eq("id", userId).maybeSingle() : { data: null };
-    const r = renderNotification(key, mockDataFor(key));
-    const vars = buildMailVariables(r.mailVars as Record<string, string>, who?.name || "Maria");
     const html = String(tpl.html).replace(/\{\{\{\s*([a-zA-Z_]+)\s*\}\}\}/g, (_m, name) => vars[name] ?? "");
-    return json({ html, subject: r.mail!.subject, templateId, status: tpl.status ?? null });
+    return json({ html, subject: r.mail.subject, source: "resend", templateId, status: tpl.status ?? null });
   }
 
   const channels: string[] = Array.isArray(body?.channels) ? body.channels : [];
@@ -114,23 +118,29 @@ Deno.serve(async (req) => {
   }
 
   if (channels.includes("mail")) {
+    const direct = LIST_MAIL_KEYS.has(key); // samme vej som den rigtige afsendelse (se notify)
     const templateId = RESEND_TEMPLATES[key];
     const apiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-    if (!templateId) result.mail = { sent: false, error: "Denne notifikation har ingen mail" };
+    const variables = buildMailVariables(r.mailVars as Record<string, string>, target.name);
+    if (!r.mail || (!templateId && !direct)) result.mail = { sent: false, error: "Denne notifikation har ingen mail" };
     else if (!apiKey) result.mail = { sent: false, error: "RESEND_API_KEY mangler" };
     else if (!target.email) result.mail = { sent: false, error: "Modtageren har ingen e-mailadresse" };
     else {
-      const m = await sendTemplateMail({
-        apiKey, to: target.email, templateId, subject: `[TEST] ${r.mail!.subject}`,
-        variables: buildMailVariables(r.mailVars as Record<string, string>, target.name), idempotencyKey: `notify-test-${crypto.randomUUID()}`,
-      });
-      result.mail = { sent: m.ok, error: m.ok ? null : m.error };
+      const idem = `notify-test-${crypto.randomUUID()}`;
+      const m = direct
+        ? await sendHtmlMail({ apiKey, to: target.email, subject: `[TEST] ${r.mail.subject}`, html: renderListMail(variables), idempotencyKey: idem })
+        : await sendTemplateMail({ apiKey, to: target.email, templateId, subject: `[TEST] ${r.mail.subject}`, variables, idempotencyKey: idem });
+      // Resend har taget imod mailen (accepteret). Levering til indbakken bekræftes ikke her.
+      result.mail = { sent: m.ok, error: m.ok ? null : m.error, source: direct ? "repo" : "resend" };
     }
   }
   // Adminloggen: kun hvilken notifikation og hvilke kanaler, aldrig modtager eller indhold
   const push = result.push as { sent?: number } | undefined, mail = result.mail as { sent?: boolean } | undefined;
   const anySent = (push?.sent ?? 0) > 0 || !!mail?.sent;
   await logAdminEvent(db, caller.id, "testpush_sendt", "edge_function", "notify-test",
-    { funktion: "notify-test", notifikation: key, kanaler: channels.filter((c) => c === "push" || c === "mail") }, anySent ? "ok" : "mislykket");
+    {
+      funktion: "notify-test", notifikation: key, kanaler: channels.filter((c) => c === "push" || c === "mail"),
+      resultat: { ...(push ? { push: (push.sent ?? 0) > 0 ? "accepteret" : "ikke sendt" } : {}), ...(mail ? { mail: mail.sent ? "accepteret" : "fejlet" } : {}) },
+    }, anySent ? "ok" : "mislykket");
   return json(result);
 });

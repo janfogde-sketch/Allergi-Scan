@@ -11,7 +11,7 @@
  },
  "N2a": {
   "file": "N2a-produkt-godkendt.html",
-  "subject": "Dit produkt er godkendt og tilføjet i EatSafe",
+  "subject": "Din indsendelse er godkendt i EatSafe",
   "vars": [
    "name",
    "productName"

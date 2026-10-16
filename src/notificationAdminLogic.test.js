@@ -76,3 +76,25 @@ describe("kategorier og hjælpefunktioner (16. okt. 2026)", () => {
     expect(prepareMailPreview(html, "dark", "https://x.dk")).toContain("@media all");
   });
 });
+
+describe("tekster om produktgodkendelse (16. okt. 2026)", () => {
+  it("N2a siger, at indsendelsen er godkendt, og at det ikke er en sikkerhedsvurdering", () => {
+    const r = renderNotification("N2a:default", mockDataFor("N2a:default"));
+    expect(r.pushTitle).toBe("Din indsendelse er godkendt");
+    expect(r.pushBody).toBe("Arla Økologisk Letmælk er nu tilgængeligt i EatSafe. Tak for dit bidrag!");
+    expect(r.mail.subject).toBe("Din indsendelse er godkendt i EatSafe");
+    const text = JSON.stringify(r.blocks);
+    expect(text).toContain("ikke en vurdering af, om produktet er sikkert for dig");
+    expect(`${r.pushTitle} ${r.pushBody} ${text}`).not.toMatch(/sikkert at spise|allergisikker|passer til dig/i);
+  });
+  it("en gemt, tilpasset pushtekst bevares (standarden overskriver den ikke)", () => {
+    const r = renderNotification("N2a:default", mockDataFor("N2a:default"), { pushOverride: { title: "Min titel", body: "Min tekst" } });
+    expect([r.pushTitle, r.pushBody]).toEqual(["Min titel", "Min tekst"]);
+  });
+  it("status for testafsendelse siger aldrig 'leveret'", async () => {
+    const { summarizeTest } = await import("./admin/notificationAdminLogic.js");
+    const r = summarizeTest({ push: { devices: 1, sent: 1, failed: 0 }, mail: { sent: true } }, ["push", "mail"]);
+    expect(JSON.stringify(r)).not.toMatch(/[Ll]everet\b/);
+    expect(r.lines.map((l) => l.status)).toEqual(["Accepteret", "Accepteret"]);
+  });
+});

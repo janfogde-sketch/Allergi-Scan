@@ -138,3 +138,11 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
   og logoet hentes fra den adresse, panelet selv ligger på (indholdsspærren `img-src 'self'` blokerede tidligere `https://www.eatsafe.dk/brand/...`, når panelet lå på en anden adresse, fx dev). Skabelonen ændres ikke.
 - **Send test:** bekræftelsesdialog, ét kald ad gangen, ikke-gemt pushtekst sendes med uden at blive gemt (`pushOverride` i `notify-test`, kræver deploy), resultat pr. kanal. "Delvist sendt" og "ikke sendt" vises som det, de er.
   Kun administratorer kan være modtagere; testen opretter ingen besked i appen og udløser ikke hændelsen; loggen `testpush_sendt` rummer kun notifikation og kanaler.
+
+### Notifikationer: finpudsning (16. okt. 2026)
+
+- **Store mailvisning:** fast panel (fuld skærm på mobil) med X øverst, og én ramme, der fylder resten (ingen tom flade, ingen dobbelt scroll). Rammen genskabes ved hver åbning, så mailen starter forfra.
+- **Delt indkøbsliste (P3):** mailen sendes som HTML fra `listMail.ts`, ikke via Resend-skabelonen. Forhåndsvisning og testmail bruger nu samme kilde som den rigtige afsendelse (`source: "repo"`); før viste panelet Resend-skabelonen.
+- **Øvrige mails:** forhåndsvisningen hentes fra den publicerede skabelon i Resend (kildefilerne kan afvige); det står under "Tekniske oplysninger".
+- **Testresultat:** pr. kanal "Accepteret"/"Fejlet". Accepteret betyder, at push-tjenesten eller Resend har taget imod beskeden. Levering bekræftes ikke og vises aldrig. Aktivitetsloggen får kanaler og resultat pr. kanal.
+- **N2a (produkt godkendt):** "Din indsendelse er godkendt" / "{{productName}} er nu tilgængeligt i EatSafe. Tak for dit bidrag!". Mailen siger udtrykkeligt, at godkendelsen ikke er en sikkerhedsvurdering. Kun standardteksten er ændret; administratorers gemte pushtekster (`notification_push_overrides`) røres ikke (der var ingen ved ændringen). Resend-skabelonen N2a skal opdateres med den nye overskrift og de to afsnit fra `N2a-produkt-godkendt.html`.

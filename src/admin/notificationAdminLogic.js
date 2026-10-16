@@ -4,6 +4,10 @@ import { DEFINITIONS, renderNotification, validatePushOverride, pushVariablesFor
 import { mockDataFor } from "../../supabase/functions/_shared/notificationMock.js";
 
 import { RESEND_TEMPLATES } from "../../supabase/functions/_shared/mailSend.ts";
+import { LIST_MAIL_KEYS } from "../../supabase/functions/_shared/listMail.ts";
+
+/** Mails, der sendes som HTML fra projektets kildefil og ikke via en skabelon i Resend (delt indkøbsliste). */
+export const isSentFromRepo = (key) => LIST_MAIL_KEYS.has(key);
 
 /** Direkte link til notifikationens mailskabelon i Resend (null hvis varianten ikke har nogen mail). */
 export function resendTemplateUrl(key) {
@@ -109,19 +113,19 @@ export function sameText(a, b) {
  * @param {string[]} channels
  */
 export function summarizeTest(res, channels) {
-  if (!res) return { overall: "failed", lines: [{ channel: "all", ok: false, text: "Testen kunne ikke gennemføres." }] };
+  if (!res) return { overall: "failed", lines: [{ channel: "all", ok: false, status: "Fejlet", text: "Testen kunne ikke gennemføres." }] };
   const lines = [];
   if (channels.includes("push")) {
     const p = res.push;
-    if (!p) lines.push({ channel: "push", ok: false, text: "Push: intet svar fra serveren." });
-    else if (p.devices === 0) lines.push({ channel: "push", ok: false, text: "Push: modtageren har ingen enhed med push slået til." });
-    else if (p.sent === 0) lines.push({ channel: "push", ok: false, text: `Push: ikke sendt${p.errors?.length ? ` (${p.errors.join("; ")})` : ""}.` });
-    else lines.push({ channel: "push", ok: p.failed === 0, partial: p.failed > 0, text: `Push: sendt til ${p.sent} af ${p.devices} enheder${p.failed ? ` (${p.errors?.join("; ") || "fejl"})` : ""}.` });
+    if (!p) lines.push({ channel: "push", ok: false, status: "Fejlet", text: "Push: intet svar fra serveren." });
+    else if (p.devices === 0) lines.push({ channel: "push", ok: false, status: "Fejlet", text: "Push: modtageren har ingen enhed med push slået til." });
+    else if (p.sent === 0) lines.push({ channel: "push", ok: false, status: "Fejlet", text: `Push: ikke afsendt${p.errors?.length ? ` (${p.errors.join("; ")})` : ""}.` });
+    else lines.push({ channel: "push", ok: p.failed === 0, partial: p.failed > 0, status: "Accepteret", text: `Push: accepteret af push-tjenesten for ${p.sent} af ${p.devices} enheder${p.failed ? ` (${p.errors?.join("; ") || "fejl"})` : ""}. Levering til telefonen bekræftes ikke.` });
   }
   if (channels.includes("mail")) {
     const m = res.mail;
-    if (!m) lines.push({ channel: "mail", ok: false, text: "Mail: intet svar fra serveren." });
-    else lines.push({ channel: "mail", ok: !!m.sent, text: m.sent ? "Mail: sendt." : `Mail: ikke sendt (${m.error || "ukendt fejl"}).` });
+    if (!m) lines.push({ channel: "mail", ok: false, status: "Fejlet", text: "Mail: intet svar fra serveren." });
+    else lines.push({ channel: "mail", ok: !!m.sent, status: m.sent ? "Accepteret" : "Fejlet", text: m.sent ? "Mail: accepteret af Resend. Levering til indbakken bekræftes ikke." : `Mail: ikke afsendt (${m.error || "ukendt fejl"}).` });
   }
   const oks = lines.filter((l) => l.ok).length;
   const some = lines.some((l) => l.ok || l.partial);

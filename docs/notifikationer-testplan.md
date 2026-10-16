@@ -40,7 +40,7 @@ For hver variant: (a) appen **lukket**, (b) appen **åben**, (c) appen i **baggr
 
 | Variant | Sådan udløses | Forventet push-tekst (titel) |
 |---|---|---|
-| N2a Produkt godkendt | QA indsender nyt produkt → admin godkender | Dit produkt er godkendt |
+| N2a Produkt godkendt | QA indsender nyt produkt → admin godkender | Din indsendelse er godkendt |
 | N2b Rettelse godkendt | QA foreslår rettelse → admin godkender | Din rettelse er godkendt |
 | N3 Afvist | Admin afviser med begrundelse | Din indsendelse er ikke godkendt |
 | N4 Produkt tilføjet | QA scanner ukendt EAN, andre indsender/godkender samme EAN | Produktet findes nu i EatSafe |

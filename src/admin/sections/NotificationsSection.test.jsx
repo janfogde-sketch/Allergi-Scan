@@ -94,10 +94,10 @@ describe("NotificationsSection", () => {
     fireEvent.change(screen.getByLabelText("Titel"), { target: { value: "Ændret" } });
     fireEvent.click(screen.getByRole("button", { name: "Tilbage til notifikationer" }));
     expect(screen.getByRole("alertdialog")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Annuller" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bliv på siden" }));
     expect(screen.getByLabelText("Titel").value).toBe("Ændret");
     fireEvent.click(screen.getByRole("button", { name: "Tilbage til notifikationer" }));
-    fireEvent.click(screen.getByRole("button", { name: "Forlad" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kassér ændringer" }));
     expect(document.querySelector(".np-layout").className).not.toContain("editing");
   });
   it("gendan standard kræver bekræftelse, når tilpasset tekst findes", async () => {
@@ -113,11 +113,41 @@ describe("NotificationsSection", () => {
     render(<NotificationsSection {...base()} />);
     openProduct();
     fireEvent.click(screen.getByRole("tab", { name: "Mail" }));
-    expect(screen.getByText(/Resend \(skrivebeskyttet her\)/)).toBeTruthy();
+    expect(screen.getByText(/^Resend/)).toBeTruthy();
     expect(screen.queryByText("N2a:default")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Tekniske oplysninger" }));
     expect(screen.getByText("N2a:default")).toBeTruthy();
     await waitFor(() => expect(document.querySelector("iframe.np-frame")).toBeTruthy());
+  });
+  it("den store mailvisning er en fast panel med X øverst, én ramme der fylder resten, åbner forfra og lukker tilbage til fanen", async () => {
+    render(<NotificationsSection {...base()} />);
+    openProduct();
+    fireEvent.click(screen.getByRole("tab", { name: "Mail" }));
+    await waitFor(() => screen.getByRole("button", { name: "Åbn større visning" }));
+    fireEvent.click(screen.getByRole("button", { name: "Åbn større visning" }));
+    const dlg = screen.getByRole("dialog", { name: "Mail i større visning" });
+    expect(dlg.querySelector(".todo-panel-head button[aria-label='Luk']")).toBeTruthy();
+    expect(dlg.querySelectorAll("iframe")).toHaveLength(1);
+    expect(dlg.querySelector(".np-big-body iframe.np-frame-big")).toBeTruthy();
+    fireEvent.click(dlg.querySelector("button[aria-label='Luk']"));
+    expect(screen.queryByRole("dialog", { name: "Mail i større visning" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Mail" }).getAttribute("aria-selected")).toBe("true");
+  });
+  it("delt indkøbsliste sendes fra kildefilen: ingen Resend-link, og kilden forklares", async () => {
+    render(<NotificationsSection {...base()} />);
+    fireEvent.click(screen.getByRole("button", { name: /Delte lister/ }));
+    fireEvent.click(screen.getByText("Delt indkøbsliste: én vare"));
+    fireEvent.click(screen.getByRole("tab", { name: "Mail" }));
+    expect(screen.getByText(/Kildefilen i projektet \(sendes direkte\)/)).toBeTruthy();
+    expect(screen.queryByText("Åbn skabelonen")).toBeNull();
+  });
+  it("pushfanen har én kort forklaring og en diskret informationsknap", () => {
+    render(<NotificationsSection {...base()} />);
+    openProduct();
+    expect(screen.getByText(/Pushbeskeden fører til den fulde besked i appen/)).toBeTruthy();
+    expect(screen.queryByText(/opdigtede eksempeldata/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Om forhåndsvisningen" }));
+    expect(screen.getByText(/opdigtede eksempeldata/)).toBeTruthy();
   });
   it("test: kræver bekræftelse, sender kun én gang ved dobbelttryk, og delvis afsendelse er ikke fuldført", async () => {
     let release;
@@ -131,8 +161,10 @@ describe("NotificationsSection", () => {
     fireEvent.click(confirm); fireEvent.click(confirm);
     expect(p.sendTest).toHaveBeenCalledTimes(1);
     release();
-    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/Delvist sendt/));
-    expect(screen.getByRole("status").textContent).toMatch(/Mail: ikke sendt/);
+    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/Delvist afsendt/));
+    expect(screen.getByRole("status").textContent).toMatch(/Mail: ikke afsendt/)
+    expect(screen.getByRole("status").textContent).toMatch(/Levering til telefonen bekræftes ikke/)
+    expect(screen.getByRole("status").textContent).not.toMatch(/[Ll]everet\b/);
   });
   it("test mislykkes med fejl og viser den", async () => {
     const p = base({ sendTest: vi.fn(async () => ({ ok: false, error: "Du har ikke adgang til at sende test." })) });
