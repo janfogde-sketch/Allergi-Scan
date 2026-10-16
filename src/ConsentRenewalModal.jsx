@@ -57,7 +57,7 @@ export default function ConsentRenewalModal({ screen, onboarded, openLegal }) {
           <HealthConsentBox id="renew-consent" checked={checked} onChange={setChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
         </div>
         <button className="btn btn-primary btn-full" onClick={accept} disabled={!checked || busy}>Jeg giver samtykke</button>
-        <button type="button" className="link-green" style={{ display:"block", margin:"14px auto 0", background:"none", border:"none", fontSize:13 }}
+        <button type="button" className="btn btn-outline btn-full" style={{ marginTop:10 }}
           disabled={busy} onClick={() => setConfirmWithdraw(true)}>Jeg vil ikke give samtykke</button>
         {confirmWithdraw && (
           <ConfirmDialog title="Vil du trække dit samtykke tilbage?"
