@@ -21,7 +21,7 @@ declare
     'family_invites.requested_by','knowledge_base.reviewed_by','family_members.family_owner_id','family_members.user_id',
     'favorites.user_id','feedback_tickets.submitted_by',
     'notification_preferences.user_id','notification_push_overrides.updated_by','notifications.user_id',
-    'push_tokens.user_id','recipes.reviewed_by','recipes.submitted_by','revision_log.changed_by',
+    'push_tokens.user_id','recall_events.actor_id','recall_matches.decided_by','recipes.reviewed_by','recipes.submitted_by','revision_log.changed_by',
     'scan_history.user_id','search_selections.user_id','security_reports.user_id',
     'shopping_list_access.user_id','shopping_list_hidden.user_id','shopping_list_items.added_by',
     'shopping_lists.owner_id','ticket_meta_log.changed_by','ticket_tasks.created_by','submissions.reviewed_by','submissions.submitted_by','user_allergens.user_id',
