@@ -10,10 +10,8 @@ import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.j
 const SUBMISSIONS_PAGE = 100;
 const TICKETS_PAGE = 100;
 const TICKETS_PAGE_ALL = 200;
-// Hver AI-reparse koster et AI-kald; loftet holder "Kør nu" til et overskueligt antal pr. tryk.
-const MANUAL_REPARSE_LIMIT = 25;
 // Serveren svarer ai_skipped:"daily_limit", når AI blev sprunget over pga. adminpuljen eller det samlede dagsloft (G29).
-const AI_LIMIT_TEXT = "AI-loftet for i dag er nået. Produktet er gemt med nøgleordsmotoren (middel kvalitet); \"Kør nu\" under Import kan tage det igen i morgen.";
+const AI_LIMIT_TEXT = "AI-loftet for i dag er nået. Produktet er gemt med nøgleordsmotoren (middel kvalitet); \"Kør genanalyse\" under Dataimport kan tage det igen i morgen.";
 
 export function useAdmin(accessToken, userId) {
   // State
@@ -47,8 +45,6 @@ export function useAdmin(accessToken, userId) {
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
-  const [reparseLoading, setReparseLoading] = useState(false);
-  const [reparseLog, setReparseLog] = useState(null);
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
@@ -567,7 +563,7 @@ export function useAdmin(accessToken, userId) {
     setBulkActionLoading(false);
     const parts = [failed > 0 ? `${succeeded} af ${ids.length} godkendt, ${failed} fejlede` : `${succeeded} indsendelser godkendt`];
     if (aiFailed > 0) parts.push(`${aiFailed} uden AI-tjek (tjek dem under Produkter)`);
-    if (aiLimited > 0) parts.push(`${aiLimited} uden AI-tjek, fordi AI-loftet for i dag er nået ("Kør nu" under Import kan tage dem igen i morgen)`);
+    if (aiLimited > 0) parts.push(`${aiLimited} uden AI-tjek, fordi AI-loftet for i dag er nået ("Kør genanalyse" under Dataimport kan tage dem igen i morgen)`);
     if (skipped > 0) parts.push(`${skipped} sprunget over`);
     showToast(parts.join(". "), failed > 0 || aiFailed > 0 || aiLimited > 0 ? "error" : "success");
     if (failed > 0) loadSubmissions(submissionFilter);
@@ -660,25 +656,6 @@ export function useAdmin(accessToken, userId) {
     setCleaningOcr(false);
   };
 
-  const runReparse = async (manual = false) => {
-    if (reparseLoading) return;
-    setReparseLoading(true);
-    setReparseLog(null);
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/auto-reparse`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-        body: JSON.stringify({ manual, limit: manual ? MANUAL_REPARSE_LIMIT : 50 }),
-      });
-      const data = await res.json();
-      setReparseLog(data);
-    } catch (e) {
-      console.error("runReparse fejl:", e);
-      setReparseLog({ error: e.message });
-    }
-    setReparseLoading(false);
-  };
-
   return {
     // State
     submissions, setSubmissions,
@@ -708,7 +685,6 @@ export function useAdmin(accessToken, userId) {
     rejectSubmission,
     updateTicketStatus,
     cleanOcrWithAI,
-    reparseLoading, reparseLog, runReparse,
     products, productsLoading, productSearch, setProductSearch, loadProducts,
     productFilters, setProductFilters, productTotal, productHasMore, productsError, productsLoadingMore,
     openProduct, setOpenProduct, editingProduct, setEditingProduct,

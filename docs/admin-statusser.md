@@ -215,3 +215,13 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
 - **Opret produkt:** stregkoden overføres (tekst, foranstillede nuller bevares), produktet slås op først ("Produktet findes allerede" + åbn), og oprettes via den eksisterende produktfunktion som ikke verificeret og uden allergenoplysninger (alle Ukendt). Ugyldigt kontrolciffer advarer, men blokerer ikke (interne koder findes).
 - **Datakvalitet:** forsøg inden for 30 sekunder på samme kode tælles ikke (automatiske genforsøg). Tekniske fejl hos Open Food Facts (netværk, 429, 5xx, ugyldigt svar) registreres ikke længere som "manglende produkt"; funktionen svarer `lookup_failed`, og appen viser en fejl i stedet for "produktet findes ikke" (og skriver ikke "ikke fundet" i historikken). Kun 404/status 0 tæller som ukendt.
 - **Unikke brugere:** kan ikke opgøres, fordi registreringen ikke gemmer brugeren (bevidst, ingen personoplysninger). Vises derfor ikke.
+
+## Dataimport (16. okt. 2026)
+
+- **Opbygning:** Overblik, Produktimport fra Open Food Facts, Genanalysér allergener, Seneste kørsler og foldede tekniske oplysninger. Samme kortstruktur og fuldbredde-knapper ("Kør import", "Kør genanalyse") på mobil. Siden hedder "Dataimport".
+- **Kørselslog (migration `20261016210000`, `import_runs`):** natkørsler og manuelle kørsler gemmer nu tællere (forsøgte opslag, fundet, importeret, fandtes allerede, ikke fundet, fejl; genanalyse: behandlet, genanalyseret, allergen hævet, AI-kald, fejl), status (Gennemført / Delvist gennemført / Fejlet), varighed og korte linjer. Ingen nøgler, e-mails eller rå fejltekster; kun en kort fejlkode. Opbevaring 180 dage. Før migrationen er udgivet, vises "Kørselsloggen er endnu ikke tilgængelig" (kørslerne virker som før).
+- **Status er aldrig opdigtet:** Klar vises kun uden registrerede kørsler; manglende tal er "–", ikke 0. "Til manuel gennemgang" er "–", fordi der ikke findes en kø (se risikovurderingen).
+- **Samtidige kørsler:** ét aktivt job pr. type (unikt indeks); en ny kørsel får 409 og en forklaring. Hængende kørsler (over 10 min.) afsluttes som afbrudt. Knapperne er slået fra under kørsel (også mod dobbeltklik). En kørsel fortsætter på serveren, selvom siden forlades.
+- **Grænser (uændrede og på serveren):** 50 stregkoder pr. import; 25 produkter pr. manuel genanalyse; nat op til 200; admin-tjek på manuelle kald.
+- **Tider:** planlagte kørsler (02:00 og 03:00 UTC) vises i dansk tid med sommer-/vintertid; UTC bruges internt.
+- **Risici og beslutninger:** `docs/dataimport-risikovurdering.md`.

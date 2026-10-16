@@ -56,7 +56,7 @@ describe("kategorier", () => {
     setMobile(false);
     const setSection = vi.fn();
     mount({ setSection });
-    const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Ukendte stregkoder": "missing", Import: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", "Frafald i onboarding": "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
+    const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Ukendte stregkoder": "missing", Dataimport: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", "Frafald i onboarding": "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
     for (const [label, id] of Object.entries(expected)) {
       setSection.mockClear();
       const find = () => [...document.querySelectorAll(".admin-nav-item")].find((b) => b.querySelector(".admin-nav-label").textContent === label);
@@ -201,18 +201,17 @@ describe("opdatering i headeren", () => {
     const btn = screen.getByRole("button", { name: "Opdater siden" });
     expect(btn.disabled).toBe(true);
     expect(btn.className).toContain("spinning");
-    rerender(<AdminLayout {...base} section="import"><div /></AdminLayout>);
+    rerender(<AdminLayout {...base} section="import" onRefresh={undefined}><div /></AdminLayout>);
     expect(container.querySelector("[aria-label='Opdater siden']")).toBeNull();
   });
-  it("alle sider med data har en opdatering i AdminApp, kun Import har ingen", async () => {
+  it("alle sider med data har en opdatering i AdminApp", async () => {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
     const { NAV_ITEMS } = await import("./navLogic.js");
     const src = readFileSync(join(process.cwd(), "src/admin/AdminApp.jsx"), "utf8");
     const block = src.slice(src.indexOf("const REFRESHERS"), src.indexOf("const refreshCurrent"));
     for (const item of NAV_ITEMS) {
-      if (item.id === "import") expect(block).not.toMatch(/\bimport\s*:/);
-      else expect(block, item.id).toMatch(new RegExp(`(^|\\s|")${item.id}"?\\s*:`));
+      expect(block, item.id).toMatch(new RegExp(`(^|\\s|")${item.id}"?\\s*:`));
     }
   });
 });
