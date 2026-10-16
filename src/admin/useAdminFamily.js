@@ -1,9 +1,11 @@
 // @ts-check
-// Familieadministrationen: oversigt, detaljer og invitationer hentes gennem serverfunktioner (migration 20261016130000, kun administratorer). Tilbagekaldelse
-// og fjernelse kræver en begrundelse og logges af databasen. En fejl er en egen tilstand, aldrig en tom liste; findes funktionerne ikke endnu, er unavailable sand.
+// Familieadministrationen: oversigt, detaljer og invitationer. Primær kilde er serverfunktionerne fra migration 20261016130000 (kun administratorer).
+// Findes de ikke endnu (404), læses de samme oplysninger direkte fra tabellerne (administratorer må læse dem; ingen allergier hentes), og handlinger er slået fra,
+// til databaseopdateringen er udgivet. Familier og invitationer hentes uafhængigt: en fejl i den ene skjuler ikke den anden, og et antal vises kun, når det er bekræftet.
 import { useState, useRef, useCallback } from "react";
 import { SUPABASE_URL } from "../constants.jsx";
 import { apiCall, makeHeaders } from "../helpers.js";
+import { buildFromTables, filterOwners } from "./familyLogic.js";
 
 export const FAMILY_PAGE = 50;
 
@@ -22,58 +24,84 @@ export function familyErrorText(e, fallback) {
   return fallback;
 }
 
+/** @typedef {"idle"|"loading"|"ok"|"error"} Phase */
+/** @typedef {null | { denied: boolean, unavailable: boolean }} Err */
+
+const errOf = (/** @type {any} */ e) => ({ denied: e?.status === 401 || e?.status === 403, unavailable: e?.status === 404 });
+
 export function useAdminFamily(/** @type {string} */ accessToken) {
   const [rows, setRows] = useState(/** @type {any[]} */ ([]));
   const [total, setTotal] = useState(/** @type {number | null} */ (null));
   const [invites, setInvites] = useState(/** @type {any[]} */ ([]));
-  const [loading, setLoading] = useState(false);
+  const [famPhase, setFamPhase] = useState(/** @type {Phase} */ ("idle"));
+  const [invPhase, setInvPhase] = useState(/** @type {Phase} */ ("idle"));
+  const [famError, setFamError] = useState(/** @type {Err} */ (null));
+  const [invError, setInvError] = useState(/** @type {Err} */ (null));
+  const [mode, setMode] = useState(/** @type {"rpc"|"legacy"|null} */ (null)); // legacy: databasefunktionerne er ikke udgivet endnu
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(/** @type {null | { denied: boolean, unavailable: boolean }} */ (null));
   const filtersRef = useRef({ q: "" });
+  const tablesRef = useRef(/** @type {null | ReturnType<typeof buildFromTables>} */ (null));
   const seq = useRef(0);
-  const rpc = useCallback((/** @type {string} */ fn, /** @type {any} */ args) => apiCall(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
-    method: "POST", headers: { ...makeHeaders(accessToken), "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(args),
-  }), [accessToken]);
+  const headers = useCallback(() => ({ ...makeHeaders(accessToken), "Content-Type": "application/json", Accept: "application/json" }), [accessToken]);
+  const rpc = useCallback((/** @type {string} */ fn, /** @type {any} */ args) => apiCall(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST", headers: headers(), body: JSON.stringify(args) }), [headers]);
+  const rest = useCallback((/** @type {string} */ path) => apiCall(`${SUPABASE_URL}/rest/v1/${path}`, { headers: headers() }), [headers]);
+
+  /** Den midlertidige læsning direkte fra tabellerne. */
+  const loadLegacy = useCallback(async (/** @type {number} */ mine) => {
+    const [mRes, iRes] = await Promise.allSettled([
+      rest("family_members?select=id,name,user_id,family_owner_id,birth_year,created_at&order=created_at.desc&limit=1000"),
+      rest("family_invites?select=id,status,created_at,expires_at,accepted_at,invited_by,accepted_by,requested_by&order=created_at.desc&limit=1000"),
+    ]);
+    if (mine !== seq.current) return;
+    const members = mRes.status === "fulfilled" && Array.isArray(mRes.value) ? mRes.value : null;
+    const inv = iRes.status === "fulfilled" && Array.isArray(iRes.value) ? iRes.value : null;
+    const ids = [...new Set([...(members || []).flatMap((m) => [m.family_owner_id, m.user_id]), ...(inv || []).flatMap((i) => [i.invited_by, i.accepted_by])].filter(Boolean))];
+    let users = /** @type {any[]} */ ([]);
+    if (ids.length) { try { const u = await rest(`users?id=in.(${ids.join(",")})&select=id,name,email`); users = Array.isArray(u) ? u : []; } catch { users = []; } }
+    if (mine !== seq.current) return;
+    const built = buildFromTables(members || [], inv || [], users);
+    tablesRef.current = built;
+    setMode("legacy");
+    if (members) { setFamError(null); setFamPhase("ok"); const f = filterOwners(built.rows, filtersRef.current.q); setRows(f); setTotal(f.length); }
+    else { setFamPhase("error"); setFamError(errOf(mRes.status === "rejected" ? mRes.reason : null)); }
+    if (inv) { setInvError(null); setInvPhase("ok"); setInvites(built.invites); }
+    else { setInvPhase("error"); setInvError(errOf(iRes.status === "rejected" ? iRes.reason : null)); }
+  }, [rest]);
 
   const load = useCallback(async (/** @type {any} */ filters) => {
     if (filters && typeof filters === "object" && !("nativeEvent" in filters)) filtersRef.current = { q: filters.q || "" };
     const mine = ++seq.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const [ov, inv] = await Promise.all([
-        rpc("admin_family_overview", { p_q: filtersRef.current.q, p_limit: FAMILY_PAGE, p_offset: 0 }),
-        rpc("admin_list_family_invites", { p_status: null, p_limit: 200 }),
-      ]);
-      if (mine !== seq.current) return;
-      setRows(Array.isArray(ov?.rows) ? ov.rows : []);
-      setTotal(Number.isFinite(Number(ov?.total)) ? Number(ov.total) : null);
-      setInvites(Array.isArray(inv) ? inv : []);
-      setLoaded(true);
-    } catch (e) {
-      if (mine !== seq.current) return;
-      const status = /** @type {any} */ (e).status;
-      setError({ denied: status === 401 || status === 403, unavailable: status === 404 });
-    }
-    if (mine === seq.current) setLoading(false);
-  }, [rpc]);
+    setFamPhase((p) => (p === "ok" ? p : "loading"));
+    setInvPhase((p) => (p === "ok" ? p : "loading"));
+    const [ov, inv] = await Promise.allSettled([
+      rpc("admin_family_overview", { p_q: filtersRef.current.q, p_limit: FAMILY_PAGE, p_offset: 0 }),
+      rpc("admin_list_family_invites", { p_status: null, p_limit: 200 }),
+    ]);
+    if (mine !== seq.current) return;
+    // Begge funktioner mangler (404): databaseopdateringen er ikke udgivet, så læs tabellerne i stedet
+    if (ov.status === "rejected" && /** @type {any} */ (ov.reason)?.status === 404 && inv.status === "rejected" && /** @type {any} */ (inv.reason)?.status === 404) { await loadLegacy(mine); return; }
+    setMode("rpc");
+    if (ov.status === "fulfilled") { setRows(Array.isArray(ov.value?.rows) ? ov.value.rows : []); setTotal(Number.isFinite(Number(ov.value?.total)) ? Number(ov.value.total) : null); setFamError(null); setFamPhase("ok"); }
+    else { setFamError(errOf(ov.reason)); setFamPhase("error"); }
+    if (inv.status === "fulfilled") { setInvites(Array.isArray(inv.value) ? inv.value : []); setInvError(null); setInvPhase("ok"); }
+    else { setInvError(errOf(inv.reason)); setInvPhase("error"); }
+  }, [rpc, loadLegacy]);
 
   const loadMore = useCallback(async () => {
+    if (mode !== "rpc") return;
     setLoadingMore(true);
     try {
       const ov = await rpc("admin_family_overview", { p_q: filtersRef.current.q, p_limit: FAMILY_PAGE, p_offset: rows.length });
       setRows((r) => [...r, ...(Array.isArray(ov?.rows) ? ov.rows : [])]);
-    } catch (e) {
-      setError({ denied: /** @type {any} */ (e).status === 403, unavailable: false });
-    }
+    } catch (e) { setFamError(errOf(e)); }
     setLoadingMore(false);
-  }, [rpc, rows.length]);
+  }, [rpc, rows.length, mode]);
 
   const getFamily = useCallback(async (/** @type {string} */ ownerId) => {
+    if (mode === "legacy" && tablesRef.current) return { ok: true, data: tablesRef.current.detail(ownerId) };
     try { return { ok: true, data: await rpc("admin_family_detail", { p_owner: ownerId }) }; }
     catch (e) { return { ok: false, error: familyErrorText(e, "Familien kunne ikke hentes.") }; }
-  }, [rpc]);
+  }, [rpc, mode]);
 
   const revokeInvite = useCallback(async (/** @type {string} */ id, /** @type {string} */ reason) => {
     try {
@@ -90,5 +118,5 @@ export function useAdminFamily(/** @type {string} */ accessToken) {
     } catch (e) { return { ok: false, error: familyErrorText(e, "Medlemmet kunne ikke fjernes.") }; }
   }, [rpc]);
 
-  return { rows, total, invites, loading, loadingMore, loaded, error, load, loadMore, getFamily, revokeInvite, removeMember };
+  return { rows, total, invites, famPhase, invPhase, famError, invError, mode, canAct: mode === "rpc", loadingMore, load, loadMore, getFamily, revokeInvite, removeMember };
 }

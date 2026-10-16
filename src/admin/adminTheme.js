@@ -319,6 +319,11 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .np-result .bad{color:var(--red);}
 @media (max-width:899px){.np-layout.editing .np-list{display:none;}.np-layout:not(.editing) .np-detail{display:none;}}
 @media (min-width:900px){.np-layout{display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:20px;align-items:start;}.np-back{display:none;}}
+.fam-search{margin:6px 0 10px;}
+.fam-search-row{display:flex;align-items:center;gap:6px;}
+.fam-search-row input{flex:1;min-width:0;}
+.fam-filters{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+.fam-filters .admin-tab-btn{flex:0 0 auto;white-space:nowrap;}
 .fam-sub{font-size:12px;font-weight:800;color:var(--ink2);margin:14px 0 6px;}
 .fam-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
 .fam-line-title{font-size:14px;font-weight:700;overflow-wrap:anywhere;}
