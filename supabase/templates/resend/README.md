@@ -47,3 +47,8 @@ Outlook (web) ignorerer vores mørke CSS og vender selv farverne: lyse baggrunde
 - Det lyse logo (`EatSafe_Logo_Email_Light.png` til auth, `..._Light_Cream.png` til Resend) har kortets baggrund bagt ind i billedet, ellers bliver dens gennemsigtige baggrund
   gjort mørk, og det mørke "Eat" forsvinder. I klienter, der understøtter mørk tilstand, skifter mailen til det gennemsigtige mørke logo.
 - `src/mailDarkMode.test.js` håndhæver reglerne.
+
+## BETA-mærket fjernet (16. okt. 2026, Bjørn)
+
+BETA-badgen er fjernet fra alle Resend-skabeloner og de indlejrede mailfiler (`welcomeMail.ts`, `inviteMail.ts`, `listMail.ts`, `inactivityMail.ts`). Test: `src/welcomeMail.test.js`.
+Skabelonerne, der ligger i Resend-kontoen, skal opdateres via API'et, før mailene mister mærket dér (kun filerne her og de indlejrede mails er ændret).
