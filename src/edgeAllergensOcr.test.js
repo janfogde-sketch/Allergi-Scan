@@ -61,6 +61,17 @@ describe("edge: allergens", () => {
     for (const v of Object.values(r.json.allergen_flags)) expect(["yes", "traces", "no", "unknown"]).toContain(v);
   });
 
+  it("en forklaring fra billedlæsningen giver 'unknown' for alt, aldrig 'no', og Claude kaldes ikke (16. okt. 2026)", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const h = await loadHandler("allergens", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
+    const r = await h.call("POST", "/allergens", { token: "a", body: { text: "Jeg kan desværre ikke læse ingredienslisten klart nok på dette billede. Teksten er fotograferet i en vinkel, der gør den svær at læse tydeligt.\n\nFor at give dig et nøjagtigt svar, ville jeg have brug for et klarere, mere direkte billede af ingredienslisten.", force_ai: true } });
+    expect(r.status).toBe(200);
+    expect(r.json.method).toBe("unreadable");
+    expect(Object.values(r.json.allergen_flags).every(v => v === "unknown")).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("Claude-fejl giver stadig et svar fra nøgleordsmotoren", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("fejl", { status: 500 })));
     const h = await loadHandler("allergens", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
@@ -159,11 +170,64 @@ describe("edge: ocr", () => {
     expect(sent[4]).toBe(sent[3]);
   });
 
+  it("ulæselig ingrediensliste: forklaringen sendes aldrig videre som tekst, men som unreadable (16. okt. 2026)", async () => {
+    for (const reply of ["ULÆSELIG", "Jeg kan desværre ikke læse ingredienslisten klart nok på dette billede. Teksten er fotograferet i en vinkel, der gør den svær at læse tydeligt.\n\nFor at give dig et nøjagtigt svar, ville jeg have brug for et klarere, mere direkte billede af ingredienslisten."]) {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ content: [{ text: reply }], usage: {} }), { status: 200 })));
+      const h = await loadHandler("ocr", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
+      const r = await h.call("POST", "/ocr", { token: "a", body });
+      expect(r.json).toMatchObject({ success: true, text: "", unreadable: true });
+    }
+  });
+
   it("Claude-fejl giver 502, og manglende nøgle giver 500 uden at lække noget", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("nede", { status: 529 })));
     const h = await loadHandler("ocr", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
     expect((await h.call("POST", "/ocr", { token: "a", body })).status).toBe(502);
     const noKey = await loadHandler("ocr", { tokens, resolver: resolver() });
     expect((await noKey.call("POST", "/ocr", { token: "a", body })).status).toBe(500);
+  });
+});
+
+describe("edge: AI-forbrugets oprindelse (log_ai_usage)", () => {
+  const usageCalls = (h) => h.state.calls.filter((c) => c.rpc === "log_ai_usage");
+  const withClaude = () => vi.stubGlobal("fetch", vi.fn(async () => claudeReply({ sesam: "traces" })));
+
+  it("allergen-tjek med en almindelig brugers login er 'user'", async () => {
+    withClaude();
+    const h = await loadHandler("allergens", { tokens, resolver: resolver({ role: "user" }), env: { ANTHROPIC_API_KEY: "k" } });
+    await h.call("POST", "/allergens", { token: "a", body: { text: "mælk", force_ai: true } });
+    expect(usageCalls(h)).toHaveLength(1);
+    expect(usageCalls(h)[0].args).toMatchObject({ p_function: "allergens", p_origin: "user", p_input: 10, p_output: 5 });
+  });
+  it("allergen-tjek med service-nøglen er 'internal'", async () => {
+    withClaude();
+    const h = await loadHandler("allergens", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
+    await h.call("POST", "/allergens", { headers: { apikey: "service-key" }, body: { text: "mælk", force_ai: true } });
+    expect(usageCalls(h)[0].args.p_origin).toBe("internal");
+  });
+  it("allergen-tjek fra en administrator er 'unknown' (panel eller eget brug kan ikke adskilles), aldrig gættet", async () => {
+    withClaude();
+    const h = await loadHandler("allergens", { tokens, resolver: resolver({ role: "admin" }), env: { ANTHROPIC_API_KEY: "k" } });
+    await h.call("POST", "/allergens", { token: "adm", body: { text: "mælk", force_ai: true } });
+    expect(usageCalls(h)[0].args.p_origin).toBe("unknown");
+  });
+  it("læsning af fotos er 'user' (kun kald med en brugers login når frem)", async () => {
+    withClaude();
+    const h = await loadHandler("ocr", { tokens, resolver: resolver(), env: { ANTHROPIC_API_KEY: "k" } });
+    await h.call("POST", "/ocr", { token: "a", body: { image_base64: "/9j/AAAA", mode: "ingredients" } });
+    expect(usageCalls(h)[0].args).toMatchObject({ p_function: "ocr", p_origin: "user" });
+  });
+  it("før migrationen er live, logges forbruget uden oprindelse i stedet for slet ikke", async () => {
+    withClaude();
+    const base = resolver({ role: "user" });
+    const h = await loadHandler("allergens", {
+      tokens, env: { ANTHROPIC_API_KEY: "k" },
+      resolver: (c) => (c.rpc === "log_ai_usage" && "p_origin" in c.args ? { data: null, error: { message: "Could not find the function public.log_ai_usage(p_function, p_input, p_model, p_origin, p_output) in the schema cache" } } : base(c)),
+    });
+    await h.call("POST", "/allergens", { token: "a", body: { text: "mælk", force_ai: true } });
+    const calls = usageCalls(h);
+    expect(calls).toHaveLength(2);
+    expect("p_origin" in calls[1].args).toBe(false);
+    expect(calls[1].args).toMatchObject({ p_function: "allergens", p_input: 10, p_output: 5 });
   });
 });

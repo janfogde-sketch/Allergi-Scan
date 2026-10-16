@@ -18,6 +18,7 @@ export function useAuditLog(accessToken) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [total, setTotal] = useState(/** @type {number | null} */ (null)); // antal poster, der matcher søgning og filtre (hele loggen, ikke kun de hentede)
   const [error, setError] = useState(/** @type {null | { denied: boolean, message: string }} */ (null));
   const filtersRef = useRef(/** @type {{ type?: string, category?: string, period?: string, q?: string }} */ ({}));
   const rowsRef = useRef(/** @type {any[]} */ ([]));
@@ -55,8 +56,13 @@ export function useAuditLog(accessToken) {
     try {
       const matchIds = f.q ? await searchIds(f.q) : [];
       const query = buildAuditQuery({ ...f, matchIds, limit: AUDIT_PAGE + 1 });
-      const data = query ? await apiCall(`${SUPABASE_URL}/rest/v1/admin_audit_log?${query}`, { headers: makeHeaders(accessToken) }) : [];
+      let count = /** @type {number | null} */ (query ? null : 0);
+      const data = query ? await apiCall(`${SUPABASE_URL}/rest/v1/admin_audit_log?${query}`, {
+        headers: { ...makeHeaders(accessToken), Prefer: "count=exact" },
+        onResponse: (res) => { const n = Number((res.headers.get("content-range") || "").split("/")[1]); count = Number.isFinite(n) ? n : null; },
+      }) : [];
       if (mine !== seq.current) return;
+      setTotal(count);
       const list = Array.isArray(data) ? data : [];
       const page = list.slice(0, AUDIT_PAGE);
       rowsRef.current = page;
@@ -97,5 +103,5 @@ export function useAuditLog(accessToken) {
     setLoadingMore(false);
   }, [accessToken, loadingMore, searchIds, loadNames]);
 
-  return { rows, names, loading, loadingMore, hasMore, loaded, error, load, loadMore };
+  return { rows, names, total, loading, loadingMore, hasMore, loaded, error, load, loadMore };
 }

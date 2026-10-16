@@ -38,6 +38,17 @@ describe("SubmittedScreen", () => {
     expect(screen.queryByText(/Søg efter alternativer/)).toBeNull();
     expect(document.body.textContent).not.toContain("🙏");
   });
+  it("siger, hvad der manglede: ingen ingrediensliste eller allergener ikke tjekket (Jan 16. okt. 2026)", () => {
+    setup({ ocrText: "" });
+    expect(screen.getByText(/Vi mangler ingredienslisten/)).toBeTruthy();
+    cleanup();
+    setup({ ocrText: "Havre, salt", captureIssues: { allergenCheckFailed: true } });
+    expect(screen.getByText(/Vi kunne ikke tjekke allergenerne/)).toBeTruthy();
+    cleanup();
+    setup({ ocrText: "Havre, salt" });
+    expect(screen.queryByText(/Vi mangler/)).toBeNull();
+    expect(screen.queryByText(/kunne ikke tjekke/)).toBeNull();
+  });
   it("Scan nyt produkt nulstiller og går til Scan", () => {
     const { setScreen, p } = setup();
     fireEvent.click(screen.getByText("Scan nyt produkt"));

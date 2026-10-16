@@ -18,7 +18,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { renderNotification, MissingRequiredError, productLabel } from "../_shared/notificationContent.js";
 import { sendWebPush, endpointHash } from "../_shared/webpush.ts";
 import { parseApnsToken, apnsConfigFromEnv, sendApns } from "../_shared/apns.ts";
-import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, retryDelayMinutes, RETRY_DELAYS_MIN } from "../_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, affectedAllergenDecreases, summarizeAllergenDecreases, retryDelayMinutes, RETRY_DELAYS_MIN } from "../_shared/notifyHelpers.js";
 import { eanVariants } from "../_shared/recallParser.js";
 import { RESEND_TEMPLATES, MAIL_ONLY_WITHOUT_PUSH, buildMailVariables, sendTemplateMail, sendHtmlMail } from "../_shared/mailSend.ts";
 import { LIST_MAIL_KEYS, renderListMail } from "../_shared/listMail.ts";
@@ -163,44 +163,7 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
     case "product_allergen_changed": {
       const { data: prod } = await db.from("products").select("id, ean, name, brand, allergen_flags").eq("id", p.product_id).maybeSingle();
       if (!prod) return [];
-      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
-      // Kandidater: favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage.
-      const ids = new Set<string>();
-      if (prod.ean) {
-        const { data: fav } = await db.from("favorites").select("user_id").eq("ean", prod.ean);
-        for (const r of fav ?? []) if (r.user_id) ids.add(r.user_id);
-      }
-      const { data: scans } = await db.from("scan_history").select("user_id")
-        .or(`product_id.eq.${prod.id}${prod.ean ? `,ean_scanned.eq.${prod.ean}` : ""}`).gte("scanned_at", since).not("user_id", "is", null);
-      for (const r of scans ?? []) ids.add(r.user_id);
-      const { data: items } = await db.from("shopping_list_items").select("list_id")
-        .or(`product_id.eq.${prod.id}${prod.ean ? `,ean.eq.${prod.ean}` : ""}`);
-      const listIds = [...new Set((items ?? []).map((i: { list_id: string }) => i.list_id))];
-      if (listIds.length) {
-        const { data: lists } = await db.from("shopping_lists").select("owner_id").in("id", listIds);
-        for (const l of lists ?? []) if (l.owner_id) ids.add(l.owner_id);
-        const { data: acc } = await db.from("shopping_list_access").select("user_id").in("list_id", listIds);
-        for (const a of acc ?? []) ids.add(a.user_id);
-      }
-      if (ids.size === 0) return [];
-
-      const userIds = [...ids];
-      const { data: own } = await db.from("user_allergens").select("user_id, allergen").in("user_id", userIds).is("family_member_id", null).eq("type", "allergen");
-      const { data: members } = await db.from("family_members").select("user_id, allergens, allergen_levels").in("user_id", userIds);
-      const { data: levelRows } = await db.from("users").select("id, allergen_levels").in("id", userIds);
-      const byUser = new Map<string, string[]>();
-      // Allergener, hvor mindst én af modtagerens profiler også reagerer på spor (strengeste profil vinder)
-      const strictFor = new Map<string, Set<string>>();
-      const ownLevels = new Map<string, Record<string, string>>((levelRows ?? []).map((r: { id: string; allergen_levels: Record<string, string> }) => [r.id, r.allergen_levels ?? {}]));
-      const add = (u: string, a: unknown, levels?: Record<string, string> | null) => {
-        const id = typeof a === "string" ? a : (a as { id?: string })?.id;
-        if (!u || !id) return;
-        byUser.set(u, [...(byUser.get(u) ?? []), id]);
-        if (levels?.[id] !== "direct_only") strictFor.set(u, (strictFor.get(u) ?? new Set()).add(id));
-      };
-      for (const r of own ?? []) add(r.user_id, r.allergen, ownLevels.get(r.user_id));
-      for (const m of members ?? []) if (Array.isArray(m.allergens)) for (const a of m.allergens) add(m.user_id, a, m.allergen_levels);
-
+      const { userIds, byUser, strictFor } = await productAllergenRecipients(db, prod);
       const productName = productLabel({ brand: prod.brand, name: prod.name });
       const plans: Planned[] = [];
       for (const userId of userIds) {
@@ -209,6 +172,20 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
         const hits = affectedAllergenChanges(p.changes as Record<string, { old: string }>, prod.allergen_flags, mine, tracesIgnored);
         if (hits.length === 0) continue; // berører ingen af modtagerens profiler, eller er rullet tilbage
         plans.push({ userId, templateKey: "P1:default", data: { productName, ean: prod.ean, changeSummary: summarizeAllergenChanges(hits) } });
+      }
+      return plans;
+    }
+    case "product_allergen_lowered": {
+      // Lavere risiko (Jan 16. okt. 2026): samme modtagere som P1, kun besked i appen (P1:lowered har inAppOnly).
+      const { data: prod } = await db.from("products").select("id, ean, name, brand, allergen_flags").eq("id", p.product_id).maybeSingle();
+      if (!prod) return [];
+      const { userIds, byUser } = await productAllergenRecipients(db, prod);
+      const productName = productLabel({ brand: prod.brand, name: prod.name });
+      const plans: Planned[] = [];
+      for (const userId of userIds) {
+        const hits = affectedAllergenDecreases(p.changes as Record<string, { old: string }>, prod.allergen_flags, byUser.get(userId) ?? []);
+        if (hits.length === 0) continue; // berører ingen af modtagerens profiler, eller er hævet igen siden
+        plans.push({ userId, templateKey: "P1:lowered", data: { productName, ean: prod.ean, changeSummary: summarizeAllergenDecreases(hits) } });
       }
       return plans;
     }
@@ -236,6 +213,52 @@ async function planEvent(db: Db, ev: EventRow): Promise<Planned[]> {
     default:
       throw new Error(`Ukendt hændelsestype: ${ev.kind}`);
   }
+}
+
+type ProductRow = { id: string; ean: string | null; name: string | null; brand: string | null; allergen_flags: Record<string, string> | null };
+
+/** Modtagere af en allergenændring: favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage,
+ *  med allergener fra egen og administrerede profiler (byUser) og dem, hvor mindst én profil reagerer på spor (strictFor). */
+async function productAllergenRecipients(db: Db, prod: ProductRow) {
+  const since = new Date(Date.now() - 90 * 86400_000).toISOString();
+  // Kandidater: favoritter, aktuelle lister (ejer + adgang) og scanninger de sidste 90 dage.
+  const ids = new Set<string>();
+  if (prod.ean) {
+    const { data: fav } = await db.from("favorites").select("user_id").eq("ean", prod.ean);
+    for (const r of fav ?? []) if (r.user_id) ids.add(r.user_id);
+  }
+  const { data: scans } = await db.from("scan_history").select("user_id")
+    .or(`product_id.eq.${prod.id}${prod.ean ? `,ean_scanned.eq.${prod.ean}` : ""}`).gte("scanned_at", since).not("user_id", "is", null);
+  for (const r of scans ?? []) ids.add(r.user_id);
+  const { data: items } = await db.from("shopping_list_items").select("list_id")
+    .or(`product_id.eq.${prod.id}${prod.ean ? `,ean.eq.${prod.ean}` : ""}`);
+  const listIds = [...new Set((items ?? []).map((i: { list_id: string }) => i.list_id))];
+  if (listIds.length) {
+    const { data: lists } = await db.from("shopping_lists").select("owner_id").in("id", listIds);
+    for (const l of lists ?? []) if (l.owner_id) ids.add(l.owner_id);
+    const { data: acc } = await db.from("shopping_list_access").select("user_id").in("list_id", listIds);
+    for (const a of acc ?? []) ids.add(a.user_id);
+  }
+  if (ids.size === 0) return { userIds: [] as string[], byUser: new Map<string, string[]>(), strictFor: new Map<string, Set<string>>() };
+
+  const userIds = [...ids];
+  const { data: own } = await db.from("user_allergens").select("user_id, allergen").in("user_id", userIds).is("family_member_id", null).eq("type", "allergen");
+  const { data: members } = await db.from("family_members").select("user_id, allergens, allergen_levels").in("user_id", userIds);
+  const { data: levelRows } = await db.from("users").select("id, allergen_levels").in("id", userIds);
+  const byUser = new Map<string, string[]>();
+  // Allergener, hvor mindst én af modtagerens profiler også reagerer på spor (strengeste profil vinder)
+  const strictFor = new Map<string, Set<string>>();
+  const ownLevels = new Map<string, Record<string, string>>((levelRows ?? []).map((r: { id: string; allergen_levels: Record<string, string> }) => [r.id, r.allergen_levels ?? {}]));
+  const add = (u: string, a: unknown, levels?: Record<string, string> | null) => {
+    const id = typeof a === "string" ? a : (a as { id?: string })?.id;
+    if (!u || !id) return;
+    byUser.set(u, [...(byUser.get(u) ?? []), id]);
+    if (levels?.[id] !== "direct_only") strictFor.set(u, (strictFor.get(u) ?? new Set()).add(id));
+  };
+  for (const r of own ?? []) add(r.user_id, r.allergen, ownLevels.get(r.user_id));
+  for (const m of members ?? []) if (Array.isArray(m.allergens)) for (const a of m.allergens) add(m.user_id, a, m.allergen_levels);
+
+  return { userIds, byUser, strictFor };
 }
 
 type RecallRow = { id: string; source_url: string; reason: string; affected: string; action: string };
@@ -340,9 +363,10 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   let retry = false;
   // Globalt flag TIL, eller brugeren står på testlisten (app_flags.notifications_test_users)
   const isTester = flags.testUsers.has(plan.userId);
-  const willPush = (flags.push || isTester) && pushOn;
+  // Nogle beskeder kommer kun i appen (inAppOnly, fx P1:lowered): ingen push og ingen mail.
+  const willPush = !r.inAppOnly && (flags.push || isTester) && pushOn;
   if (willPush) retry = (await sendPushes(db, ev, plan, r, n.id)) || retry;
-  if ((flags.email || isTester) && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
+  if (!r.inAppOnly && (flags.email || isTester) && emailOn) retry = (await sendMail(db, plan, r, n.id, willPush)) || retry;
   return { retry };
 }
 

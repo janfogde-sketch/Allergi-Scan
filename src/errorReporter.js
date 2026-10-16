@@ -54,8 +54,14 @@ export function _resetForTests() {
   sentCount = 0;
 }
 
+// En lazy-indlæst skærm eller dialog, hvis fil er væk efter et deploy: public/js/boot.js genindlæser siden og sætter window.__chunkReloading, men Vite
+// svarer først på det fejlede import() med undefined, så React kaster en TypeError (Chrome: "reading 'default'", Safari: "_result.default").
+// Fejlen er så en forventet engangsstøj, ikke et nedbrud, og rapporteres ikke, mens genindlæsningen er undervejs.
+const STALE_CHUNK_ERROR = /reading 'default'|_result\.default/;
+
 export function shouldReport(message, stack = "") {
   if (!message || typeof message !== "string") return false;
+  if (typeof window !== "undefined" && /** @type {any} */ (window).__chunkReloading && STALE_CHUNK_ERROR.test(message)) return false;
   const text = `${message}\n${stack || ""}`;
   return !IGNORED_PATTERNS.some(re => re.test(text));
 }
@@ -130,12 +136,37 @@ export async function reportError(error, meta = {}) {
   }
 }
 
+/**
+ * Efter en automatisk genindlæsning pga. en kodefil, der ikke kunne hentes (public/js/boot.js gemmer filnavnet i sessionStorage): rapportér HÆNDELSEN
+ * én gang med filnavnet og om enheden var online, i stedet for støjen "reading 'default'". Meddelelsen indeholder kun skærmens navn (uden hash),
+ * så samme kodefil giver samme fejlgruppe på tværs af udrulninger; det fulde filnavn står i konteksten.
+ * @returns {Promise<boolean>}
+ */
+export async function reportPendingChunkFailure() {
+  try {
+    const raw = sessionStorage.getItem("chunkFailure");
+    if (!raw) return false;
+    sessionStorage.removeItem("chunkFailure");
+    const info = JSON.parse(raw);
+    if (!info || typeof info !== "object" || Date.now() - Number(info.at || 0) > 5 * 60_000) return false;
+    const file = typeof info.file === "string" && /^[\w.-]{1,120}\.js$/.test(info.file) ? info.file : "";
+    const name = file ? file.replace(/-[A-Za-z0-9_-]{8}\.js$/, "") : "ukendt fil";
+    return await reportError(`Kodefil kunne ikke hentes, og siden blev genindlæst: ${name}`, {
+      source: "chunk",
+      context: { failedChunk: file || null, online: info.online !== false, build: COMMIT_SHA },
+    });
+  } catch {
+    return false;
+  }
+}
+
 let installed = false;
 
 /** Lyt efter ufangede fejl og afviste promises i hele appen. */
 export function installErrorReporting(target = typeof window !== "undefined" ? window : null) {
   if (!target || installed) return;
   installed = true;
+  reportPendingChunkFailure();
   target.addEventListener("error", (e) => {
     reportError(e?.error || e?.message, { source: "window" });
   });

@@ -1,272 +1,157 @@
 // @ts-nocheck
+// Brugere: kompakte, klikbare rækker (navn, e-mail, rolle og onboarding). Søgning, faner og antal kører på serveren (hele datasættet). Søgning sker fra headerens
+// søgeikon (den globale søgning); en aktiv søgning vises som et mærke, der kan fjernes. Rolle, redigering og sletning ligger i detaljevisningen, aldrig i listen.
+import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+import { Icon, showToast } from "../../SharedComponents.jsx";
 import { useShowSpinner } from "../RefreshContext.js";
-import React, { useState } from "react";
-import { ALLERGENS } from "../../constants.jsx";
-import { AllergenGlyph } from "../../SharedComponents.jsx";
-import { downloadCsv } from "../csvExport.js";
+import UserDetail from "./UserDetail.jsx";
+import { USER_TABS, ROLE_LABELS, onboardingStatus, usersCountText, CSV_COLUMNS } from "../usersLogic.js";
 
-const CSV_COLUMNS = [
-  { key: "name", label: "Navn" },
-  { key: "email", label: "Email" },
-  { key: "role", label: "Rolle" },
-  { key: "birth_year", label: "Fødselsår" },
-  { key: "onboarding_completed", label: "Onboarding færdig" },
-  { key: "created_at", label: "Oprettet" },
-  { key: "id", label: "Bruger-id" },
-];
+function StateBox({ icon, title, text, action, role }) {
+  return (
+    <div className="admin-table-empty audit-state" role={role}>
+      <div className="audit-state-icon" aria-hidden="true"><Icon name={icon} size={22} color="var(--muted)" /></div>
+      <div className="audit-state-title">{title}</div>
+      <div>{text}</div>
+      {action && <div style={{ marginTop: 12 }}>{action}</div>}
+    </div>
+  );
+}
 
-export default function UsersSection({
-  adminUsers, adminUsersHasMore, loadAdminUsers, adminUsersLoading, userSearch, setUserSearch, currentUserId, updateUserRole, deleteUser, logAdminExport,
-  openAdminUser, setOpenAdminUser, editingAdminUser, setEditingAdminUser, adminUserActionLoading,
-  openAdminUserForEdit, saveAdminUserEdit,
-}) {
-  const showSpinner = useShowSpinner(adminUsersLoading, adminUsers.length > 0);
-  const [roleFilter, setRoleFilter] = useState("all");
+/** Forklarer, hvad eksporten indeholder, før den hentes: omfang, antal, felter og hvad der er udeladt. */
+function ExportDialog({ count, filtered, busy, onClose, onConfirm }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape" && !busy) onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose, busy]);
+  return ReactDOM.createPortal(
+    <div className="admin-modal-overlay" onClick={() => !busy && onClose()}>
+      <div className="admin-modal audit-sheet-safe" role="dialog" aria-modal="true" aria-labelledby="usr-export-title" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+        <div className="audit-sheet-head">
+          <div style={{ minWidth: 0 }}>
+            <div id="usr-export-title" className="audit-sheet-title">Eksportér brugere til CSV</div>
+            <div className="audit-sheet-time">Eksporten registreres i aktivitetsloggen.</div>
+          </div>
+          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} disabled={busy} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+        </div>
+        <dl className="audit-detail">
+          <div className="audit-detail-row"><dt>Brugere</dt><dd>{count === null ? "Antal ukendt" : count.toLocaleString("da-DK")} {filtered ? "(kun dem, der matcher fane og søgning)" : "(alle brugere)"}</dd></div>
+          <div className="audit-detail-row"><dt>Felter</dt><dd>{CSV_COLUMNS.map((c) => c.label).join(", ")}</dd></div>
+          <div className="audit-detail-row"><dt>Udeladt</dt><dd>Allergier og andre helbredsoplysninger, fødselsår og bruger-id</dd></div>
+        </dl>
+        <div className="err-actions">
+          <button type="button" className="admin-btn admin-btn-ghost admin-touch" disabled={busy} onClick={onClose}>Annuller</button>
+          <button type="button" className="admin-btn admin-btn-primary admin-touch" disabled={busy} onClick={onConfirm}>{busy ? "Eksporterer…" : "Eksportér CSV"}</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
-  const filtered = adminUsers.filter(u => {
-    if (roleFilter === "admin" && u.role !== "admin") return false;
-    if (roleFilter === "incomplete" && u.onboarding_completed !== false) return false;
-    if (!userSearch.trim()) return true;
-    const q = userSearch.toLowerCase();
-    return (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
-  });
+export default function UsersSection({ rows, total, counts, loading, loadingMore, hasMore, loaded, error, load, loadMore, getUser, saveProfile, setRole, deleteSummary, deleteUser, exportUsers, userSearch, setUserSearch, currentUserId }) {
+  const showSpinner = useShowSpinner(loading, rows.length > 0);
+  const [tab, setTab] = useState("all");
+  const [openId, setOpenId] = useState(null);
+  const [exporting, setExporting] = useState(null); // null | "confirm" | "busy"
+  const q = userSearch.trim();
+  const first = useRef(true);
 
-  const handleDelete = (u) => {
-    if (!window.confirm(`Slet ${u.name || u.email} permanent? Dette kan ikke fortrydes.`)) return;
-    deleteUser(u.id);
+  useEffect(() => {
+    first.current = false;
+    load({ filter: tab, q });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: load genskabes hver gang og må ikke udløse nye hent
+  }, [tab, q]);
+
+  const reset = () => { setUserSearch(""); setTab("all"); };
+  const openRow = openId ? rows.find((r) => r.id === openId) || { id: openId } : null;
+  const countText = usersCountText(loaded ? rows.length === 0 ? 0 : total : null, counts.all);
+  const filtered = tab !== "all" || !!q;
+  const doExport = async () => {
+    setExporting("busy");
+    const res = await exportUsers();
+    setExporting(null);
+    if (res.ok) showToast(`${res.count.toLocaleString("da-DK")} brugere eksporteret`, "success");
+    else showToast("Eksporten mislykkedes. Prøv igen.", "error");
   };
 
-  // Rolleskift kræver bekræftelse; egen række er låst (G17). Databasen nægter desuden at fjerne den sidste admin.
-  const handleRoleChange = (u, role) => {
-    if (u.id === currentUserId || role === (u.role || "user")) return;
-    const who = u.name || u.email;
-    const question = role === "admin"
-      ? `Gør ${who} til admin? En admin kan se og ændre alle brugeres data.`
-      : `Fjern admin-rollen fra ${who}?`;
-    if (!window.confirm(question)) return;
-    updateUserRole(u.id, role);
-  };
-  const exportCsv = () => {
-    downloadCsv(`eatsafe-brugere-${new Date().toISOString().slice(0, 10)}.csv`, filtered, CSV_COLUMNS);
-    if (logAdminExport) logAdminExport("users", filtered.length);
-  };
-
-  const saveEdit = () => {
-    const before = openAdminUser?.role || "user";
-    if (editingAdminUser && editingAdminUser.role !== before) {
-      const who = openAdminUser.name || openAdminUser.email;
-      const question = editingAdminUser.role === "admin"
-        ? `Gør ${who} til admin? En admin kan se og ændre alle brugeres data.`
-        : `Fjern admin-rollen fra ${who}?`;
-      if (!window.confirm(question)) return;
-    }
-    saveAdminUserEdit();
-  };
-
-  const close = () => { setOpenAdminUser(null); setEditingAdminUser(null); };
-  const toggleLevel = (id) => setEditingAdminUser(s => {
-    const next = { ...(s.allergen_levels || {}) };
-    if (next[id] === "direct_only") delete next[id]; else next[id] = "direct_only";
-    return { ...s, allergen_levels: next };
-  });
-  const toggleAllergen = (id) => setEditingAdminUser(s => ({
-    ...s, allergen_ids: s.allergen_ids.includes(id) ? s.allergen_ids.filter(x => x !== id) : [...s.allergen_ids, id],
-  }));
+  let body;
+  if (error && (rows.length === 0 || error.denied)) {
+    body = error.denied
+      ? <StateBox role="alert" icon="shield" title="Ingen adgang" text="Du har ikke adgang til brugerne. Log ind med en administratorkonto." />
+      : <StateBox role="alert" icon="warning" title="Brugerne kunne ikke hentes" text="Det betyder ikke, at der ingen brugere er. Tjek forbindelsen, og prøv igen."
+          action={<button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => load({ filter: tab, q })}>Prøv igen</button>} />;
+  } else if (showSpinner || (loading && rows.length === 0)) {
+    body = <div className="admin-loading-row"><div className="admin-spinner" /> Henter brugere…</div>;
+  } else if (!loaded) {
+    body = null;
+  } else if (rows.length === 0) {
+    body = filtered
+      ? <StateBox icon="search" title="Ingen matchende brugere" text="Prøv at ændre søgningen eller fanen." action={<button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={reset}>Nulstil</button>} />
+      : <StateBox icon="users" title="Ingen brugere endnu" text="Når nogen opretter en konto, vises den her." />;
+  } else {
+    body = (
+      <div className="admin-card-list">
+        {rows.map((u) => {
+          const st = onboardingStatus(u);
+          return (
+            <button key={u.id} type="button" className="admin-item-card usr-row" onClick={() => setOpenId(u.id)}>
+              <div className="usr-row-name">{u.name || "Uden navn"}{u.id === currentUserId && <span className="admin-pill admin-pill-green">Dig</span>}</div>
+              <div className="usr-row-mail">{u.email || "Ingen e-mail"}</div>
+              <div className="usr-row-meta">{ROLE_LABELS[u.role || "user"]} · <span className={st.key === "done" ? "" : "usr-warn"}>{st.label}</span></div>
+              <span className="audit-card-chev" aria-hidden="true"><Icon name="chevronRight" size={16} color="var(--muted2)" /></span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <>
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center" }}>
-        <input className="admin-search" placeholder="Søg navn eller email…" value={userSearch} onChange={e => setUserSearch(e.target.value)} />
-        <div className="admin-tabs" style={{ marginBottom: 0, border: "none" }}>
-          {[["all", "Alle"], ["admin", "Admins"], ["incomplete", "Ufærdig onboarding"]].map(([id, label]) => (
-            <button key={id} className={`admin-tab-btn${roleFilter === id ? " active" : ""}`} onClick={() => setRoleFilter(id)}>{label}</button>
-          ))}
+      <div className="audit-head"><div className="audit-intro">Find brugere, se kontooplysninger og administrér adgang.</div></div>
+      <div className="admin-tabs usr-tabs" role="tablist">
+        {USER_TABS.map(([k, label]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={`admin-tab-btn${tab === k ? " active" : ""}`} onClick={() => setTab(k)}>
+            {label}{counts[k] !== null && counts[k] !== undefined ? ` (${counts[k].toLocaleString("da-DK")})` : ""}
+          </button>
+        ))}
+      </div>
+
+      {q && (
+        <button type="button" className="audit-search-chip" aria-label={`Søgning: ${q}. Fjern søgningen`} onClick={() => setUserSearch("")}>
+          <Icon name="search" size={13} color="var(--green)" /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>“{q}”</span><Icon name="x" size={13} color="var(--green)" />
+        </button>
+      )}
+
+      {loaded && !error?.denied && (
+        <div className="audit-results">
+          <span aria-live="polite">{countText}</span>
+          <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch usr-export" disabled={!rows.length} onClick={() => setExporting("confirm")}><Icon name="download" size={14} color="var(--ink2)" /> Eksportér CSV</button>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>{filtered.length} af {adminUsers.length}</span>
-          <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={filtered.length === 0}
-            onClick={exportCsv}>
-            Eksportér CSV
+      )}
+
+      {error && !error.denied && rows.length > 0 && (
+        <div className="todo-confirm" role="alert" style={{ marginBottom: 10 }}>Flere brugere kunne ikke hentes. <button type="button" className="todo-link-btn" style={{ minHeight: 32, textDecoration: "underline" }} onClick={loadMore}>Prøv igen</button></div>
+      )}
+
+      {body}
+
+      {hasMore && rows.length > 0 && !error?.denied && (
+        <div style={{ textAlign: "center", margin: "4px 0 12px" }}>
+          <button type="button" className="admin-btn admin-btn-ghost admin-touch" disabled={loadingMore} aria-busy={loadingMore} onClick={loadMore}>
+            {loadingMore ? <><div className="admin-spinner" /> Henter…</> : "Vis flere"}
           </button>
         </div>
-      </div>
-
-      <div className="admin-table-wrap">
-        {showSpinner ? (
-          <div className="admin-loading-row"><div className="admin-spinner" /> Henter brugere…</div>
-        ) : filtered.length === 0 ? (
-          <div className="admin-table-empty">Ingen brugere matcher</div>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Navn</th><th>Email</th><th>Rolle</th><th>Oprettet</th><th>Onboarding</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(u => (
-                <tr key={u.id} style={{ cursor: "pointer" }} onClick={() => openAdminUserForEdit(u)}>
-                  <td>{u.name || <span style={{ color: "var(--muted)" }}>Ingen navn</span>}{u.id === currentUserId && <span className="admin-pill admin-pill-green" style={{ marginLeft: 6 }}>Dig</span>}</td>
-                  <td data-label="Email">{u.email}</td>
-                  <td data-label="Rolle" onClick={e => e.stopPropagation()}>
-                    <select value={u.role || "user"} onChange={e => handleRoleChange(u, e.target.value)} disabled={u.id === currentUserId}
-                      aria-label={`Rolle for ${u.name || u.email}`} title={u.id === currentUserId ? "Du kan ikke ændre din egen rolle" : undefined}
-                      style={{ fontFamily: "var(--f)", fontSize: 12, padding: "3px 6px", borderRadius: 6, border: "1px solid var(--border2)" }}>
-                      <option value="user">Bruger</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </td>
-                  <td data-label="Oprettet">{u.created_at ? new Date(u.created_at).toLocaleDateString("da-DK") : "–"}</td>
-                  <td data-label="Onboarding">{u.onboarding_completed === false ? <span className="admin-pill admin-pill-amber">Ufærdig</span> : <span className="admin-pill admin-pill-neutral">Færdig</span>}</td>
-                  <td onClick={e => e.stopPropagation()}>
-                    <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => openAdminUserForEdit(u)} style={{ marginRight: 6 }}>Redigér</button>
-                    <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => handleDelete(u)} disabled={u.id === currentUserId}>Slet</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-      {adminUsersHasMore && (
-        <div style={{ margin: "12px 0", fontSize: 13, color: "var(--muted)", display: "flex", gap: 10, alignItems: "center" }}>
-          Der er flere brugere end de {adminUsers.length}, der vises.
-          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => loadAdminUsers({ more: true })}>Hent flere</button>
-        </div>
       )}
 
-      {openAdminUser && !editingAdminUser && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-loading-row"><div className="admin-spinner" /> Henter bruger…</div>
-          </div>
-        </div>
+      {openRow && (
+        <UserDetail row={openRow} currentUserId={currentUserId} getUser={getUser} saveProfile={saveProfile} setRole={setRole} deleteSummary={deleteSummary} deleteUser={deleteUser}
+          onClose={() => setOpenId(null)} onDeleted={() => setOpenId(null)} />
       )}
-
-      {openAdminUser && editingAdminUser && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Redigér bruger</div>
-                <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)" }}>ID: {openAdminUser.id}</div>
-              </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Navn</label>
-              <input value={editingAdminUser.name} onChange={e => setEditingAdminUser(s => ({ ...s, name: e.target.value }))} />
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Email</label>
-              <input value={editingAdminUser.email} onChange={e => setEditingAdminUser(s => ({ ...s, email: e.target.value }))} />
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
-                Ændrer kun profil-emailen i databasen — ændrer IKKE login-emailen i Supabase Auth. Brug Supabase Dashboard for at ændre login.
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Fødselsår</label>
-                <input type="number" value={editingAdminUser.birth_year} onChange={e => setEditingAdminUser(s => ({ ...s, birth_year: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Køn</label>
-                <select value={editingAdminUser.gender} onChange={e => setEditingAdminUser(s => ({ ...s, gender: e.target.value }))}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)", fontSize: 13 }}>
-                  <option value="">–</option>
-                  <option value="Mand">Mand</option>
-                  <option value="Kvinde">Kvinde</option>
-                  <option value="Andet">Andet</option>
-                </select>
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Rolle</label>
-                <select value={editingAdminUser.role} onChange={e => setEditingAdminUser(s => ({ ...s, role: e.target.value }))}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)", fontSize: 13 }}
-                  disabled={openAdminUser.id === currentUserId}>
-                  <option value="user">Bruger</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Allergener</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {ALLERGENS.map(a => {
-                  const isOn = editingAdminUser.allergen_ids.includes(a.id);
-                  return (
-                    <button key={a.id} type="button" onClick={() => toggleAllergen(a.id)}
-                      style={{
-                        fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
-                        background: isOn ? "var(--red-lt)" : "var(--surface3)",
-                        color: isOn ? "var(--red)" : "var(--muted2)",
-                        border: `1px solid ${isOn ? "var(--red-md)" : "var(--border)"}`,
-                      }}>
-                      <AllergenGlyph a={a} size={11} /> {a.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {editingAdminUser.allergen_ids.length > 0 && (
-              <div className="admin-field">
-                <label className="admin-label">Reagerer på spor? <span style={{ fontWeight: 400, color: "var(--muted)" }}>(slået fra = kun direkte indhold flagges)</span></label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {editingAdminUser.allergen_ids.map(id => {
-                    const a = ALLERGENS.find(x => x.id === id);
-                    if (!a) return null;
-                    const only = editingAdminUser.allergen_levels?.[id] === "direct_only";
-                    return (
-                      <button key={id} type="button" onClick={() => toggleLevel(id)} aria-pressed={only}
-                        title={only ? "Kun direkte indhold — klik for også spor" : "Også spor — klik for kun direkte indhold"}
-                        style={{
-                          fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
-                          background: only ? "var(--surface3)" : "var(--amber-lt)",
-                          color: only ? "var(--muted2)" : "var(--amber)",
-                          border: `1px solid ${only ? "var(--border)" : "var(--amber-md)"}`,
-                        }}>
-                        {a.label}: {only ? "kun direkte" : "også spor"}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="admin-field">
-              <label className="admin-label">Egne tilføjede allergier <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>
-              <input value={editingAdminUser.custom_allergens} onChange={e => setEditingAdminUser(s => ({ ...s, custom_allergens: e.target.value }))} placeholder="Fruktose, kanel…" />
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Overvågede E-numre <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>
-              <input value={editingAdminUser.e_numbers} onChange={e => setEditingAdminUser(s => ({ ...s, e_numbers: e.target.value }))} placeholder="E220, E250…" />
-            </div>
-
-            <div className="admin-field">
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--ink2)" }}>
-                <input type="checkbox" checked={editingAdminUser.onboarding_completed}
-                  onChange={e => setEditingAdminUser(s => ({ ...s, onboarding_completed: e.target.checked }))} />
-                Onboarding færdiggjort
-              </label>
-            </div>
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="admin-btn admin-btn-primary" disabled={adminUserActionLoading} onClick={saveEdit}>Gem ændringer</button>
-              <button className="admin-btn admin-btn-danger" disabled={adminUserActionLoading || openAdminUser.id === currentUserId}
-                onClick={() => { if (window.confirm(`Slet ${editingAdminUser.name || editingAdminUser.email} permanent? Dette kan ikke fortrydes.`)) { deleteUser(openAdminUser.id); close(); } }}
-                style={{ marginLeft: "auto" }}>
-                Slet bruger
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {exporting && <ExportDialog count={total} filtered={filtered} busy={exporting === "busy"} onClose={() => setExporting(null)} onConfirm={doExport} />}
     </>
   );
 }

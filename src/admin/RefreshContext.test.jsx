@@ -9,13 +9,13 @@ import MissingSection from "./sections/MissingSection.jsx";
 import HistorySection from "./sections/HistorySection.jsx";
 
 afterEach(cleanup);
-const errors = [{ id: "e1", status: "open", message: "Fejl ABC", count: 1, last_seen: "2026-10-15T08:00:00Z", first_seen: "2026-10-15T08:00:00Z", context: {} }];
+const errors = [{ id: "e1", status: "open", message: "Fejl ABC", occurrences: 1, last_seen: "2026-10-15T08:00:00Z", first_seen: "2026-10-15T08:00:00Z", context: {} }];
 const missing = [{ ean: "5701234000011", count: 2 }];
 const ui = (el, refreshing) => <RefreshContext.Provider value={refreshing}>{el}</RefreshContext.Provider>;
 
 describe("opdatering beholder data", () => {
   it("Fejl: spinner ved almindelig indlæsning, men listen står under en opdatering", () => {
-    const el = <ErrorsSection errors={errors} loading filter="all" setFilter={() => {}} load={() => {}} setStatus={() => {}} />;
+    const el = <ErrorsSection rows={errors} loading loaded options={[]} load={() => {}} />;
     const { container, unmount } = render(ui(el, false));
     expect(container.textContent).toContain("Henter…");
     expect(container.textContent).not.toContain("Fejl ABC");
@@ -25,7 +25,7 @@ describe("opdatering beholder data", () => {
     expect(r.container.textContent).not.toContain("Henter…");
   });
   it("uden data vises spinneren også under en opdatering", () => {
-    const el = <ErrorsSection errors={[]} loading filter="all" setFilter={() => {}} load={() => {}} setStatus={() => {}} />;
+    const el = <ErrorsSection rows={[]} loading options={[]} load={() => {}} />;
     const { container } = render(ui(el, true));
     expect(container.textContent).toContain("Henter…");
   });

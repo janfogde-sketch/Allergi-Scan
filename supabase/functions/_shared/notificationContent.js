@@ -107,13 +107,13 @@ const LIST_ENTITY = { type: "list", idFrom: "listId" };
 export const DEFINITIONS = {
   "N2a:default": {
     type: "N2a", variant: "default", category: "submission_status", version: 1, ttl: 86400,
-    push: { title: "Dit produkt er godkendt", body: "{{productName}} er godkendt af vores team og nu tilgængeligt for alle." },
-    mail: { subject: "Dit produkt er godkendt og tilføjet i EatSafe", preheader: "Vores team har godkendt dit produkt. Det er nu tilgængeligt for alle brugere i EatSafe." },
+    push: { title: "Din indsendelse er godkendt", body: "{{productName}} er nu tilgængeligt i EatSafe. Tak for dit bidrag!" },
+    mail: { subject: "Din indsendelse er godkendt i EatSafe", preheader: "Vores team har godkendt din indsendelse. Produktet er nu tilgængeligt i EatSafe." },
     vars: PRODUCT_VARS, required: [],
     blocks: [
-      H("Dit produkt er nu tilføjet i EatSafe"),
-      P("Vores team har gennemgået og godkendt din indsendelse af **{{productName}}**. Produktet er nu tilgængeligt for alle brugere i EatSafe."),
-      PANEL(null, [P("Du kan finde produktet ved at scanne stregkoden eller søge efter det i appen. Her kan du se ingrediens- og allergenoplysningerne samt vurderingen ud fra din profil.")]),
+      H("Din indsendelse er godkendt"),
+      P("Vores team har gennemgået og godkendt din indsendelse af **{{productName}}**. Produktet er nu tilføjet i EatSafe og tilgængeligt for alle brugere."),
+      PANEL(null, [P("Godkendelsen betyder kun, at produktet er tilføjet i EatSafe. Den er ikke en vurdering af, om produktet er sikkert for dig. Scan stregkoden eller søg efter produktet i appen for at se ingrediens- og allergenoplysningerne og vurderingen ud fra din profil.")]),
       P("Dit bidrag hjælper både dig og andre brugere med at få bedre overblik over de produkter, I møder i hverdagen. Tak, fordi du er med til at gøre EatSafe bedre."),
       P("Opdager du oplysninger, der ikke stemmer med emballagen, kan du foreslå en rettelse på produktet i appen."),
       DISC,
@@ -327,11 +327,25 @@ export const DEFINITIONS = {
     mail: { subject: "Allergenoplysninger er ændret for et af dine produkter", preheader: "Se ændringen, og tjek emballagen, før du bruger produktet." },
     vars: { ...PRODUCT_VARS, changeSummary: { fallback: "Allergenoplysningerne er ændret." } }, required: [],
     blocks: [
-      H("Nye oplysninger om dit produkt"),
-      P("Allergenoplysningerne for **{{productName}}** er blevet opdateret i EatSafe. Ændringen vedrører allergener i din profil eller hos en person i din Familie."),
+      H("Allergenoplysningerne er ændret"),
+      P("Vi har opdateret allergenoplysningerne for **{{productName}}**. Ændringen gælder allergener hos dig eller en i din Familie."),
       PANEL("Det er ændret", [P("{{changeSummary}}")]),
-      P("Ændringen kan skyldes nye eller rettede oplysninger. Den betyder ikke nødvendigvis, at producenten har ændret selve produktet."),
-      P("Scan produktet igen eller søg efter det i appen for at se den opdaterede vurdering. Tjek emballagen, før du bruger produktet."),
+      P("Åbn produktet i EatSafe for at se den nye vurdering. Tjek emballagen, før du bruger produktet."),
+      DISC,
+    ],
+    action: PRODUCT_ACTION, entity: { type: "product", idFrom: "ean" },
+  },
+
+  // ── P1, lavere risiko: en rettelse har sænket risikoen for et allergen (Jan 16. okt. 2026). KUN besked i appen. ──
+  "P1:lowered": {
+    type: "P1", variant: "lowered", category: "product_changes", version: 1, ttl: 86400, inAppOnly: true,
+    push: { title: "Allergenoplysninger er rettet", body: "Oplysninger om {{productName}} er rettet. Tjek emballagen." },
+    vars: { ...PRODUCT_VARS, changeSummary: { fallback: "Allergenoplysningerne er rettet." } }, required: [],
+    blocks: [
+      H("Allergenoplysningerne er rettet"),
+      P("Vi har rettet allergenoplysningerne for **{{productName}}**. Rettelsen gælder allergener hos dig eller en i din Familie."),
+      PANEL("Det er rettet", [P("{{changeSummary}}")]),
+      P("Åbn produktet i EatSafe for at se den nye vurdering. Tjek emballagen, før du bruger produktet."),
       DISC,
     ],
     action: PRODUCT_ACTION, entity: { type: "product", idFrom: "ean" },
@@ -551,6 +565,7 @@ export function renderNotification(key, data = {}, options = {}) {
     type: def.type,
     variant: def.variant,
     category: def.category,
+    inAppOnly: def.inAppOnly === true,
     templateVersion: def.version,
     ttlSeconds: def.ttl,
     title,

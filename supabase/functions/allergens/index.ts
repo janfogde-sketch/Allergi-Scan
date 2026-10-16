@@ -1,7 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
-import { logAiUsage } from "../_shared/aiCost.ts";
+import { logAiUsage, type AiOrigin } from "../_shared/aiCost.ts";
 import { reportLimitHit, withinGlobalLimit, withinTotalAiLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor } from "../_shared/http.ts";
+import { isUnreadableOcrText } from "../_shared/ocrText.js";
 import { logAdminEvent, logAccessDenied, fejlkode, feltAendringer } from "../_shared/adminAudit.ts";
 import {
   ALL_ALLERGENS,
@@ -17,7 +18,7 @@ const corsHeaders = corsFor();
 // CLAUDE FALLBACK — bruges når keyword-engine er usikker
 // Kræver ANTHROPIC_API_KEY som Supabase secret
 // ─────────────────────────────────────────────────────────────────────────────
-async function analyzeWithClaude(text: string): Promise<Record<string, string> | null> {
+async function analyzeWithClaude(text: string, origin: AiOrigin): Promise<Record<string, string> | null> {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return null; // Ingen nøgle = spring fallback over
 
@@ -54,7 +55,7 @@ Returner KUN JSON, ingen forklaring, ingen markdown.`;
 
     if (!res.ok) return null;
     const data = await res.json();
-    await logAiUsage("allergens", "claude-haiku-4-5", data.usage);
+    await logAiUsage("allergens", "claude-haiku-4-5", data.usage, origin);
     let raw = data.content?.[0]?.text || "";
     raw = raw.replace(/```json\s*|\s*```/g, "").trim();
     const parsed = JSON.parse(raw);
@@ -129,6 +130,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // En forklaring fra billedlæsningen ("Jeg kan ikke læse ingredienslisten ...") er ingen ingrediensliste:
+    // alt er "unknown", aldrig "no", og AI'en kaldes ikke (16. okt. 2026, fejlrapport fra "Produkt ikke fundet").
+    if (isUnreadableOcrText(text)) {
+      const unknownFlags: Record<string, string> = {};
+      for (const a of ALL_ALLERGENS) unknownFlags[a] = "unknown";
+      return new Response(
+        JSON.stringify({ success: true, allergen_flags: unknownFlags, method: "unreadable", saved: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 1. Keyword-engine kører altid (gratis, hurtig)
     let allergenFlags = analyzeIngredients(text) as unknown as Record<string, string>;
     let method = "keyword";
@@ -140,6 +152,8 @@ Deno.serve(async (req) => {
     // ai_skipped fortæller kalderen, at AI blev sprunget over pga. et loft, så admin-panelet kan sige det i stedet for at gemme stille.
     let claudeAllowed = false;
     let aiSkipped: string | null = null;
+    // Oprindelsen til forbrugsoversigten: service-nøglen = intern; en almindelig bruger = bruger; en administrator kan ikke adskilles (panelet eller eget brug) = ukendt.
+    let origin: AiOrigin = isInternalCall ? "internal" : "user";
     if (force_ai || shouldUseClaudeFallback(text, allergenFlags)) {
       const usageClient = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -149,6 +163,7 @@ Deno.serve(async (req) => {
       if (!isInternalCall) {
         const { data: roleRow } = await usageClient.from("users").select("role").eq("id", caller!.id).single();
         callerIsAdmin = roleRow?.role === "admin";
+        if (callerIsAdmin) origin = "unknown";
       }
       claudeAllowed = isInternalCall
         ? await withinGlobalLimit(usageClient, "claude_internal")
@@ -160,7 +175,7 @@ Deno.serve(async (req) => {
       if (!claudeAllowed) aiSkipped = "daily_limit";
     }
     if (claudeAllowed) {
-      const claudeFlags = await analyzeWithClaude(text);
+      const claudeFlags = await analyzeWithClaude(text, origin);
       if (claudeFlags) {
         // Claude vinder ved konflikt — men behold "yes" fra keyword (konservativt)
         const merged: Record<string, string> = {};

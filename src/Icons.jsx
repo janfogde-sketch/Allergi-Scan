@@ -84,6 +84,7 @@ export const Icon = ({ name, size=18, color="currentColor", fill="none" }) => {
     key: <><circle cx="8" cy="15" r="4" strokeWidth="1.75"/><path strokeLinecap="round" strokeLinejoin="round" d="M11.5 11.5L20 3m-4 4l2 2m-6-6l2 2"/></>,
     file: <><path strokeLinecap="round" strokeLinejoin="round" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5"/></>,
     logout: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/>,
+    copy: <><rect x="9" y="9" width="11" height="11" rx="2" strokeWidth="1.75"/><path strokeLinecap="round" strokeLinejoin="round" d="M5 15V6a2 2 0 012-2h9"/></>,
     flag: <path strokeLinecap="round" strokeLinejoin="round" d="M3 21V4.5m0 0c2.4-1 4.8-1 7.2 0s4.8 1 7.2 0c1.2-.5 2.4-.8 3.6-.8v9.5c-1.2 0-2.4.3-3.6.8-2.4 1-4.8 1-7.2 0s-4.8-1-7.2 0"/>,
     clock: <><circle cx="12" cy="12" r="9" strokeWidth="1.75"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 2"/></>,
     save: <><path strokeLinecap="round" strokeLinejoin="round" d="M5 4h11l3 3v13a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 4v5h7V4M8 20v-6h8v6"/></>,

@@ -2,6 +2,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAiUsage } from "../_shared/aiCost.ts";
 import { reportLimitHit, withinTotalAiLimit, withinUserLimit } from "../_shared/apiUsage.ts";
 import { corsFor, getCaller } from "../_shared/http.ts";
+import { OCR_UNREADABLE_MARKER, isUnreadableOcrText } from "../_shared/ocrText.js";
 
 const corsHeaders = corsFor();
 
@@ -84,7 +85,7 @@ Deno.serve(async (req) => {
       ean_from_image:
         "Læs stregkodens tal (EAN/UPC, typisk 8-14 cifre) fra dette billede. Returner KUN tallet, uden mellemrum eller andre tegn. Hvis du ikke kan læse det tydeligt, returner en tom streng.",
       ingredients:
-        "Læs ingredienslisten fra dette billede af en fødevareemballage. Emballagen viser ofte ingredienslisten på flere sprog samtidig (fx dansk sammen med svensk, norsk, engelsk eller tysk) — returner KUN den danske udgave af listen. Hvis ingredienslisten IKKE findes på dansk (kun på et andet sprog), skal du selv oversætte den til naturligt, korrekt dansk i stedet for at returnere den på originalsproget — returner ALDRIG tekst på et andet sprog end dansk. Behold rækkefølgen af ingredienser, procentangivelser i parentes, og kommaseparering som i kildeteksten. Fjern alt andet (næringsdeklaration, adresser, batchnumre, øvrige sprogversioner). VIGTIGT: Medtag også allergen-sætninger, der står ved ingredienslisten, ord for ord og som en del af svaret efter listen, fx \"Kan indeholde spor af ...\", \"Indeholder ...\", \"Produceret på et anlæg, der også håndterer ...\" og tilsvarende (også når de står på en separat linje eller i fed/versaler). Disse sætninger må ALDRIG udelades, og de må ikke omformuleres eller forkortes. Returner KUN den danske ingrediensliste inklusive disse allergen-sætninger, intet andet. Hvis du ikke kan finde en ingrediensliste, returner en tom streng.",
+        `Læs ingredienslisten fra dette billede af en fødevareemballage. Emballagen viser ofte ingredienslisten på flere sprog samtidig (fx dansk sammen med svensk, norsk, engelsk eller tysk) — returner KUN den danske udgave af listen. Hvis ingredienslisten IKKE findes på dansk (kun på et andet sprog), skal du selv oversætte den til naturligt, korrekt dansk i stedet for at returnere den på originalsproget — returner ALDRIG tekst på et andet sprog end dansk. Behold rækkefølgen af ingredienser, procentangivelser i parentes, og kommaseparering som i kildeteksten. Fjern alt andet (næringsdeklaration, adresser, batchnumre, øvrige sprogversioner). VIGTIGT: Medtag også allergen-sætninger, der står ved ingredienslisten, ord for ord og som en del af svaret efter listen, fx \"Kan indeholde spor af ...\", \"Indeholder ...\", \"Produceret på et anlæg, der også håndterer ...\" og tilsvarende (også når de står på en separat linje eller i fed/versaler). Disse sætninger må ALDRIG udelades, og de må ikke omformuleres eller forkortes. Returner KUN den danske ingrediensliste inklusive disse allergen-sætninger, intet andet. Hvis du ikke kan finde ingredienslisten, eller teksten ikke kan læses sikkert (sløret, skrå, skygger, afskåret), så returner KUN ordet ${OCR_UNREADABLE_MARKER} og ingen forklaring.`,
     };
     const prompt = PROMPTS[mode] || PROMPTS.ingredients;
 
@@ -127,11 +128,15 @@ Deno.serve(async (req) => {
     }
 
     const data = await res.json();
-    const text = data.content?.[0]?.text?.trim() || "";
-    await logAiUsage("ocr", "claude-haiku-4-5", data.usage);
+    let text = data.content?.[0]?.text?.trim() || "";
+    // Ingredienslisten kunne ikke læses: AI'en svarer med markøren eller en forklaring. Den må aldrig sendes videre
+    // som ingrediensliste (allergenanalysen ville give "nej" til alt), så appen får en tom tekst og unreadable (16. okt. 2026).
+    const unreadable = (!mode || mode === "ingredients") && isUnreadableOcrText(text);
+    if (unreadable) text = "";
+    await logAiUsage("ocr", "claude-haiku-4-5", data.usage, "user"); // kun kald med en logget ind brugers login når hertil (getCaller)
 
     return new Response(
-      JSON.stringify({ success: true, text, mode: mode || "ingredients" }),
+      JSON.stringify({ success: true, text, mode: mode || "ingredients", ...(unreadable ? { unreadable: true } : {}) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

@@ -1,8 +1,25 @@
 // @ts-nocheck
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { reportError, shouldReport, getRecentErrors, _resetForTests } from "./errorReporter.js";
+import { reportError, shouldReport, getRecentErrors, reportPendingChunkFailure, _resetForTests } from "./errorReporter.js";
 import { setMemoryToken } from "./sessionStore.js";
+
+describe("forældet lazy-chunk efter deploy", () => {
+  const chrome = "Cannot read properties of undefined (reading 'default')";
+  const safari = "undefined is not an object (evaluating 'e._result.default')";
+  it("rapporteres ikke, mens boot.js genindlæser siden (begge browserformater)", () => {
+    window.__chunkReloading = true;
+    expect(shouldReport(chrome)).toBe(false);
+    expect(shouldReport(safari)).toBe(false);
+    delete window.__chunkReloading;
+  });
+  it("rapporteres som alle andre fejl, når der ikke genindlæses, og andre fejl rapporteres altid", () => {
+    expect(shouldReport(chrome)).toBe(true);
+    window.__chunkReloading = true;
+    expect(shouldReport("Cannot read properties of undefined (reading 'map')")).toBe(true);
+    delete window.__chunkReloading;
+  });
+});
 
 describe("shouldReport", () => {
   it("afviser tom tekst og kendt støj", () => {
@@ -97,3 +114,35 @@ describe("getRecentErrors (til crash-feedback)", () => {
     expect(getRecentErrors().map(e => e.message)).toEqual(["Offline-fejl"]);
   });
 });
+
+describe("kodefil, der ikke kunne hentes (genindlæst af boot.js)", () => {
+  beforeEach(() => {
+    _resetForTests();
+    setMemoryToken(null);
+    sessionStorage.clear();
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200 })));
+  });
+  const body = () => JSON.parse(fetch.mock.calls[0][1].body);
+  it("rapporterer hændelsen én gang med skærmens navn uden hash og det fulde filnavn i konteksten", async () => {
+    sessionStorage.setItem("chunkFailure", JSON.stringify({ file: "ScannerScreen-BTWabc12.js", online: true, at: Date.now() }));
+    expect(await reportPendingChunkFailure()).toBe(true);
+    expect(body()).toMatchObject({ p_source: "chunk", p_message: "Kodefil kunne ikke hentes, og siden blev genindlæst: ScannerScreen" });
+    expect(body().p_context).toMatchObject({ failedChunk: "ScannerScreen-BTWabc12.js", online: true });
+    expect(sessionStorage.getItem("chunkFailure")).toBeNull();
+    expect(await reportPendingChunkFailure()).toBe(false); // kun én gang
+  });
+  it("uden kendt fil, uden for tidsrammen eller med ugyldigt indhold sendes intet opdigtet", async () => {
+    sessionStorage.setItem("chunkFailure", JSON.stringify({ file: "../../x", online: false, at: Date.now() }));
+    expect(await reportPendingChunkFailure()).toBe(true);
+    expect(body().p_message).toContain("ukendt fil");
+    expect(body().p_context.failedChunk).toBeNull();
+    expect(body().p_context.online).toBe(false);
+    fetch.mockClear(); _resetForTests();
+    sessionStorage.setItem("chunkFailure", JSON.stringify({ file: "A-12345678.js", at: Date.now() - 10 * 60_000 }));
+    expect(await reportPendingChunkFailure()).toBe(false);
+    sessionStorage.setItem("chunkFailure", "ikke json");
+    expect(await reportPendingChunkFailure()).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+

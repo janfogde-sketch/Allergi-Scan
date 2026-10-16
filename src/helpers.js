@@ -236,7 +236,7 @@ function userBearer(headers) {
 
 async function fetchWithTimeout(url, options) {
   const ms = options.timeoutMs ?? apiConfig.timeoutMs;
-  const { timeoutMs: _t, ...init } = options;
+  const { timeoutMs: _t, onResponse: _r, ...init } = options;
   if (!ms || init.signal || typeof AbortController === "undefined") return fetch(url, init);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
@@ -252,7 +252,7 @@ async function fetchWithTimeout(url, options) {
   } finally { clearTimeout(timer); }
 }
 
-/** @param {string} url @param {RequestInit & { timeoutMs?: number }} [options] */
+/** @param {string} url @param {RequestInit & { timeoutMs?: number, onResponse?: (res: Response) => void }} [options] onResponse får svaret (fx Content-Range), før teksten læses */
 export async function apiCall(url, options = {}, retried = false) {
   const res = await fetchWithTimeout(url, options);
   // Udløbet login (fx efter søvn): forny én gang og gentag kaldet med den nye nøgle. Lykkes fornyelsen ikke, går fejlen videre som før.
@@ -273,6 +273,7 @@ export async function apiCall(url, options = {}, retried = false) {
     err.body = bodyText;
     throw err;
   }
+  if (options.onResponse) options.onResponse(res);
   const text = await res.text();
   return text ? JSON.parse(text) : {};
 }

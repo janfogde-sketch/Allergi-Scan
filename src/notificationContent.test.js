@@ -11,7 +11,7 @@ const SAMPLE = {
   reason: "Ingredienslisten er ikke læsbar.\nIndsend et skarpere billede.",
   memberName: "Frederikke", inviteId: "inv-1",
   description: "Kameraet åbner ikke, når jeg vælger Scan.", message: "Vi har rettet fejlen. Prøv gerne igen.", ticketId: "tik-1",
-  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", adders: "Jan og Bjørn", countText: "4 varer", itemList: "• Mælk\n• Æg", changeSummary: "Æg indeholder nu",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", adders: "Jan og Bjørn", countText: "4 varer", itemList: "• Mælk\n• Æg", changeSummary: "Æg er nu registreret som indeholdt",
   recallReason: "For højt indhold af glycerol.", affectedBatches: "Frosty Pocket Lemon\nLotnr.: L1", recallAction: "Kassér produktet.", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a", recallId: "r1",
 };
 const KEYS = Object.keys(DEFINITIONS);
@@ -67,10 +67,19 @@ describe("renderNotification — alle definitioner", () => {
     expect(preheader.length).toBeLessThanOrEqual(90);
   });
 
-  it("kun det delte invitationslink (N10, N11) og annulleret/ændret tilbagekaldelse (P6) er uden mail: push og besked i appen", () => {
-    const NO_MAIL = ["N10:default", "N11:approved", "N11:declined", "P6:cancelled", "P6:updated"];
+  it("kun det delte invitationslink (N10, N11), annulleret/ændret tilbagekaldelse (P6) og lavere allergenrisiko (P1:lowered) er uden mail", () => {
+    const NO_MAIL = ["N10:default", "N11:approved", "N11:declined", "P6:cancelled", "P6:updated", "P1:lowered"];
     expect(KEYS.filter((k) => !DEFINITIONS[k].mail).sort()).toEqual([...NO_MAIL].sort());
     for (const key of NO_MAIL) expect(renderNotification(key, SAMPLE).mail).toBeNull();
+  });
+
+  it("lavere allergenrisiko (P1:lowered) er kun en besked i appen: ingen push og ingen mail (Jan 16. okt. 2026)", () => {
+    expect(KEYS.filter((k) => DEFINITIONS[k].inAppOnly)).toEqual(["P1:lowered"]);
+    const n = renderNotification("P1:lowered", { ...SAMPLE, productName: "Chokolade", changeSummary: "Mælkeprotein er nu registreret som ikke indeholdt" });
+    expect(n.inAppOnly).toBe(true);
+    expect(n.category).toBe("product_changes");
+    expect(JSON.stringify(n.blocks)).toContain("Mælkeprotein er nu registreret som ikke indeholdt");
+    expect(renderNotification("P1:default", SAMPLE).inAppOnly).toBe(false);
   });
 
   it("N10 går til afsenderen og nævner den, der bad om forbindelse og at der skal godkendes", () => {
@@ -170,7 +179,7 @@ describe("indholdsregler fra pakken", () => {
 
   it("fallbacks: tomt produktnavn giver et grammatisk korrekt push og mailtekst", () => {
     const n = renderNotification("N2a:default", { ...SAMPLE, productName: "" });
-    expect(n.pushBody).toBe("Produktet er godkendt af vores team og nu tilgængeligt for alle.");
+    expect(n.pushBody).toBe("Produktet er nu tilgængeligt i EatSafe. Tak for dit bidrag!");
     expect(blocksToText(n.blocks)).toContain("din indsendelse af produktet.");
     // F1-11: midt i sætningen med lille forbogstav
     expect(renderNotification("P6:default", { ...SAMPLE, productName: "" }).pushBody).toContain("tilbagekaldelse for produktet.");

@@ -44,3 +44,57 @@ describe("Resend-link", () => {
     for (const k of Object.keys(DEFINITIONS).filter((key) => !DEFINITIONS[key].mail)) expect(resendTemplateUrl(k)).toBeNull();
   });
 });
+
+describe("kategorier og hjælpefunktioner (16. okt. 2026)", () => {
+  it("kategorierne har brugerrettede danske navne i fast rækkefølge, og ingen intern nøgle vises", async () => {
+    const labels = listNotifications().map((g) => g.label);
+    expect(labels).toEqual(["Indsendelser", "Manglende produkter", "Familie", "Feedback", "Produktændringer", "Tilbagekaldelser", "Delte lister"]);
+    expect(labels.join(" ")).not.toMatch(/_|missing|feedback$/);
+    const fam = listNotifications().find((g) => g.label === "Familie").items.map((i) => i.name);
+    expect(fam).toEqual(["Invitation accepteret", "Anmodning om forbindelse (delt link)", "Anmodning godkendt (delt link)", "Anmodning ikke godkendt (delt link)", "Invitation udløber snart"]);
+  });
+  it("variabel indsættes ved markøren eller erstatter markeringen", async () => {
+    const { insertVariableAt } = await import("./admin/notificationAdminLogic.js");
+    expect(insertVariableAt("Hej verden", 4, 4, "productName")).toEqual({ text: "Hej {{productName}}verden", cursor: 4 + "{{productName}}".length });
+    expect(insertVariableAt("Hej XX verden", 4, 6, "reason").text).toBe("Hej {{reason}} verden");
+    expect(insertVariableAt("abc", undefined, undefined, "x").text).toBe("abc{{x}}");
+  });
+  it("test: delvist lykkedes er aldrig fuldt gennemført, og ingen enhed er en fejl", async () => {
+    const { summarizeTest } = await import("./admin/notificationAdminLogic.js");
+    expect(summarizeTest({ push: { devices: 1, sent: 1, failed: 0 }, mail: { sent: true } }, ["push", "mail"]).overall).toBe("ok");
+    expect(summarizeTest({ push: { devices: 1, sent: 1, failed: 0 }, mail: { sent: false, error: "x" } }, ["push", "mail"]).overall).toBe("partial");
+    expect(summarizeTest({ push: { devices: 0, sent: 0, failed: 0 } }, ["push"]).overall).toBe("failed");
+    expect(summarizeTest({ push: { devices: 2, sent: 1, failed: 1, errors: ["e"] } }, ["push"]).overall).toBe("partial");
+    expect(summarizeTest(null, ["push"]).overall).toBe("failed");
+  });
+  it("mail-preview: logo hentes fra egen adresse, og mørk/lys efterlignes uden at røre designet", async () => {
+    const { prepareMailPreview } = await import("./admin/notificationAdminLogic.js");
+    const html = '<style>@media(prefers-color-scheme:dark){.x{color:#fff}}</style><img src="https://www.eatsafe.dk/brand/EatSafe_Logo_Email_Dark.png">';
+    const light = prepareMailPreview(html, "light", "https://dev.eatsafe.dk");
+    expect(light).toContain('src="https://dev.eatsafe.dk/brand/EatSafe_Logo_Email_Dark.png"');
+    expect(light).toContain("@media not all");
+    expect(prepareMailPreview(html, "dark", "https://x.dk")).toContain("@media all");
+  });
+});
+
+describe("tekster om produktgodkendelse (16. okt. 2026)", () => {
+  it("N2a siger, at indsendelsen er godkendt, og at det ikke er en sikkerhedsvurdering", () => {
+    const r = renderNotification("N2a:default", mockDataFor("N2a:default"));
+    expect(r.pushTitle).toBe("Din indsendelse er godkendt");
+    expect(r.pushBody).toBe("Arla Økologisk Letmælk er nu tilgængeligt i EatSafe. Tak for dit bidrag!");
+    expect(r.mail.subject).toBe("Din indsendelse er godkendt i EatSafe");
+    const text = JSON.stringify(r.blocks);
+    expect(text).toContain("ikke en vurdering af, om produktet er sikkert for dig");
+    expect(`${r.pushTitle} ${r.pushBody} ${text}`).not.toMatch(/sikkert at spise|allergisikker|passer til dig/i);
+  });
+  it("en gemt, tilpasset pushtekst bevares (standarden overskriver den ikke)", () => {
+    const r = renderNotification("N2a:default", mockDataFor("N2a:default"), { pushOverride: { title: "Min titel", body: "Min tekst" } });
+    expect([r.pushTitle, r.pushBody]).toEqual(["Min titel", "Min tekst"]);
+  });
+  it("status for testafsendelse siger aldrig 'leveret'", async () => {
+    const { summarizeTest } = await import("./admin/notificationAdminLogic.js");
+    const r = summarizeTest({ push: { devices: 1, sent: 1, failed: 0 }, mail: { sent: true } }, ["push", "mail"]);
+    expect(JSON.stringify(r)).not.toMatch(/[Ll]everet\b/);
+    expect(r.lines.map((l) => l.status)).toEqual(["Accepteret", "Accepteret"]);
+  });
+});

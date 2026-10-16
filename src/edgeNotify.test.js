@@ -148,6 +148,34 @@ describe("edge: notify", () => {
     expect(recipients).toEqual(["user-a", "user-b"]);
   });
 
+  it("lavere allergenrisiko: kun besked i appen til dem med allergenet, aldrig push eller mail (Jan 16. okt. 2026)", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: "m1" }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const ev = event({ kind: "product_allergen_lowered", payload: { product_id: "p1", changes: { maelkeallergi: { old: "yes", new: "no" } } } });
+    const h = await loadHandler("notify", {
+      env,
+      resolver: world({
+        events: [ev],
+        flags: { notifications_push_enabled: true, notifications_email_enabled: true },
+        extra: (c) => {
+          if (c.table === "products") return { data: { id: "p1", ean: "5701234567890", name: "Chokolade", brand: "Mark", allergen_flags: { maelkeallergi: "no" } }, error: null };
+          if (c.table === "favorites") return { data: [{ user_id: "user-a" }, { user_id: "user-b" }], error: null };
+          if (c.table === "scan_history" || c.table === "shopping_list_items" || c.table === "family_members") return { data: [], error: null };
+          if (c.table === "user_allergens") return { data: [{ user_id: "user-a", allergen: "maelkeallergi" }, { user_id: "user-b", allergen: "aeg" }], error: null };
+          if (c.table === "users" && c.op("in")) return { data: [], error: null };
+          if (c.table === "push_tokens") return { data: [{ token: "{\"endpoint\":\"https://push.example/1\",\"keys\":{\"p256dh\":\"x\",\"auth\":\"y\"}}" }], error: null };
+        },
+      }),
+    });
+    await h.call("POST", "/notify", { headers: { Authorization: SVC }, body: {} });
+    const notes = h.writes().filter((c) => c.table === "notifications").map((c) => c.op("upsert")[0]);
+    expect(eventUpdates(h).at(-1)).toMatchObject({ status: "done" });
+    expect(notes.map((n) => n.user_id)).toEqual(["user-a"]);
+    expect(notes[0]).toMatchObject({ type: "P1", variant: "lowered", category: "product_changes" });
+    expect(JSON.stringify(notes[0].content_blocks)).toContain("Mælkeprotein er nu registreret som ikke indeholdt");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("annullering går kun til dem, der fik den første besked, med annulleringssidens link", async () => {
     const ev = event({ kind: "recall_cancelled", payload: { recall_id: "r1", cancel_recall_id: "r2" } });
     const h = await loadHandler("notify", {

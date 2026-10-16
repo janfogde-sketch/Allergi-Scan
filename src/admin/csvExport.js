@@ -12,8 +12,10 @@
 // når filen selv erklærer sin encoding via BOM'en herunder.
 function escapeCsvCell(value) {
   if (value === null || value === undefined) return "";
-  const str = String(value);
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  let str = String(value);
+  // Beskyttelse mod formelinjektion: en celle, der starter med = + - @ tab eller linjeskift, kan blive en formel i et regneark
+  if (/^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+  if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
   return str;
 }
 
@@ -31,6 +33,17 @@ export function downloadCsv(filename, rows, columns) {
   // danske tegn (æ/ø/å) som mojibake ved åbning af filen.
   const csv = "﻿" + header + "\n" + body;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Henter en færdig CSV-tekst ned som fil (teksten bygges andetsteds, fx buildCsv i usersLogic.js). */
+export function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

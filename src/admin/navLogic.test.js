@@ -7,7 +7,7 @@ describe("menuens navne og ruter", () => {
     expect(NAV_ITEMS.map((i) => i.id)).toEqual(["dashboard", "todo", "submissions", "recalls", "tickets", "products", "knowledge", "missing", "import", "history", "users", "family", "notifications", "onboarding", "errors", "ai-usage", "audit"]);
     const label = Object.fromEntries(NAV_ITEMS.map((i) => [i.id, i.label]));
     expect(label.todo).toBe("Opgaver");
-    expect(label.onboarding).toBe("Onboardingfrafald");
+    expect(label.onboarding).toBe("Frafald i onboarding");
     expect(label.history).toBe("Ændringshistorik");
     for (const keep of [["dashboard", "Dashboard"], ["submissions", "Indsendelser"], ["recalls", "Tilbagekald"], ["tickets", "Tickets"], ["products", "Produkter"], ["knowledge", "Leksikon"], ["import", "Import"], ["users", "Brugere"], ["family", "Familie"], ["notifications", "Notifikationer"], ["errors", "Fejl"], ["ai-usage", "AI-forbrug"], ["audit", "Aktivitetslog"]]) expect(label[keep[0]]).toBe(keep[1]);
     // Siden viser stregkoder, som brugerne har scannet uden at finde produktet (ikke produkter uden EAN)
