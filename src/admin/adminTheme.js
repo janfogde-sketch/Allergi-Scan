@@ -209,6 +209,7 @@ table.admin-table tr:hover td{background:var(--surface3);}
 @keyframes admin-spin{to{transform:rotate(360deg);}}
 .admin-loading-row{display:flex;align-items:center;gap:10px;padding:24px;color:var(--muted);font-size:13px;}
 .admin-modal-overlay{position:fixed;inset:0;background:rgba(21,32,26,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+html.admin-modal-open,html.admin-modal-open body{overflow:hidden;}
 .admin-modal{background:var(--surface);border-radius:14px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;}
 .admin-modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
 textarea.admin-textarea{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-family:var(--f);font-size:13px;resize:vertical;min-height:90px;}
@@ -683,6 +684,8 @@ button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px sol
   .admin-modal-overlay{padding:0;align-items:flex-end;overflow:hidden;}
   .admin-modal{max-width:none;max-height:92vh;border-radius:14px 14px 0 0;padding:18px 16px;}
   .admin-modal.todo-panel{width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding:0;}
+  html[style*="--admin-vvh"] .admin-modal-overlay{inset:auto 0 auto 0;top:var(--admin-vvt,0px);height:var(--admin-vvh);}
+  html[style*="--admin-vvh"] .admin-modal.todo-panel{height:100%;max-height:100%;}
   .admin-touch{min-height:44px;}
   .todo-chip{min-height:44px;}
   .dash-period button{min-height:44px;}

@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useIsMobile } from "./useIsMobile.js";
 import { watchTableCells } from "./tableCards.js";
+import { installModalGuard } from "./modalGuard.js";
 import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
 import RefreshButton from "./RefreshButton.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
@@ -77,6 +78,8 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   }, [drawerOpen, closeNav]);
   // Desktop: Escape gør ingenting, fordi sidebaren altid er synlig
   useEffect(() => { if (!isMobile) setNavOpen(false); }, [isMobile]);
+  // Fælles modalopførsel: ingen baggrundsscroll, felter scrolles frem, tastaturet skjules ved tryk uden for felterne
+  useEffect(() => installModalGuard(), []);
 
   const pick = (id) => { setSection(id); setNavOpen(false); };
   const toggleGroup = (id) => setExpanded((prev) => (prev === id ? null : id));
