@@ -18,7 +18,7 @@ declare
     'admin_todo_comments.author_id','admin_todos.assignee_id','admin_todos.completed_by','admin_todos.created_by',
     'api_usage.user_id','client_errors.user_id','consent_log.user_id','custom_allergens.created_by',
     'family_invites.accepted_by','family_invites.invited_by','family_invites.invitee_email',
-    'family_invites.requested_by','family_members.family_owner_id','family_members.user_id',
+    'family_invites.requested_by','knowledge_base.reviewed_by','family_members.family_owner_id','family_members.user_id',
     'favorites.user_id','feedback_tickets.submitted_by',
     'notification_preferences.user_id','notification_push_overrides.updated_by','notifications.user_id',
     'push_tokens.user_id','recipes.reviewed_by','recipes.submitted_by','revision_log.changed_by',

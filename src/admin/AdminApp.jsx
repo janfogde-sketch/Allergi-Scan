@@ -14,6 +14,7 @@ import MissingSection from "./sections/MissingSection.jsx";
 import ImportSection from "./sections/ImportSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
+import { useAdminKnowledge } from "./useAdminKnowledge.js";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
@@ -47,6 +48,7 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const [refreshing, setRefreshing] = useState(false);
   const clientErrors = useClientErrors(accessToken);
+  const knowledge = useAdminKnowledge(isAdmin ? accessToken : null);
   const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -114,7 +116,7 @@ export default function AdminApp() {
     if (section === "tickets") admin.loadTickets();
     if (section === "missing") loadMissingEans();
     if (section === "products") admin.loadProducts();
-    if (section === "knowledge") admin.loadKnowledgeEntries();
+    if (section === "knowledge") knowledge.load({});
     if (section === "history") admin.loadRevisionLog();
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
@@ -133,7 +135,7 @@ export default function AdminApp() {
     recalls: () => recalls.load(),
     tickets: () => admin.loadTickets(),
     products: () => admin.loadProducts(),
-    knowledge: () => admin.loadKnowledgeEntries(),
+    knowledge: () => knowledge.load({}),
     missing: () => loadMissingEans(),
     history: () => admin.loadRevisionLog(),
     users: () => adminUsers.load(),
@@ -283,17 +285,7 @@ export default function AdminApp() {
         />
       )}
       {section === "knowledge" && (
-        <KnowledgeSection
-          knowledgeEntries={admin.knowledgeEntries} knowledgeLoading={admin.knowledgeLoading}
-          knowledgeSearch={admin.knowledgeSearch} setKnowledgeSearch={admin.setKnowledgeSearch}
-          knowledgeCategoryFilter={admin.knowledgeCategoryFilter} setKnowledgeCategoryFilter={admin.setKnowledgeCategoryFilter}
-          loadKnowledgeEntries={admin.loadKnowledgeEntries}
-          openKnowledgeEntry={admin.openKnowledgeEntry} setOpenKnowledgeEntry={admin.setOpenKnowledgeEntry}
-          editingKnowledgeEntry={admin.editingKnowledgeEntry} setEditingKnowledgeEntry={admin.setEditingKnowledgeEntry}
-          knowledgeActionLoading={admin.knowledgeActionLoading}
-          openKnowledgeEntryForEdit={admin.openKnowledgeEntryForEdit} openNewKnowledgeEntry={admin.openNewKnowledgeEntry}
-          saveKnowledgeEntry={admin.saveKnowledgeEntry} deleteKnowledgeEntry={admin.deleteKnowledgeEntry}
-        />
+        <KnowledgeSection knowledge={knowledge} />
       )}
       {section === "history" && (
         <HistorySection
