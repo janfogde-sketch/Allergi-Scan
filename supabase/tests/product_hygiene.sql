@@ -31,4 +31,20 @@ begin
   end if;
 end $$;
 
+-- Nødrettelse 16. okt.: triggeren skal virke for andre roller end ejeren (fx edge-funktioner og admin), ikke kun i testen som superbruger.
+set local role service_role;
+insert into products (ean, name, source) values ('76222004', '  SERVICE   ROLLE TEST ', 'user');
+update products set name = 'NYT NAVN PRODUKT' where ean = '76222004';
+reset role;
+
+do $$
+begin
+  if not exists (select 1 from products where ean = '76222004' and name = 'Nyt navn produkt') then
+    raise exception 'Triggeren virker ikke for service_role';
+  end if;
+  if not (select prosecdef from pg_proc where oid = 'public.products_hygiene_trg()'::regprocedure) then
+    raise exception 'products_hygiene_trg skal køre med ejerens rettigheder';
+  end if;
+end $$;
+
 rollback;
