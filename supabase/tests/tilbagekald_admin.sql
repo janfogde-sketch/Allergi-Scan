@@ -4,7 +4,7 @@ begin;
 do $$
 declare
   adm uuid := gen_random_uuid(); usr uuid := gen_random_uuid(); rid uuid; rid2 uuid; n int; st text; j jsonb; res text := '';
-  e1 text := '5700000099915'; e2 text := '15700000099912';
+  e1 text := '5700000099916'; e2 text := '15700000099913';
 begin
   insert into auth.users(id,email,aud,role) values (adm,'adm-'||substr(adm::text,1,8)||'@example.invalid','authenticated','authenticated');
   insert into auth.users(id,email,aud,role) values (usr,'usr-'||substr(usr::text,1,8)||'@example.invalid','authenticated','authenticated');
