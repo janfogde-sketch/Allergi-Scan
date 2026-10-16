@@ -2,7 +2,7 @@
 // Henter og opdaterer fejlgrupper i public.client_errors (fejl fra appen og edge functions). Kun admins kan læse tabellen (RLS).
 // Søgning og filtre kører på serveren på tværs af hele historikken, 50 rækker ad gangen (nøgle-paginering). En fejl er en egen tilstand
 // (error), aldrig en tom liste, og en mislykket statusændring lader den gamle status stå. Bruger-id hentes bevidst ikke.
-// Siden virker også, før migrationen 20261015170000 er live (dev deler produktionens database): udvidede kolonner og tælle-RPC'en falder
+// Siden virker også, før migrationen 20261016090020 er live (dev deler produktionens database): udvidede kolonner og tælle-RPC'en falder
 // tilbage til de gamle.
 import { useState, useRef, useCallback } from "react";
 import { SUPABASE_URL } from "../constants.jsx";

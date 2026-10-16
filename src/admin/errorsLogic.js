@@ -1,6 +1,6 @@
 // @ts-check
 // Logik til fejlsiden (public.client_errors): etiketter, forespørgsel, sanering til "Kopiér som prompt", platform og historik.
-// Hver række er en fejlgruppe; occurrences er antal faktiske forekomster. Se supabase/migrations/20261015170000_fejladministration.sql.
+// Hver række er en fejlgruppe; occurrences er antal faktiske forekomster. Se supabase/migrations/20261016090020_fejladministration.sql.
 import { copenhagenDateKey, copenhagenDayStart, fmtAuditDateTime } from "./auditLogic.js";
 
 export const STATUS_LABELS = { open: "Åben", resolved: "Løst", ignored: "Ignoreret" };
