@@ -296,10 +296,7 @@ export default {
     ],
     [
       "p",
-      "**GitHub** (USA)\nOpbevarer vores sikkerhedskopier af databasen i et privat arkiv, som kun EatSafe har adgang til. Kopierne krypteres, før de gemmes. Det kodeord, der bruges til krypteringen, ligger som en beskyttet hemmelighed i GitHubs egen opsætning, så GitHub teknisk set kan få adgang til indholdet. Overførslen er omfattet af EU-U.S. Data Privacy Framework."
-    ],
-    [
-      "p",
+      "**GitHub** (USA)\nVi opbevarer krypterede sikkerhedskopier af vores database i et privat arkiv hos GitHub, som ikke er offentligt tilgængeligt. Sikkerhedskopierne krypteres, før de gemmes. Krypteringsnøglen opbevares som en beskyttet hemmelighed i GitHubs system. Da GitHub teknisk kan få adgang til krypteringsnøglen, kan vi ikke garantere, at GitHub er teknisk afskåret fra at læse indholdet. Overførslen af personoplysninger til GitHub i USA sker på grundlag af EU-U.S. Data Privacy Framework.",
       "**Anthropic**\nAnvendes til automatisk analyse af produktbilleder og ingredienstekst."
     ],
     [
