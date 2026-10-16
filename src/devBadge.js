@@ -11,7 +11,7 @@ export function installDevBadge(win = window) {
   el.textContent = "TEST";
   el.setAttribute("aria-hidden", "true");
   el.style.cssText =
-    "position:fixed;top:env(safe-area-inset-top,0px);left:50%;transform:translateX(-50%);z-index:2147483647;pointer-events:none;" +
+    "position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:2147483647;pointer-events:none;" +
     "padding:1px 10px;border-radius:0 0 8px 8px;font:700 10px/14px system-ui,sans-serif;letter-spacing:.08em;" +
     "background:var(--blue,#3A6EA5);color:#fff";
   doc.body.appendChild(el);
