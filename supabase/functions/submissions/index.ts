@@ -300,6 +300,9 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { status, review_note } = body;
       reviewing = { status };
+      const begrundelse = typeof review_note === "string" && review_note.trim()
+        ? (review_note.trim().length > 500 ? review_note.trim().slice(0, 500) + "…" : review_note.trim())
+        : "";
       // Revisionsspor: den der godkender er altid kalderen, aldrig en værdi fra klienten.
       const reviewed_by = caller.id;
 
@@ -353,7 +356,13 @@ Deno.serve(async (req) => {
           action: status === "approved" ? "indsendelse_godkendt" : "indsendelse_afvist",
           target_table: "submissions",
           target_id: identifier,
-          details: { ean: submission.ean, type: submission.type, ...(productId ? { product_id: productId } : {}) },
+          details: {
+            ean: submission.ean, type: submission.type,
+            ...(productId ? { product_id: productId } : {}),
+            // Begrundelsen ved afvisning (vises i admins aktivitetslog). Afkortes til 500 tegn som loggens andre værdier;
+            // delete-user fjerner den igen, når indsenderen sletter sin konto.
+            ...(status === "rejected" && begrundelse ? { begrundelse } : {}),
+          },
         });
         if (auditError) console.error(`submissions: adminlog fejlede: ${auditError.message}`);
         return true;
