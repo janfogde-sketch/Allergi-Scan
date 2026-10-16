@@ -308,7 +308,7 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
       await waitForMinLoading();
       if (isStale()) return;
       setLoading(false); setScreen(SCREENS.NOTFOUND); setNotFoundStep(1);
-      setOcrText(""); setProposedName(""); ctx.setOcrUnreadable?.(false);
+      setOcrText(""); setProposedName(""); ctx.setOcrUnreadable?.(false); ctx.setCaptureIssues?.({});
       setProposedFlags(Object.fromEntries(PRODUCT_ALLERGENS.map(a => [a.id, false])));
       setProductImagePreview(null); setProductImageBase64(null);
       setOcrImageBase64(null); setNutritionImageBase64(null);
@@ -406,6 +406,9 @@ export function useProduct({ accessToken, userId, activeProfiles,
   const [proposedFlags, setProposedFlags]     = useState(null);
   // Billedet af ingredienslisten kunne ikke læses (tomt svar eller en forklaring fra AI'en): vis gode råd til et nyt billede.
   const [ocrUnreadable, setOcrUnreadable]     = useState(false);
+  // Hvad billedlæsningen ikke fik med (Jan, 16. okt. 2026): nameUnread = produktnavnet kunne ikke læses fra forsiden;
+  // allergenCheckFailed = ingredienserne blev læst, men allergentjekket fejlede. Vises på trinene, ved "Gennemse og send" og på Tak-siden.
+  const [captureIssues, setCaptureIssues]     = useState({});
 
   // Næringsindhold OCR
   const [nutritionOcrLoading, setNutritionOcrLoading] = useState(false);
@@ -440,9 +443,12 @@ export function useProduct({ accessToken, userId, activeProfiles,
       const base64 = await compressImageToBase64(file);
       setProductImageBase64(base64);
       setProductImagePreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
+      // Kunne navnet ikke læses, får brugeren besked på næste trin i stedet for et stille, tomt felt (16. okt. 2026).
+      let foundName = "";
       try {
         const ocrData = await apiCall(`${SUPABASE_URL}/functions/v1/ocr`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ image_base64: base64, mode:"product_name" }) });
-        if (ocrData.success && ocrData.text) {
+        // En forklaring fra AI'en ("Jeg kan ikke se ...") er aldrig et produktnavn.
+        if (ocrData.success && ocrData.text && !isUnreadableOcrText(ocrData.text)) {
           const text = ocrData.text;
           // Parse BRAND: og NAME: fra OCR-svar
           const brandMatch = text.match(/BRAND:\s*(.+)/i);
@@ -450,15 +456,15 @@ export function useProduct({ accessToken, userId, activeProfiles,
           if (nameMatch && nameMatch[1] && nameMatch[1].toLowerCase() !== "ukendt") {
             const brand = brandMatch?.[1]?.trim();
             const name = nameMatch[1].trim();
-            const fullName = (brand && brand.toLowerCase() !== "ukendt") ? `${brand} ${name}` : name;
-            setProposedName(fullName);
-          } else {
+            foundName = (brand && brand.toLowerCase() !== "ukendt") ? `${brand} ${name}` : name;
+          } else if (!nameMatch) {
             // Fallback til gammel metode
-            const name = extractProductName(text);
-            if (name) setProposedName(name);
+            foundName = extractProductName(text);
           }
         }
-      } catch {}
+      } catch { /* navnet kunne ikke læses; brugeren får besked */ }
+      if (foundName) setProposedName(foundName);
+      setCaptureIssues(prev => ({ ...prev, nameUnread: !foundName }));
     } catch { setScanError_("Billedet kunne ikke læses. Prøv igen."); }
     setOcrLoading(false);
     setNotFoundStep(2);
@@ -484,6 +490,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
         setOcrText("");
         setProposedFlags({});
         setOcrUnreadable(true);
+        setCaptureIssues(prev => ({ ...prev, allergenCheckFailed: false }));
       } else if (ocrData.success && ocrData.text) {
         setOcrUnreadable(false);
         setOcrText(ocrData.text);
@@ -497,9 +504,18 @@ export function useProduct({ accessToken, userId, activeProfiles,
         // sammenlignet med at spare over den samme, billigere heuristik som
         // bruges til den høj-volumen natlige reparse-cron (se
         // shouldUseClaudeFallback i allergens/index.ts).
-        const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text, force_ai: true }) });
-        traceLog(tid, "ocr:allergen-response", { success: allergenData.success, method: allergenData.method, flags: allergenData.allergen_flags });
-        if (allergenData.success) setProposedFlags(allergenData.allergen_flags);
+        // Fejler allergentjekket, går appen ikke stille videre: alt ville se ud som "nej". Brugeren får besked (16. okt. 2026).
+        let allergenOk = false;
+        try {
+          const allergenData = await apiCall(`${SUPABASE_URL}/functions/v1/allergens`, { method:"POST", headers: makeHeaders(accessToken), body: JSON.stringify({ text: ocrData.text, force_ai: true }) });
+          traceLog(tid, "ocr:allergen-response", { success: allergenData.success, method: allergenData.method, flags: allergenData.allergen_flags });
+          allergenOk = !!(allergenData.success && allergenData.allergen_flags);
+          if (allergenOk) setProposedFlags(allergenData.allergen_flags);
+        } catch (err) {
+          traceLog(tid, "ocr:allergen-error", { error: err?.message || String(err) });
+        }
+        if (!allergenOk) setProposedFlags({});
+        setCaptureIssues(prev => ({ ...prev, allergenCheckFailed: !allergenOk }));
         setNotFoundStep(3); // → Næringsindhold
       } else {
         traceLog(tid, "ocr:empty", { error: "OCR returnerede tom tekst eller fejl", raw: JSON.stringify(ocrData).substring(0, 200) });
@@ -633,6 +649,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     submitting,
     ocrText, setOcrText,
     ocrUnreadable, setOcrUnreadable,
+    captureIssues, setCaptureIssues,
     ocrLoading, setOcrLoading,
     ocrImageBase64, setOcrImageBase64,
     setNutritionImageBase64,

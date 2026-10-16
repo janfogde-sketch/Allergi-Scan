@@ -9,7 +9,7 @@ import { PhotoVerdictCard } from "./NotFoundParts.jsx";
 export default function SubmittedScreen({
   notFoundEan,
   proposedName,
-  proposedFlags, ocrText, scanProfiles,
+  proposedFlags, ocrText, scanProfiles, captureIssues = {},
   setNotFoundStep,
   setProposedName,
   setProposedFlags,
@@ -29,6 +29,12 @@ export default function SubmittedScreen({
   };
 
   const name = normalizeProductName(proposedName);
+  // Hvad der manglede ved indsendelsen, så brugeren ved, hvorfor produktet ikke kan vurderes endnu (Jan, 16. okt. 2026).
+  const missingLine = !String(ocrText || "").trim()
+    ? "Vi mangler ingredienslisten, så vi kan ikke vurdere produktet, før den er tilføjet."
+    : captureIssues.allergenCheckFailed
+      ? "Vi kunne ikke tjekke allergenerne automatisk. Vi tjekker dem, før produktet bliver godkendt."
+      : "";
 
   return (
     <div className="screen fade-in" style={{ paddingBottom: 120 }}>
@@ -55,6 +61,13 @@ export default function SubmittedScreen({
         <div style={{ fontSize: 13, color: "var(--ink2)", lineHeight: 1.55, marginBottom: 16 }}>
           Vi gennemgår produktet snarest. Du får besked, når det er godkendt og tilgængeligt i EatSafe.
         </div>
+
+        {missingLine && (
+          <div role="status" style={{ display: "flex", alignItems: "flex-start", gap: 8, textAlign: "left", background: "var(--amber-lt)", border: "1px solid var(--amber-md)", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "var(--ink)", lineHeight: 1.5 }}>
+            <span style={{ flexShrink: 0, marginTop: 2, display: "flex" }}><Icon name="warning" size={14} color="var(--amber)" /></span>
+            <span>{missingLine}</span>
+          </div>
+        )}
 
         {/* Den foreløbige vurdering fra billedet gentages her, så brugeren ikke går fra produktet uden svaret (16. okt. 2026) */}
         <div style={{ textAlign: "left" }}>

@@ -475,7 +475,7 @@ export default function EatSafe() {
     scanError, setScanError,
     notFoundStep, setNotFoundStep,
     submitting,
-    ocrText, setOcrText, ocrUnreadable, setOcrUnreadable,
+    ocrText, setOcrText, ocrUnreadable, setOcrUnreadable, captureIssues, setCaptureIssues,
     ocrLoading, setOcrLoading,
     ocrImageBase64, setOcrImageBase64,
     setNutritionImageBase64,
@@ -652,13 +652,13 @@ export default function EatSafe() {
     setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
     setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
     setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
-    vibrateOnWarning, soundOnWarning, setOcrUnreadable,
+    vibrateOnWarning, soundOnWarning, setOcrUnreadable, setCaptureIssues,
   }, opts), [accessToken, activeIds, activeLevels, activeCustom, activeENumbers, scanFamily, activeProfiles, scanProfiles,
        productCacheRef, scanTokenRef, scanAbortRef, saveHistoryEntry, loadAlternatives, clearAlternatives,
        setScanResult, setScreen, setLoading, setScanError, setShowIng, setHistory,
        setNotFoundEan, setNotFoundStep, setOcrText, setProposedName, setProposedFlags,
        setProductImagePreview, setProductImageBase64, setOcrImageBase64, setNutritionImageBase64,
-       vibrateOnWarning, soundOnWarning, setOcrUnreadable]);
+       vibrateOnWarning, soundOnWarning, setOcrUnreadable, setCaptureIssues]);
   lookupProductRef.current = lookupProduct;
 
   // Primær handling fra en besked. Produktet slås op på ny (aktuel status),
@@ -958,7 +958,7 @@ export default function EatSafe() {
             proposedNutrition={proposedNutrition} setProposedNutrition={setProposedNutrition}
             proposedNotes={proposedNotes} setProposedNotes={setProposedNotes}
             ocrLoading={ocrLoading} ocrText={ocrText} setOcrText={setOcrText}
-            ocrUnreadable={ocrUnreadable} scanProfiles={scanProfiles}
+            ocrUnreadable={ocrUnreadable} captureIssues={captureIssues} scanProfiles={scanProfiles}
             nutritionOcrLoading={nutritionOcrLoading} handleNutritionCapture={handleNutritionCapture}
             productImagePreview={productImagePreview}
             submitting={submitting} submitProduct={submitProduct}
