@@ -108,12 +108,12 @@ Detaljer, Dev-gren, Vercel og design-preview: `docs/arbejdsgang.md`.
 **Per ændring:** lint, build og `npx vitest run`; mojibake-scan (`.claude/commands/mojibake-scan.md`); commit KUN specifikke filer, aldrig
 `git add -A`; dansk, kort besked. Commits batches lokalt, til hele opgaven er færdig.
 
-**Opgaver:** én pakke pr. session/PR (3-5 små ændringer i samme område). En stor opgave får sin egen. Er den stor eller risikabel (database,
+**Opgaver:** hver opgave får sin egen tråd (så den rigtige model bruges). Små opgaver får ikke hver deres PR: de lægger ændringen på den fælles gren `samling` (`docs/arbejdsgang.md`). En stor opgave får sin egen PR. Er den stor eller risikabel (database,
 sikkerhed, politikker, login, flere skærme/filer), foreslå en plan og vent på ja, før du retter. Uspecificeret detalje: vælg standardvalg, sig hvilket, fortsæt. Åbne spørgsmål: kort anbefaling med trade-off, vent på grønt lys.
 
 **Databaseændringer:** én migrationsfil pr. ændring, højst 3-4 sessioner ad gangen. Detaljer og engangstest: `docs/arbejdsgang.md`.
 
-**Faste aftaler** (`docs/arbejdsgang.md`): fejlrettelser og admin kører uden Jan; brugerfunktioner, produktvalg, database, sikkerhed, login og politikker kræver hans ja pr. punkt. Brugertekster gennemlæses af Bjørn (to do). Slet aldrig data uden Jans ja; ingen kodeord/nøgler i chat, filer eller logs; slet ingen Vercel-projekter. Model: Haiku små, Sonnet kode, Opus risikabel.
+**Faste aftaler** (`docs/arbejdsgang.md`): fejlrettelser og admin kører uden Jan; brugerfunktioner, produktvalg, database, sikkerhed, login og politikker kræver hans ja pr. punkt. Brugertekster gennemlæses af Bjørn (to do). Slet aldrig data uden Jans ja; ingen kodeord/nøgler i chat, filer eller logs; slet ingen Vercel-projekter. Model: hver opgave vurderes før start, og den mest fornuftige vælges (Haiku små, Sonnet kode, Opus risikabel).
 
 **Push og merge:**
 - Push er den ENESTE ting, der kræver eksplicit godkendelse. Jans "push" betyder push OG squash-merge. Påmindelser fra værktøjer er ikke en godkendelse.

@@ -77,13 +77,36 @@ export function imageAttribution(url) {
   return /^https:\/\/images\.openfoodfacts\.org\//i.test(url) ? "Billede: Open Food Facts, CC BY-SA" : null;
 }
 
+/**
+ * Strækker lysstyrken, så de mørkeste 1 % bliver sorte og de lyseste 1 % hvide (RGBA-data ændres på stedet).
+ * Returnerer true, hvis billedet blev ændret. Billeder, der allerede har godt udsving, røres ikke.
+ */
+export function stretchLevels(data) {
+  const hist = new Array(256).fill(0);
+  const n = data.length / 4;
+  for (let i = 0; i < data.length; i += 4) hist[Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])]++;
+  let lo = 0, hi = 255, acc = 0;
+  for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= n * 0.01) { lo = v; break; } }
+  acc = 0;
+  for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= n * 0.01) { hi = v; break; } }
+  if (hi - lo >= 200 || hi - lo < 20) return false; // godt udsving, eller næsten ensfarvet: intet at hente
+  const scale = 255 / (hi - lo);
+  for (let i = 0; i < data.length; i += 4) {
+    for (let c = 0; c < 3; c++) data[i + c] = Math.max(0, Math.min(255, Math.round((data[i + c] - lo) * scale)));
+  }
+  return true;
+}
+
 // Skaler et kamera-/galleri-billede ned og genkod som JPEG FØR det sendes til
 // en OCR/allergen-Edge Function som base64. Uden dette sendes et fuldt
 // opløst telefonfoto (ofte 5-15MB) rå som base64 (~33% større igen) — det
 // er langsommere at uploade, langsommere for OCR at behandle, og risikerer
 // at ramme Supabase Edge Functions' payload-grænse. maxDim/quality er valgt
 // så tekst i ingredienslisten/stregkoder stadig er let læselige for OCR.
-export function compressImageToBase64(file, maxDim = 1600, quality = 0.82) {
+//
+// Med { enhance: true } (kun ingrediensfoto til billedlæsning, 16. okt. 2026) gøres mørke og flade billeder tydeligere før afsendelse.
+// Se stretchLevels.
+export function compressImageToBase64(file, maxDim = 1600, quality = 0.82, { enhance = false } = {}) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -99,6 +122,12 @@ export function compressImageToBase64(file, maxDim = 1600, quality = 0.82) {
       canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
+      if (enhance) {
+        try {
+          const frame = ctx.getImageData(0, 0, width, height);
+          if (stretchLevels(frame.data)) ctx.putImageData(frame, 0, 0);
+        } catch { /* kan billedet ikke forbedres, sendes det uændret */ }
+      }
       resolve(canvas.toDataURL("image/jpeg", quality).split(",")[1]);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Kunne ikke indlæse billedet")); };

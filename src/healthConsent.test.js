@@ -66,7 +66,7 @@ describe("isConsentStale (samtykke forældet)", () => {
   // (så alle bliver bedt om at bekræfte på ny ved næste appåbning), og først derefter opdateres felterne her. Er politikændringen
   // kun en rettelse uden betydning for brugeren, opdateres kun datoen her (versionen røres ikke).
   it("samtykketeksten, politikken og versionen hører sammen", () => {
-    const snapshot = { version: "2026-10-02", text: HEALTH_CONSENT_TEXT, policyUpdated: "15. oktober 2026" };
+    const snapshot = { version: "2026-10-02", text: HEALTH_CONSENT_TEXT, policyUpdated: "16. oktober 2026" };
     expect(privacy.updated).toBe(snapshot.policyUpdated);
     expect(HEALTH_CONSENT_VERSION).toBe(snapshot.version);
     expect(snapshot.text).toBe("Jeg giver udtrykkeligt samtykke til, at EatSafe behandler mine allergi-, intolerance- og andre helbredsoplysninger for at give mig personlige produktkontroller og advarsler.");

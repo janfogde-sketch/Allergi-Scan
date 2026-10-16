@@ -1,9 +1,12 @@
 // @ts-check
 // Hvilke sociale logins er slået til i Supabase (8. okt. 2026). "Fortsæt med Apple" vises først, når Apple-udbyderen
 // er aktiveret i Supabase (Authentication → Providers), så knappen kan kobles på uden en ny app-version.
-// Google og Facebook er altid slået til og vises uanset svaret.
+// Google er altid slået til og vises uanset svaret.
+// Facebook er skjult (16. okt. 2026), til Facebook-login er sat op (kræver CVR-nummer). Sæt FACEBOOK_LOGIN_ENABLED til true for at vise knappen igen.
 import { useEffect, useState } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
+
+export const FACEBOOK_LOGIN_ENABLED = false;
 
 export function appleEnabledFromSettings(settings) {
   return settings?.external?.apple === true;

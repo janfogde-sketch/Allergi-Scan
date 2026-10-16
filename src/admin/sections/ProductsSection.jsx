@@ -1,166 +1,158 @@
 // @ts-nocheck
+// Produkter: kompakte kort (navn som overskrift, derefter brand/EAN, kategori, kilde, verificering og dato), søgning på navn og EAN, filtre for kategori, kilde og
+// verificering og tydelig sortering. Alt kører på serveren (hele tabellen). CSV ligger i en sekundær menu. Redigering sker i ProductEditor.
+import React, { useState, useEffect, useRef } from "react";
 import { useShowSpinner } from "../RefreshContext.js";
-import React from "react";
-import { PRODUCT_ALLERGENS } from "../../constants.jsx";
+import { Icon } from "../../SharedComponents.jsx";
 import { downloadCsv } from "../csvExport.js";
+import ProductEditor from "./ProductEditor.jsx";
+import {
+  PRODUCT_SORTS, PRODUCT_CATEGORIES, SOURCE_FILTERS, STATUS_FILTERS, VERIFIED_LABELS, VERIFIED_TONE, SOURCE_LABELS, labelOr,
+} from "../productsLogic.js";
 
-const VERIFIED_STATUSES = ["unverified", "partial", "verified"];
 const CSV_COLUMNS = [
   { key: "name", label: "Navn" },
   { key: "brand", label: "Brand" },
   { key: "ean", label: "EAN" },
   { key: "category", label: "Kategori" },
-  { key: "source", label: "Kilde" },
-  { key: "verified_status", label: "Status" },
+  { key: "sourceLabel", label: "Kilde" },
+  { key: "statusLabel", label: "Verificering" },
   { key: "updated_at", label: "Opdateret" },
   { key: "id", label: "Produkt-id" },
 ];
+const date = (v) => (v ? new Date(v).toLocaleDateString("da-DK") : "–");
+const PILL = { green: "admin-pill-green", amber: "admin-pill-amber", neutral: "admin-pill-neutral" };
 
 export default function ProductsSection({
   products, productsLoading, productSearch, setProductSearch, loadProducts,
+  productFilters = { category: "", source: "", status: "", sort: "updated_desc" }, setProductFilters = () => {}, productTotal = null, productHasMore = false, productsError = false, productsLoadingMore = false,
   openProduct, setOpenProduct, editingProduct, setEditingProduct,
-  productActionLoading, openProductForEdit, saveProductEdit, deleteProduct,
+  productActionLoading, openProductForEdit, saveProductEdit, deleteProduct, loadProductHistory,
 }) {
   const showSpinner = useShowSpinner(productsLoading, products.length > 0);
+  const [menu, setMenu] = useState(false);
+  const first = useRef(true);
   const close = () => { setOpenProduct(null); setEditingProduct(null); };
+  const filtered = !!(productFilters.category || productFilters.source || productFilters.status);
+  const q = productSearch.trim();
 
-  const handleDelete = () => {
-    if (!openProduct) return;
-    if (!window.confirm(`Slet "${openProduct.name || openProduct.ean}" permanent? Dette kan ikke fortrydes.`)) return;
-    deleteProduct(openProduct.id);
+  // Søgningen kører, mens der skrives (efter en kort pause); første visning hentes af siden selv
+  useEffect(() => {
+    if (first.current) { first.current = false; return undefined; }
+    const t = setTimeout(() => loadProducts(productSearch), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: loadProducts genskabes hver gang
+  }, [productSearch]);
+
+  const exportCsv = () => {
+    setMenu(false);
+    const rows = products.map((p) => ({ ...p, sourceLabel: labelOr(SOURCE_LABELS, p.source, ""), statusLabel: labelOr(VERIFIED_LABELS, p.verified_status || "unverified") }));
+    downloadCsv(`eatsafe-produkter-${new Date().toISOString().slice(0, 10)}.csv`, rows, CSV_COLUMNS);
   };
+  const reset = () => { setProductSearch(""); setProductFilters({ category: "", source: "", status: "" }); };
+
+  const countText = productTotal === null ? "" : `${productTotal.toLocaleString("da-DK")} ${productTotal === 1 ? "produkt" : "produkter"}`;
+
+  let body;
+  if (productsError && products.length === 0) {
+    body = (
+      <div className="admin-table-empty audit-state" role="alert">
+        <div className="audit-state-icon" aria-hidden="true"><Icon name="warning" size={22} color="var(--muted)" /></div>
+        <div className="audit-state-title">Kunne ikke hente produkter</div>
+        <div>Det betyder ikke, at der ingen produkter er. Tjek forbindelsen, og prøv igen.</div>
+        <div style={{ marginTop: 12 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => loadProducts(productSearch)}>Prøv igen</button></div>
+      </div>
+    );
+  } else if (showSpinner && products.length === 0) {
+    body = <div className="admin-loading-row"><div className="admin-spinner" /> Henter produkter…</div>;
+  } else if (products.length === 0) {
+    body = (
+      <div className="admin-table-empty audit-state">
+        <div className="audit-state-icon" aria-hidden="true"><Icon name="search" size={22} color="var(--muted)" /></div>
+        <div className="audit-state-title">{q || filtered ? "Ingen produkter matcher" : "Ingen produkter"}</div>
+        <div>{q || filtered ? "Prøv at ændre søgningen eller filtrene." : "Der er ingen produkter at vise."}</div>
+        {(q || filtered) && <div style={{ marginTop: 12 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={reset}>Nulstil</button></div>}
+      </div>
+    );
+  } else {
+    body = (
+      <div className="admin-card-list">
+        {products.map((p) => {
+          const st = p.verified_status || "unverified";
+          return (
+            <button key={p.id} type="button" className="admin-item-card usr-row prd-row" onClick={() => openProductForEdit(p)}>
+              <div className="usr-row-name prd-name">{p.name || <span style={{ color: "var(--muted)" }}>Uden navn</span>}</div>
+              <div className="usr-row-mail">{p.brand ? `${p.brand} · ` : ""}<span className="np-mono">{p.ean}</span></div>
+              <div className="usr-row-meta">
+                <span className={`admin-pill ${PILL[VERIFIED_TONE[st] || "neutral"]}`}>{labelOr(VERIFIED_LABELS, st)}</span>{" "}
+                {p.category || "Uden kategori"} · {labelOr(SOURCE_LABELS, p.source, "Ukendt kilde")} · {date(p.updated_at)}
+              </div>
+              <span className="audit-card-chev" aria-hidden="true"><Icon name="chevronRight" size={16} color="var(--muted2)" /></span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <>
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center" }}>
-        <form onSubmit={e => { e.preventDefault(); loadProducts(); }} style={{ display: "flex", gap: 8, flex: 1 }}>
-          <input className="admin-search" placeholder="Søg navn, brand eller EAN…"
-            value={productSearch} onChange={e => setProductSearch(e.target.value)} style={{ flex: 1 }} />
-          <button type="submit" className="admin-btn admin-btn-ghost admin-btn-sm">Søg</button>
-        </form>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>
-            {productSearch.trim() ? `${products.length} resultater` : "Seneste opdaterede"}
-          </span>
-          <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={products.length === 0}
-            onClick={() => downloadCsv(`eatsafe-produkter-${new Date().toISOString().slice(0, 10)}.csv`, products, CSV_COLUMNS)}>
-            Eksportér CSV
-          </button>
+      <div className="prd-search">
+        <label htmlFor="prd-q" className="np-vars-label">Søg på produktnavn, brand eller EAN</label>
+        <div className="prd-search-row">
+          <input id="prd-q" type="search" enterKeyHint="search" autoComplete="off" className="admin-search" placeholder="Fx skyr eller 5701234567899" value={productSearch}
+            onChange={(e) => setProductSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur(); loadProducts(productSearch); } }} />
+          {productSearch && <button type="button" className="admin-iconbtn" aria-label="Ryd søgning" onClick={() => setProductSearch("")}><Icon name="x" size={18} color="var(--ink2)" /></button>}
         </div>
       </div>
 
-      <div className="admin-table-wrap">
-        {showSpinner ? (
-          <div className="admin-loading-row"><div className="admin-spinner" /> Henter produkter…</div>
-        ) : products.length === 0 ? (
-          <div className="admin-table-empty">{productSearch.trim() ? "Ingen produkter matcher" : "Søg for at finde et produkt"}</div>
-        ) : (
-          <table className="admin-table">
-            <thead><tr><th>Produkt</th><th>EAN</th><th>Kategori</th><th>Kilde</th><th>Status</th><th>Opdateret</th><th></th></tr></thead>
-            <tbody>
-              {products.map(p => (
-                <tr key={p.id} style={{ cursor: "pointer" }} onClick={() => openProductForEdit(p)}>
-                  <td>{p.name || <span style={{ color: "var(--muted)" }}>Ukendt</span>}{p.brand ? ` — ${p.brand}` : ""}</td>
-                  <td data-label="EAN" style={{ fontFamily: "var(--mono)" }}>{p.ean}</td>
-                  <td data-label="Kategori">{p.category || <span style={{ color: "var(--muted)" }}>–</span>}</td>
-                  <td data-label="Kilde">{p.source || "–"}</td>
-                  <td data-label="Status">
-                    <span className={`admin-pill ${p.verified_status === "verified" ? "admin-pill-green" : p.verified_status === "partial" ? "admin-pill-amber" : "admin-pill-neutral"}`}>
-                      {p.verified_status || "unverified"}
-                    </span>
-                  </td>
-                  <td data-label="Opdateret">{p.updated_at ? new Date(p.updated_at).toLocaleDateString("da-DK") : "–"}</td>
-                  <td><button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={e => { e.stopPropagation(); openProductForEdit(p); }}>Redigér</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="prd-filters">
+        <div className="admin-field"><label htmlFor="prd-cat">Kategori</label>
+          <select id="prd-cat" className="admin-select" value={productFilters.category} onChange={(e) => setProductFilters({ category: e.target.value })}>
+            <option value="">Alle</option>{PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select></div>
+        <div className="admin-field"><label htmlFor="prd-src">Kilde</label>
+          <select id="prd-src" className="admin-select" value={productFilters.source} onChange={(e) => setProductFilters({ source: e.target.value })}>
+            <option value="">Alle</option>{SOURCE_FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select></div>
+        <div className="admin-field"><label htmlFor="prd-st">Verificering</label>
+          <select id="prd-st" className="admin-select" value={productFilters.status} onChange={(e) => setProductFilters({ status: e.target.value })}>
+            <option value="">Alle</option>{STATUS_FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select></div>
+        <div className="admin-field"><label htmlFor="prd-sort">Sortér</label>
+          <select id="prd-sort" className="admin-select" value={productFilters.sort} onChange={(e) => setProductFilters({ sort: e.target.value })}>
+            {PRODUCT_SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select></div>
       </div>
 
-      {openProduct && !editingProduct && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-loading-row"><div className="admin-spinner" /> Henter produkt…</div>
-          </div>
+      <div className="audit-results">
+        <span aria-live="polite">{productsError && products.length > 0 ? "Kunne ikke opdatere – viser seneste hentede" : countText || (q || filtered ? "" : "Seneste opdaterede")}</span>
+        <span className="prd-actions">
+          {(q || filtered) && <button type="button" className="todo-link-btn" onClick={reset}>Nulstil</button>}
+          <span className="prd-menu">
+            <button type="button" className="admin-iconbtn" aria-label="Flere handlinger" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}><Icon name="more" size={18} color="var(--ink2)" /></button>
+            {menu && (
+              <div className="prd-menu-list" role="menu">
+                <button type="button" role="menuitem" className="prd-menu-item" disabled={products.length === 0} onClick={exportCsv}><Icon name="download" size={14} color="var(--ink2)" /> Eksportér viste som CSV ({products.length})</button>
+              </div>
+            )}
+          </span>
+        </span>
+      </div>
+
+      {body}
+
+      {productHasMore && products.length > 0 && (
+        <div style={{ textAlign: "center", margin: "14px 0" }}>
+          <button type="button" className="admin-btn admin-btn-ghost admin-touch" disabled={productsLoadingMore} onClick={() => loadProducts(productSearch, undefined, true)}>
+            {productsLoadingMore ? "Henter…" : `Vis flere${productTotal !== null ? ` (${products.length} af ${productTotal.toLocaleString("da-DK")})` : ""}`}
+          </button>
         </div>
       )}
 
-      {openProduct && editingProduct && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Redigér produkt</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--mono)" }}>EAN {openProduct.ean} · ID: {openProduct.id}</div>
-              </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Produktnavn</label>
-                <input value={editingProduct.name} onChange={e => setEditingProduct(s => ({ ...s, name: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Brand</label>
-                <input value={editingProduct.brand} onChange={e => setEditingProduct(s => ({ ...s, brand: e.target.value }))} />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Kategori</label>
-                <input value={editingProduct.category} onChange={e => setEditingProduct(s => ({ ...s, category: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Verificeringsstatus</label>
-                <select value={editingProduct.verified_status} onChange={e => setEditingProduct(s => ({ ...s, verified_status: e.target.value }))}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)", fontSize: 13 }}>
-                  {VERIFIED_STATUSES.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Ingredienstekst</label>
-              <textarea className="admin-textarea" rows={3} value={editingProduct.ingredients_text}
-                onChange={e => setEditingProduct(s => ({ ...s, ingredients_text: e.target.value }))}
-                placeholder="Ingrediensliste…" />
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Allergener (klik for at skifte: Nej → Ja → Spor)</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 }}>
-                {PRODUCT_ALLERGENS.map(a => {
-                  const val = editingProduct.allergen_flags[a.id] || "no";
-                  const next = val === "no" ? "yes" : val === "yes" ? "traces" : "no";
-                  const isYes = val === "yes", isTrace = val === "traces";
-                  return (
-                    <button key={a.id}
-                      onClick={() => setEditingProduct(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 6, padding: "7px 10px", borderRadius: 8, cursor: "pointer",
-                        border: `1px solid ${isYes ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border)"}`,
-                        background: isYes ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--surface3)",
-                        fontFamily: "var(--f)", fontSize: 12,
-                      }}>
-                      <span style={{ flex: 1, textAlign: "left", fontWeight: 600, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>{a.label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 800, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted)" }}>
-                        {isYes ? "JA" : isTrace ? "SPOR" : "NEJ"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <button className="admin-btn admin-btn-primary" disabled={productActionLoading} onClick={saveProductEdit}>Gem ændringer</button>
-              <button className="admin-btn admin-btn-danger" disabled={productActionLoading} onClick={handleDelete} style={{ marginLeft: "auto" }}>Slet produkt</button>
-            </div>
-          </div>
-        </div>
+      {openProduct && (
+        <ProductEditor product={openProduct} draft={editingProduct} setDraft={setEditingProduct} busy={productActionLoading}
+          onSave={saveProductEdit} onDelete={() => deleteProduct(openProduct.id)} onClose={close} onRetry={() => openProductForEdit(openProduct)} loadHistory={loadProductHistory} />
       )}
     </>
   );
