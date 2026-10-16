@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { Icon } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
+import CloseX from "../CloseX.jsx";
 import {
   JOBS, MANUAL_REANALYZE_LIMIT, IMPORT_LIMIT, RUN_STATUS_LABEL, RUN_STATUS_PILL, TRIGGER_LABEL,
   jobStatus, countTiles, nextRun, fmtLocal, fmtLocalFull, durationSec, errorText, runSummary,
@@ -34,7 +35,7 @@ function RunSheet({ run, onClose }) {
             <div className="audit-sheet-title">{JOBS[run.job]?.label || run.job}</div>
             <div className="audit-sheet-time">{fmtLocalFull(run.started_at)}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
         <div className="todo-panel-body">
           <dl className="audit-detail">

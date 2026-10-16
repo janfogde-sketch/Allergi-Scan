@@ -56,21 +56,27 @@ body{
 /* ── Layout ── */
 .admin-shell{display:flex;min-height:100vh;}
 .admin-sidebar{width:var(--sidebar-w);flex-shrink:0;position:sticky;top:0;height:100vh;height:100dvh;box-sizing:border-box;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-.admin-sidebar-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(16px + env(safe-area-inset-top)) 12px 12px 22px;}
-.admin-sidebar-logo{display:flex;align-items:center;gap:7px;font-size:17px;font-weight:900;color:var(--ink);}
+.admin-sidebar-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(16px + env(safe-area-inset-top)) 12px 16px 22px;}
+.admin-sidebar-brand{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;}
+.admin-sidebar-section{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ink2);line-height:1.2;}
 .admin-nav-close{display:none;}
 .admin-nav{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;padding:0 12px 8px;}
-.admin-nav-group{display:flex;flex-direction:column;margin-bottom:2px;}
-.admin-nav-group-head{display:flex;align-items:center;gap:6px;min-height:34px;padding:4px 10px;border:none;background:none;font-family:var(--f);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;width:100%;text-align:left;border-radius:6px;}
+.admin-nav-group{display:flex;flex-direction:column;margin-bottom:6px;}
+.admin-nav-group-head{display:flex;align-items:center;gap:6px;min-height:36px;padding:4px 10px;border:none;background:none;font-family:var(--f);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);cursor:pointer;width:100%;text-align:left;border-radius:6px;}
 @media (hover:hover){.admin-nav-group-head:hover{background:var(--surface2);}}.admin-nav-group-head:active{background:var(--surface2);}
 .admin-nav-group-label{flex:1;min-width:0;overflow-wrap:anywhere;}
-.admin-nav-chev{display:inline-flex;flex:none;}
+.admin-nav-chev{display:inline-flex;flex:none;transition:transform .15s ease;}
 .admin-nav-chev.closed{transform:rotate(-90deg);}
-.admin-nav-items{display:flex;flex-direction:column;}
-.admin-nav-item{display:flex;align-items:center;gap:10px;min-height:36px;padding:4px 10px 4px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;border:none;background:none;font-family:var(--f);text-align:left;width:100%;}
+.admin-nav-items{display:flex;flex-direction:column;gap:1px;padding-bottom:4px;}
+.admin-nav-back{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink);text-decoration:none;}
+@media (hover:hover){.admin-nav-back:hover{background:var(--surface2);}}
+.admin-nav-back:active{background:var(--surface2);}
+.admin-nav-back:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
+.admin-modal-header .audit-sheet-close{margin:-8px -8px 0 0;}
+.admin-nav-item{display:flex;align-items:center;gap:10px;min-height:36px;padding:4px 10px 4px 14px;border-radius:8px;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;border:none;background:none;font-family:var(--f);text-align:left;width:100%;}
 @media (hover:hover){.admin-nav-item:hover{background:var(--surface2);}}
 .admin-nav-item:active{background:var(--surface2);}
-.admin-nav-item.active,.admin-nav-item.active:hover,.admin-nav-item.active:active{background:var(--green-lt);color:var(--green);font-weight:800;}
+.admin-nav-item.active,.admin-nav-item.active:hover,.admin-nav-item.active:active{background:var(--green-lt);color:var(--green);font-weight:600;}
 .admin-nav-label{flex:1;min-width:0;line-height:1.25;overflow-wrap:anywhere;}
 .admin-nav-item:focus-visible,.admin-nav-group-head:focus-visible,.admin-nav-close:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
 .admin-nav-item .badge,.admin-nav-group-head .badge{margin-left:auto;flex:none;box-sizing:border-box;min-width:20px;height:20px;padding:0 6px;border-radius:10px;font-size:11px;font-weight:800;line-height:20px;text-align:center;letter-spacing:0;text-transform:none;background:var(--surface2);color:var(--ink2);}

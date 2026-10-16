@@ -10,6 +10,7 @@ import { AllergenGlyph, Icon, showToast } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
 import { ROLE_LABELS, onboardingStatus, prefsOf, diffPrefs, profileChanged, validBirthYear, normalizeENumber, normalizeCustom } from "../usersLogic.js";
 import { fmtAuditDateTime } from "../auditLogic.js";
+import CloseX from "../CloseX.jsx";
 
 const labelOf = (id) => (ALLERGENS.find((a) => a.id === id) || {}).label || id;
 const copy = (value) => {
@@ -218,7 +219,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
             <div id="usr-title" className="audit-sheet-title">{(u && u.name) || row.name || "Uden navn"}</div>
             <div className="audit-sheet-time">{ROLE_LABELS[(u && u.role) || row.role || "user"]}{isMe ? " · Dig" : ""}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={requestClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={requestClose} />
         </div>
         <div className="usr-tabs admin-tabs" role="tablist">
           {[["overview", "Oversigt"], ["prefs", "Præferencer"], ["admin", "Administration"]].map(([k, label]) => (

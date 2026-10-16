@@ -7,6 +7,7 @@ import ReactDOM from "react-dom";
 import { Icon, showToast } from "../../SharedComponents.jsx";
 import { useShowSpinner } from "../RefreshContext.js";
 import Disclosure from "../Disclosure.jsx";
+import CloseX from "../CloseX.jsx";
 import {
   listNotifications, defaultPush, previewPush, overrideIsActive, validatePushOverride, pushVariablesFor, VARIABLE_LABELS,
   PUSH_TITLE_MAX, PUSH_BODY_MAX, resendTemplateUrl, insertVariableAt, sameText, summarizeTest, prepareMailPreview, MAIL_TEMPLATE_NAMES, isSentFromRepo,
@@ -47,7 +48,7 @@ function Confirm({ title, text, confirmLabel, cancelLabel = "Annuller", danger, 
       <div className="admin-modal audit-sheet-safe" role="alertdialog" aria-modal="true" aria-labelledby="np-confirm-title" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
         <div className="audit-sheet-head">
           <div id="np-confirm-title" className="audit-sheet-title">{title}</div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onCancel} disabled={busy} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onCancel} disabled={busy} />
         </div>
         <div style={{ fontSize: 13.5, lineHeight: 1.5, color: "var(--ink2)" }}>{text}</div>
         <div className="err-actions">
@@ -198,7 +199,7 @@ function MailTab({ k, selected, recipient, loadMailPreview }) {
           <div className="admin-modal todo-panel np-big" role="dialog" aria-modal="true" aria-label="Mail i større visning" onClick={(e) => e.stopPropagation()}>
             <div className="todo-panel-head">
               <div className="audit-sheet-title">{selected.name}</div>
-              <button type="button" className="admin-iconbtn audit-sheet-close" onClick={() => setBig(false)} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+              <CloseX onClick={() => setBig(false)} />
             </div>
             <div className="np-big-body">{frame("100%", "np-frame np-frame-big", bigKey)}</div>
           </div>

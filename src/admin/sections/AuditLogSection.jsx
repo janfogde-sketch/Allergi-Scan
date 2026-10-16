@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Icon, showToast } from "../../SharedComponents.jsx";
 import { useIsMobile } from "../useIsMobile.js";
 import Disclosure from "../Disclosure.jsx";
+import CloseX from "../CloseX.jsx";
 import {
   AUDIT_TYPES, AUDIT_CATEGORIES, AUDIT_PERIODS, auditActionLabel, auditActionType, auditChangeText, auditActorText, auditTargetText, auditTargetParts,
   auditCardParts, auditCategory, auditChanges, auditFilterCount, auditOutcome, auditReason, auditTechRows, fmtAuditDateTime,
@@ -59,7 +60,7 @@ function Detail({ row, names, onClose }) {
             <div id="audit-sheet-title" className="audit-sheet-title">{auditActionLabel(row.action)}</div>
             <div className="audit-sheet-time">{fmtAuditDateTime(row.created_at, true)}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
         <dl className="audit-detail">
           {item("Udført af", auditActorText(row, names.users))}

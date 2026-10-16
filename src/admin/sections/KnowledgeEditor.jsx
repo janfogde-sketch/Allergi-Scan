@@ -11,6 +11,7 @@ import {
   KB_CATEGORIES, KB_CATEGORY_SINGULAR, EDITORIAL, fieldLabel, showField, categoryChangeLoss, slugFromTitle, slugify, missingInfo, entryDirty, validateEntry, sourceLabel,
 } from "../knowledgeLogic.js";
 import { ChipList, RelationPicker, EmojiPicker } from "./knowledgeParts.jsx";
+import CloseX from "../CloseX.jsx";
 
 const FIELD_NAMES = { title: "titel", summary: "resumé", description: "beskrivelse", health_notes: "sundhedsnoter", status_label: "faglig klassifikation", category: "kategori", slug: "slug", sources: "kilder", allergen_ids: "tilknyttede allergener", found_in: "findes i", alternatives: "alternativer", diet_tags: "kost-tags", aliases: "aliaser", tags: "søgetags", editorial_status: "redaktionel status", published: "udgivelse", sort_order: "sortering" };
 
@@ -38,7 +39,7 @@ function Preview({ e, onClose }) {
       <div className="admin-modal todo-panel pe-panel" role="dialog" aria-modal="true" aria-label="Forhåndsvisning" onClick={(ev) => ev.stopPropagation()}>
         <div className="todo-panel-head">
           <div><div className="audit-sheet-title">Forhåndsvisning</div><div className="audit-sheet-time">Sådan ser opslaget cirka ud i appen</div></div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
         <div className="todo-panel-body kb-preview">
           <div className="kb-pv-cat">{KB_CATEGORY_SINGULAR[e.category] || e.category}</div>
@@ -103,7 +104,7 @@ export default function KnowledgeEditor({ entryId, isNew, initial, orig, meta, h
             <div id="kb-title" className="audit-sheet-title">{isNew ? "Nyt opslag" : "Rediger opslag"}</div>
             <div className="audit-sheet-time">{e.emoji ? `${e.emoji} ` : ""}{e.title || "Uden titel"} · {KB_CATEGORY_SINGULAR[cat] || cat}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={requestClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={requestClose} />
         </div>
 
         <div className="todo-panel-body">

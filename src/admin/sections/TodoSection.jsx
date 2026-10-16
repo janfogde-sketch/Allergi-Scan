@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Icon } from "../../SharedComponents.jsx";
 import { useIsMobile } from "../useIsMobile.js";
 import TodoModal, { isHttpUrl } from "./TodoModal.jsx";
+import CloseX from "../CloseX.jsx";
 import {
   STATUS_LABELS, STATUS_PILL, PRIORITY_LABELS, PRIORITY_PILL, TRACK_LABELS, SORT_MODES,
   todayKey, dueInfo, sortTodos, filterTodos, activeFilterCount, countByView, viewNeedsDone, personName,
@@ -323,7 +324,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
           <div className="admin-modal" role="dialog" aria-modal="true" aria-label="Sådan fungerer opgaver" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
               <div style={{ fontSize: 15, fontWeight: 800 }}>Sådan fungerer opgaver</div>
-              <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setShowInfo(false)}>Luk</button>
+              <CloseX onClick={() => setShowInfo(false)} />
             </div>
             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6 }}>
               <li>Fælles liste for admin-brugerne.</li>
