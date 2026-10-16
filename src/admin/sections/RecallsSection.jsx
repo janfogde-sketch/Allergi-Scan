@@ -10,7 +10,7 @@ import { NEW_VIEWS, STATUS_TEXT, RECALL_STATUS_PILL, RECALL_PERIODS, viewCounts,
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString("da-DK", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", year: "numeric" }) : "–");
 const EMPTY = {
   needs_review: ["Intet afventer gennemgang", "Tilbagekaldelser, der kræver din handling, vises her."],
-  ready: ["Ingen varslede tilbagekaldelser", "Når en tilbagekaldelse er knyttet til produkter og besked er lagt i kø, vises den her."],
+  ready: ["Ingen varslinger endnu", "Når en tilbagekaldelse er knyttet til produkter og besked er lagt i kø, vises den her."],
   archive: ["Arkivet er tomt", "Arkiverede og annullerede tilbagekaldelser vises her."],
 };
 
@@ -41,7 +41,7 @@ export default function RecallsSection({ recalls: rc }) {
 
   let body;
   if (rc.error && rc.recalls.length === 0) {
-    const t = rc.error === "offline" ? ["Ingen forbindelse", "Tjek forbindelsen, og prøv igen."] : rc.error === "denied" ? ["Ingen adgang", "Din konto har ikke administratorrettighed."] : ["Kunne ikke hente tilbagekaldelser", "Det betyder ikke, at der ingen tilbagekaldelser er."];
+    const t = rc.error === "offline" ? ["Kunne ikke hente tilbagekaldelser", "Tjek forbindelsen, og prøv igen."] : rc.error === "denied" ? ["Ingen adgang", "Din konto har ikke administratorrettighed."] : ["Kunne ikke hente tilbagekaldelser", "Det betyder ikke, at der ingen tilbagekaldelser er."];
     body = (
       <div className="admin-table-empty audit-state mi-empty" role="alert">
         <div className="audit-state-icon" aria-hidden="true"><Icon name="warning" size={22} color="var(--muted)" /></div>
@@ -74,10 +74,10 @@ export default function RecallsSection({ recalls: rc }) {
               <div className="admin-item-pills">
                 <span className={`admin-pill ${RECALL_STATUS_PILL[r.status]}`}>{STATUS_TEXT[r.status]}</span>
                 {r.status === "needs_review" && isRecent(r) && <span className="admin-pill admin-pill-blue">Ny</span>}
-                {noCode ? <span className="admin-pill admin-pill-red">Stregkode mangler</span> : unverified ? <span className="admin-pill admin-pill-amber">Kræver kontrol</span> : null}
+                {noCode ? <span className="admin-pill admin-pill-red">Mangler stregkode</span> : unverified ? <span className="admin-pill admin-pill-amber">Kræver kontrol</span> : null}
                 {r.status === "ready" && !noCode && !unverified && <span className="admin-pill admin-pill-neutral">{(r.eans || []).length} {(r.eans || []).length === 1 ? "stregkode" : "stregkoder"}</span>}
               </div>
-              <div className="usr-row-meta">{fmtDate(r.published_at)} · {prods} {prods === 1 ? "berørt produkt" : "berørte produkter"}{unverified ? ` · ${r.unverified_eans.length} ubekræftet kode` : ""}</div>
+              <div className="usr-row-meta">{fmtDate(r.published_at)} · {prods} {prods === 1 ? "berørt produkt" : "berørte produkter"}{unverified ? ` · ${r.unverified_eans.length} ${r.unverified_eans.length === 1 ? "stregkode kræver" : "stregkoder kræver"} kontrol` : ""}</div>
               <span className="audit-card-chev" aria-hidden="true"><Icon name="chevronRight" size={16} color="var(--muted2)" /></span>
             </button>
           );

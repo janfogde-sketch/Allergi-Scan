@@ -10,7 +10,7 @@ import { isOfficialRecallUrl } from "../../../supabase/functions/_shared/recallP
 import CloseX from "../CloseX.jsx";
 import {
   STATUS_TEXT, MATCH_LABEL, MATCH_PILL, FLAG_TEXT, recallProducts, lookupCodes, matchEntry, summarizeMatch, missingInfoText, nameMismatch, recallHistory, notificationSummary,
-  addProduct, removeProduct, searchTermFromRaw, confirmSendText, RECALL_STATUS_PILL,
+  addProduct, removeProduct, searchTermFromRaw, confirmSendText, RECALL_STATUS_PILL, coversAllBatches,
 } from "../recallLogic.js";
 
 const KIND = { carton: "Kartonkode", unit: "Salgsenhed", unknown: "Stregkode" };
@@ -102,7 +102,7 @@ export default function RecallDetail({ recall, onClose, api }) {
 
   const overrides = useMemo(() => Object.fromEntries((state.detail?.matches || []).map((m) => [m.ean, m])), [state.detail]);
   const summary = useMemo(() => summarizeMatch(recall, entries, state.products.byEan, overrides), [recall, entries, state.products, overrides]);
-  const matchesFor = (entry) => matchEntry(entry, state.products.byEan, overrides).map((m) => ({ ...m, by: m.decidedBy ? api.nameOf(m.decidedBy) : null }));
+  const matchesFor = (entry) => matchEntry(entry, state.products.byEan, overrides, { allBatches: coversAllBatches(recall) }).map((m) => ({ ...m, by: m.decidedBy ? api.nameOf(m.decidedBy) : null }));
   const history = recallHistory(state.detail?.events, api.nameOf);
   const notif = notificationSummary(state.detail?.stats);
   const missing = missingInfoText(recall, entries);
@@ -119,7 +119,7 @@ export default function RecallDetail({ recall, onClose, api }) {
   const search = async (q = query) => { if (!q.trim()) { setResults([]); return; } setSearching(true); setResults(await api.searchProducts(q)); setSearching(false); };
   const finish = async (action) => { setBusy(true); const ok = await api.resolve(recall.id, action, selected.map((p) => p.ean), note.trim() || null); setBusy(false); if (ok) onClose(); };
   const mismatched = selected.filter((p) => nameMismatch(p, recall));
-  const foundFromPage = entries.flatMap((e) => matchEntry(e, state.products.byEan, overrides)).filter((m) => m.product && m.kind !== "carton" && m.level !== "unverified").map((m) => m.product);
+  const foundFromPage = entries.flatMap((e) => matchEntry(e, state.products.byEan, overrides, { allBatches: coversAllBatches(recall) })).filter((m) => m.product && m.kind !== "carton" && m.level !== "unverified").map((m) => m.product);
   const decide = async (ean, level, basis) => { const r = await api.setMatch(recall.id, ean, level, basis); if (r.ok) await reload(); return r; };
 
   return ReactDOM.createPortal(
@@ -173,7 +173,7 @@ export default function RecallDetail({ recall, onClose, api }) {
               {summary.all.length === 0 ? <div className="pe-muted">Ingen stregkoder at matche.</div> : (
                 <ul className="rc-matches">{entries.flatMap((e) => matchesFor(e)).map((m) => <MatchRow key={m.code} recall={recall} m={m} decide={decide} canDecide={state.detail?.newTables} />)}</ul>
               )}
-              <div className="usr-hint">Matchet bygger på stregkode og partioplysninger, aldrig på navnet alene. Uden partioplysninger er et match kun muligt. En kartonkode er ikke et bekræftet match for salgsenheden.</div>
+              <div className="usr-hint">Matchet bygger på stregkode og partioplysninger, aldrig på navnet alene. Gælder tilbagekaldelsen bestemte partier eller datoer, eller mangler oplysningerne, er et match kun muligt. En kartonkode er ikke et bekræftet match for salgsenheden.</div>
             </>
           )}
 
@@ -202,7 +202,7 @@ export default function RecallDetail({ recall, onClose, api }) {
                 <div key={p.ean} className="rc-result"><div style={{ minWidth: 0 }}><b>{p.name}</b>{p.brand ? ` · ${p.brand}` : ""} <span className="np-mono pe-muted">{p.ean}</span>{nameMismatch(p, recall) && <div className="usr-err">Navnet ligner ikke noget på tilbagekaldelsen. Kontrollér, at det er det rigtige produkt.</div>}</div>
                   <button type="button" className="todo-link-btn" onClick={() => setSelected((s) => removeProduct(s, p.ean))} aria-label={`Fjern ${p.name}`}>Fjern</button></div>
               ))}
-              {selected.length > 0 && <div className="info-box" role="status">{affected === null ? "Tæller berørte brugere…" : affected === 0 ? "Ingen brugere har produkterne som favorit, scannet dem de seneste 90 dage eller på en indkøbsliste." : `${affected} ${affected === 1 ? "bruger" : "brugere"} får en besked (favorit, scannet de seneste 90 dage eller på en indkøbsliste). Beskeden siger, at produktet kan være berørt, og beder om at kontrollere parti og dato; den påstår ikke, at brugeren ejer et berørt parti.`}</div>}
+              {selected.length > 0 && <div className="info-box" role="status">{affected === null ? "Tæller berørte brugere…" : affected === 0 ? "Ingen brugere har produkterne som favorit, scannet dem de seneste 90 dage eller på en indkøbsliste." : `${affected} ${affected === 1 ? "bruger" : "brugere"} vil modtage en varsling (favorit, scannet de seneste 90 dage eller på en indkøbsliste). Beskeden siger, at produktet kan være berørt, og beder om at kontrollere parti og dato; den påstår ikke, at brugeren ejer et berørt parti.`}</div>}
 
               {confirm ? (
                 <div className="todo-confirm" role="alertdialog" aria-label="Bekræft">

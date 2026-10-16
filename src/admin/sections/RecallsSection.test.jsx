@@ -40,8 +40,8 @@ describe("Tilbagekaldelser: oversigt", () => {
   });
   it("manglende stregkode og ubekræftet kode markeres tydeligt på kortet", () => {
     mount({ recalls: [mk({ eans: [], affected: "Pølse\nLøgpølse" }), mk({ id: "r9", title: "Tilbagekald: Dild", eans: [], unverified_eans: ["571287790945"] })] });
-    expect(screen.getAllByText("Stregkode mangler").length).toBe(2);
-    expect(screen.getByText(/1 ubekræftet kode/)).toBeTruthy();
+    expect(screen.getAllByText("Mangler stregkode").length).toBe(2);
+    expect(screen.getByText(/1 stregkode kræver kontrol/)).toBeTruthy();
   });
   it("søgning på titel, produktnavn, EAN uden foranstillede nuller og lotnummer; filtre og nulstil", () => {
     mount();
@@ -61,7 +61,7 @@ describe("Tilbagekaldelser: oversigt", () => {
     expect(screen.getByText("Henter tilbagekaldelser…")).toBeTruthy();
     cleanup();
     const a = api({ recalls: [], error: "offline" }); render(<RecallsSection recalls={a} />);
-    expect(screen.getByText("Ingen forbindelse")).toBeTruthy();
+    expect(screen.getByText("Kunne ikke hente tilbagekaldelser")).toBeTruthy();
     expect(screen.queryByText("Intet afventer gennemgang")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Prøv igen" }));
     expect(a.load).toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe("Tilbagekaldelser: oversigt", () => {
     expect(screen.getByText(/Seneste vellykkede hentning/)).toBeTruthy();
     cleanup();
     render(<RecallsSection recalls={api({ syncRuns: [{ id: "f", status: "failed", error_code: "kilde_svarer_ikke", started_at: new Date().toISOString() }, OKRUN] })} />);
-    expect(screen.getByRole("alert").textContent).toMatch(/fejlede.*svarede ikke.*tom liste betyder ikke/);
+    expect(screen.getByRole("alert").textContent).toMatch(/mislykkedes.*svarede ikke.*tom liste betyder ikke/);
     cleanup();
     render(<RecallsSection recalls={api({ syncRuns: null, recalls: [] })} />);
     expect(screen.getByText(/kan ikke hentes lige nu/)).toBeTruthy();
@@ -84,11 +84,12 @@ describe("Tilbagekaldelser: oversigt", () => {
 describe("Tilbagekaldelser: detaljer", () => {
   const open = async (o = {}, id = "Tilbagekald: Test kiks", tab) => { const a = mount(o); if (tab) fireEvent.click(screen.getByRole("tab", { name: tab })); fireEvent.click(screen.getByText(id).closest("button")); const d = await screen.findByRole("dialog"); return { a, d }; };
 
-  it("sektioner, kildelink, strukturerede produkter med lot og dato, bekræftet match og original tekst bag foldning", async () => {
+  it("sektioner, kildelink, strukturerede produkter med lot og dato, match og original tekst bag foldning", async () => {
     const { d } = await open();
     for (const h of ["Overblik", "Årsag", "Berørte produkter", "Forbrugerhandling", "Produktmatch", "Varsling", "Historik"]) expect(within(d).getByText(h)).toBeTruthy();
     expect(within(d).getByRole("link", { name: /Åbn Fødevarestyrelsens tilbagekaldelse/ }).href).toContain("foedevarestyrelsen.dk");
-    expect((await within(d).findAllByText("Bekræftet match")).length).toBeGreaterThan(0);
+    expect((await within(d).findAllByText("Muligt match")).length).toBeGreaterThan(0); // bestemte partier: stregkode alene er ikke bekræftet
+    expect(within(d).queryByText("Bekræftet match")).toBeNull();
     expect(within(d).getByText("A1")).toBeTruthy();
     expect(within(d).getByText("01.01.2027")).toBeTruthy();
     expect(d.querySelector(".todo-panel-head")).toBeTruthy();
@@ -106,7 +107,11 @@ describe("Tilbagekaldelser: detaljer", () => {
     expect(await within(d).findByText("Kartonkode")).toBeTruthy();
     expect(within(d).getByText("Salgsenhed")).toBeTruthy();
     expect(within(d).getAllByText(/Muligt match/).length).toBeGreaterThan(0);
-    expect(within(d).getAllByText("Bekræftet match").length).toBeGreaterThan(0);
+    expect(within(d).queryByText("Bekræftet match")).toBeNull();
+  });
+  it("tilbagekaldelse der dokumenteret omfatter alle partier kan bekræftes uden partinummer", async () => {
+    const { d } = await open({ recalls: [mk({ affected: "Alle partier af Testkiks er omfattet\nTestkiks\nEAN: 5701234567899" })] });
+    expect((await within(d).findAllByText("Bekræftet match")).length).toBeGreaterThan(0);
   });
   it("produktopslag der fejler vises som fejl, ikke som 'ingen match'", async () => {
     const { d } = await open({ findProducts: vi.fn(async () => ({ ok: false, byEan: {} })) });
@@ -114,7 +119,7 @@ describe("Tilbagekaldelser: detaljer", () => {
   });
   it("matchafgørelse kræver begrundelse og gemmes med niveau og begrundelse", async () => {
     const { a, d } = await open();
-    await within(d).findAllByText("Bekræftet match");
+    await within(d).findAllByText("Muligt match");
     fireEvent.click(within(d).getByRole("button", { name: "Registrér afgørelse" }));
     fireEvent.change(within(d).getByLabelText("Matchniveau"), { target: { value: "not_covered" } });
     expect(within(d).getByText(/Manglende oplysninger er ikke dokumentation/)).toBeTruthy();
@@ -135,7 +140,7 @@ describe("Tilbagekaldelser: detaljer", () => {
     fireEvent.click(await within(d).findByRole("button", { name: "Tilføj" }));
     await waitFor(() => expect(a.affectedCount).toHaveBeenCalled());
     fireEvent.click(within(d).getByRole("button", { name: "Gem og send besked" }));
-    expect(within(d).getByRole("alertdialog").textContent).toMatch(/3 brugere får en besked/);
+    expect(within(d).getByRole("alertdialog").textContent).toMatch(/3 brugere vil modtage en varsling/);
     fireEvent.change(within(d).getByLabelText(/Note til historikken/), { target: { value: "Navn og producent stemmer" } });
     await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "Bekræft og send" })); });
     expect(a.resolve).toHaveBeenCalledWith("r1", "link", ["5700000000011"], "Navn og producent stemmer");
