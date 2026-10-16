@@ -91,3 +91,33 @@ describe("ændringer og betegnelser", () => {
     expect(labelOr(VERIFIED_LABELS, null)).toBe("Ikke angivet");
   });
 });
+
+import { buildProductsQuery, cleanProductSearch, PRODUCT_PAGE } from "./productsLogic.js";
+describe("produktlistens forespørgsel", () => {
+  it("uden søgning og filtre: de senest opdaterede, 51 rækker (én ekstra viser, at der er flere)", () => {
+    const q = buildProductsQuery({});
+    expect(q).toContain("order=updated_at.desc.nullslast,id.desc");
+    expect(q).toContain(`limit=${PRODUCT_PAGE + 1}`);
+    expect(q).not.toContain("or=");
+  });
+  it("tekst søger i navn og brand; cifre søger også i begyndelsen af EAN; specialtegn fjernes", () => {
+    const t = decodeURIComponent(buildProductsQuery({ q: "skyr" }));
+    expect(t).toContain("or=(name.ilike.*skyr*,brand.ilike.*skyr*)");
+    expect(decodeURIComponent(buildProductsQuery({ q: "5701234" }))).toContain("ean.like.5701234*");
+    expect(cleanProductSearch('a,b(c)*"d%')).toBe("a b c d");
+    expect(buildProductsQuery({ q: "a,b" })).not.toMatch(/ilike\.\*a,b/);
+  });
+  it("filtre og sortering sendes til serveren; Open Food Facts omfatter begge kildeværdier", () => {
+    const q = decodeURIComponent(buildProductsQuery({ category: "Mejeri & æg", source: "open_food_facts", status: "partial", sort: "name_asc", offset: 50 }));
+    expect(q).toContain("category=eq.Mejeri & æg");
+    expect(q).toContain("source=in.(open_food_facts,off_import)");
+    expect(q).toContain("verified_status=eq.partial");
+    expect(q).toContain("order=name.asc,id.asc");
+    expect(q).toContain("offset=50");
+  });
+  it("ukendt kilde eller sortering giver aldrig ugyldige filtre", () => {
+    const q = buildProductsQuery({ source: "x", sort: "y" });
+    expect(q).not.toContain("source=");
+    expect(q).toContain("order=updated_at.desc");
+  });
+});

@@ -78,7 +78,7 @@ describe("Produktformular", () => {
   });
   it("verificeret kan ikke vælges, før ingredienser, kendte allergener og uden konflikter; statusnavne er danske", () => {
     render(<Harness initial={mk()} />);
-    const status = sel("Verificering");
+    const status = document.getElementById("pe-status");
     expect(within(status).getByRole("option", { name: "Ikke verificeret" })).toBeTruthy();
     expect(within(status).getByRole("option", { name: "Delvist verificeret" })).toBeTruthy();
     expect(within(status).getByRole("option", { name: "Verificeret" }).disabled).toBe(true);
@@ -115,5 +115,75 @@ describe("Produktformular", () => {
   it("lange produktnavne ombrydes i overskriften", () => {
     render(<Harness initial={mk({ name: "Ekstra".repeat(40) })} />);
     expect(document.getElementById("pe-title").textContent.length).toBeGreaterThan(200);
+  });
+});
+
+describe("Produktoversigt", () => {
+  const rows = [
+    { ...P, id: "a", name: "Skyr naturel ".repeat(12), brand: "Arla", verified_status: "unverified", source: "katalog" },
+    { ...P, id: "b", name: "Havredrik", brand: "", ean: "5709999999998", category: null, verified_status: "partial", source: "off_import" },
+  ];
+  const base = (o = {}) => ({
+    products: rows, productsLoading: false, productSearch: "", setProductSearch: vi.fn(), loadProducts: vi.fn(),
+    productFilters: { category: "", source: "", status: "", sort: "updated_desc" }, setProductFilters: vi.fn(), productTotal: 20182, productHasMore: true, productsError: false, productsLoadingMore: false,
+    openProduct: null, setOpenProduct: vi.fn(), editingProduct: null, setEditingProduct: vi.fn(), productActionLoading: false,
+    openProductForEdit: vi.fn(), saveProductEdit: vi.fn(), deleteProduct: vi.fn(), loadProductHistory: vi.fn(), ...o,
+  });
+  it("kompakte kort med navn som overskrift, EAN, kategori, kilde, danske statusser og dato; ingen rå statuskoder", () => {
+    render(<ProductsSection {...base()} />);
+    const cards = document.querySelectorAll(".prd-row");
+    expect(cards).toHaveLength(2);
+    expect(cards[0].querySelector(".prd-name").textContent).toMatch(/^Skyr naturel/);
+    expect(cards[0].textContent).toMatch(/Arla · 5701234567899/);
+    expect(cards[0].textContent).toMatch(/Ikke verificeret/);
+    expect(cards[0].textContent).toMatch(/Mejeri & æg · Katalog/);
+    expect(cards[1].textContent).toMatch(/Delvist verificeret/);
+    expect(cards[1].textContent).toMatch(/Uden kategori · Open Food Facts/);
+    expect(document.body.textContent).not.toMatch(/\bunverified\b|\bpartial\b/);
+    expect(screen.getByText("20.182 produkter")).toBeTruthy();
+  });
+  it("et kort åbner redigering", () => {
+    const p = base();
+    render(<ProductsSection {...p} />);
+    fireEvent.click(document.querySelectorAll(".prd-row")[1]);
+    expect(p.openProductForEdit).toHaveBeenCalledWith(rows[1]);
+  });
+  it("søgning, filtre og sortering sendes til serveren", () => {
+    const p = base();
+    render(<ProductsSection {...p} />);
+    fireEvent.change(screen.getByLabelText(/Søg på produktnavn/), { target: { value: "skyr" } });
+    expect(p.setProductSearch).toHaveBeenCalledWith("skyr");
+    fireEvent.change(screen.getByLabelText("Kategori"), { target: { value: "Mejeri & æg" } });
+    expect(p.setProductFilters).toHaveBeenCalledWith({ category: "Mejeri & æg" });
+    fireEvent.change(screen.getByLabelText("Kilde"), { target: { value: "open_food_facts" } });
+    fireEvent.change(screen.getByLabelText("Verificering"), { target: { value: "partial" } });
+    fireEvent.change(screen.getByLabelText("Sortér"), { target: { value: "name_asc" } });
+    expect(p.setProductFilters).toHaveBeenCalledTimes(4);
+    expect(p.setProductFilters).toHaveBeenLastCalledWith({ sort: "name_asc" });
+  });
+  it("CSV ligger i en sekundær menu og eksporterer danske betegnelser", () => {
+    const p = base();
+    render(<ProductsSection {...p} />);
+    expect(screen.queryByText(/Eksportér viste som CSV/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Flere handlinger" }));
+    expect(screen.getByRole("menuitem").textContent).toMatch(/Eksportér viste som CSV \(2\)/);
+  });
+  it("en fejl er aldrig en tom liste, og en tom søgning kan nulstilles", () => {
+    const p = base({ products: [], productsError: true, productTotal: null, productHasMore: false });
+    render(<ProductsSection {...p} />);
+    expect(screen.getByRole("alert").textContent).toMatch(/Kunne ikke hente produkter/);
+    expect(screen.getByRole("alert").textContent).toMatch(/ikke, at der ingen produkter er/);
+    cleanup();
+    const q = base({ products: [], productsError: false, productTotal: 0, productHasMore: false, productSearch: "zzz" });
+    render(<ProductsSection {...q} />);
+    expect(screen.getByText("Ingen produkter matcher")).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Nulstil" })[0]);
+    expect(q.setProductSearch).toHaveBeenCalledWith("");
+  });
+  it("Vis flere henter næste side", () => {
+    const p = base();
+    render(<ProductsSection {...p} />);
+    fireEvent.click(screen.getByRole("button", { name: /Vis flere \(2 af 20\.182\)/ }));
+    expect(p.loadProducts).toHaveBeenCalledWith("", undefined, true);
   });
 });

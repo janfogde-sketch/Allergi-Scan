@@ -154,3 +154,40 @@ export function changedFields(orig, cur) {
   if (JSON.stringify(orig.allergen_flags || {}) !== JSON.stringify(cur.allergen_flags || {})) out.allergen_flags = cur.allergen_flags || {};
   return out;
 }
+
+// ── Produktoversigten: søgning, filtre og sortering (kører på serveren) ─────────────────────────────────────────────────────
+export const PRODUCT_PAGE = 50;
+export const PRODUCT_SORTS = /** @type {Array<[string, string]>} */ ([["updated_desc", "Senest opdateret"], ["updated_asc", "Ældst opdateret"], ["name_asc", "Navn A–Å"], ["name_desc", "Navn Å–A"]]);
+export const PRODUCT_CATEGORIES = ["Kolonial", "Drikkevarer", "Snacks & slik", "Kød & fisk", "Mejeri & æg", "Brød & bagværk", "Frost", "Frugt & grønt", "Færdigretter", "Andet"];
+/** Kildefiltre: værdi, visningsnavn og de databaseværdier, der hører til. */
+export const SOURCE_FILTERS = /** @type {Array<[string, string, string[]]>} */ ([
+  ["katalog", "Katalog", ["katalog"]], ["open_food_facts", "Open Food Facts", ["open_food_facts", "off_import"]], ["user", "Indsendt af bruger", ["user"]], ["producer", "Producent", ["producer"]],
+]);
+export const STATUS_FILTERS = /** @type {Array<[string, string]>} */ ([["unverified", "Ikke verificeret"], ["partial", "Delvist verificeret"], ["verified", "Verificeret"], ["auto_verified", "Automatisk verificeret"]]);
+
+/** Fjerner tegn med betydning i PostgREST-filtre. @param {string} q */
+export const cleanProductSearch = (q) => String(q || "").replace(/[,()*:\\"%]/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * Forespørgsel til produktlisten. Søgning på navn, brand og EAN (cifre søger i begyndelsen af EAN), filtre og sortering kører på serveren, så resultaterne gælder hele tabellen.
+ * @param {{ q?: string, category?: string, source?: string, status?: string, sort?: string, offset?: number, limit?: number }} o
+ */
+export function buildProductsQuery(o) {
+  const { q = "", category = "", source = "", status = "", sort = "updated_desc", offset = 0, limit = PRODUCT_PAGE + 1 } = o;
+  const parts = ["select=id,ean,name,brand,category,source,verified_status,updated_at"];
+  const s = cleanProductSearch(q);
+  if (s) {
+    const enc = encodeURIComponent(s);
+    const ors = [`name.ilike.*${enc}*`, `brand.ilike.*${enc}*`];
+    if (/^\d+$/.test(s)) ors.push(`ean.like.${enc}*`);
+    parts.push(`or=(${ors.join(",")})`);
+  }
+  if (category) parts.push(`category=eq.${encodeURIComponent(category)}`);
+  const src = SOURCE_FILTERS.find((x) => x[0] === source);
+  if (src) parts.push(`source=in.(${src[2].join(",")})`);
+  if (status) parts.push(`verified_status=eq.${encodeURIComponent(status)}`);
+  const order = { updated_desc: "updated_at.desc.nullslast,id.desc", updated_asc: "updated_at.asc.nullsfirst,id.asc", name_asc: "name.asc,id.asc", name_desc: "name.desc,id.desc" }[sort] || "updated_at.desc.nullslast,id.desc";
+  parts.push(`order=${order}`, `limit=${limit}`);
+  if (offset) parts.push(`offset=${offset}`);
+  return parts.join("&");
+}
