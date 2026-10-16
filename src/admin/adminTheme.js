@@ -125,6 +125,17 @@ table.admin-table tr:hover td{background:var(--surface3);}
 .mi-row .usr-row-name{font-family:var(--mono);letter-spacing:.02em;}
 .mi-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .mi-empty{padding:18px 16px;}
+.di-card{padding:14px;margin-bottom:12px;}
+.di-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.di-title{font-size:15px;font-weight:800;margin:0;}
+.di-sub{font-size:12.5px;color:var(--ink2);line-height:1.5;margin:6px 0 10px;overflow-wrap:anywhere;}
+.di-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 10px;}
+@media (max-width:520px){.di-tiles{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.di-tile{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface);}
+.di-tile-num{font-size:20px;font-weight:800;}
+.di-tile-label{font-size:11.5px;color:var(--ink2);line-height:1.3;}
+.di-run{width:100%;min-height:44px;}
+.di-log{margin:0;padding-left:18px;font-size:12px;font-family:var(--mono);overflow-wrap:anywhere;}
 .admin-tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);}
 .admin-tab-btn{background:none;border:none;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--muted);padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
 .admin-tab-btn.active{color:var(--green);border-bottom-color:var(--green);}

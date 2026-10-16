@@ -7,6 +7,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
+import { startRun, finishRun, runStatus } from "../_shared/runLog.ts";
 import { analyzeIngredients, liftGlutenFromWheat, stripHtml } from "../_shared/allergenEngine.js";
 
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
@@ -179,8 +180,12 @@ Deno.serve(async (req) => {
         { funktion: "auto-import-off", antal: stats.imported, fejl_antal: stats.error, ...extra }, outcome)
     : Promise.resolve();
 
-  const stats = { imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
+  const stats = { attempted: 0, found: 0, imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
   const log: string[] = [];
+  // Kørselslog: kun én import ad gangen (automatisk og manuel kørsel kan ikke løbe samtidigt)
+  const runId = await startRun(supabase, "off_import", isCron ? "cron" : "manual");
+  if (runId === null) return Response.json({ ok: false, busy: true, error: "Der kører allerede en import. Prøv igen om lidt." }, { status: 409 });
+  let stoppedEarly = false;
 
   try {
     // 1. Hent top-50 manglende EAN'er (spring koder over, som er tjekket for nylig)
@@ -194,6 +199,7 @@ Deno.serve(async (req) => {
 
     if (fetchErr) throw new Error(`missing_ean_log fejl: ${fetchErr.message}`);
     if (!missing || missing.length === 0) {
+      await finishRun(supabase, runId, "ok", { ...stats, nothing_to_do: 1 }, ["Ingen kvalificerede manglende EAN'er"]);
       return Response.json({ ok: true, message: "Ingen manglende EAN'er", stats });
     }
 
@@ -201,7 +207,7 @@ Deno.serve(async (req) => {
 
     const startedAt = Date.now();
     for (const row of missing) {
-      if (Date.now() - startedAt > 110000) { log.push("Stoppet tidligt (tidsgrænse); resten tages i nat"); break; }
+      if (Date.now() - startedAt > 110000) { log.push("Stoppet tidligt (tidsgrænse); resten tages i nat"); stoppedEarly = true; break; }
       const ean = row.ean;
 
       // 2. Tjek om den allerede eksisterer
@@ -219,6 +225,7 @@ Deno.serve(async (req) => {
       }
 
       // 3. Hent fra OFF
+      stats.attempted++;
       await sleep(DELAY_MS);
       let product: any = null;
       try {
@@ -230,6 +237,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      if (product) stats.found++;
       if (!product) {
         stats.not_on_off++;
         await supabase.from("missing_ean_log").update({ last_checked: new Date().toISOString() }).eq("ean", ean);
@@ -288,10 +296,12 @@ Deno.serve(async (req) => {
       }
     }
   } catch (e: any) {
+    await finishRun(supabase, runId, "failed", stats, log, fejlkode(e));
     await logRun("mislykket", { fejl: fejlkode(e) });
     return Response.json({ ok: false, error: e.message, stats }, { status: 500 });
   }
 
+  await finishRun(supabase, runId, runStatus(stats.imported + stats.not_on_off + stats.already_exists, stats.error, stoppedEarly), stats, log);
   await logRun("ok");
   return Response.json({ ok: true, stats, log });
 });

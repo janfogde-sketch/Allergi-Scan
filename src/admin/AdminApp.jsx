@@ -16,6 +16,7 @@ import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import { useAdminKnowledge } from "./useAdminKnowledge.js";
 import { useAdminMissing } from "./useAdminMissing.js";
+import { useAdminImport } from "./useAdminImport.js";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
@@ -51,6 +52,7 @@ export default function AdminApp() {
   const clientErrors = useClientErrors(accessToken);
   const knowledge = useAdminKnowledge(isAdmin ? accessToken : null);
   const missing = useAdminMissing(isAdmin ? accessToken : null);
+  const dataImport = useAdminImport(isAdmin ? accessToken : null);
   const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -64,24 +66,6 @@ export default function AdminApp() {
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
 
-  // ── OFF-import (porteret fra App.jsx — samme logik) ───────────────────────
-  const [importLog, setImportLog] = useState(null);
-  const [importLoading, setImportLoading] = useState(false);
-  const runImport = async () => {
-    setImportLoading(true);
-    setImportLog(null);
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/auto-import-off`, {
-        method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify({}),
-      });
-      setImportLog(data);
-    } catch (e) {
-      setImportLog({ ok: false, error: e.message, stats: { imported: 0, not_on_off: 0, error: 1 }, log: [] });
-      showToast("Import fejlede: " + e.message, "error");
-    }
-    setImportLoading(false);
-  };
-
   // ── Sektion-skift henter frisk data ────────────────────────────────────────
   useEffect(() => {
     if (!accessToken || !isAdmin) return;
@@ -89,6 +73,7 @@ export default function AdminApp() {
     if (section === "submissions") admin.loadSubmissions(admin.submissionFilter);
     if (section === "tickets") admin.loadTickets();
     if (section === "missing") missing.load({});
+    if (section === "import") dataImport.load();
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") knowledge.load({});
     if (section === "history") admin.loadRevisionLog();
@@ -111,6 +96,7 @@ export default function AdminApp() {
     products: () => admin.loadProducts(),
     knowledge: () => knowledge.load({}),
     missing: () => missing.load({}),
+    import: () => dataImport.load(),
     history: () => admin.loadRevisionLog(),
     users: () => adminUsers.load(),
     family: () => adminFamily.load(),
@@ -235,12 +221,7 @@ export default function AdminApp() {
       {section === "missing" && (
         <MissingSection missing={missing} onOpenProduct={(ean) => { admin.setProductSearch(ean); admin.loadProducts(ean); setSection("products"); }} />
       )}
-      {section === "import" && (
-        <ImportSection
-          importLog={importLog} importLoading={importLoading} runImport={runImport}
-          reparseLog={admin.reparseLog} reparseLoading={admin.reparseLoading} runReparse={admin.runReparse}
-        />
-      )}
+      {section === "import" && <ImportSection imp={dataImport} />}
       {section === "products" && (
         <ProductsSection
           products={admin.products} productsLoading={admin.productsLoading}

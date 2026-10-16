@@ -9,6 +9,7 @@ const TEXT = "vand, sukker, aroma"; // force_ai sender den til AI-trinnet
 function resolver({ role = "user", userOk = true, adminOk = true, totalOk = true } = {}) {
   return (c) => {
     if (c.table === "users" && c.kind === "select") return { data: { role }, error: null };
+    if (c.rpc === "import_run_start") return { data: "run-1", error: null };
     if (c.rpc === "bump_api_usage") return { data: userOk, error: null };
     if (c.rpc === "bump_api_usage_global" && c.args.p_kind === "claude_admin") return { data: adminOk, error: null };
     if (c.rpc === "bump_api_usage_global" && c.args.p_kind === "ai_total") return { data: totalOk, error: null };
