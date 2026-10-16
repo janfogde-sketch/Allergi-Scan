@@ -338,13 +338,14 @@ async function deliver(db: Db, ev: EventRow, plan: Planned, flags: Flags): Promi
   // Er både push og mail fravalgt, oprettes ingen besked (udviklerpakken). Undtagelse: en
   // tilbagekaldelse (P6) og en allergenændring (P1) lander altid som besked i appen, så de aldrig
   // forsvinder helt (F1-4, Jan 6. okt. 2026); push og mail følger stadig brugerens valg.
+  // Beskeder kun til appen (inAppOnly, fx P1:lowered) følger brugerens valg: er kategorien slået fra, sendes intet.
   const enabled = async (channel: string): Promise<boolean> => {
     const { data, error } = await db.rpc("notification_enabled", { p_user_id: plan.userId, p_category: r.category, p_channel: channel });
     if (error) throw error;
     return data !== false;
   };
   const [pushOn, emailOn] = [await enabled("push"), await enabled("email")];
-  if (!pushOn && !emailOn && r.category !== "recalls" && r.category !== "product_changes") return { retry: false };
+  if (!pushOn && !emailOn && (r.inAppOnly || (r.category !== "recalls" && r.category !== "product_changes"))) return { retry: false };
 
   const row = {
     user_id: plan.userId, event_id: ev.id, event_key: ev.event_key,
