@@ -261,3 +261,49 @@ describe("Brugere: administration", () => {
     expect(screen.getByRole("button", { name: "Kopiér Bruger-id" })).toBeTruthy();
   });
 });
+
+describe("Brugere: detaljer når databasefunktionerne mangler, og fejltilstande", () => {
+  it("læsning virker, men redigering, rolleændring og sletning er slået fra med en forklaring", async () => {
+    const p = base();
+    p.getUser = vi.fn(async (id, withPrefs) => ({ ok: true, user: { ...(withPrefs ? PREFS : DETAIL), version: null, legacy: true } }));
+    await openUser(p);
+    expect(screen.queryByRole("button", { name: "Rediger oplysninger" })).toBeNull();
+    expect(screen.getByText(/Redigering er slået fra/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Præferencer" }));
+    await waitFor(() => screen.getByText("Overvågede E-numre"));
+    expect(screen.queryByRole("button", { name: "Rediger præferencer" })).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Administration" }));
+    expect(screen.getByRole("button", { name: "Ændre brugerrolle" }).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Slet bruger" })).toBeNull();
+    expect(screen.getByText(/Sletning er slået fra/)).toBeTruthy();
+  });
+  it("fejl i hele detaljen viser den fælles fejltilstand med Prøv igen, og visningen forbliver åben", async () => {
+    const p = base();
+    p.getUser = vi.fn(async () => ({ ok: false, error: "x", kind: "server" }));
+    await openUser(p);
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/Kunne ikke hente brugeroplysninger.*Der opstod en fejl under indlæsningen/));
+    p.getUser = vi.fn(async () => ({ ok: true, user: DETAIL }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Prøv igen" })).toBeTruthy();
+  });
+  it("særskilte tilstande for manglende adgang og slettet bruger (uden Prøv igen)", async () => {
+    for (const [kind, text] of [["denied", /Du har ikke adgang/], ["notfound", /findes ikke længere/]]) {
+      cleanup();
+      const p = base();
+      p.getUser = vi.fn(async () => ({ ok: false, error: "x", kind }));
+      await openUser(p);
+      await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(text));
+      expect(screen.queryByRole("button", { name: "Prøv igen" })).toBeNull();
+    }
+  });
+  it("præferencer, der ikke kan hentes, skjuler ikke oversigten, og viser egen fejl med Prøv igen", async () => {
+    const p = base();
+    p.getUser = vi.fn(async (id, withPrefs) => (withPrefs ? { ok: false, error: "x", kind: "server" } : { ok: true, user: DETAIL }));
+    await openUser(p);
+    expect(screen.getByText("anne@example.dk", { selector: "dd" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Præferencer" }));
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/Kunne ikke hente præferencer/));
+    expect(screen.queryByRole("button", { name: "Rediger præferencer" })).toBeNull(); // ingen redigering uden indlæste værdier
+    expect(screen.getByRole("button", { name: "Prøv igen" })).toBeTruthy();
+  });
+});

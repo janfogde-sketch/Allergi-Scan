@@ -132,3 +132,52 @@ describe("userErrorText", () => {
     expect(userErrorText(new Error("boom"), "Fallback")).toBe("Fallback");
   });
 });
+
+describe("getUser: årsager og midlertidig læsning (16. okt. 2026)", () => {
+  const nf = () => Object.assign(new Error("x"), { status: 404, body: JSON.stringify({ code: "PGRST202" }) });
+  it("når admin_get_user ikke er udgivet (404/PGRST202), læses brugeren direkte; ingen version, markeret legacy, og uden præferencer ingen allergifelter", async () => {
+    apiCall.mockImplementation(async (url) => {
+      if (url.includes("/rpc/admin_get_user")) throw nf();
+      if (url.includes("/rest/v1/users?id=eq.id-1")) return [{ id: "id-1", name: "A", email: "a@x.dk", role: "user", created_at: "2026-10-01T00:00:00Z", onboarding_completed: false, birth_year: null, gender: null }];
+      throw err(500);
+    });
+    const { result } = renderHook(() => useAdminUsers("t"));
+    let r;
+    await act(async () => { r = await result.current.getUser("id-1"); });
+    expect(r.ok).toBe(true);
+    expect(r.user).toMatchObject({ id: "id-1", legacy: true, version: null, onboarding_completed: false });
+    expect(r.user.allergens).toBeUndefined();
+    expect(apiCall.mock.calls.every(([u, o]) => !o?.method || u.includes("/rpc/"))).toBe(true); // intet skrives
+  });
+  it("med præferencer læses allergener og egne fra user_allergens (kun brugerens egne rækker)", async () => {
+    apiCall.mockImplementation(async (url) => {
+      if (url.includes("/rpc/admin_get_user")) throw nf();
+      if (url.includes("/rest/v1/users?")) return [{ id: "id-1", name: "A", role: "user", e_numbers: ["E220"], allergen_levels: { milk: "direct_only" } }];
+      if (url.includes("/rest/v1/user_allergens?")) { expect(url).toContain("family_member_id=is.null"); return [{ allergen: "milk", type: "allergen" }, { allergen: "kanel", type: "custom" }]; }
+      throw err(500);
+    });
+    const { result } = renderHook(() => useAdminUsers("t"));
+    let r;
+    await act(async () => { r = await result.current.getUser("id-1", true); });
+    expect(r.user).toMatchObject({ allergens: ["milk"], custom: ["kanel"], e_numbers: ["E220"], legacy: true });
+  });
+  it("en bruger, der ikke findes, er 'notfound' (ikke serverfejl)", async () => {
+    apiCall.mockRejectedValueOnce(err(400, "P0002"));
+    const { result } = renderHook(() => useAdminUsers("t"));
+    let r;
+    await act(async () => { r = await result.current.getUser("id-x"); });
+    expect(r).toMatchObject({ ok: false, kind: "notfound" });
+    apiCall.mockImplementation(async (url) => { if (url.includes("/rpc/")) throw nf(); return []; });
+    await act(async () => { r = await result.current.getUser("id-x"); });
+    expect(r).toMatchObject({ ok: false, kind: "notfound" });
+  });
+  it("401, 403, netværksfejl og serverfejl får hver sin art", async () => {
+    const { result } = renderHook(() => useAdminUsers("t"));
+    for (const [e, kind] of [[err(401, ""), "session"], [err(403, ""), "denied"], [new Error("Failed to fetch"), "network"], [err(500, ""), "server"]]) {
+      apiCall.mockRejectedValueOnce(e);
+      let r;
+      await act(async () => { r = await result.current.getUser("id-1"); });
+      expect(r).toMatchObject({ ok: false, kind });
+    }
+  });
+});

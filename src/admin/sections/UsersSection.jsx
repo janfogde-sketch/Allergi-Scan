@@ -129,7 +129,7 @@ export default function UsersSection({ rows, total, counts, loading, loadingMore
       {loaded && !error?.denied && (
         <div className="audit-results">
           <span aria-live="polite">{countText}</span>
-          <button type="button" className="todo-link-btn usr-export" disabled={!rows.length} onClick={() => setExporting("confirm")}>Eksportér CSV</button>
+          <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch usr-export" disabled={!rows.length} onClick={() => setExporting("confirm")}><Icon name="download" size={14} color="var(--ink2)" /> Eksportér CSV</button>
         </div>
       )}
 

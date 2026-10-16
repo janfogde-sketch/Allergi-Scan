@@ -72,6 +72,23 @@ function ChipInput({ id, label, values, onChange, normalize, placeholder, errorT
   );
 }
 
+/** Fejltilstand for en sektion: særskilt tekst for adgang, session, slettet bruger og serverfejl, med "Prøv igen". Viser aldrig tekniske detaljer. */
+function LoadError({ kind, what, onRetry }) {
+  const t = kind === "denied" ? ["Ingen adgang", "Du har ikke adgang til disse oplysninger."]
+    : kind === "session" ? ["Din session er udløbet", "Log ind igen for at fortsætte."]
+    : kind === "notfound" ? ["Brugeren findes ikke længere", "Kontoen kan være slettet. Luk visningen, og opdatér listen."]
+    : kind === "network" ? [`Kunne ikke hente ${what}`, "Tjek forbindelsen, og prøv igen."]
+    : [`Kunne ikke hente ${what}`, "Der opstod en fejl under indlæsningen."];
+  return (
+    <div className="admin-table-empty audit-state" role="alert">
+      <div className="audit-state-icon" aria-hidden="true"><Icon name="warning" size={22} color="var(--muted)" /></div>
+      <div className="audit-state-title">{t[0]}</div>
+      <div>{t[1]}</div>
+      {kind !== "denied" && kind !== "notfound" && <div style={{ marginTop: 12 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={onRetry}>Prøv igen</button></div>}
+    </div>
+  );
+}
+
 const Row = ({ label, children }) => (children ? <div className="audit-detail-row"><dt>{label}</dt><dd>{children}</dd></div> : null);
 
 export default function UserDetail({ row, currentUserId, getUser, saveProfile, setRole, deleteSummary, deleteUser, onClose, onDeleted }) {
@@ -97,14 +114,14 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
   const loadOverview = async () => {
     setOv((s) => (s.status === "ok" ? s : { status: "loading" }));
     const res = await getUser(id, false);
-    if (!res.ok) { setOv({ status: "error", text: res.error }); return; }
+    if (!res.ok) { setOv({ status: "error", kind: res.kind }); return; }
     versionRef.current = res.user.version;
     setOv({ status: "ok", user: res.user });
   };
   const loadPrefs = async () => {
     setPf({ status: "loading" });
     const res = await getUser(id, true);
-    if (!res.ok) { setPf({ status: "error", text: res.error }); return; }
+    if (!res.ok) { setPf({ status: "error", kind: res.kind }); return; }
     versionRef.current = res.user.version;
     setPf({ status: "ok", data: prefsOf(res.user) });
   };
@@ -113,6 +130,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
   useEffect(() => { if (tab === "prefs" && pf.status === "idle") loadPrefs(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab]);
 
   const u = ov.status === "ok" ? ov.user : null;
+  const legacy = !!u?.legacy; // databasefunktionerne er ikke udgivet endnu: kun læsning
   const overviewDirty = edit && u && profileChanged({ name: u.name, birth_year: u.birth_year, gender: u.gender }, draft);
   const prefsDiff = pEdit && pf.status === "ok" && pDraft ? diffPrefs(pf.data, pDraft, labelOf) : { changed: false, lines: [] };
   const dirty = !!(overviewDirty || prefsDiff.changed);
@@ -130,7 +148,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
   // ── Oversigt: navn, fødselsår og køn ──────────────────────────────────────────────────────────────────────────────────
   const startEdit = () => { setDraft({ name: u.name || "", birth_year: u.birth_year ? String(u.birth_year) : "", gender: u.gender || "" }); setFailed(null); setEdit(true); };
   const yearOk = validBirthYear(draft.birth_year);
-  const canSaveProfile = edit && overviewDirty && yearOk && !busy;
+  const canSaveProfile = edit && overviewDirty && yearOk && !busy && versionRef.current !== null;
   const saveOverview = async () => {
     setBusy(true); setFailed(null);
     const res = await saveProfile(id, { profile: { name: draft.name.trim(), birth_year: draft.birth_year === "" ? null : Number(draft.birth_year), gender: draft.gender || null }, version: versionRef.current });
@@ -221,7 +239,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
 
         <div className="todo-panel-body">
           {ov.status === "loading" && <div className="admin-loading-row"><div className="admin-spinner" /> Henter bruger…</div>}
-          {ov.status === "error" && <div role="alert">{ov.text} <button type="button" className="todo-link-btn" style={{ minHeight: 32, textDecoration: "underline" }} onClick={loadOverview}>Prøv igen</button></div>}
+          {ov.status === "error" && <LoadError kind={ov.kind} what="brugeroplysninger" onRetry={loadOverview} />}
 
           {u && tab === "overview" && (
             <>
@@ -251,14 +269,15 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
                   </div>
                 </div>
               )}
-              {!edit && <button type="button" className="admin-btn admin-btn-ghost admin-touch usr-edit-btn" onClick={startEdit}>Rediger oplysninger</button>}
+              {!edit && !legacy && <button type="button" className="admin-btn admin-btn-ghost admin-touch usr-edit-btn" onClick={startEdit}>Rediger oplysninger</button>}
+              {legacy && <div className="usr-hint">Redigering er slået fra, til den seneste databaseopdatering er udgivet.</div>}
             </>
           )}
 
           {u && tab === "prefs" && (
             <>
               {pf.status === "loading" && <div className="admin-loading-row"><div className="admin-spinner" /> Henter præferencer…</div>}
-              {pf.status === "error" && <div role="alert">{pf.text} <button type="button" className="todo-link-btn" style={{ minHeight: 32, textDecoration: "underline" }} onClick={loadPrefs}>Prøv igen</button></div>}
+              {pf.status === "error" && <LoadError kind={pf.kind} what="præferencer" onRetry={loadPrefs} />}
               {pf.status === "ok" && !pEdit && (
                 <>
                   <div className="admin-field"><label>Allergener</label><AllergenChips selected={pf.data.allergens} readOnly /></div>
@@ -268,8 +287,8 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
                     )}</div>
                   <ChipInput id="p-custom" label="Egne allergier" values={pf.data.custom} readOnly />
                   <ChipInput id="p-enum" label="Overvågede E-numre" values={pf.data.eNumbers} readOnly />
-                  <button type="button" className="admin-btn admin-btn-ghost admin-touch usr-edit-btn" onClick={startPrefEdit}>Rediger præferencer</button>
-                  <div className="usr-hint">Ændringer kan påvirke brugerens produktvurderinger og kræver en begrundelse.</div>
+                  {!legacy && <button type="button" className="admin-btn admin-btn-ghost admin-touch usr-edit-btn" onClick={startPrefEdit}>Rediger præferencer</button>}
+                  <div className="usr-hint">{legacy ? "Redigering er slået fra, til den seneste databaseopdatering er udgivet." : "Ændringer kan påvirke brugerens produktvurderinger og kræver en begrundelse."}</div>
                 </>
               )}
               {pf.status === "ok" && pEdit && pDraft && !review && (
@@ -301,9 +320,10 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
               <div className="admin-field">
                 <label>Rolle</label>
                 <div className="usr-line"><span>{ROLE_LABELS[u.role || "user"]}</span>
-                  {!roleOpen && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={isMe} onClick={() => { setRoleOpen(true); setFailed(null); }}>Ændre brugerrolle</button>}
+                  {!roleOpen && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={isMe || legacy} onClick={() => { setRoleOpen(true); setFailed(null); }}>Ændre brugerrolle</button>}
                 </div>
                 {isMe && <div className="usr-hint">Du kan ikke ændre din egen rolle.</div>}
+                {legacy && !isMe && <div className="usr-hint">Rolleændring er slået fra, til den seneste databaseopdatering er udgivet.</div>}
                 {roleOpen && (
                   <div className="todo-confirm" role="alertdialog" aria-label="Ændre brugerrolle">
                     <div style={{ fontWeight: 700, marginBottom: 6 }}>Ændre rolle til {ROLE_LABELS[newRole].toLowerCase()}?</div>
@@ -317,7 +337,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
               </div>
               <div className="admin-field">
                 <label>Slet bruger</label>
-                {isMe ? <div className="usr-hint" style={{ marginTop: 0 }}>Du kan ikke slette din egen konto herfra.</div> : !del ? (
+                {isMe ? <div className="usr-hint" style={{ marginTop: 0 }}>Du kan ikke slette din egen konto herfra.</div> : legacy ? <div className="usr-hint" style={{ marginTop: 0 }}>Sletning er slået fra, til den seneste databaseopdatering er udgivet.</div> : !del ? (
                   <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={startDelete}>Slet bruger</button>
                 ) : (
                   <div className="todo-confirm" role="alertdialog" aria-label="Slet bruger">
