@@ -34,7 +34,7 @@ describe("opdatering beholder data", () => {
     let r = render(ui(m, true));
     expect(r.container.textContent).toContain("5701234000011");
     r.unmount();
-    const h = <HistorySection revisionLog={[]} revisionLogLoading revisionLogFilter="all" setRevisionLogFilter={() => {}} loadRevisionLog={() => {}} />;
+    const h = <HistorySection history={{ rows: [], loading: true, total: null, error: null, hasMore: false, load: () => {} }} />;
     r = render(ui(h, true));
     expect(r.container.textContent).toContain("Henter ændringshistorik…");
   });

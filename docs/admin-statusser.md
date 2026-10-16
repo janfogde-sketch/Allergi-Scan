@@ -225,3 +225,9 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
 - **Grænser (uændrede og på serveren):** 50 stregkoder pr. import; 25 produkter pr. manuel genanalyse; nat op til 200; admin-tjek på manuelle kald.
 - **Tider:** planlagte kørsler (02:00 og 03:00 UTC) vises i dansk tid med sommer-/vintertid; UTC bruges internt.
 - **Risici og beslutninger:** `docs/dataimport-risikovurdering.md`.
+
+## Ændringshistorik (16. okt. 2026)
+
+- **Oversigt:** kompakte rækker (produktnavn, EAN, handling, tidspunkt, aktør, kort beskrivelse; "Allergen"-mærke ved allergenændringer). Filtre Alle / Oprettet / Opdateret / Slettet, søgning på produktnavn, EAN og administrator, periode, sortering og kun allergenændringer. Alt på serveren (`admin_product_history`, migration `20261016220000`; før den er udgivet vises de ældre registreringer som hidtil).
+- **Detaljer:** produkt og EAN, handling, fuldt tidspunkt med årstal og zone, ansvarlig, kilde, og de faktisk gemte før/efter-værdier. Allergener vises ét ad gangen (Ukendt → Indeholder), øvrige felter som Før/Efter. Tekniske id'er og feltnavne ligger i en foldet sektion. "Åbn produktet" når det findes; slettet produkt fremgår, og historikken bevares.
+- **Ærlighed om data:** ældre poster og oprettelser har ingen før/efter-værdier og vises med en tydelig besked; aktør vises kun, når loggen dokumenterer den ("Ikke registreret" ellers). Automatiske ændringer (import, AI) logges ikke i dag. Mangler og forslag: `docs/aendringshistorik.md`.

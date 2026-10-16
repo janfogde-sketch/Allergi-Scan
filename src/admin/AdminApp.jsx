@@ -17,6 +17,7 @@ import KnowledgeSection from "./sections/KnowledgeSection.jsx";
 import { useAdminKnowledge } from "./useAdminKnowledge.js";
 import { useAdminMissing } from "./useAdminMissing.js";
 import { useAdminImport } from "./useAdminImport.js";
+import { useAdminHistory } from "./useAdminHistory.js";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
@@ -53,6 +54,7 @@ export default function AdminApp() {
   const knowledge = useAdminKnowledge(isAdmin ? accessToken : null);
   const missing = useAdminMissing(isAdmin ? accessToken : null);
   const dataImport = useAdminImport(isAdmin ? accessToken : null);
+  const history = useAdminHistory(isAdmin ? accessToken : null);
   const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -76,7 +78,7 @@ export default function AdminApp() {
     if (section === "import") dataImport.load();
     if (section === "products") admin.loadProducts();
     if (section === "knowledge") knowledge.load({});
-    if (section === "history") admin.loadRevisionLog();
+    if (section === "history") history.load({});
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
     if (section === "todo") todos.load();
@@ -97,7 +99,7 @@ export default function AdminApp() {
     knowledge: () => knowledge.load({}),
     missing: () => missing.load({}),
     import: () => dataImport.load(),
-    history: () => admin.loadRevisionLog(),
+    history: () => history.load({}),
     users: () => adminUsers.load(),
     family: () => adminFamily.load(),
     notifications: () => notifications.load(),
@@ -239,13 +241,7 @@ export default function AdminApp() {
       {section === "knowledge" && (
         <KnowledgeSection knowledge={knowledge} />
       )}
-      {section === "history" && (
-        <HistorySection
-          revisionLog={admin.revisionLog} revisionLogLoading={admin.revisionLogLoading}
-          revisionLogFilter={admin.revisionLogFilter} setRevisionLogFilter={admin.setRevisionLogFilter}
-          loadRevisionLog={admin.loadRevisionLog}
-        />
-      )}
+      {section === "history" && <HistorySection history={history} onOpenProduct={(ean) => { admin.setProductSearch(ean); admin.loadProducts(ean); setSection("products"); }} />}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
       {section === "audit" && <AuditLogSection {...auditLog} />}
       {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
