@@ -7,8 +7,8 @@
 export const PRICE_TABLE = [
   { prefix: "claude-haiku-4-5", from: "2025-10-01", inUsd: 1, outUsd: 5, label: "Claude Haiku 4.5" },
 ];
-export const PRICE_CHECKED = "7. okt. 2026"; // da priserne senest blev læst fra Anthropics prisliste; ikke verificeret automatisk
-export const USD_TO_DKK = 6.9; // fast antagelse; ikke hentet fra en valutakilde
+export const PRICE_CHECKED = "16. okt. 2026"; // da priserne senest blev læst fra Anthropics prisliste; ikke verificeret automatisk
+export const USD_TO_DKK = 6.66; // fast antagelse: 7,46 kr. pr. euro / 1,1208 dollar pr. euro (ECB, 15. okt. 2026); ikke hentet automatisk
 export const HAIKU_USD_PER_M_INPUT = PRICE_TABLE[0].inUsd;
 export const HAIKU_USD_PER_M_OUTPUT = PRICE_TABLE[0].outUsd;
 

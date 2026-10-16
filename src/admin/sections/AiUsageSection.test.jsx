@@ -20,24 +20,24 @@ describe("AI-forbrug", () => {
     const sel = screen.getByLabelText("Periode");
     expect(sel.value).toBe("month");
     expect([...sel.options].map((o) => o.textContent)).toEqual(["Denne måned", "I dag", "Seneste 7 dage", "Seneste 30 dage", "Sidste måned", "Brugerdefineret periode"]);
-    expect(screen.getByText("47,43 kr.")).toBeTruthy(); // estimeret forbrug i oktober
+    expect(screen.getByText("45,78 kr.")).toBeTruthy(); // estimeret forbrug i oktober
     expect(screen.getByText("1.204")).toBeTruthy(); // AI-kald i alt
     expect(screen.getByText("Estimeret forbrug")).toBeTruthy();
     expect(screen.getByText(/ind ·/)).toBeTruthy();
   });
   it("viser forbrug pr. funktion sorteret efter pris med procent, og totalen stemmer", () => {
     render(<AiUsageSection {...base} />);
-    expect(screen.getByText("41,37 kr. · 87,2 %")).toBeTruthy();
-    expect(screen.getByText("6,06 kr. · 12,8 %")).toBeTruthy();
+    expect(screen.getByText("39,93 kr. · 87,2 %")).toBeTruthy();
+    expect(screen.getByText("5,84 kr. · 12,8 %")).toBeTruthy();
     // Forbrugstypen står ved funktionen: kategorisering er dokumenteret intern, allergen-tjek kan ikke fastslås
-    expect(screen.getByText(/582 kald · 7,11 øre pr\. kald · Intern/)).toBeTruthy();
-    expect(screen.getByText(/622 kald · 0,97 øre pr\. kald · Ukendt/)).toBeTruthy();
+    expect(screen.getByText(/582 kald · 6,86 øre pr\. kald · Intern/)).toBeTruthy();
+    expect(screen.getByText(/622 kald · 0,94 øre pr\. kald · Ukendt/)).toBeTruthy();
   });
   it("perioden ændrer alt samlet: i dag viser kun dagens tal, og en tom periode får en egen besked", () => {
     render(<AiUsageSection {...base} />);
     fireEvent.change(screen.getByLabelText("Periode"), { target: { value: "today" } });
     expect(screen.getByText("200")).toBeTruthy();
-    expect(screen.queryByText("47,43 kr.")).toBeNull();
+    expect(screen.queryByText("45,78 kr.")).toBeNull();
     fireEvent.change(screen.getByLabelText("Periode"), { target: { value: "lastMonth" } });
     expect(screen.getByText("Intet forbrug i den valgte periode")).toBeTruthy();
     expect(screen.getByText(/andre perioder/)).toBeTruthy();
@@ -87,7 +87,7 @@ describe("AI-forbrug", () => {
     r3.unmount();
     render(<AiUsageSection {...base} error={{ denied: true, message: "x" }} />);
     expect(screen.getByText("Ingen adgang")).toBeTruthy();
-    expect(screen.queryByText("47,43 kr.")).toBeNull();
+    expect(screen.queryByText("45,78 kr.")).toBeNull();
   });
   it("'Om AI-forbruget' er lukket og skelner estimat fra faktisk udgift", () => {
     render(<AiUsageSection {...base} />);
@@ -118,7 +118,7 @@ describe("AI-forbrug", () => {
     render(<AiUsageSection {...base} />);
     fireEvent.click(screen.getByRole("button", { name: /^8\. oktober 2026/ }));
     const box = screen.getByText("8. oktober 2026", { selector: ".ai-day-title" }).parentElement;
-    expect(within(box).getByText("41,57 kr.")).toBeTruthy();
+    expect(within(box).getByText("40,12 kr.")).toBeTruthy();
     expect(within(box).getByText("602")).toBeTruthy();
     expect(within(box).getByText("1.525.924")).toBeTruthy(); // tokens ind
     expect(within(box).getByText("899.661")).toBeTruthy(); // tokens ud
@@ -134,8 +134,8 @@ describe("AI-forbrug", () => {
     render(<AiUsageSection {...base} />);
     expect(screen.queryByText(/Skalaen er afkortet/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Fokusér på almindelige dage" }));
-    expect(screen.getByText(/Skalaen er afkortet.*8\. okt\. \(41,57 kr\.\)/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /8\. oktober 2026: 41,57 kr\., afkortet i diagrammet/ })).toBeTruthy();
+    expect(screen.getByText(/Skalaen er afkortet.*8\. okt\. \(40,12 kr\.\)/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /8\. oktober 2026: 40,12 kr\., afkortet i diagrammet/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Vis fuld skala" }));
     expect(screen.queryByText(/Skalaen er afkortet/)).toBeNull();
   });
@@ -144,10 +144,10 @@ describe("AI-forbrug", () => {
     const sel = screen.getByLabelText("Forbrugstype");
     expect([...sel.options].map((o) => o.textContent)).toEqual(["Alle", "Brugerfunktioner", "Interne processer", "Ukendt / ikke klassificeret"]);
     fireEvent.change(sel, { target: { value: "internal" } });
-    expect(screen.getByText("41,37 kr.")).toBeTruthy(); // kun kategorisering
+    expect(screen.getByText("39,93 kr.")).toBeTruthy(); // kun kategorisering
     expect(screen.queryByText("Allergen-tjek")).toBeNull();
     fireEvent.change(sel, { target: { value: "unknown" } });
-    expect(screen.getByText("6,06 kr.")).toBeTruthy(); // allergen-tjek kan ikke fastslås
+    expect(screen.getByText("5,84 kr.")).toBeTruthy(); // allergen-tjek kan ikke fastslås
     expect(screen.queryByText(/^Kategorisering$/)).toBeNull();
     fireEvent.change(sel, { target: { value: "user" } });
     expect(screen.getByText("Intet forbrug af den valgte forbrugstype")).toBeTruthy();
@@ -162,7 +162,7 @@ describe("AI-forbrug", () => {
   });
   it("gennemsnit pr. kald vises i øre under 1 kr.", () => {
     render(<AiUsageSection {...base} />);
-    expect(screen.getByText("3,94 øre")).toBeTruthy(); // 47,43 kr. / 1.204 kald
+    expect(screen.getByText("3,80 øre")).toBeTruthy(); // 45,78 kr. / 1.204 kald
   });
 });
 
@@ -191,7 +191,7 @@ describe("AI-budget", () => {
     fireEvent.change(screen.getByLabelText("Periode"), { target: { value: "today" } });
     const bar = screen.getByRole("progressbar", { name: /Andel af månedsbudgettet/ });
     expect(bar.getAttribute("aria-valuenow")).toBe("9");
-    expect(screen.getByText(/Tilbage: 452,57 kr./)).toBeTruthy();
+    expect(screen.getByText(/Tilbage: 454,22 kr./)).toBeTruthy();
     unmount();
     render(<AiUsageSection {...base} budget={{ monthly_dkk: 50, warn_1: 80, warn_2: 100 }} />);
     expect(screen.getByText(/over 80 % af budgettet/)).toBeTruthy();
