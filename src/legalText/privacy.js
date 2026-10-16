@@ -296,7 +296,7 @@ export default {
     ],
     [
       "p",
-      "**GitHub** (USA)\nOpbevarer vores krypterede sikkerhedskopier af databasen. GitHub kan ikke læse indholdet, fordi kun EatSafe har nøglen. Overførslen er omfattet af EU-U.S. Data Privacy Framework."
+      "**GitHub** (USA)\nOpbevarer vores sikkerhedskopier af databasen i et privat arkiv, som kun EatSafe har adgang til. Kopierne krypteres, før de gemmes. Det kodeord, der bruges til krypteringen, ligger som en beskyttet hemmelighed i GitHubs egen opsætning, så GitHub teknisk set kan få adgang til indholdet. Overførslen er omfattet af EU-U.S. Data Privacy Framework."
     ],
     [
       "p",
