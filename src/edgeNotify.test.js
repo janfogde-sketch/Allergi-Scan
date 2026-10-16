@@ -172,7 +172,7 @@ describe("edge: notify", () => {
     expect(eventUpdates(h).at(-1)).toMatchObject({ status: "done" });
     expect(notes.map((n) => n.user_id)).toEqual(["user-a"]);
     expect(notes[0]).toMatchObject({ type: "P1", variant: "lowered", category: "product_changes" });
-    expect(JSON.stringify(notes[0].content_blocks)).toContain("Mælkeprotein står nu som ikke indeholdt");
+    expect(JSON.stringify(notes[0].content_blocks)).toContain("Mælkeprotein er nu registreret som ikke indeholdt");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
