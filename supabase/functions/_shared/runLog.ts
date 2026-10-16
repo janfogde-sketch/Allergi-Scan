@@ -5,7 +5,7 @@
 
 // deno-lint-ignore no-explicit-any
 type Client = any;
-export type RunJob = "off_import" | "reanalyze";
+export type RunJob = "off_import" | "reanalyze" | "recalls_sync";
 export type RunStatus = "ok" | "partial" | "failed";
 
 /** Starter en kørsel. null = en anden kørsel af samme slags er i gang; "ulogget" = logningen er ikke tilgængelig (kørslen fortsætter alligevel). */

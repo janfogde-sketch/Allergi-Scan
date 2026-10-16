@@ -1,6 +1,6 @@
 // @ts-check
 // Leksikonadministrationen (knowledge_base): liste med søgning, kategori, filtre og sortering på serveren, opslag, gemning, sletning og historik.
-// Tabellen er offentlig læsbar og kan kun ændres af administratorer (RLS). Redaktionelle felter (migration 20261016190000) bruges kun, når kolonnerne findes;
+// Tabellen er offentlig læsbar og kan kun ændres af administratorer (RLS). Redaktionelle felter (migration 20261017091000) bruges kun, når kolonnerne findes;
 // før da virker alt som hidtil. En fejl er aldrig en tom liste, og gemning sender kun, hvad formularen ejer (tips og risikoniveau røres ikke).
 import { useState, useRef, useCallback } from "react";
 import { SUPABASE_URL } from "../constants.jsx";
