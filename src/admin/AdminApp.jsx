@@ -67,7 +67,7 @@ export default function AdminApp() {
   const adminFamily = useAdminFamily(accessToken);
   const [familySearch, setFamilySearch] = useState("");
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
-  const recalls = useAdminRecalls(isAdmin ? accessToken : null);
+  const recalls = useAdminRecalls(isAdmin ? accessToken : null, (id) => (id ? (todos.admins || []).find((a) => a.id === id)?.name || "Administrator" : "Ingen"));
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
 
   // ── Sektion-skift henter frisk data ────────────────────────────────────────
@@ -249,7 +249,7 @@ export default function AdminApp() {
       {section === "audit" && <AuditLogSection {...auditLog} />}
       {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
       {section === "onboarding" && <OnboardingFunnelSection {...onboardingFunnel} />}
-      {section === "recalls" && <RecallsSection {...recalls} />}
+      {section === "recalls" && <RecallsSection recalls={recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && (
         <TodoSection {...todos} userId={userId} preset={todoPreset}

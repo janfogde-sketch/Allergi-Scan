@@ -70,3 +70,58 @@ describe("annulleret og ændret tilbagekaldelse", () => {
     expect(sameEanSet(["1"], ["1", "2"])).toBe(false);
   });
 });
+
+import { extractAffectedProducts, deriveUnitFromCarton, gtinKind } from "../supabase/functions/_shared/recallParser.js";
+
+describe("strukturerede berørte produkter", () => {
+  it("flere varianter hver med eget lot, dato og stregkode blandes ikke sammen", () => {
+    const t = "Frosty Pocket Lemon\nLotnr.: L1436RPK0222\nHoldbarhedsdato: 30/11/2027\nEAN/GTIN-nummer: 8435660200767\nNettoindhold: 150 ml\nFrosty Pocket Strawberry\nLotnr.: L1336RPK0111\nHoldbarhedsdato: 30/11/2027\nEAN/GTIN-nummer: 8435660200750\nNettoindhold: 150 ml";
+    const p = extractAffectedProducts(t);
+    expect(p.map((x) => x.name)).toEqual(["Frosty Pocket Lemon", "Frosty Pocket Strawberry"]);
+    expect(p[0].lots).toEqual(["L1436RPK0222"]);
+    expect(p[1].lots).toEqual(["L1336RPK0111"]);
+    expect(p[0].eans[0]).toMatchObject({ code: "8435660200767", valid: true });
+    expect(p[1].eans[0].code).toBe("8435660200750");
+    expect(p.every((x) => !x.uncertain)).toBe(true);
+  });
+  it("karton (GTIN-14) og salgsenhed skelnes, og flere partier med flere datoer markeres usikre", () => {
+    const t = "Amanda Makrelkræs tube 80 gram. Varenr. 107080001010,\nEAN karton: 15705550826125\nEAN på styk / tuben: 5705550826128\nProduktionsdato: 26-05-2026, 10-08-2026, 21-09-2026\nHoldbarhedsudløb: 26-05-2027, 10-08-2027, 21-09-2027\nLotnummer: 270526, 270810, 270921";
+    const [p] = extractAffectedProducts(t);
+    expect(p.name).toBe("Amanda Makrelkræs tube 80 gram");
+    expect(p.article_no).toBe("107080001010");
+    expect(p.eans.map((e) => [e.code, e.kind])).toEqual([["15705550826125", "carton"], ["5705550826128", "unit"]]);
+    expect(p.lots).toEqual(["270526", "270810", "270921"]);
+    expect(p.best_before).toHaveLength(3);
+    expect(p.flags).toContain("lot_date_pairing_unknown");
+    expect(p.uncertain).toBe(true);
+  });
+  it("GTIN-14 på karton giver den indeholdte salgsenhed (EAN-13); andre koder giver ingenting", () => {
+    expect(deriveUnitFromCarton("15705550826125")).toBe("5705550826128");
+    expect(deriveUnitFromCarton("5705550826128")).toBeNull();
+    expect(deriveUnitFromCarton("15705550826120")).toBeNull(); // forkert kontrolciffer
+    expect(gtinKind("15705550826125")).toBe("carton");
+    expect(gtinKind("5705550826128", "EAN på styk")).toBe("unit");
+  });
+  it("uden stregkode: produktlisten udtrækkes, men alt markeres usikkert og uden partioplysninger", () => {
+    const t = "Følgende produkter er omfattet:\nOksespegepølse – alm.\nLøgpølse\nDer kan være solgt yderligere varianter af spegepølser og pålægsprodukter. Produkterne kan kendes ved, at ingredienslisten kun fylder én linje.";
+    const p = extractAffectedProducts(t);
+    expect(p.map((x) => x.name)).toEqual(["Oksespegepølse – alm.", "Løgpølse"]);
+    for (const x of p) { expect(x.flags).toContain("no_barcode"); expect(x.flags).toContain("no_batch_info"); expect(x.uncertain).toBe(true); }
+  });
+  it("lot og dato i samme linje, ugyldigt kontrolciffer og manglende holdbarhedsdato", () => {
+    const [d] = extractAffectedProducts("Salling Øko Dild\nNettovægt: 15 g.\nEAN nr. 571287790945\nLot nr. L:007221 med bedst før den 15. 09.2027");
+    expect(d.eans[0]).toMatchObject({ code: "571287790945", valid: false });
+    expect(d.flags).toContain("invalid_barcode");
+    expect(d.lots).toEqual(["L:007221"]);
+    expect(d.best_before[0]).toMatch(/15\. ?09\.2027/);
+    const [k] = extractAffectedProducts("Bähncke Karry Ketchup\nEAN: 5702040711032\nVarenummer: 457150769\nL-kode: 493181");
+    expect(k.best_before).toEqual([]);
+    expect(k.lots).toEqual(["493181"]);
+    expect(k.flags).not.toContain("no_batch_info");
+  });
+  it("parseRecallPage gemmer hele artiklen som rå tekst", () => {
+    const r = parseRecallPage(PAGE, { title: "Tilbagekald" });
+    expect(r.rawText).toContain("Kassér produktet.");
+    expect(r.rawText).toContain("Frosty Pocket Fejl");
+  });
+});
