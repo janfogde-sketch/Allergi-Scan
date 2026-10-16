@@ -72,15 +72,18 @@ describe("opgaver: mobilkort og desktoptabel", () => {
 
 describe("tickets: mobilkort og handlingsmenu", () => {
   const ticket = { id: "k1", type: "content", description: "Privatlivspolitik – ikke færdig. Teksten mangler afsnit 4 om børn.", status: "open", created_at: "2026-09-30T10:00:00Z", context: { screen_label: "PrivacyScreen" } };
-  const props = { adminTickets: [ticket], ticketsLoading: false, adminTicketFilter: "active", setAdminTicketFilter: vi.fn(), ticketsIncludeDone: true, loadTickets: vi.fn(), openTicket: null, setOpenTicket: vi.fn(), updateTicketStatus: vi.fn() };
-  it("mobil: kort med titel, uddrag, type, skærm, dato, status og Kopiér prompt", () => {
+  const work = { meta: {}, tasks: {}, todos: {}, admins: [], available: true, nameOf: () => "Ingen", load: vi.fn(), loadDetail: async () => ({ ok: true, metaLog: [], todoActivity: [], comments: [], tasks: [] }) };
+  const props = { adminTickets: [ticket], ticketsLoading: false, adminTicketFilter: "active", setAdminTicketFilter: vi.fn(), ticketsIncludeDone: true, loadTickets: vi.fn(), openTicket: null, setOpenTicket: vi.fn(), updateTicketStatus: vi.fn(), work };
+  it("kort (mobil og desktop) med titel, uddrag, kategori, status og dato; hele kortet åbner ticketten; handlinger ligger i detaljerne", () => {
     setMobile(true);
     const { container } = render(<TicketsSection {...props} />);
     expect(container.querySelector("table")).toBeNull();
     expect(screen.getByText("Privatlivspolitik – ikke færdig.")).toBeTruthy();
-    expect(screen.getByText("Indhold")).toBeTruthy();
-    expect(screen.getByText("PrivacyScreen")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Kopiér prompt" })).toBeTruthy();
+    const card = screen.getByText("Privatlivspolitik – ikke færdig.").closest("button");
+    expect(card.textContent).toContain("Indhold");
+    expect(screen.queryByRole("button", { name: "Kopiér prompt" })).toBeNull(); // ikke på kortet
+    fireEvent.click(card);
+    expect(props.setOpenTicket).toHaveBeenCalledWith(ticket);
   });
   it("downloads ligger i 'Flere handlinger', og opdatering sker fra headeren (ikke her)", () => {
     setMobile(false);

@@ -18,6 +18,7 @@ import { useAdminKnowledge } from "./useAdminKnowledge.js";
 import { useAdminMissing } from "./useAdminMissing.js";
 import { useAdminImport } from "./useAdminImport.js";
 import { useAdminHistory } from "./useAdminHistory.js";
+import { useTicketWork } from "./useTicketWork.js";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
@@ -55,6 +56,7 @@ export default function AdminApp() {
   const missing = useAdminMissing(isAdmin ? accessToken : null);
   const dataImport = useAdminImport(isAdmin ? accessToken : null);
   const history = useAdminHistory(isAdmin ? accessToken : null);
+  const ticketWork = useTicketWork(isAdmin ? accessToken : null, userId);
   const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -217,7 +219,8 @@ export default function AdminApp() {
           ticketsIncludeDone={admin.ticketsIncludeDone} loadTickets={admin.loadTickets}
           openTicket={admin.openTicket} setOpenTicket={admin.setOpenTicket}
           getTicketScreenshotUrl={admin.getTicketScreenshotUrl}
-          updateTicketStatus={async (id, status, note) => { await admin.updateTicketStatus(id, status, note); todos.load({ quiet: true }); }}
+          work={ticketWork}
+          updateTicketStatus={async (id, status, note) => { await admin.updateTicketStatus(id, status, note); todos.load({ quiet: true }); ticketWork.load(); }}
         />
       )}
       {section === "missing" && (

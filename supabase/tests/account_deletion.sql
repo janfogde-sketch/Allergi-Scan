@@ -24,7 +24,7 @@ declare
     'push_tokens.user_id','recipes.reviewed_by','recipes.submitted_by','revision_log.changed_by',
     'scan_history.user_id','search_selections.user_id','security_reports.user_id',
     'shopping_list_access.user_id','shopping_list_hidden.user_id','shopping_list_items.added_by',
-    'shopping_lists.owner_id','submissions.reviewed_by','submissions.submitted_by','user_allergens.user_id',
+    'shopping_lists.owner_id','ticket_meta_log.changed_by','ticket_tasks.created_by','submissions.reviewed_by','submissions.submitted_by','user_allergens.user_id',
     'users.email','users.id'
   ];
   found text[]; missing text[]; stale text[];
