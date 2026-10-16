@@ -1,10 +1,10 @@
 // @ts-nocheck
 import { useShowSpinner } from "../RefreshContext.js";
 import React from "react";
-import { PRODUCT_ALLERGENS } from "../../constants.jsx";
+import ProductEditor from "./ProductEditor.jsx";
 import { downloadCsv } from "../csvExport.js";
+import { VERIFIED_LABELS, labelOr } from "../productsLogic.js";
 
-const VERIFIED_STATUSES = ["unverified", "partial", "verified"];
 const CSV_COLUMNS = [
   { key: "name", label: "Navn" },
   { key: "brand", label: "Brand" },
@@ -19,16 +19,10 @@ const CSV_COLUMNS = [
 export default function ProductsSection({
   products, productsLoading, productSearch, setProductSearch, loadProducts,
   openProduct, setOpenProduct, editingProduct, setEditingProduct,
-  productActionLoading, openProductForEdit, saveProductEdit, deleteProduct,
+  productActionLoading, openProductForEdit, saveProductEdit, deleteProduct, loadProductHistory,
 }) {
   const showSpinner = useShowSpinner(productsLoading, products.length > 0);
   const close = () => { setOpenProduct(null); setEditingProduct(null); };
-
-  const handleDelete = () => {
-    if (!openProduct) return;
-    if (!window.confirm(`Slet "${openProduct.name || openProduct.ean}" permanent? Dette kan ikke fortrydes.`)) return;
-    deleteProduct(openProduct.id);
-  };
 
   return (
     <>
@@ -66,7 +60,7 @@ export default function ProductsSection({
                   <td data-label="Kilde">{p.source || "–"}</td>
                   <td data-label="Status">
                     <span className={`admin-pill ${p.verified_status === "verified" ? "admin-pill-green" : p.verified_status === "partial" ? "admin-pill-amber" : "admin-pill-neutral"}`}>
-                      {p.verified_status || "unverified"}
+                      {labelOr(VERIFIED_LABELS, p.verified_status || "unverified")}
                     </span>
                   </td>
                   <td data-label="Opdateret">{p.updated_at ? new Date(p.updated_at).toLocaleDateString("da-DK") : "–"}</td>
@@ -78,89 +72,9 @@ export default function ProductsSection({
         )}
       </div>
 
-      {openProduct && !editingProduct && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-loading-row"><div className="admin-spinner" /> Henter produkt…</div>
-          </div>
-        </div>
-      )}
-
-      {openProduct && editingProduct && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>Redigér produkt</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--mono)" }}>EAN {openProduct.ean} · ID: {openProduct.id}</div>
-              </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Produktnavn</label>
-                <input value={editingProduct.name} onChange={e => setEditingProduct(s => ({ ...s, name: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Brand</label>
-                <input value={editingProduct.brand} onChange={e => setEditingProduct(s => ({ ...s, brand: e.target.value }))} />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Kategori</label>
-                <input value={editingProduct.category} onChange={e => setEditingProduct(s => ({ ...s, category: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Verificeringsstatus</label>
-                <select value={editingProduct.verified_status} onChange={e => setEditingProduct(s => ({ ...s, verified_status: e.target.value }))}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)", fontSize: 13 }}>
-                  {VERIFIED_STATUSES.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Ingredienstekst</label>
-              <textarea className="admin-textarea" rows={3} value={editingProduct.ingredients_text}
-                onChange={e => setEditingProduct(s => ({ ...s, ingredients_text: e.target.value }))}
-                placeholder="Ingrediensliste…" />
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Allergener (klik for at skifte: Nej → Ja → Spor)</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 }}>
-                {PRODUCT_ALLERGENS.map(a => {
-                  const val = editingProduct.allergen_flags[a.id] || "no";
-                  const next = val === "no" ? "yes" : val === "yes" ? "traces" : "no";
-                  const isYes = val === "yes", isTrace = val === "traces";
-                  return (
-                    <button key={a.id}
-                      onClick={() => setEditingProduct(s => ({ ...s, allergen_flags: { ...s.allergen_flags, [a.id]: next } }))}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 6, padding: "7px 10px", borderRadius: 8, cursor: "pointer",
-                        border: `1px solid ${isYes ? "var(--red-md)" : isTrace ? "var(--amber-md)" : "var(--border)"}`,
-                        background: isYes ? "var(--red-lt)" : isTrace ? "var(--amber-lt)" : "var(--surface3)",
-                        fontFamily: "var(--f)", fontSize: 12,
-                      }}>
-                      <span style={{ flex: 1, textAlign: "left", fontWeight: 600, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted2)" }}>{a.label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 800, color: isYes ? "var(--red)" : isTrace ? "var(--amber)" : "var(--muted)" }}>
-                        {isYes ? "JA" : isTrace ? "SPOR" : "NEJ"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <button className="admin-btn admin-btn-primary" disabled={productActionLoading} onClick={saveProductEdit}>Gem ændringer</button>
-              <button className="admin-btn admin-btn-danger" disabled={productActionLoading} onClick={handleDelete} style={{ marginLeft: "auto" }}>Slet produkt</button>
-            </div>
-          </div>
-        </div>
+      {openProduct && (
+        <ProductEditor product={openProduct} draft={editingProduct} setDraft={setEditingProduct} busy={productActionLoading}
+          onSave={saveProductEdit} onDelete={() => deleteProduct(openProduct.id)} onClose={close} onRetry={() => openProductForEdit(openProduct)} loadHistory={loadProductHistory} />
       )}
     </>
   );

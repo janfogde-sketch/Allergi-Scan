@@ -277,7 +277,7 @@ export default function AdminApp() {
           editingProduct={admin.editingProduct} setEditingProduct={admin.setEditingProduct}
           productActionLoading={admin.productActionLoading}
           openProductForEdit={admin.openProductForEdit} saveProductEdit={admin.saveProductEdit}
-          deleteProduct={admin.deleteProduct}
+          deleteProduct={admin.deleteProduct} loadProductHistory={admin.loadProductHistory}
         />
       )}
       {section === "knowledge" && (
