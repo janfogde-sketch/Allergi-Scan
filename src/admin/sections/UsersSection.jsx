@@ -7,6 +7,7 @@ import { Icon, showToast } from "../../SharedComponents.jsx";
 import { useShowSpinner } from "../RefreshContext.js";
 import UserDetail from "./UserDetail.jsx";
 import { USER_TABS, ROLE_LABELS, onboardingStatus, usersCountText, CSV_COLUMNS } from "../usersLogic.js";
+import CloseX from "../CloseX.jsx";
 
 function StateBox({ icon, title, text, action, role }) {
   return (
@@ -34,7 +35,7 @@ function ExportDialog({ count, filtered, busy, onClose, onConfirm }) {
             <div id="usr-export-title" className="audit-sheet-title">Eksportér brugere til CSV</div>
             <div className="audit-sheet-time">Eksporten registreres i aktivitetsloggen.</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} disabled={busy} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} disabled={busy} />
         </div>
         <dl className="audit-detail">
           <div className="audit-detail-row"><dt>Brugere</dt><dd>{count === null ? "Antal ukendt" : count.toLocaleString("da-DK")} {filtered ? "(kun dem, der matcher fane og søgning)" : "(alle brugere)"}</dd></div>

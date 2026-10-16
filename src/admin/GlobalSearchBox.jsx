@@ -7,6 +7,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useIsMobile } from "./useIsMobile.js";
+import CloseX from "./CloseX.jsx";
 
 export default function GlobalSearchBox({
   globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
@@ -117,7 +118,7 @@ export default function GlobalSearchBox({
                     onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }} />
                 )}
               </form>
-              <button type="button" className="admin-btn admin-btn-ghost admin-touch" onClick={() => setSheetOpen(false)}>Luk</button>
+              <CloseX inline onClick={() => setSheetOpen(false)} />
             </div>
             <div className="admin-search-sheet-body">{localSearch ? <div style={{ fontSize: 12, color: "var(--muted)" }}>{localSearch.value.trim() ? "Resultaterne vises på siden, når du lukker søgningen." : "Skriv for at søge på denne side."}</div> : resultsBody}</div>
           </div>

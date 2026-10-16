@@ -7,6 +7,7 @@ import { useShowSpinner } from "../RefreshContext.js";
 import { Icon } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
 import { fmtLocalFull } from "../importLogic.js";
+import CloseX from "../CloseX.jsx";
 import {
   ACTIONS, ACTION_LABEL, ACTION_PILL, PERIODS, SORTS, KIND_LABEL, fieldLabel, actorOf, sourceOf, allergenDiff, changeKind, valueText, touchesAllergens, describe, hasDetails,
 } from "../historyLogic.js";
@@ -51,7 +52,7 @@ function Detail({ row, onClose, onOpenProduct }) {
             <div className="audit-sheet-title hi-name">{row.name || "Produkt uden registreret navn"}</div>
             <div className="audit-sheet-time">{row.ean ? <span className="np-mono">{row.ean}</span> : "EAN ikke registreret"}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
         <div className="todo-panel-body">
           <dl className="audit-detail">

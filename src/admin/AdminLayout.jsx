@@ -98,7 +98,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
         {...(drawerOpen ? { role: "dialog", "aria-modal": "true" } : {})}
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="admin-sidebar-head">
-          <div className="admin-sidebar-logo"><EatSafeLogo variant="horizontal" size={20} /> Admin</div>
+          <div className="admin-sidebar-brand"><EatSafeLogo variant="horizontal" size={24} /><span className="admin-sidebar-section">Administration</span></div>
           <button type="button" ref={closeBtnRef} className="admin-nav-close" aria-label="Luk menu" onClick={closeNav}>
             <Icon name="x" size={18} color="var(--ink2)" />
           </button>
@@ -112,7 +112,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
               <div key={group.id} className="admin-nav-group">
                 <button type="button" className="admin-nav-group-head" aria-expanded={isOpen} aria-controls={`nav-group-${group.id}`}
                   onClick={() => toggleGroup(group.id)}>
-                  <span className={`admin-nav-chev${isOpen ? "" : " closed"}`} aria-hidden="true"><Icon name="chevronDown" size={12} color="var(--muted)" /></span>
+                  <span className={`admin-nav-chev${isOpen ? "" : " closed"}`} aria-hidden="true"><Icon name="chevronDown" size={14} color="var(--ink2)" /></span>
                   <span className="admin-nav-group-label">{group.label}</span>
                   {!isOpen && <NavBadge count={groupTotal} tone={worstTone(groupBadges.filter((b) => b.n > 0).map((b) => b.tone))} />}
                 </button>
@@ -140,6 +140,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
           })}
         </nav>
         <div className="admin-sidebar-footer">
+          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={16} color="var(--ink2)" /><span>Tilbage til EatSafe</span></a>
           <div className="admin-sidebar-user" title={userEmail}><Icon name="profile" size={14} color="var(--muted)" /><span>{userEmail}</span></div>
           <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} />
           <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm admin-btn-quiet" onClick={logout}><Icon name="logout" size={14} color="var(--muted)" />Log ud</button>

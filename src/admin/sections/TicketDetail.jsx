@@ -8,6 +8,7 @@ import Disclosure from "../Disclosure.jsx";
 import { ticketReporter } from "../../ticketReporter.js";
 import { statusPill } from "../statusTone.js";
 import { fmtLocalFull } from "../importLogic.js";
+import CloseX from "../CloseX.jsx";
 import {
   TYPE_LABELS, STATUS_LABELS, PRIORITIES, PRIORITY_PILL, PRIORITY_LABEL, TASK_STATUS, ticketTitleParts, effectivePriority, originLabel, isLegalCandidate, progress, buildActivity,
 } from "../ticketsLogic.js";
@@ -74,7 +75,7 @@ export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCop
               <span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span>
             </div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
 
         <div className="todo-panel-body">

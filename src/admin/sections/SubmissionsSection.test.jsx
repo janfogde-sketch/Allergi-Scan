@@ -78,3 +78,26 @@ describe("Indsendelser", () => {
     expect(p.updateSubmissionAndApprove).toHaveBeenCalled();
   });
 });
+
+describe("Indsendelser: luk med kryds og advarsel ved ændringer", () => {
+  it("kryds lukker uden ændringer; med ændringer vises en bekræftelse, og 'Bliv og ret' bevarer vinduet", () => {
+    setMobile(false);
+    const s = sub();
+    const ed = { name: "Kiks", brand: "", ingredients_text: "mel", allergen_flags: {}, excluded_enumbers: [] };
+    const setOpen = vi.fn(); const setEdit = vi.fn();
+    const mk = (editing) => <SubmissionsSection {...props([s], "pending", { openSubmission: s, editingSubmission: editing, setOpenSubmission: setOpen, setEditingSubmission: setEdit })} />;
+    const { rerender } = render(mk(ed));
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
+    expect(setOpen).toHaveBeenCalledWith(null);
+    setOpen.mockClear();
+    rerender(mk({ ...ed, name: "Kiks med ændring" }));
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
+    expect(setOpen).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog", { name: "Ikke-gemte ændringer" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Bliv og ret" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Luk" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kassér ændringer" }));
+    expect(setOpen).toHaveBeenCalledWith(null);
+  });
+});

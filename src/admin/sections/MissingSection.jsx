@@ -8,6 +8,7 @@ import { Icon, showToast } from "../../SharedComponents.jsx";
 import { PRODUCT_CATEGORIES } from "../productsLogic.js";
 import { fmtAuditDateTime } from "../auditLogic.js";
 import { MISSING_STATUS, MISSING_STATUS_LABEL, MISSING_STATUS_PILL, MISSING_SETTABLE, MISSING_PERIODS, MISSING_SORTS, validateCreate, eanWarning, attemptsText } from "../missingLogic.js";
+import CloseX from "../CloseX.jsx";
 
 const date = (v) => (v ? new Date(v).toLocaleDateString("da-DK", { timeZone: "Europe/Copenhagen" }) : "–");
 
@@ -52,7 +53,7 @@ function Sheet({ row, m, onClose, onOpenProduct }) {
             <div className="audit-sheet-title np-mono">{row.ean}</div>
             <div className="audit-sheet-time">{attemptsText(row.attempts)} · seneste {fmtAuditDateTime(row.last_seen)}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
         <div className="todo-panel-body">
           {err && <div className="pe-notice pe-red" role="alert">{err}</div>}

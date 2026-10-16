@@ -7,6 +7,7 @@ import { Icon } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
 import { fmtLocalFull } from "../importLogic.js";
 import { isOfficialRecallUrl } from "../../../supabase/functions/_shared/recallParser.js";
+import CloseX from "../CloseX.jsx";
 import {
   STATUS_TEXT, MATCH_LABEL, MATCH_PILL, FLAG_TEXT, recallProducts, lookupCodes, matchEntry, summarizeMatch, missingInfoText, nameMismatch, recallHistory, notificationSummary,
   addProduct, removeProduct, searchTermFromRaw, confirmSendText, RECALL_STATUS_PILL,
@@ -129,7 +130,7 @@ export default function RecallDetail({ recall, onClose, api }) {
             <div id="rc-title" className="audit-sheet-title rc-title">{recall.title}</div>
             <div className="audit-sheet-time">{fmtDay(recall.published_at)} · <span className={`admin-pill ${RECALL_STATUS_PILL[recall.status]}`}>{STATUS_TEXT[recall.status]}</span></div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
 
         <div className="todo-panel-body">

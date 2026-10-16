@@ -8,6 +8,7 @@ import { PRODUCT_ALLERGENS } from "../../constants.jsx";
 import { Icon } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
 import { fmtAuditDateTime } from "../auditLogic.js";
+import CloseX from "../CloseX.jsx";
 import {
   FLAG_STATES, FLAG_META, flagState, canMarkNotDetected, validateProduct, verifyBlockers, eanCheck, productDirty,
   VERIFIED_LABELS, QUALITY_LABELS, SOURCE_LABELS, METHOD_LABELS, labelOr,
@@ -84,7 +85,7 @@ export default function ProductEditor({ product, draft, setDraft, busy, onSave, 
             <div id="pe-title" className="audit-sheet-title">{(ready && draft.name) || product.name || "Produkt uden navn"}</div>
             <div className="audit-sheet-time">EAN {product.ean}{ready && !ean.ok ? " · tjek EAN" : ""}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={requestClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={requestClose} />
         </div>
 
         <div className="todo-panel-body">

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useShowSpinner } from "../RefreshContext.js";
 import { useIsMobile } from "../useIsMobile.js";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { PRODUCT_ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
 import { apiCall, makeHeaders, extractENumbers, normalizeENumber, addENumberToText } from "../../helpers.js";
 import { showToast } from "../../SharedComponents.jsx";
@@ -11,6 +11,7 @@ import {
   SUBMISSION_STATUS_LABELS, SUBMISSION_ACTION_LABELS, submissionTypeLabel,
 } from "../submissionLogic.js";
 import { privateImagePath, SUBMISSION_IMAGES_BUCKET } from "../../../supabase/functions/_shared/productImages.js";
+import CloseX from "../CloseX.jsx";
 
 const fmtDate = (d) => new Intl.DateTimeFormat("da-DK", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", year: "numeric" }).format(new Date(d));
 const productName = (s) => s.ai_parsed_data?.name || s.product_name || "Ukendt produkt";
@@ -195,6 +196,13 @@ export default function SubmissionsSection({
   };
 
   const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };
+  // Ikke-gemte ændringer: sammenlignes med indholdet, da vinduet blev åbnet; kassering kræver bekræftelse
+  const [discardAsk, setDiscardAsk] = useState(false);
+  const snapRef = useRef({ id: null, json: "" });
+  if (openSubmission && editingSubmission && snapRef.current.id !== openSubmission.id) snapRef.current = { id: openSubmission.id, json: JSON.stringify(editingSubmission) };
+  if (!openSubmission && snapRef.current.id) snapRef.current = { id: null, json: "" };
+  const dirtySubmission = !!(openSubmission && editingSubmission && snapRef.current.id === openSubmission.id && snapRef.current.json !== JSON.stringify(editingSubmission));
+  const requestClose = () => { if (dirtySubmission) setDiscardAsk(true); else close(); };
 
   const isMobile = useIsMobile();
   const readOnly = !!openSubmission && openSubmission.status !== "pending"; // godkendte og afviste indsendelser kan kun ses, aldrig behandles igen herfra
@@ -272,8 +280,17 @@ export default function SubmissionsSection({
       )}
 
       {openSubmission && editingSubmission && (
-        <div className="admin-modal-overlay" onClick={close}>
+        <div className="admin-modal-overlay" onClick={requestClose}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
+            {discardAsk && (
+              <div className="todo-confirm" role="alertdialog" aria-label="Ikke-gemte ændringer" style={{ marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Du har ændringer, der ikke er gemt.</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setDiscardAsk(false)}>Bliv og ret</button>
+                  <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={() => { setDiscardAsk(false); close(); }}>Kassér ændringer</button>
+                </div>
+              </div>
+            )}
             <div className="admin-modal-header">
               <div>
                 <div style={{ fontSize: 16, fontWeight: 800 }}>{readOnly ? "Detaljer" : openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
@@ -291,7 +308,7 @@ export default function SubmissionsSection({
                   )}
                 </div>
               </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
+              <CloseX onClick={requestClose} />
             </div>
 
             <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
