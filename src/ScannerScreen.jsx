@@ -43,6 +43,7 @@ export default function ScannerScreen({
   proposedNutrition, setProposedNutrition,
   proposedNotes, setProposedNotes,
   ocrLoading, ocrText, setOcrText,
+  ocrUnreadable, scanProfiles,
   nutritionOcrLoading, handleNutritionCapture,
   productImagePreview,
   submitting, submitProduct,
@@ -209,6 +210,7 @@ export default function ScannerScreen({
             proposedNutrition={proposedNutrition} setProposedNutrition={setProposedNutrition}
             proposedNotes={proposedNotes} setProposedNotes={setProposedNotes}
             ocrLoading={ocrLoading} ocrText={ocrText} setOcrText={setOcrText}
+            ocrUnreadable={ocrUnreadable} scanProfiles={scanProfiles}
             nutritionOcrLoading={nutritionOcrLoading} handleNutritionCapture={handleNutritionCapture}
             productImagePreview={productImagePreview}
             submitting={submitting} submitProduct={submitProduct}
@@ -233,6 +235,7 @@ export default function ScannerScreen({
           <SubmittedScreen
             notFoundEan={notFoundEan}
             proposedName={proposedName}
+            proposedFlags={proposedFlags} ocrText={ocrText} scanProfiles={scanProfiles}
             setNotFoundStep={setNotFoundStep}
             setProposedName={setProposedName}
             setProposedFlags={setProposedFlags}

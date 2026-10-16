@@ -4,10 +4,12 @@ import { SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { Icon } from "./SharedComponents.jsx";
 import { normalizeProductName } from "./helpers.js";
+import { PhotoVerdictCard } from "./NotFoundParts.jsx";
 
 export default function SubmittedScreen({
   notFoundEan,
   proposedName,
+  proposedFlags, ocrText, scanProfiles,
   setNotFoundStep,
   setProposedName,
   setProposedFlags,
@@ -52,6 +54,11 @@ export default function SubmittedScreen({
         </div>
         <div style={{ fontSize: 13, color: "var(--ink2)", lineHeight: 1.55, marginBottom: 16 }}>
           Vi gennemgår produktet snarest. Du får besked, når det er godkendt og tilgængeligt i EatSafe.
+        </div>
+
+        {/* Den foreløbige vurdering fra billedet gentages her, så brugeren ikke går fra produktet uden svaret (16. okt. 2026) */}
+        <div style={{ textAlign: "left" }}>
+          <PhotoVerdictCard profiles={scanProfiles} flags={proposedFlags} ingredientsText={ocrText} />
         </div>
 
         {/* EAN som diskret, sekundær information */}
