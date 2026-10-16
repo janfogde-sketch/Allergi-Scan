@@ -55,6 +55,7 @@ export default function AdminApp() {
   const aiUsage = useAiUsage(accessToken);
   const onboardingFunnel = useOnboardingFunnel(accessToken);
   const adminFamily = useAdminFamily(accessToken);
+  const [familySearch, setFamilySearch] = useState("");
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
   const recalls = useAdminRecalls(isAdmin ? accessToken : null);
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
@@ -216,6 +217,7 @@ export default function AdminApp() {
           globalSearchLoading={admin.globalSearchLoading} runGlobalSearch={admin.runGlobalSearch}
           setSection={setSection} setUserSearch={admin.setUserSearch}
           setProductSearch={admin.setProductSearch} loadProducts={admin.loadProducts}
+          localSearch={section === "family" ? { value: familySearch, onChange: setFamilySearch, placeholder: "Søg i familier (ejer, navn, e-mail)…" } : undefined}
         />
       }
     >
@@ -308,7 +310,7 @@ export default function AdminApp() {
         <TodoSection {...todos} userId={userId} preset={todoPreset}
           onOpenTicket={(ticketId) => { setSection("tickets"); admin.openTicketById(ticketId); }} />
       )}
-      {section === "family" && <FamilySection {...adminFamily} />}
+      {section === "family" && <FamilySection {...adminFamily} q={familySearch} setQ={setFamilySearch} />}
     </AdminLayout>
     </RefreshContext.Provider>
     </>

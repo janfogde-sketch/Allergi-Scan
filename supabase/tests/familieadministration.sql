@@ -16,6 +16,7 @@ begin
   update public.users set role='admin' where id=adm;
   alter table public.users enable trigger prevent_role_self_escalation_trigger;
   insert into public.family_members(family_owner_id, name) values (own, 'Barn') returning id into fid;
+  insert into public.family_members(user_id, family_owner_id, name) values (oth, own, 'Anden konto');
   insert into public.family_invites(token, invited_by, status, expires_at) values ('t-pend-'||gen_random_uuid(), own, 'pending', now() + interval '1 day') returning id into inv_pend;
   insert into public.family_invites(token, invited_by, status, expires_at) values ('t-exp-'||gen_random_uuid(), own, 'pending', now() - interval '1 day') returning id into inv_exp;
   insert into public.family_invites(token, invited_by, status, expires_at, requested_by) values ('t-req-'||gen_random_uuid(), own, 'pending', now() + interval '1 day', oth) returning id into inv_req;
@@ -44,7 +45,14 @@ begin
   if (v->>'total')::int < 1 then res := res || 'OVERSIGT-TOM '; end if;
   if v::text like '%Barn%' then res := res || 'NAVN-I-OVERSIGT '; end if;
   v := public.admin_family_detail(own);
-  if jsonb_array_length(v->'members') <> 1 or jsonb_array_length(v->'invites') <> 4 then res := res || 'DETALJER-FORKERTE '; end if;
+  if jsonb_array_length(v->'members') <> 3 or jsonb_array_length(v->'invites') <> 4 then res := res || 'DETALJER-FORKERTE '; end if;
+  -- Medlemstype: en række uden egen konto er en børneprofil, den forbundne er en voksen; en række med en anden konto end ejeren er 'unknown' (gættes ikke)
+  select count(*) into n from jsonb_array_elements(v->'members') m where m->>'type' = 'child' and m->>'name' = 'Barn'; if n<>1 then res := res || 'BOERNEPROFIL-FORKERT '; end if;
+  select count(*) into n from jsonb_array_elements(v->'members') m where m->>'type' = 'adult'; if n<>1 then res := res || 'VOKSEN-FORKERT '; end if;
+  select count(*) into n from jsonb_array_elements(v->'members') m where m->>'type' = 'unknown' and m->>'name' = 'Anden konto'; if n<>1 then res := res || 'UKENDT-TYPE-GAETTET '; end if;
+  v := public.admin_family_overview();
+  select count(*) into n from jsonb_array_elements(v->'rows') r where r->>'owner_id' = own::text and (r->>'profiles')::int = 2 and (r->>'connected')::int = 1; if n<>1 then res := res || 'ANTAL-FORKERT '; end if;
+  v := public.admin_family_detail(own);
   if v::text like '%allergen%' then res := res || 'ALLERGIER-I-DETALJER '; end if;
 
   -- Afledt status

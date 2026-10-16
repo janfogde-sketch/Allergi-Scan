@@ -10,8 +10,9 @@ import { useIsMobile } from "./useIsMobile.js";
 
 export default function GlobalSearchBox({
   globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
-  setSection, setUserSearch, setProductSearch, loadProducts,
+  setSection, setUserSearch, setProductSearch, loadProducts, localSearch,
 }) {
+  // localSearch: { value, onChange, placeholder }. På sider med egen søgning (fx Familie) styrer headerens søgefelt den side i stedet for den globale søgning.
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
   const isMobile = useIsMobile();
@@ -106,14 +107,19 @@ export default function GlobalSearchBox({
         {sheetOpen && (
           <div className="admin-search-sheet" role="dialog" aria-modal="true" aria-label="Søg i admin">
             <div className="admin-search-sheet-bar">
-              <form onSubmit={(e) => { e.preventDefault(); runGlobalSearch(globalSearch); }}>
-                <input ref={inputRef} className="admin-search" style={{ width: "100%" }} placeholder="Søg brugere, produkter, tickets…" enterKeyHint="search"
-                  value={globalSearch}
-                  onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }} />
+              <form onSubmit={(e) => { e.preventDefault(); if (localSearch) { e.target.querySelector("input")?.blur(); setSheetOpen(false); } else runGlobalSearch(globalSearch); }}>
+                {localSearch ? (
+                  <input ref={inputRef} className="admin-search" type="search" style={{ width: "100%" }} placeholder={localSearch.placeholder} enterKeyHint="search"
+                    value={localSearch.value} onChange={e => localSearch.onChange(e.target.value)} />
+                ) : (
+                  <input ref={inputRef} className="admin-search" style={{ width: "100%" }} placeholder="Søg brugere, produkter, tickets…" enterKeyHint="search"
+                    value={globalSearch}
+                    onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }} />
+                )}
               </form>
               <button type="button" className="admin-btn admin-btn-ghost admin-touch" onClick={() => setSheetOpen(false)}>Luk</button>
             </div>
-            <div className="admin-search-sheet-body">{resultsBody}</div>
+            <div className="admin-search-sheet-body">{localSearch ? <div style={{ fontSize: 12, color: "var(--muted)" }}>{localSearch.value.trim() ? "Resultaterne vises på siden, når du lukker søgningen." : "Skriv for at søge på denne side."}</div> : resultsBody}</div>
           </div>
         )}
       </>
@@ -122,13 +128,17 @@ export default function GlobalSearchBox({
 
   return (
     <div ref={boxRef} style={{ position: "relative", width: 320 }}>
-      <form onSubmit={submit}>
-        <input className="admin-search" placeholder="Søg brugere, produkter, tickets…" style={{ width: "100%" }}
-          value={globalSearch}
-          onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }}
-          onFocus={() => { if (globalSearchResults) setOpen(true); }} />
+      <form onSubmit={localSearch ? (e) => e.preventDefault() : submit}>
+        {localSearch ? (
+          <input className="admin-search" type="search" placeholder={localSearch.placeholder} style={{ width: "100%" }} value={localSearch.value} onChange={e => localSearch.onChange(e.target.value)} />
+        ) : (
+          <input className="admin-search" placeholder="Søg brugere, produkter, tickets…" style={{ width: "100%" }}
+            value={globalSearch}
+            onChange={e => { setGlobalSearch(e.target.value); if (!e.target.value.trim()) setGlobalSearchResults(null); }}
+            onFocus={() => { if (globalSearchResults) setOpen(true); }} />
+        )}
       </form>
-      {open && (
+      {open && !localSearch && (
         <div className="admin-modal" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 380, maxHeight: 420, overflowY: "auto", padding: 12, zIndex: 50 }}>
           {resultsBody}
         </div>
