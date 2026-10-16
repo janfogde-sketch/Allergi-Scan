@@ -25,6 +25,7 @@ export const MOCK_DATA = {
   "N6:reopened": TICKET,
   "N6:reply": TICKET,
   "P1:default": { ...PRODUCT, changeSummary: "Indeholder nu mælk" },
+  "P1:lowered": { ...PRODUCT, changeSummary: "Mælkeprotein står nu som ikke indeholdt" },
   "P2:default": { inviteId: "mock", expiresAt: "i morgen kl. 14.00" },
   "P3:one": { ...LIST, adders: "Jan", countText: "en vare", itemList: "• Havregryn" },
   "P3:many": { ...LIST, adders: "Jan og Bjørn", countText: "5 varer", itemList: "• Havregryn\n• Mælk\n• Æg\n• Smør\nog 1 flere" },

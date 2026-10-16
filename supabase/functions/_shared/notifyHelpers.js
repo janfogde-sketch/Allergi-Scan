@@ -102,6 +102,31 @@ export function summarizeAllergenChanges(list) {
   return list.map((c) => `${c.label} ${CHANGE_WORDS[c.value] ?? "er ændret"}`).join(", ");
 }
 
+// Lavere risiko (Jan 16. okt. 2026): ord til beskeden om en rettelse, hvor risikoen er sænket.
+const DECREASE_WORDS = { no: "står nu som ikke indeholdt", traces: "står nu som kan indeholde spor", unknown: "er nu uoplyst" };
+
+/**
+ * Hvilke sænkede flag gælder stadig og berører denne modtagers profiler? Samme form som affectedAllergenChanges.
+ * changes: { key: { old, new } } fra hændelsen; current: produktets AKTUELLE flag. Kun flag, hvor risikoen fortsat er lavere end før.
+ */
+export function affectedAllergenDecreases(changes, current, profileAllergens) {
+  const mine = new Set(profileAllergens);
+  const viaCoeliac = mine.has("coeliaki");
+  const out = [];
+  for (const [key, ch] of Object.entries(changes ?? {})) {
+    if (!mine.has(key) && !(viaCoeliac && (key === "gluten" || key === "hvede"))) continue;
+    const now = current?.[key] ?? "unknown";
+    if (allergenRiskRank(now) >= allergenRiskRank(ch?.old)) continue; // hævet igen siden
+    out.push({ key, label: ALLERGEN_LABELS[key] ?? key, value: now });
+  }
+  return out;
+}
+
+/** "Mælkeprotein står nu som ikke indeholdt, Æg står nu som kan indeholde spor". */
+export function summarizeAllergenDecreases(list) {
+  return list.map((c) => `${c.label} ${DECREASE_WORDS[c.value] ?? "er rettet"}`).join(", ");
+}
+
 // F1-12 (6. okt. 2026): ventetid før næste forsøg efter et midlertidigt fejlet forsøg nr. `attempt`
 // (1-baseret). Stigende, så et kort nedbrud hos push-/mailtjenesten ikke opbruger alle forsøg.
 export const RETRY_DELAYS_MIN = [1, 5, 15, 60, 240];
