@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { NEW_VIEWS, viewCounts, listRecalls, searchRecalls, recallProducts, lookupCodes, matchEntry, summarizeMatch, nameMismatch, syncStatus, recallHistory, notificationSummary, missingInfoText, STATUS_TEXT } from "./recallLogic.js";
+import { coversAllBatches, NEW_VIEWS, viewCounts, listRecalls, searchRecalls, recallProducts, lookupCodes, matchEntry, summarizeMatch, nameMismatch, syncStatus, recallHistory, notificationSummary, missingInfoText, STATUS_TEXT } from "./recallLogic.js";
 import { needsReviewCount, filterRecalls, countByStatus, addProduct, removeProduct, searchTermFromRaw, confirmSendText } from "./recallLogic.js";
 
 const R = [
@@ -31,8 +31,8 @@ describe("recallLogic", () => {
     expect(searchTermFromRaw(" dild ")).toBe("dild");
   });
   it("bekræftelsen nævner antal brugere og produkter", () => {
-    expect(confirmSendText(12, 2)).toBe("12 brugere får en besked. Send tilbagekaldelsen for 2 produkter? Det kan ikke fortrydes.");
-    expect(confirmSendText(1, 1)).toMatch(/^1 bruger får en besked\. .* 1 produkt\?/);
+    expect(confirmSendText(12, 2)).toBe("12 brugere vil modtage en varsling. Send tilbagekaldelsen for 2 produkter? Det kan ikke fortrydes.");
+    expect(confirmSendText(1, 1)).toMatch(/^1 bruger vil modtage en varsling\. .* 1 produkt\?/);
     expect(confirmSendText(0, 1)).toMatch(/^Ingen brugere/);
   });
 });
@@ -77,9 +77,11 @@ describe("produktmatch", () => {
     expect(s.reasons).toContain("Ingen gyldig stregkode på siden");
     expect(missingInfoText(r, entries)).toContain("gyldig stregkode");
   });
-  it("stregkode + partioplysninger = bekræftet; stregkode uden partioplysninger = muligt (ikke falsk sikkerhed)", () => {
+  it("bestemte partier eller datoer: stregkode alene er kun muligt; bekræftet kræver dokumentation for, at alle partier er omfattet", () => {
     const withBatch = recallProducts(RC())[0];
-    expect(matchEntry(withBatch, byEan([P]))[0]).toMatchObject({ level: "confirmed", product: P });
+    expect(matchEntry(withBatch, byEan([P]))[0]).toMatchObject({ level: "possible", product: P });
+    expect(matchEntry(withBatch, byEan([P]))[0].basis).toMatch(/kontrollér parti og dato/);
+    expect(matchEntry(withBatch, byEan([P]), {}, { allBatches: true })[0]).toMatchObject({ level: "confirmed", product: P });
     const noBatch = recallProducts(RC({ affected: "Testkiks\nEAN: 5701234567899" }))[0];
     const m = matchEntry(noBatch, byEan([P]))[0];
     expect(m.level).toBe("possible");
@@ -88,7 +90,7 @@ describe("produktmatch", () => {
   it("foranstillede nuller: EAN-13 i databasen findes også, når siden har 14 cifre med 0", () => {
     const e = recallProducts(RC({ affected: "Testkiks\nEAN: 05701234567899\nLotnr.: A1", eans: ["05701234567899"] }))[0];
     expect(e.eans[0].code).toBe("05701234567899");
-    expect(matchEntry(e, byEan([P]))[0].level).toBe("confirmed");
+    expect(matchEntry(e, byEan([P]), {}, { allBatches: true })[0].level).toBe("confirmed");
     expect(lookupCodes([e])).toContain("5701234567899");
   });
   it("karton (GTIN-14) er aldrig et bekræftet match; salgsenheden udledes og er kun et muligt match", () => {
@@ -97,7 +99,8 @@ describe("produktmatch", () => {
     const product = { id: "p2", ean: "5705550826128", name: "Makrelkræs" };
     const ms = matchEntry(e, byEan([product]));
     expect(ms.find((m) => m.kind === "carton")).toMatchObject({ level: "possible", unit: "5705550826128" });
-    expect(ms.find((m) => m.kind === "unit").level).toBe("confirmed");
+    expect(ms.find((m) => m.kind === "unit").level).toBe("possible"); // bestemte partier: stregkode alene er ikke bekræftet
+    expect(matchEntry(e, byEan([product]), {}, { allBatches: true }).find((m) => m.kind === "unit").level).toBe("confirmed");
     // kun kartonen i kataloget: intet automatisk match for den
     expect(matchEntry(e, byEan([{ id: "x", ean: "15705550826125", name: "Karton" }])).find((m) => m.kind === "carton").level).toBe("not_found");
   });
@@ -111,9 +114,13 @@ describe("produktmatch", () => {
   });
   it("flere varianter og lot: hver variant matches for sig", () => {
     const r = RC({ affected: "A Lemon\nLotnr.: L1\nEAN/GTIN-nummer: 8435660200767\nA Dracula\nLotnr.: L2\nEAN/GTIN-nummer: 8435660200774", eans: ["8435660200767", "8435660200774"] });
-    const s = summarizeMatch(r, recallProducts(r), { "8435660200767": { id: "p", ean: "8435660200767", name: "A Lemon" } });
-    expect(s.confirmed).toBe(1);
+    const lookup = { "8435660200767": { id: "p", ean: "8435660200767", name: "A Lemon" } };
+    const s = summarizeMatch(r, recallProducts(r), lookup);
+    expect(s.confirmed).toBe(0);
+    expect(s.possible).toBe(1);
     expect(s.notFound).toBe(1);
+    const all = summarizeMatch({ ...r, affected: `Alle partier er omfattet.\n${r.affected}` }, recallProducts({ ...r, affected: r.affected }), lookup);
+    expect(all.confirmed).toBe(1);
   });
   it("navnebeskyttelse: et produkt uden fælles ord med tilbagekaldelsen advares der om", () => {
     expect(nameMismatch({ name: "Kærnemælk", brand: "Arla" }, RC())).toBe(true);
@@ -121,11 +128,22 @@ describe("produktmatch", () => {
   });
 });
 
+describe("dokumentation for alle partier", () => {
+  it("kun udtrykkelige formuleringer tæller; manglende oplysninger gør aldrig noget til 'omfattet' eller 'ikke omfattet'", () => {
+    for (const t of ["Alle partier af produktet er omfattet", "samtlige batches tilbagekaldes", "Gælder alle datomærkninger", "Tilbagekaldelsen gælder uanset holdbarhedsdato", "Alle batchnumre", "Alle bedst før datoer.", "Alle bedst før-datoer"]) expect(coversAllBatches({ affected: t }), t).toBe(true);
+    for (const t of ["Lotnr.: A1", "Bedst før 01.01.2027", "Kun parti 12 er omfattet", "Alle bedst før datoer til og med 12.10.2027", "Alle bedst før datoer til og med maj 2027.", ""]) expect(coversAllBatches({ affected: t }), t).toBe(false);
+    const e = recallProducts(RC({ affected: "Testkiks\nEAN: 5701234567899" }))[0];
+    const m = matchEntry(e, { "5701234567899": { id: "p", ean: "5701234567899", name: "Testkiks" } })[0];
+    expect(m.level).toBe("possible");
+    expect(["not_covered", "confirmed"]).not.toContain(m.level);
+  });
+});
+
 describe("synkronisering, historik og varsling", () => {
   it("sync: fejl, forældet og ukendt vises aldrig som succes", () => {
     const ok = { status: "ok", started_at: "2026-10-16T17:00:00Z", finished_at: "2026-10-16T17:00:20Z" };
     expect(syncStatus([ok], Date.parse("2026-10-16T18:00:00Z"))).toMatchObject({ state: "ok", lastOkAt: ok.finished_at });
-    expect(syncStatus([{ status: "failed", error_code: "kilde_svarer_ikke", started_at: "2026-10-16T17:00:00Z" }, ok], NOW)).toMatchObject({ state: "failed", lastOkAt: ok.finished_at, code: "kilde_svarer_ikke" });
+    expect(syncStatus([{ status: "failed", error_code: "kilde_svarer_ikke", started_at: "2026-10-16T17:00:00Z" }, ok], NOW)).toMatchObject({ state: "failed", text: "Seneste hentning fra Fødevarestyrelsen mislykkedes", lastOkAt: ok.finished_at, code: "kilde_svarer_ikke" });
     expect(syncStatus([ok], Date.parse("2026-10-19T18:00:00Z")).state).toBe("stale");
     expect(syncStatus([], NOW).state).toBe("unknown");
     expect(syncStatus(null, NOW).state).toBe("unknown");

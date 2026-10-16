@@ -44,8 +44,8 @@ export const searchTermFromRaw = (raw) => String(raw ?? "").replace(/\D/g, "") |
 // Tekst til bekræftelsen før en besked sendes.
 export function confirmSendText(count, productCount) {
   const who = count === 0 ? "Ingen brugere har dem som favorit, scannet dem de seneste 90 dage eller har dem på en indkøbsliste"
-    : count === 1 ? "1 bruger får en besked"
-    : `${count} brugere får en besked`;
+    : count === 1 ? "1 bruger vil modtage en varsling"
+    : `${count} brugere vil modtage en varsling`;
   return `${who}. Send tilbagekaldelsen for ${productCount} ${productCount === 1 ? "produkt" : "produkter"}? Det kan ikke fortrydes.`;
 }
 
@@ -59,8 +59,8 @@ export const STATUS_TEXT = /** @type {Record<string, string>} */ ({ needs_review
 export const MATCH_LABEL = /** @type {Record<string, string>} */ ({ confirmed: "Bekræftet match", possible: "Muligt match", not_covered: "Ikke omfattet", not_found: "Ikke fundet i EatSafe", unverified: "Ugyldig stregkode" });
 export const MATCH_PILL = /** @type {Record<string, string>} */ ({ confirmed: "admin-pill-green", possible: "admin-pill-amber", not_covered: "admin-pill-neutral", not_found: "admin-pill-neutral", unverified: "admin-pill-red" });
 export const FLAG_TEXT = /** @type {Record<string, string>} */ ({
-  no_barcode: "Ingen stregkode angivet", invalid_barcode: "Stregkoden har ugyldigt kontrolciffer", no_batch_info: "Ingen partinummer eller datoer: alle partier kan være omfattet, kontrollér kilden",
-  lot_date_pairing_unknown: "Flere partier og datoer: hvilken dato der hører til hvilket parti er ikke angivet", no_name: "Produktnavn kunne ikke læses", sentence_only: "Teksten ligner en sætning, ikke et produkt",
+  no_barcode: "Ingen stregkode angivet", invalid_barcode: "Stregkoden har ugyldigt kontrolciffer", no_batch_info: "Parti- og datooplysninger mangler: alle partier kan være omfattet, kontrollér kilden",
+  lot_date_pairing_unknown: "Det er ikke angivet, hvilke datoer der hører til hvilke partier.", no_name: "Produktnavn kunne ikke læses", sentence_only: "Teksten ligner en sætning, ikke et produkt",
 });
 export const RECALL_PERIODS = /** @type {Array<[string, string]>} */ ([["", "Alle datoer"], ["30", "Seneste 30 dage"], ["90", "Seneste 90 dage"], ["365", "Seneste år"]]);
 
@@ -103,8 +103,9 @@ export function lookupCodes(entries) {
  *  not_found: ingen produkt i EatSafe. not_covered kommer kun fra administratorens afgørelse med begrundelse.
  * @param {any} entry @param {Record<string, any>} byEan @param {Record<string, any>} overrides stregkode → recall_matches-række
  */
-export function matchEntry(entry, byEan, overrides = {}) {
+export function matchEntry(entry, byEan, overrides = {}, opts = {}) {
   const hasBatch = entry.lots.length > 0 || entry.best_before.length > 0 || entry.production_dates.length > 0;
+  const allBatches = !!opts.allBatches;
   const findProduct = (/** @type {string} */ code) => eanVariants(code).map((v) => byEan[v]).find(Boolean) || null;
   return entry.eans.map((/** @type {{ code: string, kind: string, valid: boolean }} */ x) => {
     const override = overrides[x.code];
@@ -117,13 +118,28 @@ export function matchEntry(entry, byEan, overrides = {}) {
     }
     const product = findProduct(x.code);
     if (!product) return { code: x.code, kind: x.kind, level: "not_found", product: null, basis: "Stregkoden findes ikke i EatSafes produktkatalog", manual: false };
-    return { code: x.code, kind: x.kind, level: hasBatch ? "confirmed" : "possible", product, basis: hasBatch ? "Stregkoden matcher produktet, og siden angiver parti eller dato, som brugeren skal kontrollere" : "Stregkoden matcher produktet, men siden angiver ingen partioplysninger: alle partier kan være omfattet", manual: false };
+    // Bekræftet kræver dokumentation for, at produktet er omfattet: siden skal udtrykkeligt omfatte alle partier. Gælder tilbagekaldelsen bestemte partier eller datoer, er stregkoden alene kun et muligt match.
+    if (allBatches) return { code: x.code, kind: x.kind, level: "confirmed", product, basis: "Stregkoden matcher produktet, og siden oplyser, at alle partier er omfattet", manual: false };
+    return { code: x.code, kind: x.kind, level: "possible", product, basis: hasBatch ? "Stregkoden matcher produktet, men tilbagekaldelsen gælder bestemte partier eller datoer: kontrollér parti og dato på produktet" : "Stregkoden matcher produktet, men siden angiver ingen partioplysninger: alle partier kan være omfattet", manual: false };
   });
+}
+
+/** Oplyser siden udtrykkeligt, at alle partier er omfattet? (kun dokumenteret formulering; manglende partioplysninger tæller aldrig) @param {any} r */
+export function coversAllBatches(r) {
+  const text = `${r.title || ""} ${r.intro || ""} ${r.affected || ""}`;
+  const re = /\b(alle|samtlige)\s+(?:[\wæøå]+[\s-]+){0,2}?(partier|batches?|batchnumre|lotnumre|lotnummer|datoer|datomærkninger|holdbarhedsdatoer|produktionsdatoer)\b|\buanset\s+(parti|batch|lotnummer|holdbarhed|datomærkning|bedst før)/gi;
+  for (const m of text.matchAll(re)) {
+    // "Alle bedst før datoer til og med …" afgrænser datoerne og er derfor ikke alle partier
+    if (/^\s*(til og med|til|frem til|indtil|før|efter|fra)\b/i.test(text.slice(m.index + m[0].length, m.index + m[0].length + 20))) continue;
+    return true;
+  }
+  return false;
 }
 
 /** Samlet match for en tilbagekaldelse. @param {any} r @param {any[]} entries @param {Record<string, any>} byEan @param {Record<string, any>} overrides */
 export function summarizeMatch(r, entries, byEan, overrides = {}) {
-  const all = entries.flatMap((e) => matchEntry(e, byEan, overrides));
+  const opts = { allBatches: coversAllBatches(r) };
+  const all = entries.flatMap((e) => matchEntry(e, byEan, overrides, opts));
   const count = (/** @type {string} */ l) => all.filter((m) => m.level === l).length;
   /** @type {string[]} */ const reasons = [];
   if (!(r.eans || []).length) reasons.push("Ingen gyldig stregkode på siden");
@@ -194,11 +210,11 @@ export function syncStatus(runs, now = Date.now()) {
   const lastOk = done.find((r) => r.status === "ok" || r.status === "partial");
   const last = done[0];
   const lastOkAt = lastOk?.finished_at || lastOk?.started_at || null;
-  if (last.status === "failed") return { state: "failed", text: "Seneste hentning fra Fødevarestyrelsen fejlede", lastOkAt, code: last.error_code || null };
+  if (last.status === "failed") return { state: "failed", text: "Seneste hentning fra Fødevarestyrelsen mislykkedes", lastOkAt, code: last.error_code || null };
   if (lastOkAt && now - Date.parse(lastOkAt) > 36 * 3600_000) return { state: "stale", text: "Hentningen har ikke kørt det seneste døgn", lastOkAt };
   return { state: last.status === "partial" ? "partial" : "ok", text: last.status === "partial" ? "Seneste hentning lykkedes delvist" : "Hentning fra Fødevarestyrelsen virker", lastOkAt };
 }
-export const SYNC_ERROR_TEXT = /** @type {Record<string, string>} */ ({ tomt_feed: "Fødevarestyrelsens feed var tomt eller kunne ikke læses.", kilde_svarer_ikke: "Fødevarestyrelsens side svarede ikke.", sync_fejlede: "Hentningen fejlede.", afbrudt: "Hentningen blev afbrudt." });
+export const SYNC_ERROR_TEXT = /** @type {Record<string, string>} */ ({ tomt_feed: "Fødevarestyrelsens feed var tomt eller kunne ikke læses.", kilde_svarer_ikke: "Fødevarestyrelsens side svarede ikke.", sync_fejlede: "", afbrudt: "Hentningen blev afbrudt." });
 
 // ── Historik ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 /** @param {any[]} events @param {(id: string|null|undefined) => string} nameOf */
