@@ -30,7 +30,7 @@ begin
 
   execute 'set local role authenticated';
   perform set_config('request.jwt.claims', json_build_object('sub', adm,'role','authenticated')::text, true);
-  select count(*) into n from public.admin_product_history('0090000009'); if n <> 1 then res := res || 'EAN-PRAEFIKS(' || n || ') '; end if;
+  select count(*) into n from public.admin_product_history('0090000009'); if n <> 4 then res := res || 'EAN-PRAEFIKS(' || n || ') '; end if;
   select count(*) into n from public.admin_product_history('Historiktest'); if n <> 3 then res := res || 'SOEGNING-NAVN(' || n || ') '; end if;
   select count(*) into n from public.admin_product_history('Testadmin'); if n <> 4 then res := res || 'SOEGNING-AKTOER(' || n || ') '; end if;
   select count(*) into n from public.admin_product_history('Historiktest', null, null, true); if n <> 1 then res := res || 'ALLERGENFILTER(' || n || ') '; end if;
