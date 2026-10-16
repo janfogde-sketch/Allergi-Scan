@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect } from "vitest";
-import { formatDanishDeadline, formatDanishDateTime, summarizeItems, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, allergenRiskRank, retryDelayMinutes } from "../supabase/functions/_shared/notifyHelpers.js";
+import { formatDanishDeadline, formatDanishDateTime, summarizeItems, formatNames, itemCountText, bulletList, affectedAllergenChanges, summarizeAllergenChanges, affectedAllergenDecreases, summarizeAllergenDecreases, allergenRiskRank, retryDelayMinutes } from "../supabase/functions/_shared/notifyHelpers.js";
 
 describe("formatDanishDeadline", () => {
   const now = new Date("2026-09-30T12:00:00Z"); // 14:00 dansk sommertid
@@ -98,5 +98,21 @@ describe("retryDelayMinutes (F1-12)", () => {
     expect(retryDelayMinutes(9)).toBe(240);
     expect(retryDelayMinutes(0)).toBe(1);
     expect(retryDelayMinutes(undefined)).toBe(1);
+  });
+});
+
+describe("affectedAllergenDecreases (lavere risiko, 16. okt. 2026)", () => {
+  const changes = { maelkeallergi: { old: "yes", new: "no" }, aeg: { old: "traces", new: "no" }, gluten: { old: "yes", new: "traces" } };
+  it("tager kun modtagerens egne allergener (og gluten/hvede via cøliaki) med", () => {
+    const hits = affectedAllergenDecreases(changes, { maelkeallergi: "no", aeg: "no", gluten: "traces" }, ["maelkeallergi", "coeliaki"]);
+    expect(hits.map(h => h.key).sort()).toEqual(["gluten", "maelkeallergi"]);
+    expect(summarizeAllergenDecreases(hits.filter(h => h.key === "maelkeallergi"))).toBe("Mælkeprotein står nu som ikke indeholdt");
+  });
+  it("springer over, når risikoen er hævet igen siden", () => {
+    expect(affectedAllergenDecreases(changes, { maelkeallergi: "yes" }, ["maelkeallergi"])).toEqual([]);
+  });
+  it("et manglende flag tæller som uoplyst", () => {
+    const hits = affectedAllergenDecreases({ aeg: { old: "yes" } }, {}, ["aeg"]);
+    expect(summarizeAllergenDecreases(hits)).toBe("Æg er nu uoplyst");
   });
 });

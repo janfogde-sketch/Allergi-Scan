@@ -337,6 +337,22 @@ export const DEFINITIONS = {
     action: PRODUCT_ACTION, entity: { type: "product", idFrom: "ean" },
   },
 
+  // ── P1, lavere risiko: en rettelse har sænket risikoen for et allergen (Jan 16. okt. 2026). KUN besked i appen. ──
+  "P1:lowered": {
+    type: "P1", variant: "lowered", category: "product_changes", version: 1, ttl: 86400, inAppOnly: true,
+    push: { title: "Allergenoplysninger er rettet", body: "Oplysninger om {{productName}} er rettet. Tjek emballagen." },
+    vars: { ...PRODUCT_VARS, changeSummary: { fallback: "Allergenoplysningerne er rettet." } }, required: [],
+    blocks: [
+      H("Oplysninger om dit produkt er rettet"),
+      P("Allergenoplysningerne for **{{productName}}** er blevet rettet i EatSafe. Rettelsen vedrører allergener i din profil eller hos en person i din Familie."),
+      PANEL("Det er rettet", [P("{{changeSummary}}")]),
+      P("Rettelsen kan skyldes nye eller rettede oplysninger. Den betyder ikke nødvendigvis, at producenten har ændret selve produktet."),
+      P("Scan produktet igen eller søg efter det i appen for at se den opdaterede vurdering. Tjek emballagen, før du bruger produktet."),
+      DISC,
+    ],
+    action: PRODUCT_ACTION, entity: { type: "product", idFrom: "ean" },
+  },
+
   // ── P6: tilbagekaldelse fra Fødevarestyrelsen, matchet på EAN (aldrig på navn alene) ──
   "P6:default": {
     type: "P6", variant: "default", category: "recalls", version: 1, ttl: 86400,
@@ -551,6 +567,7 @@ export function renderNotification(key, data = {}, options = {}) {
     type: def.type,
     variant: def.variant,
     category: def.category,
+    inAppOnly: def.inAppOnly === true,
     templateVersion: def.version,
     ttlSeconds: def.ttl,
     title,

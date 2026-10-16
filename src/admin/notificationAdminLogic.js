@@ -31,6 +31,7 @@ const NOTIFICATION_NAMES = {
   "N6:reopened": "Ticket: genåbnet",
   "N6:reply": "Ticket: svar fra teamet",
   "P1:default": "Allergener ændret på produkt",
+  "P1:lowered": "Allergen rettet ned på produkt (kun i appen)",
   "P2:default": "Invitation udløber snart",
   "P3:one": "Delt indkøbsliste: én vare",
   "P3:many": "Delt indkøbsliste: flere varer",
@@ -54,7 +55,7 @@ export const CATEGORY_LABELS = {
 export const MAIL_TEMPLATE_NAMES = {
   "N2a:default": "Produkt godkendt", "N2b:default": "Rettelse godkendt", "N3:default": "Indsendelse afvist", "N4:default": "Produkt tilføjet",
   "N5:default": "Familieinvitation accepteret", "N6:in_progress": "Feedback (i gang)", "N6:resolved": "Feedback (løst)", "N6:reopened": "Feedback (genåbnet)",
-  "N6:reply": "Nyt svar på feedback", "P1:default": "Ændrede allergenoplysninger", "P2:default": "Invitation udløber", "P3:one": "Delt indkøbsliste", "P3:many": "Delt indkøbsliste",
+  "N6:reply": "Nyt svar på feedback", "P1:default": "Ændrede allergenoplysninger", "P1:lowered": "Rettede allergenoplysninger", "P2:default": "Invitation udløber", "P3:one": "Delt indkøbsliste", "P3:many": "Delt indkøbsliste",
   "P6:default": "Tilbagekaldelse", "P6:cancelled": "Tilbagekaldelse", "P6:updated": "Tilbagekaldelse",
 };
 
