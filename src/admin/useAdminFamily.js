@@ -50,7 +50,7 @@ export function useAdminFamily(/** @type {string} */ accessToken) {
   const loadLegacy = useCallback(async (/** @type {number} */ mine) => {
     const [mRes, iRes] = await Promise.allSettled([
       rest("family_members?select=id,name,user_id,family_owner_id,birth_year,created_at&order=created_at.desc&limit=1000"),
-      rest("family_invites?select=id,status,created_at,expires_at,accepted_at,invited_by,accepted_by,requested_by&order=created_at.desc&limit=1000"),
+      rest("family_invites?select=id,status,kind,created_at,expires_at,accepted_at,invited_by,accepted_by,requested_by&order=created_at.desc&limit=1000"),
     ]);
     if (mine !== seq.current) return;
     const members = mRes.status === "fulfilled" && Array.isArray(mRes.value) ? mRes.value : null;

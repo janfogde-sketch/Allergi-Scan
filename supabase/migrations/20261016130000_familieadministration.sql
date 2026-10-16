@@ -87,9 +87,9 @@ begin
     raise exception 'Kun for administratorer' using errcode = '42501';
   end if;
   with owners as (
+    -- Hver række i family_members er en profil, som ejeren administrerer (børneprofil). Voksne med egen konto er forbundet gennem accepterede invitationer, ikke gennem rækker her.
     select coalesce(fm.family_owner_id, fm.user_id) as owner_id,
            count(*) as profiles,
-           count(*) filter (where fm.user_id is null) as child_profiles,
            max(fm.created_at) as last_change
       from public.family_members fm
       where coalesce(fm.family_owner_id, fm.user_id) is not null
@@ -97,10 +97,11 @@ begin
   ), inv as (
     select i.invited_by as owner_id,
            count(*) filter (where public.family_invite_status(i.status, i.expires_at) = 'pending') as pending_invites,
-           count(*) filter (where public.family_invite_status(i.status, i.expires_at) = 'accepted') as accepted_invites
+           count(*) filter (where public.family_invite_status(i.status, i.expires_at) = 'accepted') as accepted_invites,
+           count(distinct i.accepted_by) filter (where i.status = 'accepted' and i.accepted_by is not null) as connected
       from public.family_invites i group by 1
   ), rows as (
-    select o.owner_id, u.name, u.email, o.profiles, o.child_profiles, o.last_change,
+    select o.owner_id, u.name, u.email, o.profiles, coalesce(v.connected, 0) as connected, o.last_change,
            coalesce(v.pending_invites, 0) as pending_invites, coalesce(v.accepted_invites, 0) as accepted_invites
       from owners o
       left join public.users u on u.id = o.owner_id
@@ -130,12 +131,20 @@ begin
   end if;
   return jsonb_build_object(
     'owner', (select jsonb_build_object('id', u.id, 'name', u.name, 'email', u.email) from public.users u where u.id = p_owner),
-    'members', coalesce((select jsonb_agg(jsonb_build_object('id', fm.id, 'name', fm.name, 'user_id', fm.user_id, 'is_child', fm.user_id is null,
-                                                              'birth_year', fm.birth_year, 'created_at', fm.created_at) order by fm.created_at)
-                           from public.family_members fm where coalesce(fm.family_owner_id, fm.user_id) = p_owner), '[]'::jsonb),
+    -- Medlemstype ud fra data: en profil uden egen konto (børneprofil) er en række, hvor user_id er ejeren eller tom. En række med en ANDEN konto end ejeren kan ikke afgøres sikkert ("unknown").
+    -- Voksne med egen konto er de forbundne gennem accepterede invitationer.
+    'members', coalesce((select jsonb_agg(m order by m ->> 'created_at') from (
+        select jsonb_build_object('id', fm.id, 'name', fm.name, 'birth_year', fm.birth_year, 'created_at', fm.created_at,
+               'type', case when fm.user_id is null or fm.user_id = p_owner then 'child' else 'unknown' end) as m
+          from public.family_members fm where coalesce(fm.family_owner_id, fm.user_id) = p_owner
+        union all
+        select jsonb_build_object('id', 'acc-' || a.uid::text, 'name', ua.name, 'birth_year', null, 'created_at', a.first_at, 'type', 'adult')
+          from (select i.accepted_by as uid, min(i.accepted_at) as first_at from public.family_invites i
+                  where i.invited_by = p_owner and i.status = 'accepted' and i.accepted_by is not null group by 1) a
+          left join public.users ua on ua.id = a.uid) x), '[]'::jsonb),
     'invites', coalesce((select jsonb_agg(jsonb_build_object('id', i.id, 'status', public.family_invite_status(i.status, i.expires_at),
                                                               'created_at', i.created_at, 'expires_at', i.expires_at, 'accepted_at', i.accepted_at,
-                                                              'accepted_by', i.accepted_by, 'is_request', i.requested_by is not null) order by i.created_at desc)
+                                                              'accepted_by', i.accepted_by, 'kind', i.kind, 'is_request', i.requested_by is not null) order by i.created_at desc)
                            from public.family_invites i where i.invited_by = p_owner), '[]'::jsonb));
 end;
 $$;
@@ -143,7 +152,7 @@ $$;
 -- 6) Invitationer med afledt status
 create or replace function public.admin_list_family_invites(p_status text default null, p_limit int default 100)
 returns table (id uuid, status text, created_at timestamptz, expires_at timestamptz, accepted_at timestamptz,
-               invited_by uuid, inviter_name text, accepted_by uuid, accepted_name text, is_request boolean)
+               invited_by uuid, inviter_name text, accepted_by uuid, accepted_name text, kind text, is_request boolean)
 language plpgsql
 stable
 security definer
@@ -155,7 +164,7 @@ begin
   end if;
   return query
     select i.id, public.family_invite_status(i.status, i.expires_at), i.created_at, i.expires_at, i.accepted_at,
-           i.invited_by, ui.name, i.accepted_by, ua.name, i.requested_by is not null
+           i.invited_by, ui.name, i.accepted_by, ua.name, i.kind, i.requested_by is not null
       from public.family_invites i
       left join public.users ui on ui.id = i.invited_by
       left join public.users ua on ua.id = i.accepted_by

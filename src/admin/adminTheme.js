@@ -319,9 +319,10 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .np-result .bad{color:var(--red);}
 @media (max-width:899px){.np-layout.editing .np-list{display:none;}.np-layout:not(.editing) .np-detail{display:none;}}
 @media (min-width:900px){.np-layout{display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:20px;align-items:start;}.np-back{display:none;}}
-.fam-search{margin:6px 0 10px;}
-.fam-search-row{display:flex;align-items:center;gap:6px;}
-.fam-search-row input{flex:1;min-width:0;}
+.fam-filters-wrap{position:relative;}
+.fam-filters-wrap.more::after{content:"";position:absolute;top:0;right:0;bottom:12px;width:28px;pointer-events:none;background:linear-gradient(to right,transparent,var(--paper));}
+.fam-empty{font-size:12.5px;color:var(--muted);padding:4px 0 8px;}
+.fam-off .admin-disclosure{margin-top:4px;}
 .fam-filters{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
 .fam-filters .admin-tab-btn{flex:0 0 auto;white-space:nowrap;}
 .fam-sub{font-size:12px;font-weight:800;color:var(--ink2);margin:14px 0 6px;}
