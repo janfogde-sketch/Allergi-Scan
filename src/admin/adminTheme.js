@@ -221,6 +221,10 @@ select.admin-select:focus,.admin-field input[type=date]:focus{outline:2px solid 
 .admin-field select.admin-select{width:100%;padding:9px 12px;font-size:13.5px;}
 .admin-modal{overflow-x:hidden;min-width:0;overscroll-behavior:contain;}
 .todo-panel{display:flex;flex-direction:column;padding:0;overflow:hidden;}
+.iv-panel{max-width:900px;height:88vh;}
+.iv-stage{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;background:var(--surface2);padding:8px;}
+.iv-bar{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);}
+.iv-level{min-width:56px;text-align:center;font-size:13px;font-weight:700;color:var(--ink2);}
 .todo-panel-head{flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
 .todo-panel-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .todo-panel-foot{flex:0 0 auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 16px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);}
