@@ -762,3 +762,26 @@ describe("submissionErrorText", () => {
     expect(submissionErrorText({ status: 500 }, "x")).toBe("x");
   });
 });
+
+describe("stretchLevels: gør mørke billeder tydeligere", () => {
+  const frame = (vals) => new Uint8ClampedArray(vals.flatMap((v) => [v, v, v, 255]));
+  it("strækker et mørkt billede ud over hele skalaen", async () => {
+    const { stretchLevels } = await import("./helpers.js");
+    const d = frame([20, 25, 30, 35, 40, 45, 50, 55, 60, 65]);
+    expect(stretchLevels(d)).toBe(true);
+    expect(Math.min(d[0], d[4])).toBe(0);
+    expect(d[36]).toBe(255);
+    expect(d[3]).toBe(255);
+  });
+  it("rører ikke et billede med godt udsving", async () => {
+    const { stretchLevels } = await import("./helpers.js");
+    const d = frame([0, 40, 90, 140, 200, 255]);
+    expect(stretchLevels(d)).toBe(false);
+    expect(d[0]).toBe(0);
+  });
+  it("rører ikke et næsten ensfarvet billede", async () => {
+    const { stretchLevels } = await import("./helpers.js");
+    const d = frame([100, 101, 102, 100]);
+    expect(stretchLevels(d)).toBe(false);
+  });
+});

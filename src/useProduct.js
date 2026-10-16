@@ -477,7 +477,7 @@ export function useProduct({ accessToken, userId, activeProfiles,
     setOcrLoading(true);
     setScanError_("");
     try {
-      const base64 = await compressImageToBase64(file);
+      const base64 = await compressImageToBase64(file, 1600, 0.82, { enhance: true });
       traceLog(tid, "ocr:base64-ready", { length: base64.length });
       setOcrImageBase64(base64);
       traceLog(tid, "ocr:image_ready", { size: Math.round(base64.length * 0.75 / 1024) + "kb" });
