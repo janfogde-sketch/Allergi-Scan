@@ -56,7 +56,7 @@ describe("edge: delete-user", () => {
     expect(tables).not.toContain("families");
     // users slettes sidst, og hver sletning er afgrænset til brugerens eget id
     expect(tables[tables.length - 1]).toBe("users");
-    for (const w of h.writes()) {
+    for (const w of h.writes().filter((c) => c.table !== "admin_audit_log")) {
       const eqs = w.ops.filter(([n]) => n === "eq").map(([, a]) => a[1]);
       expect(eqs).toEqual(["user-a"]);
     }
@@ -78,6 +78,25 @@ describe("edge: delete-user", () => {
       { bucket: "submission-images", op: "remove", path: ["labels/1.jpg", "products/1.jpg"] },
       { bucket: "product-images", op: "remove", path: ["labels/0.jpg"] },
     ]);
+  });
+
+  it("admins begrundelse for brugerens afviste indsendelser fjernes fra aktivitetsloggen, men loglinjen bliver", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const h = await loadHandler("delete-user", { tokens, resolver: base((c) => {
+      if (c.table === "submissions" && c.kind === "select") return { data: [{ id: "s1", raw_label_image: null, ai_parsed_data: null }], error: null };
+      if (c.table === "admin_audit_log" && c.kind === "select") return { data: [{ id: 7, details: { ean: "570", type: "new", begrundelse: "Hej Anna" } }], error: null };
+    }) });
+    expect((await h.call("POST", "/delete-user", { token: "a", body: { uid: "user-a" } })).status).toBe(200);
+    const opslag = h.state.calls.find((c) => c.table === "admin_audit_log" && c.kind === "select");
+    expect(opslag.has("eq", "target_table", "submissions")).toBe(true);
+    expect(opslag.op("in")).toEqual(["target_id", ["s1"]]);
+    const ret = h.writes().filter((c) => c.table === "admin_audit_log");
+    expect(ret).toHaveLength(1);
+    expect(ret[0].kind).toBe("update");
+    expect(ret[0].op("update")[0]).toEqual({ details: { ean: "570", type: "new" } });
+    expect(ret[0].has("eq", "id", 7)).toBe(true);
+    const tables = h.writes().map((c) => c.table);
+    expect(tables.indexOf("admin_audit_log")).toBeLessThan(tables.indexOf("submissions"));
   });
 
   it("en admin kan slette en anden konto", async () => {

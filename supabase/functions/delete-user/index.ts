@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     // Indsendte billeder (privat bøtte og ældre filer i den offentlige) fjernes FØRST, mens indsendelsernes rækker stadig peger på dem,
     // så et nyt forsøg kan finde resten. Billeder, et godkendt produkt i produktdatabasen bruger, bliver (privatlivspolitikken, afsnit 11).
     const { data: subs, error: subsError } = await supabase
-      .from("submissions").select("raw_label_image, ai_parsed_data").eq("submitted_by", uid);
+      .from("submissions").select("id, raw_label_image, ai_parsed_data").eq("submitted_by", uid);
     if (subsError) throw new DeleteStepError("submissions (opslag)", subsError.message);
     if (Object.keys(pathsToDelete(subs ?? [], [])).length > 0) {
       const { data: kept, error: keptError } = await supabase.from("products").select("image_url").ilike("image_url", `%/${PRODUCT_IMAGES_BUCKET}/%`);
@@ -109,6 +109,19 @@ Deno.serve(async (req) => {
     await step("user_allergens", supabase.from("user_allergens").delete().eq("user_id", uid));
     await step("family_members", supabase.from("family_members").delete().eq("user_id", uid));
     await step("feedback_tickets", supabase.from("feedback_tickets").delete().eq("submitted_by", uid));
+    // Admins begrundelse for en afvist indsendelse kan nævne indsenderen: den fjernes fra adminloggen sammen med indsendelsen.
+    // Selve loglinjen ("Indsendelse afvist") bliver og slettes efter 12 måneder som resten af loggen.
+    const subIds = (subs ?? []).map((s: { id?: string }) => s.id).filter(Boolean) as string[];
+    for (let i = 0; i < subIds.length; i += 100) {
+      const { data: logRows, error: logError } = await supabase.from("admin_audit_log").select("id, details")
+        .eq("target_table", "submissions").in("target_id", subIds.slice(i, i + 100)).not("details->begrundelse", "is", null);
+      if (logError) throw new DeleteStepError("admin_audit_log (opslag)", logError.message);
+      for (const row of (logRows ?? []) as Array<{ id: number; details: Record<string, unknown> }>) {
+        const { begrundelse: _fjernet, ...rest } = row.details ?? {};
+        const { error: updError } = await supabase.from("admin_audit_log").update({ details: rest }).eq("id", row.id);
+        if (updError) throw new DeleteStepError("admin_audit_log (begrundelse)", updError.message);
+      }
+    }
     await step("submissions", supabase.from("submissions").delete().eq("submitted_by", uid));
     // users slettes sidst før auth.users.
     await step("users", supabase.from("users").delete().eq("id", uid));

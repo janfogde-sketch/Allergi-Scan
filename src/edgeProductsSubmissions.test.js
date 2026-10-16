@@ -208,6 +208,16 @@ describe("edge: submissions", () => {
     expect(h.writes()[0].op("update")[0]).toMatchObject({ status: "rejected", review_note: "Utydeligt" });
     expect(h.writes()[0].has("eq", "status", "pending")).toBe(true);
     expect(h.writes()[1].op("insert")[0]).toMatchObject({ admin_id: "user-admin", action: "indsendelse_afvist", target_id: "s1" });
+    expect(h.writes()[1].op("insert")[0].details).toMatchObject({ begrundelse: "Utydeligt" });
+  });
+
+  it("aktivitetsloggen får begrundelsen afkortet til 500 tegn, og ingen begrundelse, når den er tom", async () => {
+    const lang = await loadHandler("submissions", { tokens, resolver: resolver() });
+    await lang.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "rejected", reviewed_by: "user-admin", review_note: "  " + "x".repeat(600) + " " } });
+    expect(lang.writes()[1].op("insert")[0].details.begrundelse).toBe("x".repeat(500) + "…");
+    const tom = await loadHandler("submissions", { tokens, resolver: resolver() });
+    await tom.call("PATCH", "/submissions/s1", { token: "adm", body: { status: "rejected", reviewed_by: "user-admin", review_note: "   " } });
+    expect(tom.writes()[1].op("insert")[0].details).not.toHaveProperty("begrundelse");
   });
 
   it("en allerede behandlet indsendelse kan ikke godkendes igen (409, intet skrives)", async () => {

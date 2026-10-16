@@ -6,7 +6,7 @@
 // Mini-markup i tekst: **fed**, \n = linjeskift, {mail} = hej@eatsafe.dk, [tekst](url) = link.
 // Åbne juridiske punkter hører i admin-ticket, aldrig her (teksten er offentlig).
 export default {
-  "updated": "15. oktober 2026",
+  "updated": "16. oktober 2026",
   "draftNotice": "Denne side er en foreløbig udgave af EatSafes privatlivspolitik og er endnu ikke juridisk gennemgået. Kontakt {mail}, hvis du har spørgsmål, indtil den endelige version er på plads.",
   "blocks": [
     [
@@ -385,7 +385,7 @@ export default {
         "feedback og fejlmeldinger sendt som logget ind: slettes med din konto, og ellers automatisk 12 måneder efter, at du sendte dem, når sagen er afsluttet",
         "produktindsendelser: slettes med din konto, og ellers automatisk 12 måneder efter, at de er godkendt eller afvist. Et godkendt produkt bliver i EatSafes produktdatabase sammen med det produktbillede, produktet bruger",
         "loginsessioner (med IP-adresse og enhedstype, til sikkerhed og fejlfinding): slettes, når du logger ud, og ellers automatisk efter 6 måneder uden brug; derefter skal du logge ind igen",
-        "adminlog (hvilken administrator der har oprettet, ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår; for produkter og andet indhold de gamle og nye værdier, for brugerprofiler kun at et felt er ændret, aldrig helbredsoplysninger; desuden afviste forsøg på at bruge administratorfunktioner og mislykkede administrative handlinger): slettes automatisk efter 12 måneder, afviste forsøg og mislykkede handlinger dog efter 90 dage",
+        "adminlog (hvilken administrator der har oprettet, ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår; for produkter og andet indhold de gamle og nye værdier, for brugerprofiler kun at et felt er ændret, aldrig helbredsoplysninger; ved en afvist produktindsendelse administratorens begrundelse, som fjernes, hvis du sletter din konto; desuden afviste forsøg på at bruge administratorfunktioner og mislykkede administrative handlinger): slettes automatisk efter 12 måneder, afviste forsøg og mislykkede handlinger dog efter 90 dage",
         "sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder",
         "logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister",
         "sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Hver kopi slettes automatisk efter 7 dage, så oplysninger, du har slettet, også er væk fra kopierne senest 7 dage efter. Midlertidige kopier, som vi laver ved vedligehold af databasen, slettes automatisk senest 30 dage efter."
