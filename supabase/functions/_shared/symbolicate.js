@@ -46,7 +46,7 @@ export function cleanSource(source) {
 /**
  * @param {{ stack?: string|null, componentStack?: string|null }} input
  * @param {(file: string) => Promise<any|null>} loadMap giver source map (objekt) til filen i buildet, ellers null
- * @param {new (map: any) => { originalPositionFor: (p: { line: number, column: number }) => { source: string|null, line: number|null, column: number|null, name: string|null } }} Consumer
+ * @param {new (map: any) => { originalPositionFor: (p: { line: number, column: number }) => { source?: string|null, line?: number|null, column?: number|null, name?: string|null } }} Consumer
  */
 export async function symbolicateStack(input, loadMap, Consumer) {
   const frames = [...parseStackFrames(input.stack), ...parseStackFrames(input.componentStack)].slice(0, MAX_FRAMES);
