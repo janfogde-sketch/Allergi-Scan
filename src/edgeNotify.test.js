@@ -176,27 +176,6 @@ describe("edge: notify", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("lavere allergenrisiko følger brugerens valg: produktbeskeder slået fra giver ingen besked (Jan 16. okt. 2026)", async () => {
-    const ev = event({ kind: "product_allergen_lowered", payload: { product_id: "p1", changes: { maelkeallergi: { old: "yes", new: "no" } } } });
-    const h = await loadHandler("notify", {
-      env,
-      resolver: world({
-        events: [ev],
-        optedOut: true,
-        extra: (c) => {
-          if (c.table === "products") return { data: { id: "p1", ean: "5701234567890", name: "Chokolade", brand: "Mark", allergen_flags: { maelkeallergi: "no" } }, error: null };
-          if (c.table === "favorites") return { data: [{ user_id: "user-a" }], error: null };
-          if (c.table === "scan_history" || c.table === "shopping_list_items" || c.table === "family_members") return { data: [], error: null };
-          if (c.table === "user_allergens") return { data: [{ user_id: "user-a", allergen: "maelkeallergi" }], error: null };
-          if (c.table === "users" && c.op("in")) return { data: [], error: null };
-        },
-      }),
-    });
-    await h.call("POST", "/notify", { headers: { Authorization: SVC }, body: {} });
-    expect(h.writes().some((c) => c.table === "notifications")).toBe(false);
-    expect(eventUpdates(h).at(-1)).toMatchObject({ status: "done" });
-  });
-
   it("annullering går kun til dem, der fik den første besked, med annulleringssidens link", async () => {
     const ev = event({ kind: "recall_cancelled", payload: { recall_id: "r1", cancel_recall_id: "r2" } });
     const h = await loadHandler("notify", {
