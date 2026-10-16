@@ -47,7 +47,7 @@ describe("præferencer", () => {
     const after = { allergens: ["egg", "milk"], custom: [], eNumbers: ["E220", "E250"], levels: {} };
     const d = diffPrefs(before, after, (x) => x.toUpperCase());
     expect(d.changed).toBe(true);
-    expect(d.lines).toEqual(["Tilføjer allergen: EGG", "Fjerner egen allergi: kanel", "Tilføjer E-nummer: E250", "Spor for MILK: også spor"]);
+    expect(d.lines).toEqual(["Tilføjer allergi/intolerance: EGG", "Fjerner eget valg: kanel", "Tilføjer E-nummer: E250", "Sporadvarsel for MILK: slået til"]);
   });
   it("profil: ændring og fødselsår", () => {
     expect(profileChanged({ name: "A", birth_year: 1990, gender: "Mand" }, { name: " A ", birth_year: "1990", gender: "Mand" })).toBe(false);

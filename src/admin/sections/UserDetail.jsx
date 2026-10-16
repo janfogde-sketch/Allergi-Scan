@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { ALLERGENS } from "../../constants.jsx";
+import { traceEligible } from "../../helpers.js";
 import { AllergenGlyph, Icon, showToast } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
 import { ROLE_LABELS, onboardingStatus, prefsOf, diffPrefs, profileChanged, validBirthYear, normalizeENumber, normalizeCustom } from "../usersLogic.js";
@@ -19,9 +20,9 @@ const copy = (value) => {
 /** Valgte og ikke valgte allergener. Valgt er markeret med et flueben og grøn kant (ikke kun farve) og ligner aldrig en fejlmelding. */
 function AllergenChips({ selected, onToggle, readOnly }) {
   const list = readOnly ? ALLERGENS.filter((a) => selected.includes(a.id)) : ALLERGENS;
-  if (readOnly && list.length === 0) return <div className="usr-none">Ingen valgte allergener</div>;
+  if (readOnly && list.length === 0) return <div className="usr-none">Ingen valgte allergier eller intolerancer</div>;
   return (
-    <div className="usr-chips" role={readOnly ? "list" : "group"} aria-label="Allergener">
+    <div className="usr-chips" role={readOnly ? "list" : "group"} aria-label="Allergier og intolerancer">
       {list.map((a) => {
         const on = selected.includes(a.id);
         return readOnly ? (
@@ -88,6 +89,9 @@ function LoadError({ kind, what, onRetry }) {
     </div>
   );
 }
+
+/** De sporadvarsler, der faktisk er slået til: valgte allergier med sporlogik, som ikke er sat til kun direkte indhold. Laktose o.l. har ingen sporadvarsel. */
+const activeTraces = (data) => traceEligible(data.allergens).filter((a) => data.levels[a] !== "direct_only");
 
 const Row = ({ label, children }) => (children ? <div className="audit-detail-row"><dt>{label}</dt><dd>{children}</dd></div> : null);
 
@@ -247,6 +251,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
                 <dl className="audit-detail">
                   <Row label="Navn">{u.name || "Ikke angivet"}</Row>
                   <Row label="E-mail (login)">{u.email || "Ikke angivet"}</Row>
+                  {typeof u.email_confirmed === "boolean" && <Row label="E-mail bekræftet">{u.email_confirmed ? "Ja" : "Nej"}</Row>}
                   <Row label="Rolle">{ROLE_LABELS[u.role || "user"]}</Row>
                   <Row label="Oprettet">{u.created_at ? fmtAuditDateTime(u.created_at, true) : ""}</Row>
                   <Row label="Onboarding"><span className={status.key === "done" ? "" : "usr-warn"}>{status.label}</span></Row>
@@ -270,7 +275,6 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
                 </div>
               )}
               {!edit && !legacy && <button type="button" className="admin-btn admin-btn-ghost admin-touch usr-edit-btn" onClick={startEdit}>Rediger oplysninger</button>}
-              {legacy && <div className="usr-hint">Redigering er slået fra, til den seneste databaseopdatering er udgivet.</div>}
             </>
           )}
 
@@ -280,26 +284,26 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
               {pf.status === "error" && <LoadError kind={pf.kind} what="præferencer" onRetry={loadPrefs} />}
               {pf.status === "ok" && !pEdit && (
                 <>
-                  <div className="admin-field"><label>Allergener</label><AllergenChips selected={pf.data.allergens} readOnly /></div>
-                  <div className="admin-field"><label>Advar ved spor</label>
-                    {pf.data.allergens.length === 0 ? <div className="usr-none">Ingen valgte allergener</div> : (
-                      <ul className="usr-traces">{pf.data.allergens.map((a) => <li key={a}><span>{labelOf(a)}</span><span>{pf.data.levels[a] === "direct_only" ? "Kun direkte indhold" : "Også spor"}</span></li>)}</ul>
+                  <div className="admin-field"><label>Allergier og intolerancer</label><AllergenChips selected={pf.data.allergens} readOnly /></div>
+                  <div className="admin-field"><label>Sporadvarsler</label>
+                    {activeTraces(pf.data).length === 0 ? <div className="usr-none">Ingen sporadvarsler</div> : (
+                      <ul className="usr-traces">{activeTraces(pf.data).map((a) => <li key={a}><span>{labelOf(a)}</span><span>Aktiveret</span></li>)}</ul>
                     )}</div>
-                  <ChipInput id="p-custom" label="Egne allergier" values={pf.data.custom} readOnly />
+                  <ChipInput id="p-custom" label="Egne valg" values={pf.data.custom} readOnly />
                   <ChipInput id="p-enum" label="Overvågede E-numre" values={pf.data.eNumbers} readOnly />
                   {!legacy && <button type="button" className="admin-btn admin-btn-ghost admin-touch usr-edit-btn" onClick={startPrefEdit}>Rediger præferencer</button>}
-                  <div className="usr-hint">{legacy ? "Redigering er slået fra, til den seneste databaseopdatering er udgivet." : "Ændringer kan påvirke brugerens produktvurderinger og kræver en begrundelse."}</div>
+                  {!legacy && <div className="usr-hint">Ændringer kan påvirke brugerens produktvurderinger og kræver en begrundelse.</div>}
                 </>
               )}
               {pf.status === "ok" && pEdit && pDraft && !review && (
                 <>
-                  <div className="admin-field"><label>Allergener</label><AllergenChips selected={pDraft.allergens} onToggle={toggleAllergen} /></div>
-                  <div className="admin-field"><label>Advar ved spor</label>
-                    <div className="usr-hint" style={{ marginTop: 0, marginBottom: 6 }}>Slået til: produktet advares også, hvis det kan indeholde spor. Slået fra: kun direkte indhold.</div>
-                    {pDraft.allergens.length === 0 ? <div className="usr-none">Vælg et allergen først</div> : pDraft.allergens.map((a) => (
-                      <label key={a} className="usr-check"><input type="checkbox" checked={pDraft.levels[a] !== "direct_only"} onChange={() => toggleTrace(a)} /><span>{labelOf(a)}: advar også ved spor</span></label>
+                  <div className="admin-field"><label>Allergier og intolerancer</label><AllergenChips selected={pDraft.allergens} onToggle={toggleAllergen} /></div>
+                  <div className="admin-field"><label>Sporadvarsler</label>
+                    <div className="usr-hint" style={{ marginTop: 0, marginBottom: 6 }}>Slået til: produktet advares også, hvis det kan indeholde spor. Slået fra: kun direkte indhold. Intolerancer uden sporlogik (fx laktose) har ingen sporadvarsel.</div>
+                    {traceEligible(pDraft.allergens).length === 0 ? <div className="usr-none">Vælg en allergi først</div> : traceEligible(pDraft.allergens).map((a) => (
+                      <label key={a} className="usr-check"><input type="checkbox" checked={pDraft.levels[a] !== "direct_only"} onChange={() => toggleTrace(a)} /><span>{labelOf(a)}: sporadvarsel</span></label>
                     ))}</div>
-                  <ChipInput id="p-custom" label="Egne allergier" values={pDraft.custom} onChange={(v) => setPDraft((d) => ({ ...d, custom: v }))} normalize={normalizeCustom} placeholder="Fx kanel" errorText="Skriv en kort tekst uden < eller >." />
+                  <ChipInput id="p-custom" label="Egne valg" values={pDraft.custom} onChange={(v) => setPDraft((d) => ({ ...d, custom: v }))} normalize={normalizeCustom} placeholder="Fx kanel" errorText="Skriv en kort tekst uden < eller >." />
                   <ChipInput id="p-enum" label="Overvågede E-numre" values={pDraft.eNumbers} onChange={(v) => setPDraft((d) => ({ ...d, eNumbers: v }))} normalize={normalizeENumber} placeholder="Fx E220" errorText="Skriv et E-nummer, fx E220." />
                 </>
               )}
@@ -320,13 +324,13 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
               <div className="admin-field">
                 <label>Rolle</label>
                 <div className="usr-line"><span>{ROLE_LABELS[u.role || "user"]}</span>
-                  {!roleOpen && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={isMe || legacy} onClick={() => { setRoleOpen(true); setFailed(null); }}>Ændre brugerrolle</button>}
+                  {!roleOpen && !legacy && <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={isMe} onClick={() => { setRoleOpen(true); setFailed(null); }}>Ændr brugerrolle</button>}
                 </div>
                 {isMe && <div className="usr-hint">Du kan ikke ændre din egen rolle.</div>}
-                {legacy && !isMe && <div className="usr-hint">Rolleændring er slået fra, til den seneste databaseopdatering er udgivet.</div>}
                 {roleOpen && (
-                  <div className="todo-confirm" role="alertdialog" aria-label="Ændre brugerrolle">
-                    <div style={{ fontWeight: 700, marginBottom: 6 }}>Ændre rolle til {ROLE_LABELS[newRole].toLowerCase()}?</div>
+                  <div className="todo-confirm" role="alertdialog" aria-label="Ændr brugerrolle">
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>Ændr rolle til {ROLE_LABELS[newRole].toLowerCase()}?</div>
+                    <div style={{ fontSize: 12.5, marginBottom: 6 }}>Nuværende rolle: <b>{ROLE_LABELS[u.role || "user"]}</b> · Ny rolle: <b>{ROLE_LABELS[newRole]}</b></div>
                     <div style={{ fontSize: 12.5, marginBottom: 8 }}>{newRole === "admin" ? "En administrator kan se og ændre alle brugeres data og rolle." : "Brugeren mister adgangen til administrationen."}</div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={busy} onClick={() => setRoleOpen(false)}>Annuller</button>
@@ -335,9 +339,14 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
                   </div>
                 )}
               </div>
-              <div className="admin-field">
+              {legacy && (
+                <div className="np-note fam-off">Administrative ændringer er midlertidigt utilgængelige.
+                  <Disclosure title="Hvorfor?">Rolleændring og sletning kræver den seneste databaseopdatering, som endnu ikke er udgivet. Oplysningerne vises skrivebeskyttet.</Disclosure>
+                </div>
+              )}
+              {!legacy && <div className="admin-field">
                 <label>Slet bruger</label>
-                {isMe ? <div className="usr-hint" style={{ marginTop: 0 }}>Du kan ikke slette din egen konto herfra.</div> : legacy ? <div className="usr-hint" style={{ marginTop: 0 }}>Sletning er slået fra, til den seneste databaseopdatering er udgivet.</div> : !del ? (
+                {isMe ? <div className="usr-hint" style={{ marginTop: 0 }}>Du kan ikke slette din egen konto herfra.</div> : !del ? (
                   <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={startDelete}>Slet bruger</button>
                 ) : (
                   <div className="todo-confirm" role="alertdialog" aria-label="Slet bruger">
@@ -364,7 +373,7 @@ export default function UserDetail({ row, currentUserId, getUser, saveProfile, s
                     )}
                   </div>
                 )}
-              </div>
+              </div>}
               <Disclosure title="Tekniske oplysninger">
                 <dl className="audit-tech">
                   <div className="audit-tech-row"><dt>Bruger-id</dt><dd>{id}</dd>

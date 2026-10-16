@@ -87,13 +87,13 @@ export function diffPrefs(before, after, label = (id) => id) {
   const levelKeys = [...new Set([...Object.keys(before.levels), ...Object.keys(after.levels)])].filter((k) => before.levels[k] !== after.levels[k]);
   /** @type {string[]} */
   const lines = [];
-  if (added.length) lines.push(`Tilføjer allergen: ${added.map(label).join(", ")}`);
-  if (removed.length) lines.push(`Fjerner allergen: ${removed.map(label).join(", ")}`);
-  if (cAdded.length) lines.push(`Tilføjer egen allergi: ${cAdded.join(", ")}`);
-  if (cRemoved.length) lines.push(`Fjerner egen allergi: ${cRemoved.join(", ")}`);
+  if (added.length) lines.push(`Tilføjer allergi/intolerance: ${added.map(label).join(", ")}`);
+  if (removed.length) lines.push(`Fjerner allergi/intolerance: ${removed.map(label).join(", ")}`);
+  if (cAdded.length) lines.push(`Tilføjer eget valg: ${cAdded.join(", ")}`);
+  if (cRemoved.length) lines.push(`Fjerner eget valg: ${cRemoved.join(", ")}`);
   if (eAdded.length) lines.push(`Tilføjer E-nummer: ${eAdded.join(", ")}`);
   if (eRemoved.length) lines.push(`Fjerner E-nummer: ${eRemoved.join(", ")}`);
-  for (const k of levelKeys) lines.push(`Spor for ${label(k)}: ${after.levels[k] === "direct_only" ? "kun direkte indhold" : "også spor"}`);
+  for (const k of levelKeys) lines.push(`Sporadvarsel for ${label(k)}: ${after.levels[k] === "direct_only" ? "slået fra (kun direkte indhold)" : "slået til"}`);
   return { changed: lines.length > 0, lines };
 }
 

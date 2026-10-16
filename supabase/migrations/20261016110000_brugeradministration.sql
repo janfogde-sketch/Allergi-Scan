@@ -84,14 +84,15 @@ begin
   if not public.is_admin((select auth.uid())) then
     raise exception 'Kun for administratorer' using errcode = '42501';
   end if;
-  select id, name, email, role, created_at, onboarding_completed, onboarding_step, birth_year, gender, e_numbers, allergen_levels
+  select id, name, email, role, created_at, onboarding_completed, onboarding_step, birth_year, gender, e_numbers, allergen_levels,
+         (select a.email_confirmed_at is not null from auth.users a where a.id = public.users.id) as email_confirmed
     into u from public.users where id = p_user;
   if not found then
     raise exception 'Bruger ikke fundet' using errcode = 'P0002';
   end if;
   v := jsonb_build_object(
     'id', u.id, 'name', u.name, 'email', u.email, 'role', u.role, 'created_at', u.created_at,
-    'onboarding_completed', u.onboarding_completed, 'onboarding_step', u.onboarding_step, 'birth_year', u.birth_year, 'gender', u.gender,
+    'onboarding_completed', u.onboarding_completed, 'onboarding_step', u.onboarding_step, 'birth_year', u.birth_year, 'gender', u.gender, 'email_confirmed', u.email_confirmed,
     'version', public.admin_user_version(p_user)
   );
   if p_with_preferences then
