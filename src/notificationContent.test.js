@@ -247,7 +247,7 @@ describe("P6: tilbagekaldelse", () => {
   });
   it("annulleret og ændret siger det tydeligt i push", () => {
     expect(renderNotification("P6:cancelled", data).pushTitle).toBe("Tilbagekaldelsen er annulleret");
-    expect(renderNotification("P6:updated", data).pushTitle).toBe("Tilbagekaldelsen er ændret");
+    expect(renderNotification("P6:updated", data).pushTitle).toBe("Tilbagekaldelsen er opdateret");
     expect(renderNotification("P6:updated", data).pushBody).toContain("Frosty Pocket Lemon");
   });
 });

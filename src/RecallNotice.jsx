@@ -21,7 +21,7 @@ export default function RecallNotice({ recalls }) {
       {date && <div style={{ fontSize:12, color:"var(--muted)", marginTop:2 }}>Offentliggjort {date}</div>}
       {r.affected && <div style={line}><b>Berørte varer:</b> {r.affected}</div>}
       {r.reason && <div style={line}><b>Årsag:</b> {r.reason}</div>}
-      {r.action && <div style={line}><b>Hvad skal du gøre:</b> {r.action}</div>}
+      {r.action && <div style={line}><b>Hvad skal du gøre?</b> {r.action}</div>}
       <div style={{ ...line, color:"var(--ink2)" }}>
         Ofte gælder det kun bestemte partier eller datoer. Sammenlign med emballagen, før du spiser varen.
       </div>

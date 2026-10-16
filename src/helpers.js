@@ -195,8 +195,8 @@ export const STORE_SOURCES = ["katalog"];
 // en importdato er ikke en verificering, så uden dato står der tydeligt, at det ikke er kontrolleret.
 export const ingredientsVerifiedText = (iso) => {
   const d = iso ? new Date(iso) : null;
-  if (!d || Number.isNaN(d.getTime())) return "Ikke kontrolleret mod emballagen endnu";
-  return `Ingredienser kontrolleret ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}`;
+  if (!d || Number.isNaN(d.getTime())) return "Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.";
+  return `Ingrediensoplysninger kontrolleret mod emballagen den ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}.`;
 };
 
 export const verifiedBadge = (verified_status, source) => {
@@ -774,7 +774,7 @@ export function evaluateProductForProfiles(profiles, product) {
   const reasons = level === "danger" ? [...dangerReasons, ...traceReasons] : level === "warn" ? traceReasons : [];
   // Ingen profil at vurdere imod er aldrig "sikkert": manglende oplysninger er ikke sikkerhed.
   if (noProfiles && !missing.length) missing.push("Ingen profil valgt");
-  if (nothingToCheck) missing.push("Ingen allergier valgt");
+  if (nothingToCheck) missing.push("Ingen fødevarehensyn valgt");
   return { level, label, reasons, missing, results };
 }
 

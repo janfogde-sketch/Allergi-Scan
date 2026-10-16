@@ -326,7 +326,7 @@ export function makeResultSections(c) {
           {scanResult.brand && !heroBrandInTitle && <div className="product-hero-brand">{scanResult.brand}</div>}
           {/* Seneste kontrol mod emballagen; datoen er ingen garanti, så "Kontrollér altid emballagen" står fast. */}
           <div style={{ fontSize:12, lineHeight:1.45, color:"var(--muted)", marginTop:6 }}>
-            {ingredientsVerifiedText(scanResult.ingredients_verified_at)}. Kontrollér altid emballagen.
+            {ingredientsVerifiedText(scanResult.ingredients_verified_at)} Kontrollér altid emballagen.
           </div>
           <div className="product-hero-meta">
             <span style={{ fontSize:10, color:"var(--muted)", fontWeight:500 }}>EAN: {scanResult.code}</span>

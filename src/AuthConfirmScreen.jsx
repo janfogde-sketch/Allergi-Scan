@@ -22,6 +22,15 @@ const TITLES = {
   email_change: "Bekræft ny e-mail",
 };
 
+// Teksten under titlen følger handlingen: login, bekræftelse af e-mail, ny adgangskode eller invitation må ikke forveksles.
+const ACTIONS = {
+  recovery: "Du er ved at nulstille adgangskoden for",
+  signup: "Du er ved at bekræfte e-mailadressen",
+  email: "Du er ved at bekræfte e-mailadressen",
+  email_change: "Du er ved at bekræfte den nye e-mailadresse",
+  invite: "Du er ved at acceptere invitationen med",
+};
+
 export default function AuthConfirmScreen() {
   const { pendingAuthLink, authConfirmLoading, authConfirmError, authConfirmDone, confirmAuthLink, cancelAuthLink } = useAuthContext();
   const link = pendingAuthLink;
@@ -41,8 +50,8 @@ export default function AuthConfirmScreen() {
             <div className="verify-icon verify-icon-ok" aria-hidden="true">
               <Icon name="check" size={24} color="var(--green)" />
             </div>
-            <div className="verify-title">Tak, linket er bekræftet</div>
-            <div className="verify-text">Bekræft også linket i mailen til din anden e-mailadresse, hvis du har fået to mails.</div>
+            <div className="verify-title">Din e-mailadresse er bekræftet</div>
+            {link?.type === "email_change" && <div className="verify-text">Du skal også bekræfte den anden e-mailadresse. Åbn den tilhørende e-mail, og følg linket.</div>}
           </div>
           <button className="btn welcome-btn" onClick={cancelAuthLink}>Fortsæt</button>
         </>
@@ -54,7 +63,7 @@ export default function AuthConfirmScreen() {
             </div>
             <div className="verify-title">{title}</div>
             {email ? (
-              <div className="verify-text">Du er ved at logge ind som <strong style={{ overflowWrap: "anywhere" }}>{email}</strong>.</div>
+              <div className="verify-text">{ACTIONS[link.type] || "Du er ved at logge ind med"} <strong style={{ overflowWrap: "anywhere" }}>{email}</strong>.</div>
             ) : (
               <div className="verify-text">Tryk på Fortsæt for at bruge linket fra din mail.</div>
             )}

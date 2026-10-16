@@ -48,21 +48,22 @@ export default function ConsentRenewalModal({ screen, onboarded, openLegal }) {
       <div role="dialog" aria-modal="true" aria-labelledby="consent-renew-title"
         style={{ background:"var(--sheet)", borderRadius:20, padding:"28px 22px 22px", width:"100%", maxWidth:400, boxSizing:"border-box", margin:"auto" }}>
         <div id="consent-renew-title" style={{ fontSize:20, fontWeight:800, color:"var(--ink)", marginBottom:10, letterSpacing:"-.3px" }}>
-          Vi har opdateret vores vilkår for dine oplysninger
+          Vi har opdateret oplysningerne om dit samtykke
         </div>
         <p style={{ fontSize:14, color:"var(--ink2)", lineHeight:1.65, margin:"0 0 16px" }}>
-          Teksten om, hvordan EatSafe behandler dine allergioplysninger, er ændret. Læs den, og bekræft, at du stadig er med.
+          Vi har opdateret informationen om, hvordan EatSafe behandler dine allergi- og helbredsoplysninger. Læs informationen, og vælg, om du fortsat vil give samtykke.
         </p>
         <div style={{ marginBottom:16 }}>
           <HealthConsentBox id="renew-consent" checked={checked} onChange={setChecked} openPrivacy={() => openLegal(SCREENS.PRIVACY)} />
         </div>
-        <button className="btn btn-primary btn-full" onClick={accept} disabled={!checked || busy}>Jeg accepterer</button>
+        <button className="btn btn-primary btn-full" onClick={accept} disabled={!checked || busy}>Jeg giver samtykke</button>
         <button type="button" className="link-green" style={{ display:"block", margin:"14px auto 0", background:"none", border:"none", fontSize:13 }}
           disabled={busy} onClick={() => setConfirmWithdraw(true)}>Jeg vil ikke give samtykke</button>
         {confirmWithdraw && (
-          <ConfirmDialog title="Træk samtykket tilbage?"
-            message="Dine allergi- og helbredsoplysninger og din scanningshistorik slettes permanent."
-            confirmLabel="Træk tilbage og slet"
+          <ConfirmDialog title="Vil du trække dit samtykke tilbage?"
+            message="Hvis du trækker dit samtykke tilbage, sletter vi de oplysninger, der behandles på grundlag af samtykket, herunder dine allergi- og helbredsoplysninger og din scanningshistorik. Sletningen gennemføres efter de frister, der er beskrevet i privatlivspolitikken."
+            confirmLabel="Træk samtykke tilbage og slet"
+            cancelLabel="Behold mit samtykke"
             onCancel={() => setConfirmWithdraw(false)} onConfirm={withdraw} />
         )}
       </div>

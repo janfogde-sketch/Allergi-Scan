@@ -260,7 +260,7 @@ export default {
     ],
     [
       "p",
-      "Billeder, du sender ind, er kun synlige for EatSafes administratorer, indtil de er godkendt. Godkendes et produktbillede, vises det offentligt på produktet. Billeder af ingredienslisten vises ikke offentligt."
+      "Billeder, du indsender, kan kun ses af EatSafes administratorer, mens indsendelsen behandles. Hvis et produktbillede godkendes til offentlig visning, kan det blive vist på produktets side i EatSafe. Billeder af ingredienslister offentliggøres ikke."
     ],
     [
       "p",
@@ -304,7 +304,7 @@ export default {
     ],
     [
       "p",
-      "**Open Food Facts**\nAnvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder fra Open Food Facts hentes af EatSafes server og vises fra EatSafes egen adresse, så Open Food Facts ikke modtager oplysninger om dig eller din enhed."
+      "**Open Food Facts**\nAnvendes som ekstern kilde til produktoplysninger og billeder. Disse stammer fra Open Food Facts og dets bidragydere og er udgivet under Open Database License (ODbL), Database Contents License og Creative Commons Attribution-ShareAlike (billeder). Opslag af produktdata sker fra EatSafes server alene med produktets stregkode. Produktbilleder fra Open Food Facts hentes gennem EatSafes server og vises fra EatSafes egen adresse. Ved visning af billederne oprettes der derfor ikke en direkte forbindelse mellem din enhed og Open Food Facts."
     ],
     [
       "p",
@@ -357,7 +357,7 @@ export default {
     ],
     [
       "p",
-      "Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv. Bruger du ikke din konto i 36 måneder, sender vi dig en mail og sletter kontoen og alle oplysninger på den efter 30 dage, medmindre du logger ind igen inden da. Bliver en konto aldrig oprettet færdigt, så der ikke findes en profil til den, slettes loginkontoen automatisk efter 30 dage."
+      "Kontodata og aktive profiloplysninger opbevares som udgangspunkt, mens din konto er aktiv. Bruger du ikke din konto i 36 måneder, sender vi dig en mail og sletter kontoen og alle oplysninger på den efter 30 dage, medmindre du logger ind igen inden da. Hvis du opretter en loginkonto, men ikke færdiggør oprettelsen af din profil, slettes loginkontoen automatisk efter 30 dage."
     ],
     [
       "p",
@@ -385,10 +385,10 @@ export default {
         "feedback og fejlmeldinger sendt som logget ind: slettes med din konto, og ellers automatisk 12 måneder efter, at du sendte dem, når sagen er afsluttet",
         "produktindsendelser: slettes med din konto, og ellers automatisk 12 måneder efter, at de er godkendt eller afvist. Et godkendt produkt bliver i EatSafes produktdatabase sammen med det produktbillede, produktet bruger",
         "loginsessioner (med IP-adresse og enhedstype, til sikkerhed og fejlfinding): slettes, når du logger ud, og ellers automatisk efter 6 måneder uden brug; derefter skal du logge ind igen",
-        "adminlog (hvilken administrator der har oprettet, ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår; for produkter og andet indhold de gamle og nye værdier, for brugerprofiler kun at et felt er ændret, aldrig helbredsoplysninger; ved en afvist produktindsendelse administratorens begrundelse, som fjernes, hvis du sletter din konto; desuden afviste forsøg på at bruge administratorfunktioner og mislykkede administrative handlinger): slettes automatisk efter 12 måneder, afviste forsøg og mislykkede handlinger dog efter 90 dage",
+        "administratorlog (hvilke handlinger administratorer udfører i EatSafe): loggen viser, hvilken administrator der har oprettet, ændret eller slettet noget følsomt, fx en rolle, en status, et produkt eller en brugers profil, og hvornår, samt afviste forsøg på at bruge administratorfunktioner og mislykkede administrative handlinger. For produkter og andet indhold gemmes de gamle og nye værdier; for brugerprofiler gemmes kun, at et felt er ændret, aldrig helbredsoplysninger. Ved en afvist produktindsendelse gemmes administratorens begrundelse, som fjernes, hvis du sletter din konto. Loggen slettes automatisk efter 12 måneder; afviste forsøg og mislykkede handlinger dog efter 90 dage",
         "sikkerhedsindberetninger (hvis du har oplyst, at en e-mail om nulstilling af adgangskode ikke var fra dig): slettes automatisk efter 12 måneder",
         "logs hos vores leverandører (fx Supabase og Vercel): efter leverandørernes egne standardfrister",
-        "sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Hver kopi slettes automatisk efter 7 dage, så oplysninger, du har slettet, også er væk fra kopierne senest 7 dage efter. Midlertidige kopier, som vi laver ved vedligehold af databasen, slettes automatisk senest 30 dage efter."
+        "sikkerhedskopier: EatSafe tager hver nat en krypteret sikkerhedskopi af databasen. Almindelige sikkerhedskopier slettes automatisk efter syv dage. Midlertidige sikkerhedskopier kan opbevares i op til 30 dage. Oplysninger, som er slettet fra den aktive database, kan derfor fortsat findes i sikkerhedskopier i denne periode."
       ]
     ],
     [
