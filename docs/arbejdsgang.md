@@ -20,7 +20,7 @@ Intet må kun leve i samtalen. Ved afslutning af en opgave:
 ## Arbejdsgang for alle sessioner (Jan, 14. okt. 2026)
 
 - **To do:** skrives med workflowet "Skriv til to do" (`docs/todo-skrivning.md`). Arbejdstråde lægger ingen to do-ændringer i deres PR'er. To do'er lukkes/kommenteres af den udpegede lukketråd pr. omgang med workflowet (ingen PR, intet nummer, ingen udrulning), eller af sessionen selv, hvis ingen er udpeget. Verificér bagefter med en læsning.
-- **Én pakke pr. session/PR:** 3-5 små ændringer inden for samme område samles; en stor opgave får sin egen.
+- **Samlegren (Jan, 16. okt. 2026, erstatter "én pakke pr. session/PR"):** hver opgave får sin egen tråd, så den rigtige model bruges. Små opgaver laver ikke hver deres PR: de lægger ændringen på den fælles gren `samling`, lavet fra nyeste `dev`, og henter nyeste udgave lige før push. Den tråd, der lægger den 3. ændring på grenen, eller som finder grenen ældre end et døgn, opretter én PR fra `samling` til `dev` med `gh pr merge --auto --squash`. Efter merge laves `samling` på ny fra `dev`. Store eller risikable opgaver (database, migrationer, login, sikkerhed, allergener) får egen PR mod `dev`.
 - **Databaseændringer:** højst 3-4 sessioner, der ændrer databasen, ad gangen. Hent `origin/main` lige før merge, brug et unikt migrationsnummer, og tjek bagefter i databasen, at ændringen er der. Backup-tabeller får RLS slået til i samme migration. Store migrationsfiler fejler ved anvendelse: del dem.
 - **Grøn før merge:** alle PR'er merges kun, når CI og DB-tests er grønne i PR'en; tjek DB-tests på main bagefter. Hovedgrenen kræver, at branchen er opdateret. Tjek CI aktivt; vent aldrig på planlagte genkontroller. Kun én session retter en rød `main`, de andre venter.
 - **Ingen CVR-krævende forslag** og ingen betalte planer uden Jans ja. **Alle iPhone-tests lægges som to do hos Bjørn**, aldrig hos Jan.
@@ -114,8 +114,8 @@ Samlet fra projektets indstillinger, så alle arbejder ens.
 - **Fejl i `client_errors`:** markeres løst eller ignoreret (fx "Share canceled" = ignoreret, ikke en fejl).
 - **Skærmbilleder og tjek** laves fra den nyeste pushede version (`origin/main`), ikke en lokal gren. Browser-preview kun til større designopgaver og kun, når en ændring skal ses (koster forbrug).
 - **Kodegennemgang** før beta er læsende: rapport plus to do pr. fund, ingen rettelser før Jans ja.
-- **Model pr. opgave:** Haiku til små og enkle opgaver (status, lukke to do'er), Sonnet til almindeligt kodearbejde, Opus kun til svære eller risikable (sikkerhed, allergenlogik, data der ikke kan fortrydes, login).
-- **Tråde:** navngiv med spor som præfiks ("Kode:", "Design:", "Data:", "Ledelse:"); færre og større tråde, højst 3 ad gangen og aldrig i samme område. Luk færdige tråde.
+- **Model pr. opgave (Jan, 16. okt. 2026):** hver opgave vurderes, før den startes, og den mest fornuftige model vælges: Haiku til små og enkle opgaver (status, lukke to do'er, oprydning), Sonnet til almindeligt kodearbejde, Opus kun til svære eller risikable opgaver (allergenlogik, sikkerhed, database, login, data der ikke kan fortrydes).
+- **Tråde:** én opgave pr. tråd (Jan, 16. okt. 2026); navngiv med spor som præfiks ("Kode:", "Design:", "Data:", "Ledelse:"); højst 3 ad gangen og aldrig i samme område. Luk færdige tråde.
 - **Opfølgning** på en løst opgave bliver en ny to do med foreslået frist, markeret som forslag.
 
 ## Tjek selv tests (Jan, 15. okt. 2026)
