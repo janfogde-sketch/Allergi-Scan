@@ -27,7 +27,7 @@ export function useAiUsage(accessToken) {
       try {
         data = await get("day,function_name,model,origin,calls,input_tokens,output_tokens");
       } catch (e) {
-        // Før migrationen 20261016090000 er live, findes origin ikke (400): hent uden; forbrugstypen afledes så kun af funktionen
+        // Før migrationen 20261016090100 er live, findes origin ikke (400): hent uden; forbrugstypen afledes så kun af funktionen
         if (/** @type {any} */ (e).status !== 400) throw e;
         data = await get("day,function_name,model,calls,input_tokens,output_tokens");
       }
