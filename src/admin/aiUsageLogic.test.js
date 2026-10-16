@@ -9,7 +9,7 @@ const rows = [
 
 describe("aiUsageLogic", () => {
   it("regner pris: 1 mio. ind og 1 mio. ud = 6 dollar", () => {
-    expect(costDkk(1e6, 1e6)).toBeCloseTo(6 * 6.9, 5);
+    expect(costDkk(1e6, 1e6)).toBeCloseTo(6 * 6.66, 5);
   });
   it("lægger sammen", () => {
     const t = totals(rows);
@@ -39,19 +39,19 @@ import {
 } from "./aiUsageLogic.js";
 
 const row = (day, fn, calls, input, output, model = "claude-haiku-4-5") => ({ day, function_name: fn, model, calls, input_tokens: input, output_tokens: output });
-// De rigtige oktobertal (15. okt. 2026), som kontrolleres mod de kendte beløb: Kategorisering 41,37 kr., Allergen-tjek 6,06 kr., i alt 47,43 kr.
+// De rigtige oktobertal (15. okt. 2026), som kontrolleres mod de kendte beløb: Kategorisering 39,93 kr., Allergen-tjek 5,84 kr., i alt 45,78 kr. (kurs 6,66).
 const OKT = [
   row("2026-10-08", "classify-categories", 582, 1514471, 896321), row("2026-10-08", "allergens", 20, 11453, 3340),
   row("2026-10-13", "allergens", 201, 115393, 33567), row("2026-10-14", "allergens", 201, 116655, 33567), row("2026-10-15", "allergens", 200, 114747, 33400),
 ];
 
 describe("priser og totaler", () => {
-  it("oktobertallene giver 41,37 kr. og 6,06 kr. og 47,43 kr. i alt", () => {
+  it("oktobertallene giver 39,93 kr. og 5,84 kr. og 45,78 kr. i alt", () => {
     const f = functionShares(OKT);
     expect(f[0].key).toBe("classify-categories");
-    expect(f[0].dkk).toBeCloseTo(41.37, 2);
-    expect(f[1].dkk).toBeCloseTo(6.06, 2);
-    expect(totals(OKT).dkk).toBeCloseTo(47.43, 2);
+    expect(f[0].dkk).toBeCloseTo(39.93, 2);
+    expect(f[1].dkk).toBeCloseTo(5.845, 3);
+    expect(totals(OKT).dkk).toBeCloseTo(45.78, 2);
     expect(f[0].share).toBeCloseTo(0.872, 3);
     expect(f.reduce((s, x) => s + x.dkk, 0)).toBeCloseTo(totals(OKT).dkk, 8); // fordelingen stemmer med totalen
   });
@@ -60,7 +60,7 @@ describe("priser og totaler", () => {
     expect(priceFor("claude-ukendt-9")).toBeNull();
     const t = totals([row("2026-10-15", "x", 3, 1000, 1000, "claude-ukendt-9"), row("2026-10-15", "allergens", 1, 1e6, 0)]);
     expect(t.unpricedCalls).toBe(3);
-    expect(t.dkk).toBeCloseTo(6.9, 5); // kun den kendte række er med
+    expect(t.dkk).toBeCloseTo(6.66, 5); // kun den kendte række er med
   });
   it("månedstotal stemmer med summen af dagene", () => {
     const sum = byDay(OKT).reduce((s, d) => s + d.dkk, 0);
@@ -182,14 +182,14 @@ describe("økonomisk korrekthed", () => {
     { day: "2026-10-14", function_name: "allergens", model: "claude-haiku-4-5", calls: 201, input_tokens: 116655, output_tokens: 33567 },
     { day: "2026-10-15", function_name: "allergens", model: "claude-haiku-4-5", calls: 200, input_tokens: 114747, output_tokens: 33400 },
   ];
-  it("totalen regnes af de uafrundede tal: 47,4285 kr. (vises som 47,43), mens de afrundede dagsbeløb giver 47,42", () => {
+  it("totalen regnes af de uafrundede tal: 45,7788 kr. (vises som 45,78), og de afrundede dagsbeløb giver det samme", () => {
     const total = totals(rows).dkk;
-    expect(total).toBeCloseTo(47.4285, 3);
-    expect(formatKr(total)).toBe("47,43 kr.");
+    expect(total).toBeCloseTo(45.7788, 3);
+    expect(formatKr(total)).toBe("45,78 kr.");
     const days = byDay(rows).map((d) => d.dkk);
     expect(days.reduce((s, v) => s + v, 0)).toBeCloseTo(total, 10); // dag + dag = måned uden afrunding
     const roundedSum = days.reduce((s, v) => s + Math.round(v * 100) / 100, 0);
-    expect(roundedSum.toFixed(2)).toBe("47.42"); // forskellen er ren afrunding (−0,0085 kr.), ikke en fejl
+    expect(roundedSum.toFixed(2)).toBe("45.78"); // afrundingen af dagene kan ellers give få øre forskel
     expect(Math.abs(roundedSum - total)).toBeLessThan(0.005 * days.length);
   });
   it("funktioner og måned bruger samme grundlag som dagene", () => {
