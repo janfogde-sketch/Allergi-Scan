@@ -118,6 +118,13 @@ table.admin-table tr:hover td{background:var(--surface3);}
 .admin-pill-red{background:var(--red-lt);color:var(--red);}
 .admin-pill-amber{background:var(--amber-lt);color:var(--amber);}
 .admin-pill-neutral{background:var(--surface2);color:var(--ink2);}
+.admin-pill-blue{background:var(--blue-lt,var(--surface2));color:var(--blue);}
+.mi-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.mi-count{font-size:13px;color:var(--ink2);}
+.mi-count b{color:var(--ink);}
+.mi-row .usr-row-name{font-family:var(--mono);letter-spacing:.02em;}
+.mi-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.mi-empty{padding:18px 16px;}
 .admin-tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);}
 .admin-tab-btn{background:none;border:none;font-family:var(--f);font-size:12.5px;font-weight:700;color:var(--muted);padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
 .admin-tab-btn.active{color:var(--green);border-bottom-color:var(--green);}

@@ -301,6 +301,13 @@ export async function runLookupProduct(ean, ctx, opts = {}) {
     } finally { clearTimeout(timer); }
     traceLog(tid, "scan:product-response", { found: data.found, name: data.product?.name });
     if (isStale()) return;
+    // Teknisk fejl hos kilden er ikke "produktet findes ikke": ingen manglende-produkt-skærm og ingen historik
+    if (!data.found && data.lookup_failed) {
+      traceLog(tid, "scan:lookup-failed");
+      setScanError("Opslaget kunne ikke gennemføres lige nu. Prøv igen om lidt.");
+      setLoading(false);
+      return;
+    }
     if (!data.found) {
       traceLog(tid, "scan:not-found");
       setNotFoundEan(ean.trim());
