@@ -158,9 +158,11 @@ async function fetchByCategory(category, excludeEan, accessToken, activeIds, bas
     + `&limit=300`
     + `&order=allergen_quality.asc`; // "high" før "medium"
 
-  const res = await fetch(url, {
-    headers: { ...makeHeaders(accessToken), "Accept": "application/json" },
-  });
+  const headers = { ...makeHeaders(accessToken), "Accept": "application/json" };
+  // Dobbelte katalogvarer, der er skjult fra søgningen, foreslås heller ikke som alternativ (16. okt. 2026). Kolonnen findes
+  // først i databasen efter næste udgivelse; indtil da afviser databasen filteret, og vi spørger igen uden det.
+  let res = await fetch(url + `&search_hidden=is.false`, { headers });
+  if (res.status === 400) res = await fetch(url, { headers });
   if (!res.ok) return [];
 
   const products = await res.json();
