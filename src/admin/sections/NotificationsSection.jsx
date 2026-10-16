@@ -9,7 +9,7 @@ import { useShowSpinner } from "../RefreshContext.js";
 import Disclosure from "../Disclosure.jsx";
 import {
   listNotifications, defaultPush, previewPush, overrideIsActive, validatePushOverride, pushVariablesFor, VARIABLE_LABELS,
-  PUSH_TITLE_MAX, PUSH_BODY_MAX, resendTemplateUrl, insertVariableAt, sameText, summarizeTest, prepareMailPreview, MAIL_TEMPLATE_NAMES,
+  PUSH_TITLE_MAX, PUSH_BODY_MAX, resendTemplateUrl, insertVariableAt, sameText, summarizeTest, prepareMailPreview, MAIL_TEMPLATE_NAMES, isSentFromRepo,
 } from "../notificationAdminLogic.js";
 
 function StateBox({ icon, title, text, action, role }) {
@@ -34,7 +34,7 @@ function PushPreview({ title, body, saved }) {
 }
 
 /** Bekræftelsesdialog (X lukker, Escape annullerer, fokus på første knap). */
-function Confirm({ title, text, confirmLabel, danger, busy, onCancel, onConfirm }) {
+function Confirm({ title, text, confirmLabel, cancelLabel = "Annuller", danger, busy, onCancel, onConfirm }) {
   const ref = useRef(null);
   useEffect(() => { ref.current?.focus(); }, []);
   useEffect(() => {
@@ -51,12 +51,23 @@ function Confirm({ title, text, confirmLabel, danger, busy, onCancel, onConfirm 
         </div>
         <div style={{ fontSize: 13.5, lineHeight: 1.5, color: "var(--ink2)" }}>{text}</div>
         <div className="err-actions">
-          <button type="button" ref={ref} className="admin-btn admin-btn-ghost admin-touch" disabled={busy} onClick={onCancel}>Annuller</button>
+          <button type="button" ref={ref} className="admin-btn admin-btn-ghost admin-touch" disabled={busy} onClick={onCancel}>{cancelLabel}</button>
           <button type="button" className={`admin-btn ${danger ? "admin-btn-danger" : "admin-btn-primary"} admin-touch`} disabled={busy} onClick={onConfirm}>{busy ? "Arbejder…" : confirmLabel}</button>
         </div>
       </div>
     </div>,
     document.body
+  );
+}
+
+/** Diskret informationsknap (samme mønster som AI-forbrug), der folder en kort forklaring ud. */
+function InfoTip({ label, children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="ai-info-btn np-info-btn" aria-label={label} aria-expanded={open} onClick={() => setOpen((v) => !v)}><Icon name="info" size={16} color="var(--muted)" /></button>
+      {open && <div className="ai-note" role="note">{children}</div>}
+    </>
   );
 }
 
@@ -113,13 +124,13 @@ function PushTab({ k, def, saved, draft, setDraft, check, dirty, isDefault, vars
       {!check.ok && <div className="error-box" role="alert" style={{ marginBottom: 10, fontSize: 13 }}>{check.error}</div>}
       <div className="admin-label" style={{ marginTop: 4 }}>Forhåndsvisning</div>
       {preview && <PushPreview title={preview.title} body={preview.body} saved={!dirty} />}
-      <div className="np-note">Eksempeldata er opdigtede. Hvor meget af teksten der vises, afhænger af enhed og styresystem.</div>
       <div className="np-actions">
         <button type="button" className="admin-btn admin-btn-primary admin-touch" onClick={onSave} disabled={saving || !dirty || !check.ok}>{saving ? "Gemmer…" : "Gem push-tekst"}</button>
         <button type="button" className="admin-btn admin-btn-ghost admin-touch" onClick={onReset} disabled={saving || (isDefault && !overrideIsActive(saved))}>Gendan standard</button>
         {dirty && <span className="np-dirty" role="status">Ikke gemt</span>}
       </div>
-      <div className="np-note">Push er en kort version, der fører til beskeden i appen. Beskeden i appen og mailen ændres ikke her.</div>
+      <div className="np-note">Pushbeskeden fører til den fulde besked i appen. Mail og appbesked ændres ikke her.
+        <InfoTip label="Om forhåndsvisningen">Forhåndsvisningen bruger opdigtede eksempeldata. Hvor meget af teksten der vises, afhænger af enhed og styresystem.</InfoTip></div>
     </div>
   );
 }
@@ -128,6 +139,7 @@ function MailTab({ k, selected, recipient, loadMailPreview }) {
   const [state, setState] = useState({ state: "idle" });
   const [mode, setMode] = useState("light");
   const [big, setBig] = useState(false);
+  const [bigKey, setBigKey] = useState(0); // ny ramme ved hver åbning, så mailen starter fra toppen
   const [attempt, setAttempt] = useState(0);
   const templateUrl = resendTemplateUrl(k);
   useEffect(() => {
@@ -140,46 +152,55 @@ function MailTab({ k, selected, recipient, loadMailPreview }) {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: hentes kun ved skift af besked, modtager eller nyt forsøg; loadMailPreview genskabes hver gang
   }, [k, recipient, templateUrl, attempt]);
+  useEffect(() => {
+    if (!big) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setBig(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [big]);
   const srcDoc = useMemo(() => (state.state === "ok" ? prepareMailPreview(state.html, mode, window.location.origin) : ""), [state, mode]);
-  const frame = (h) => <iframe title={`Mail: ${selected.name}`} sandbox="" srcDoc={srcDoc} className="np-frame" style={{ height: h }} />;
+  const frame = (h, cls, key) => <iframe key={key} title={`Mail: ${selected.name}`} sandbox="" srcDoc={srcDoc} className={cls} style={{ height: h }} />;
   const mail = selected.def.mail;
+  const fromRepo = isSentFromRepo(k);
   if (!mail) return <StateBox icon="mail" title="Ingen mail" text="Denne notifikation sendes kun som push og besked i appen." />;
   return (
     <div>
       <dl className="audit-detail">
         <div className="audit-detail-row"><dt>Emne</dt><dd>{mail.subject}</dd></div>
         <div className="audit-detail-row"><dt>Skabelon</dt><dd>{MAIL_TEMPLATE_NAMES[k] ?? selected.name}</dd></div>
-        <div className="audit-detail-row"><dt>Rettes i</dt><dd>Resend (skrivebeskyttet her){templateUrl && <> · <a href={templateUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--green)", fontWeight: 600 }}>Åbn skabelonen</a></>}</dd></div>
+        <div className="audit-detail-row"><dt>Rettes i</dt><dd>{fromRepo ? "Kildefilen i projektet (sendes direkte)" : "Resend"}{templateUrl && !fromRepo && <> · <a href={templateUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--green)", fontWeight: 600 }}>Åbn skabelonen</a></>}</dd></div>
       </dl>
-      <div className="np-note">Mailens design og tekst kan ikke redigeres fra administrationen. Ændringer laves i Resend og i kildefilen i repoet.</div>
       <div className="np-modes" role="group" aria-label="Visning">
         {[["light", "Lys"], ["dark", "Mørk"]].map(([m, label]) => (
           <button key={m} type="button" aria-pressed={mode === m} className={`admin-btn admin-btn-sm admin-touch ${mode === m ? "admin-btn-primary" : "admin-btn-ghost"}`} onClick={() => setMode(m)}>{label}</button>
         ))}
-        {state.state === "ok" && <button type="button" className="todo-link-btn np-bigbtn" onClick={() => setBig(true)}>Åbn større visning</button>}
+        {state.state === "ok" && <button type="button" className="todo-link-btn np-bigbtn" onClick={() => { setBigKey((n) => n + 1); setBig(true); }}>Åbn større visning</button>}
       </div>
-      {state.state === "loading" && <div className="admin-loading-row"><div className="admin-spinner" /> Henter mailen fra Resend…</div>}
-      {state.state === "error" && <StateBox role="alert" icon="warning" title="Mailen kunne ikke vises" text={`Forhåndsvisningen hentes fra Resend. ${state.error}`} action={<button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setAttempt((n) => n + 1)}>Prøv igen</button>} />}
+      {state.state === "loading" && <div className="admin-loading-row"><div className="admin-spinner" /> Henter mailen…</div>}
+      {state.state === "error" && <StateBox role="alert" icon="warning" title="Mailen kunne ikke vises" text={`Forhåndsvisningen kunne ikke hentes. ${state.error}`} action={<button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setAttempt((n) => n + 1)}>Prøv igen</button>} />}
       {state.state === "ok" && (
         <>
-          <div className="np-note" style={{ marginTop: 0 }}>Eksempeldata{state.status && state.status !== "published" ? ` · skabelonen er ${state.status}` : ""}. Lys/mørk efterligner mailklienternes mørke tilstand med skabelonens egne regler.</div>
-          {frame(420)}
+          {frame(420, "np-frame")}
+          <div className="np-note">Visningen bruger eksempeldata. Den endelige visning kan variere mellem mailklienter.</div>
         </>
       )}
       <Disclosure title="Tekniske oplysninger">
         <dl className="audit-detail">
           <div className="audit-detail-row"><dt>Notifikation</dt><dd className="np-mono">{k}</dd></div>
-          <div className="audit-detail-row"><dt>Skabelon-id</dt><dd className="np-mono">{state.templateId || (templateUrl || "").split("/").pop() || "–"}</dd></div>
+          <div className="audit-detail-row"><dt>Skabelon-id</dt><dd className="np-mono">{fromRepo ? "–" : state.templateId || (templateUrl || "").split("/").pop() || "–"}</dd></div>
+          <div className="audit-detail-row"><dt>Kilde</dt><dd>{fromRepo ? "Visningen er bygget af kildefilen i projektet, som også bruges ved afsendelse." : "Visningen hentes fra den publicerede skabelon i Resend. Kildefilerne i projektet kan afvige, hvis Resend er rettet eller ikke opdateret."}</dd></div>
+          <div className="audit-detail-row"><dt>Lys/mørk</dt><dd>Efterligner mailklienternes mørke tilstand med skabelonens egne regler. Gmail og Outlook til Windows vender selv farverne.</dd></div>
+          {state.status && state.status !== "published" && <div className="audit-detail-row"><dt>Status</dt><dd>Skabelonen er {state.status}, ikke publiceret.</dd></div>}
         </dl>
       </Disclosure>
       {big && ReactDOM.createPortal(
         <div className="admin-modal-overlay" onClick={() => setBig(false)}>
-          <div className="admin-modal todo-panel" role="dialog" aria-modal="true" aria-label="Mail i større visning" style={{ maxWidth: 720 }} onClick={(e) => e.stopPropagation()}>
+          <div className="admin-modal todo-panel np-big" role="dialog" aria-modal="true" aria-label="Mail i større visning" onClick={(e) => e.stopPropagation()}>
             <div className="todo-panel-head">
               <div className="audit-sheet-title">{selected.name}</div>
               <button type="button" className="admin-iconbtn audit-sheet-close" onClick={() => setBig(false)} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
             </div>
-            <div className="todo-panel-body">{frame("70vh")}</div>
+            <div className="np-big-body">{frame("100%", "np-frame np-frame-big", bigKey)}</div>
           </div>
         </div>, document.body)}
     </div>
@@ -230,8 +251,8 @@ function TestTab({ k, selected, admins, recipient, setRecipient, draft, dirty, c
       {result?.error && <div className="error-box" role="alert" style={{ marginTop: 12, fontSize: 13 }}>Testen mislykkedes: {result.error}</div>}
       {result?.lines && (
         <div className={`np-result ${result.overall}`} role="status">
-          <div className="np-result-title">{result.overall === "ok" ? "Testen er sendt" : result.overall === "partial" ? "Delvist sendt – ikke alt lykkedes" : "Testen blev ikke sendt"}</div>
-          {result.lines.map((l) => <div key={l.channel} className={l.ok ? "" : "bad"}>{l.ok ? "✓ " : "✗ "}{l.text}</div>)}
+          <div className="np-result-title">{result.overall === "ok" ? "Testen er afsendt" : result.overall === "partial" ? "Delvist afsendt – ikke alt lykkedes" : "Testen blev ikke afsendt"}</div>
+          {result.lines.map((l) => <div key={l.channel} className={l.ok ? "" : "bad"}><strong>{l.status}</strong> · {l.text}</div>)}
           {result.dirty && !result.usedDraft && <div className="bad">Bemærk: serveren brugte den gemte pushtekst, ikke din ikke-gemte (den nyeste serverversion er ikke udgivet endnu).</div>}
         </div>
       )}
@@ -266,11 +287,15 @@ function Editor({ k, selected, props, dirtyRef, onBack }) {
 
   const reload = useCallback(async () => { await load(); setConflict(""); setDraft({ title: overrides[k]?.title ?? def.title, body: overrides[k]?.body ?? def.body }); base.current = overrides[k]?.updated_at ?? null; }, [load, overrides, k, def.title, def.body]);
 
+  const saveGuard = useRef(false);
   const doSave = async (payload, successText) => {
+    if (saveGuard.current) return; // ét gem ad gangen
+    saveGuard.current = true;
     setSaving(true);
     setConflict("");
     const res = await savePush(k, payload, base.current);
     setSaving(false);
+    saveGuard.current = false;
     if (!res.ok) { if (res.conflict) setConflict(res.error); else showToast(res.error, "error"); return; }
     base.current = res.updated_at;
     if (!payload.title && !payload.body) setDraft({ title: def.title, body: def.body });
@@ -385,7 +410,7 @@ export default function NotificationsSection(props) {
           : <StateBox icon="bell" title="Vælg en notifikation" text="Åbn en kategori til venstre, og vælg en notifikation." />}
       </div>
       {pending && (
-        <Confirm title="Forlad uden at gemme?" danger confirmLabel="Forlad" onCancel={() => setPending(null)}
+        <Confirm title="Forlad uden at gemme?" danger confirmLabel="Kassér ændringer" cancelLabel="Bliv på siden" onCancel={() => setPending(null)}
           text="Du har ikke-gemte ændringer i pushteksten. De går tabt, hvis du forlader siden."
           onConfirm={() => { const n = pending.next; dirtyRef.current = false; setPending(null); n(); }} />
       )}

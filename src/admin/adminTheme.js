@@ -303,6 +303,10 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .np-modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0;}
 .np-bigbtn{margin-left:auto;}
 .np-frame{display:block;width:100%;max-width:640px;border:1px solid var(--border);border-radius:10px;background:var(--paper);margin:0 auto;}
+.np-big{width:100%;max-width:720px;height:min(92dvh,900px);}
+.np-big-body{flex:1 1 auto;min-height:0;display:flex;overflow:hidden;}
+.np-frame-big{flex:1 1 auto;width:100%;max-width:none;height:100%;border:0;border-radius:0;margin:0;}
+.np-info-btn{display:inline-flex;vertical-align:middle;margin:-12px 0 -12px 2px;}
 .np-mono{font-family:var(--mono);font-size:12px;overflow-wrap:anywhere;}
 .np-channels{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
 .np-channels label{display:flex;gap:6px;align-items:center;font-size:13.5px;min-height:44px;}

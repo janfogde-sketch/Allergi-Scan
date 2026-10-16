@@ -170,7 +170,7 @@ describe("indholdsregler fra pakken", () => {
 
   it("fallbacks: tomt produktnavn giver et grammatisk korrekt push og mailtekst", () => {
     const n = renderNotification("N2a:default", { ...SAMPLE, productName: "" });
-    expect(n.pushBody).toBe("Produktet er godkendt af vores team og nu tilgængeligt for alle.");
+    expect(n.pushBody).toBe("Produktet er nu tilgængeligt i EatSafe. Tak for dit bidrag!");
     expect(blocksToText(n.blocks)).toContain("din indsendelse af produktet.");
     // F1-11: midt i sætningen med lille forbogstav
     expect(renderNotification("P6:default", { ...SAMPLE, productName: "" }).pushBody).toContain("tilbagekaldelse for produktet.");
