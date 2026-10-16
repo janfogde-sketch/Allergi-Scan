@@ -325,6 +325,30 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .fam-off .admin-disclosure{margin-top:4px;}
 .fam-filters{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
 .fam-filters .admin-tab-btn{flex:0 0 auto;white-space:nowrap;}
+.pe-panel{max-width:600px;width:100%;}
+.pe-section{font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2);margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--border);}
+.pe-section:first-child{margin-top:0;border-top:none;padding-top:0;}
+.pe-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media (max-width:520px){.pe-grid{grid-template-columns:1fr;}}
+.pe-notice{font-size:12.5px;line-height:1.45;border-radius:10px;padding:8px 10px;margin:0 0 8px;border:1px solid var(--border);}
+.pe-amber{background:var(--amber-lt);border-color:var(--amber-md);color:var(--ink);}
+.pe-red{background:var(--red-lt);border-color:var(--red-md);color:var(--ink);}
+.pe-flags{display:flex;flex-direction:column;gap:6px;margin:8px 0;}
+.pe-flag{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border:1px solid var(--border);border-left-width:4px;border-radius:10px;background:var(--surface);}
+.pe-flag label{font-size:13.5px;font-weight:600;min-width:0;overflow-wrap:anywhere;}
+.pe-flag select{width:176px;flex:none;min-height:40px;}
+.pe-t-neutral{border-left-color:var(--border2);}
+.pe-t-red{border-left-color:var(--red);background:var(--red-lt);}
+.pe-t-amber{border-left-color:var(--amber);background:var(--amber-lt);}
+.pe-t-green{border-left-color:var(--green);}
+.pe-conflict{outline:2px solid var(--amber);outline-offset:-2px;}
+.pe-legend{margin:6px 0 0;padding-left:18px;}
+.pe-legend li{margin-bottom:4px;}
+.pe-history{list-style:none;margin:0;padding:0;}
+.pe-history li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.pe-muted{font-size:12.5px;color:var(--muted);padding:6px 0;}
+.pe-danger{margin-top:22px;padding-top:14px;border-top:1px solid var(--border);}
+.pe-del{color:var(--red);border-color:var(--red-md);}
 .fam-sub{font-size:12px;font-weight:800;color:var(--ink2);margin:14px 0 6px;}
 .fam-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
 .fam-line-title{font-size:14px;font-weight:700;overflow-wrap:anywhere;}
