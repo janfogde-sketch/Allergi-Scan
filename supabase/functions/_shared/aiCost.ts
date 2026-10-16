@@ -14,7 +14,7 @@ export async function logAiUsage(functionName: string, model: string, usage: any
     const input = (usage.input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0);
     const args = { p_function: functionName, p_model: model, p_input: input, p_output: usage.output_tokens ?? 0 };
     let { error } = await supabase.rpc("log_ai_usage", { ...args, p_origin: origin });
-    // Før migrationen 20261016090000 er live, kender funktionen ikke p_origin: log uden oprindelse, så ingen registrering går tabt.
+    // Før migrationen 20261016090100 er live, kender funktionen ikke p_origin: log uden oprindelse, så ingen registrering går tabt.
     if (error && /p_origin|schema cache|Could not find the function/i.test(error.message)) {
       ({ error } = await supabase.rpc("log_ai_usage", args));
     }
