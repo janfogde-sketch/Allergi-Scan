@@ -98,12 +98,16 @@ describe("Frafald i onboarding", () => {
     render(<OnboardingFunnelSection {...base({ data: { ...DATA, total: 0, completed: 0, possible_dropout: 0 } })} />);
     expect(screen.getByText("Ingen konti oprettet i perioden")).toBeTruthy();
   });
-  it("'Om onboardingstatistikken' er lukket som standard og forklarer definitionerne", () => {
+  it("'Om onboardingstatistikken' er lukket som standard, er kort, og de tekniske detaljer ligger i en lukket undersektion", () => {
     render(<OnboardingFunnelSection {...base()} />);
-    expect(screen.queryByText(/Perioden afgrænser altid kohorten/)).toBeNull();
+    expect(screen.queryByText(/hvilket trin uafsluttede brugere/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Om onboardingstatistikken" }));
-    expect(screen.getByText(/Perioden afgrænser altid kohorten/)).toBeTruthy();
-    expect(screen.getByText(/ikke bevis for permanent frafald/)).toBeTruthy();
+    expect(screen.getByText(/hvilket trin uafsluttede brugere/)).toBeTruthy();
+    expect(screen.getByText(/Det betyder ikke nødvendigvis, at brugeren har opgivet/)).toBeTruthy();
+    expect(screen.getByText(/Valgfrie trin tæller ikke som frafald/)).toBeTruthy();
+    expect(screen.queryByText(/example\.com eller example\.invalid/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Tekniske oplysninger" }));
+    expect(screen.getByText(/Kun trinskift registreres/)).toBeTruthy();
     expect(screen.getByText(/example\.com eller example\.invalid/)).toBeTruthy();
   });
 });

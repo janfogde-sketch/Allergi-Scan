@@ -158,13 +158,21 @@ export default function OnboardingFunnelSection({ data, loading, loaded, error, 
       {body}
 
       <Disclosure title="Om onboardingstatistikken">
-        <p style={{ margin: "0 0 6px" }}><strong>Oprettet konto:</strong> en konto oprettet i den valgte periode (dansk tid). Perioden afgrænser altid kohorten efter oprettelsestidspunktet; alle tal bruger samme kohorte.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Gennemført:</strong> serveren har registreret, at onboarding er afsluttet. Det kan kun ske, når navn, alder og køn er udfyldt (og samtykke til helbredsoplysninger er givet, hvis der er gemt allergier eller E-numre). Trin 4 og 5 er valgfrie.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Igangværende:</strong> bekræftet e-mail, ikke gennemført, og fremgang (et nyt trin) registreret inden for de seneste 24 timer. <strong>Muligt frafald:</strong> ikke gennemført og ingen fremgang i over 24 timer. 24 timer er en foreløbig grænse og ikke bevis for permanent frafald; brugeren genoptager forløbet, hvor vedkommende slap.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Ikke startet:</strong> bekræftet e-mail, men ingen registreret fremgang (kontoen står stadig på sit første trin). <strong>E-mail ikke bekræftet:</strong> kontoen er oprettet, men mailen er ikke bekræftet; det er frafald før selve onboarding.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Senest registrerede trin</strong> er det trin, en uafsluttet konto står på nu, og er ikke en tragt. <strong>Tragten</strong> bygger kun på registrerede trinskift (højeste nåede trin) og viser, hvor mange der nåede og fortsatte forbi et trin; historiske forløb opfindes ikke.</p>
-        <p style={{ margin: "0 0 6px" }}><strong>Testkonti:</strong> konti på testlisten for notifikationer og konti med en e-mailadresse på example.com eller example.invalid er udeladt som standard og kan tages med. Andre interne konti (fx på firmaets domæne) kan ikke kendes og tælles med.</p>
-        <p style={{ margin: 0 }}><strong>Historik:</strong> trin og fremgang registreres fra udgivelsen af den nye registrering; ældre gennemførte konti tæller som gennemført, men har intet trinforløb. Kun samlede tal vises, ingen oplysninger om enkelte brugere.</p>
+        <p style={{ margin: "0 0 8px" }}>Statistikken viser, hvor mange der gennemfører onboarding, og hvilket trin uafsluttede brugere senest har nået.</p>
+        <p style={{ margin: "0 0 8px" }}><strong>Gennemført:</strong> Brugeren har afsluttet alle obligatoriske trin.</p>
+        <p style={{ margin: "0 0 8px" }}><strong>Igangværende:</strong> Brugeren er ikke færdig, men har nået et nyt trin inden for de seneste 24 timer.</p>
+        <p style={{ margin: "0 0 8px" }}><strong>Muligt frafald:</strong> Brugeren er ikke færdig og har ikke nået et nyt trin i mere end 24 timer. Det betyder ikke nødvendigvis, at brugeren har opgivet.</p>
+        <p style={{ margin: "0 0 8px" }}><strong>Ikke startet:</strong> Brugeren har bekræftet sin e-mail, men er endnu ikke begyndt på onboarding.</p>
+        <p style={{ margin: "0 0 8px" }}><strong>E-mail ikke bekræftet:</strong> Kontoen er oprettet, men e-mailadressen er endnu ikke bekræftet.</p>
+        <p style={{ margin: 0 }}><strong>Bemærk:</strong> Valgfrie trin tæller ikke som frafald. Statistikken viser kun samlede tal og ingen oplysninger om enkelte brugere.</p>
+        <Disclosure title="Tekniske oplysninger">
+          <p style={{ margin: "0 0 6px" }}><strong>Periode:</strong> Tallene gælder konti oprettet i perioden (dansk tid). Alle tal bruger samme gruppe af konti.</p>
+          <p style={{ margin: "0 0 6px" }}><strong>Registrering:</strong> Kun trinskift registreres, ikke anden aktivitet i appen. "Aktiv" betyder derfor, at et nyt trin er nået.</p>
+          <p style={{ margin: "0 0 6px" }}><strong>Gennemført:</strong> Sættes af serveren og kræver navn, alder og køn (og samtykke til helbredsoplysninger, hvis allergier eller E-numre er gemt). Trin 4 og 5 er valgfrie.</p>
+          <p style={{ margin: "0 0 6px" }}><strong>Tragten:</strong> Bygger kun på registrerede trinskift (højeste nåede trin). Der opfindes ingen historik.</p>
+          <p style={{ margin: "0 0 6px" }}><strong>Ældre konti:</strong> Gennemførte konti fra før registreringen tæller som gennemført, men har intet trinforløb og indgår ikke i tragten.</p>
+          <p style={{ margin: 0 }}><strong>Testkonti:</strong> Konti på notifikationernes testliste og konti med e-mail på example.com eller example.invalid er udeladt som standard og kan tages med. Andre interne konti kan ikke kendes og tælles med. 24 timer er en foreløbig grænse.</p>
+        </Disclosure>
       </Disclosure>
     </>
   );
