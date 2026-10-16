@@ -68,3 +68,35 @@ export function PhotoVerdictCard({ profiles, flags, ingredientsText }) {
     </div>
   );
 }
+
+// Kort orange besked, når billedlæsningen ikke fik noget med (Jan, 16. okt. 2026): brugeren skal vide det på hvert trin.
+export function CaptureNotice({ title, text }) {
+  return (
+    <div role="status" style={{ display:"flex", alignItems:"flex-start", gap:10, background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, padding:"12px 14px", marginBottom:14 }}>
+      <span style={{ flexShrink:0, marginTop:1 }}><Icon name="warning" size={16} color="var(--amber)" /></span>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:13, fontWeight:800, color:"var(--ink)" }}>{title}</div>
+        {text && <div style={{ fontSize:12, color:"var(--ink2)", lineHeight:1.5, marginTop:2 }}>{text}</div>}
+      </div>
+    </div>
+  );
+}
+
+export function MissingSummary({ items, onFix }) {
+  if (!items.length) return null;
+  return (
+    <div role="status" style={{ background:"var(--amber-lt)", border:"1px solid var(--amber-md)", borderRadius:12, padding:"12px 14px", marginBottom:14 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:6 }}>
+        <Icon name="warning" size={16} color="var(--amber)" /> Det mangler vi
+      </div>
+      {items.map(it => (
+        <div key={it.key} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"6px 0" }}>
+          <span style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5 }}>{it.text}</span>
+          {it.step && (
+            <button type="button" className="btn btn-outline btn-sm" style={{ flexShrink:0 }} onClick={() => onFix(it.step)}>Ret</button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

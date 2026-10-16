@@ -4,7 +4,8 @@ import { ALLERGENS, PRODUCT_ALLERGENS, SCREENS } from "./constants.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
 import { Icon, Loader, AllergenGlyph } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
-import { OcrUnreadableNotice, PhotoVerdictCard } from "./NotFoundParts.jsx";
+import { OcrUnreadableNotice, PhotoVerdictCard, CaptureNotice, MissingSummary } from "./NotFoundParts.jsx";
+import { missingSubmissionItems, allergensUnchecked } from "./submissionMissing.js";
 
 const S = {
   none:             { display:"none" },
@@ -79,7 +80,7 @@ export default function NotFoundScreen({
   proposedNutrition, setProposedNutrition,
   proposedNotes, setProposedNotes,
   ocrLoading, ocrText, setOcrText,
-  ocrUnreadable, scanProfiles,
+  ocrUnreadable, captureIssues = {}, scanProfiles,
   nutritionOcrLoading, handleNutritionCapture,
   productImagePreview,
   submitting, submitProduct,
@@ -91,6 +92,10 @@ export default function NotFoundScreen({
   const [ingInput, setIngInput] = React.useState("");
   const nutritionFilledCount = NUTRITION_KEYS.filter(k => proposedNutrition?.[k]).length;
   const nutritionFilled = nutritionFilledCount > 0;
+  // Mindre end halvdelen af felterne læst: orange i stedet for grøn, så brugeren tjekker og udfylder resten.
+  const nutritionPartial = nutritionFilled && nutritionFilledCount < NUTRITION_KEYS.length / 2;
+  const nameMissingNotice = !!captureIssues.nameUnread && !proposedName.trim();
+  const unchecked = allergensUnchecked({ ocrText, allergenCheckFailed: captureIssues.allergenCheckFailed });
 
   const parseIngredients = (text) => {
     if (!text) return [];
@@ -212,6 +217,8 @@ export default function NotFoundScreen({
               </div>
             )}
 
+            {nameMissingNotice && <CaptureNotice title="Vi kunne ikke læse produktnavnet" text="Skriv det selv i feltet ovenfor eller på sidste trin." />}
+
             <StepHead step={2} title="Fotografér ingredienslisten" help="Vi bruger billedet til at finde allergener og ingredienser." />
 
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px", marginBottom:14 }}>
@@ -253,6 +260,7 @@ export default function NotFoundScreen({
         {/* ── TRIN 3: Næringsindhold ── */}
         {notFoundStep === 3 && !ocrLoading && !nutritionOcrLoading && (
           <div className="fade-in">
+            {captureIssues.allergenCheckFailed && <CaptureNotice title="Vi kunne ikke tjekke allergenerne" text="Ingredienslisten er læst, men allergenerne blev ikke tjekket. Vælg dem selv på sidste trin." />}
             <PhotoVerdictCard profiles={scanProfiles} flags={proposedFlags} ingredientsText={ocrText} />
             <StepHead step={3} optional title="Næringsindhold" help="Fotografér eller skriv næringsdeklarationen. Du kan gå videre uden at udfylde noget." />
 
@@ -271,10 +279,13 @@ export default function NotFoundScreen({
 
             {scanError && <div className="error-box" style={S.mb10}><Icon name="warning" size={13} color="var(--red)" /> {scanError}</div>}
 
-            {nutritionFilled && (
+            {nutritionFilled && !nutritionPartial && (
               <div style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 12px", background:"var(--green-lt)", border:"1px solid var(--green-mid)", borderRadius:10, marginBottom:10, fontSize:12, color:"var(--green)", fontWeight:700 }}>
                 <Icon name="check" size={12} color="var(--green)" /> {nutritionFilledCount} af {NUTRITION_KEYS.length} felter er læst fra billedet. Tjek tallene, og udfyld resten selv, hvis du vil.
               </div>
+            )}
+            {nutritionPartial && (
+              <CaptureNotice title={`Vi kunne kun læse ${nutritionFilledCount} af ${NUTRITION_KEYS.length} felter`} text="Tjek tallene, og udfyld resten selv. Du kan også tage et nyt billede." />
             )}
 
             <div style={UI.ubgsurface_bd1pxsolid_br12_p14px_mb14}>
@@ -353,6 +364,12 @@ export default function NotFoundScreen({
         {notFoundStep === 5 && !ocrLoading && (
           <div className="fade-in">
             <StepHead step={5} title="Gennemse og send" />
+
+            {/* Alt, der ikke blev registreret, samlet øverst med en vej til at rette det (Jan, 16. okt. 2026) */}
+            <MissingSummary onFix={setNotFoundStep} items={missingSubmissionItems({
+              name: proposedName, hasImage: !!productImagePreview, hasIngredients: ingItems.length > 0 || !!ocrText,
+              ocrUnreadable, nameUnread: captureIssues.nameUnread, unchecked, nutritionCount: nutritionFilledCount,
+            })} />
 
             {/* Ingredienslisten kunne ikke læses: sig det, før brugeren sender, med gode råd til et nyt billede (Jan, 16. okt. 2026) */}
             {ocrUnreadable && ingItems.length === 0 && <OcrUnreadableNotice onCapture={handleImageCapture} />}
@@ -439,6 +456,11 @@ export default function NotFoundScreen({
                 <div style={{ ...S.h13, display:"flex", alignItems:"center", gap:6 }}><Icon name="warning" size={13} color="var(--ink)" /> Allergener</div>
                 <div style={S.sub11}>Tryk for at slå til eller fra</div>
               </div>
+              {unchecked && (
+                <div style={{ ...UI.ufs12_camber_fw600_p8px10px_bgamberlt_br8_mb10, display:"flex", alignItems:"flex-start", gap:6 }}>
+                  <Icon name="warning" size={12} color="var(--amber)" /> Vi har ikke tjekket allergenerne automatisk. Grå betyder ikke, at produktet er fri for allergenet. Vælg dem, der står på pakken.
+                </div>
+              )}
               <div style={UI.wrapGap7}>
                 {PRODUCT_ALLERGENS.filter(a => !["svovl","lupin","bloeddyr"].includes(a.id) || ["yes","traces",true].includes(proposedFlags?.[a.id])).map(a => {
                   const val = proposedFlags?.[a.id];
