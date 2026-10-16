@@ -28,11 +28,12 @@ const todoProps = {
 const ticketProps = {
   adminTickets: [{ id: "k1", type: "bug", description: "Fejl. Mere tekst.", status: "open", created_at: "2026-09-30T10:00:00Z", context: {} }],
   ticketsLoading: false, adminTicketFilter: "active", setAdminTicketFilter: vi.fn(), ticketsIncludeDone: true, loadTickets: vi.fn(), openTicket: null, setOpenTicket: vi.fn(), updateTicketStatus: vi.fn(),
+  work: { meta: {}, tasks: {}, todos: {}, admins: [], available: true, nameOf: () => "Ingen", load: vi.fn() },
 };
 
 describe.each(WIDTHS)("bredde %i px (%s)", (w) => {
   const mobile = w <= 820;
-  it("To do og Tickets: kort på mobil, tabel ellers", () => {
+  it("To do: kort på mobil, tabel ellers; Tickets: altid kort", () => {
     atWidth(w);
     const a = render(<TodoSection {...todoProps} />).container;
     expect(!!a.querySelector("table")).toBe(!mobile);
@@ -40,7 +41,8 @@ describe.each(WIDTHS)("bredde %i px (%s)", (w) => {
     cleanup();
     atWidth(w);
     const b = render(<TicketsSection {...ticketProps} />).container;
-    expect(!!b.querySelector("table")).toBe(!mobile);
+    expect(!!b.querySelector("table")).toBe(false);
+    expect(!!b.querySelector(".admin-item-card")).toBe(true);
   });
   it("Aktivitetslog viser handling, admin og skift uden e-mail eller navn", () => {
     atWidth(w);

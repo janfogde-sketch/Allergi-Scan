@@ -125,6 +125,26 @@ table.admin-table tr:hover td{background:var(--surface3);}
 .mi-row .usr-row-name{font-family:var(--mono);letter-spacing:.02em;}
 .mi-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .mi-empty{padding:18px 16px;}
+.tk-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.tk-filters{grid-template-columns:repeat(3,minmax(0,1fr));}
+.tk-block{grid-column:1/-1;margin:2px 0 0;}
+@media (max-width:640px){.tk-filters{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.tk-title{overflow-wrap:anywhere;white-space:normal;}
+.tk-excerpt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+.tk-card{text-align:left;width:100%;}
+.tk-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.tk-desc{font-size:14px;line-height:1.65;}
+.tk-desc-h{font-size:14px;font-weight:800;margin:14px 0 4px;}
+.tk-desc-p{margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.tk-shot{width:100%;max-height:420px;object-fit:contain;border-radius:8px;background:var(--surface2);}
+.tk-tasks{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px;}
+.tk-tasks li{display:flex;align-items:center;gap:8px;}
+.tk-task-t{flex:1;min-width:0;overflow-wrap:anywhere;font-size:13.5px;}
+.tk-task-t.done{text-decoration:line-through;color:var(--muted);}
+.tk-task-s{width:150px;flex:none;min-height:40px;}
+@media (max-width:520px){.tk-tasks li{flex-wrap:wrap;}.tk-task-s{width:100%;}}
+.tk-foot-status{width:auto;min-width:130px;}
+.tk-activity li span:last-child{overflow-wrap:anywhere;}
 .di-card{padding:14px;margin-bottom:12px;}
 .di-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .di-title{font-size:15px;font-weight:800;margin:0;}
@@ -566,6 +586,7 @@ button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px sol
 .admin-menu-item.has-icon{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;}
 .admin-menu{max-width:calc(100vw - 24px);}
 .admin-menu-hint{font-size:11px;font-weight:500;color:var(--muted);}
+.admin-menu-fixed{position:fixed;right:auto;min-width:0;max-width:calc(100vw - 24px);z-index:300;}
 .admin-card-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
 .admin-item-card{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-family:var(--f);color:var(--ink);cursor:pointer;box-sizing:border-box;}
 .admin-item-card:active{background:var(--surface2);}

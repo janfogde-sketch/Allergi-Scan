@@ -1,256 +1,141 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from "react";
-import { showToast } from "../../SharedComponents.jsx";
-import { ticketReporter, ticketDevice } from "../../ticketReporter.js";
-import { useIsMobile } from "../useIsMobile.js";
+// Tickets: kompakte, klikbare kort (titel, kort uddrag, kategori, status, prioritet, ansvarlig, dato), kompakte filtre (status, kategori, prioritet, ansvarlig, lanceringsblokering),
+// søgning i titel og beskrivelse og sortering. Alt andet (status, prioritet, tjekliste, kommentarer, kopiér prompt) sker i detaljevisningen. Filtre huskes i sessionen.
+import React, { useEffect, useState, useMemo } from "react";
+import { showToast, Icon } from "../../SharedComponents.jsx";
 import ActionsMenu from "../ActionsMenu.jsx";
 import { statusPill } from "../statusTone.js";
+import TicketDetail from "./TicketDetail.jsx";
+import {
+  TYPE_LABELS, STATUS_LABELS, PRIORITIES, PRIORITY_PILL, PRIORITY_LABEL, TICKET_SORTS, ticketTitleParts, effectivePriority, originLabel, isLegalCandidate, progress, filterTickets, statusCounts, hasFilters,
+  buildTicketPrompt, buildManyPrompts,
+} from "../ticketsLogic.js";
 
-const TYPE_LABELS = { bug: "Fejl", ui: "Design", missing: "Mangler", content: "Indhold", crash: "Crash", suggestion: "Forslag" };
-const STATUS_LABELS = { open: "Åben", in_progress: "I gang", resolved: "Løst" };
-
-// Bygger en færdig, indsætbar prompt til Claude Code pr. ticket — så admin
-// kan tage indholdet af en downloadet/kopieret ticket og smide det direkte
-// ind i en session uden selv at skulle formulere opgaven. Inkluderer al
-// kontekst appen faktisk logger (FeedbackModal.jsx/FeedbackButton.jsx),
-// så Claude ikke skal gætte sig til skærm/bruger/enhed.
-function buildTicketPrompt(t) {
-  const ctx = t.context || {};
-  const dato = new Date(t.created_at).toLocaleString("da-DK", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  const lines = [
-    `Undersøg og analysér følgende bruger-rapporterede ${(TYPE_LABELS[t.type] || t.type).toLowerCase()} i EatSafe-kodebasen (Allergi-Scan).`,
-    ``,
-    `## Rapport`,
-    `Type: ${TYPE_LABELS[t.type] || t.type}`,
-    `Beskrivelse: ${t.description || "(ingen beskrivelse angivet)"}`,
-    `Indsendt: ${dato}`,
-    `Bruger: ${ticketReporter(t)}${ctx.user_email ? ` (${ctx.user_email})` : ""}, rolle: ${ctx.user_role || "—"}`,
-    ``,
-    `## Kontekst fra appen på indsendelsestidspunktet`,
-    `Skærm/sektion: ${ctx.screen_label || ctx.admin_section || ctx.screen || "—"}${ctx.page_id ? ` (${ctx.page_id})` : ""}`,
-    `Kilde: ${ctx.source === "desktop-admin" ? "Desktop admin-panel" : "Mobil-app (PWA)"}`,
-    `URL: ${ctx.url || "—"}`,
-    `Enhed/browser: ${ticketDevice(ctx)} · ${ctx.browser || ctx.user_agent || ctx.platform || "—"}`,
-    `Viewport: ${ctx.viewport || "—"} (skærm: ${ctx.screen_size || "—"})`,
-    `Online: ${ctx.online === false ? "Nej" : "Ja"}`,
-    ...(ctx.build_time || ctx.commit_sha ? [`Build: ${ctx.build_time || "—"} (${ctx.commit_sha || "—"})`] : []),
-    ...(ctx.scan_result_ean ? [`Relateret produkt: ${ctx.scan_result_name || "—"} [EAN ${ctx.scan_result_ean}]`] : []),
-    ...(ctx.allergens?.length ? [`Brugerens allergener: ${ctx.allergens.join(", ")}`] : []),
-    ...(ctx.debug_trace?.length ? [``, `## Seneste debug-trace (${ctx.debug_trace.length} entries)`, JSON.stringify(ctx.debug_trace.slice(-15), null, 2)] : []),
-    (t.image_path || t.image_base64) ? `\n(Der er vedhæftet et skærmbillede til denne ticket i EatSafe-admin — det kan ses i ticketen i admin-panelet (ticket-id ${t.id}), hvis det er relevant for fejlsøgningen.)` : ``,
-    ``,
-    `## Opgave`,
-    `1. Undersøg selv koden i repoet for at finde den sandsynlige rodårsag — gæt ikke, grep/læs de relevante filer først.`,
-    `2. Forklar kort hvad der sker, og hvorfor (den reelle mekanisme, ikke bare symptomet).`,
-    `3. Foreslå en konkret løsning.`,
-    `4. Beskriv hvad løsningen vil betyde — omfang, risiko, og om den bør shippes isoleret eller kan batches.`,
-    `Vent på min bekræftelse før du retter, medmindre det er en klart isoleret, lav-risiko rettelse.`,
-  ];
-  return lines.join("\n");
-}
-
-function copyTicketPrompt(t) {
-  navigator.clipboard?.writeText(buildTicketPrompt(t))
-    .then(() => showToast("Prompt kopieret"))
-    .catch((e) => showToast("Kunne ikke kopiere: " + e.message, "error"));
-}
-
-function exportOpenTickets(tickets) {
-  const filtered = tickets.filter(t => t.status === "open");
-  const sections = filtered.map((t, i) => `═══ Ticket ${i + 1} af ${filtered.length} (id: ${t.id}) ═══\n\n${buildTicketPrompt(t)}`);
-  const text = `EatSafe Tickets — Åbne (${filtered.length} stk)\nEksporteret: ${new Date().toLocaleString("da-DK")}\n\nHver ticket nedenfor er en færdig, indsætbar prompt — kopiér én sektion ad gangen ind i en Claude Code-session.\n\n` + sections.join("\n\n\n");
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = `eatsafe-tickets-open-${new Date().toISOString().slice(0, 10)}.txt`;
-  a.click(); URL.revokeObjectURL(url);
-}
-
-// Kort titel + uddrag ud fra beskrivelsen (tickets har ingen egen titel): første linje/sætning er titlen, resten uddraget.
-export function ticketTitleParts(description) {
-  const text = String(description || "").trim().replace(/\r/g, "");
-  if (!text) return { title: "(ingen beskrivelse)", excerpt: "" };
-  const firstLine = text.split("\n")[0];
-  const m = firstLine.match(/^(.{20,90}?[.!?])(\s|$)/);
-  const title = m ? m[1] : (firstLine.length > 90 ? firstLine.slice(0, 87).trimEnd() + "…" : firstLine);
-  const rest = text.slice(title.length).replace(/^\s*[…]?\s*/, "").trim();
-  return { title, excerpt: rest };
-}
-
-function TicketCard({ t, onOpen, onStatus }) {
-  const { title, excerpt } = ticketTitleParts(t.description);
-  return (
-    <div className="admin-item-card" role="button" tabIndex={0} onClick={onOpen}
-      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); onOpen(); } }}>
-      <div className="admin-item-title">{title}</div>
-      {excerpt && <div className="admin-item-excerpt">{excerpt}</div>}
-      <div className="admin-item-pills">
-        <span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span>
-        <span className={`admin-pill ${statusPill(t.status)}`}>{STATUS_LABELS[t.status] || t.status}</span>
-      </div>
-      <dl className="admin-item-facts">
-        <dt>Skærm</dt><dd>{t.context?.screen_label || t.context?.screen || "–"}</dd>
-        <dt>Dato</dt><dd>{new Date(t.created_at).toLocaleDateString("da-DK")}</dd>
-        <dt>Bruger</dt><dd>{ticketReporter(t)}</dd>
-      </dl>
-      <div className="admin-item-actions" onClick={(e) => e.stopPropagation()}>
-        <select value={t.status} aria-label={`Status for: ${title}`} onChange={(e) => onStatus(t, e.target.value)}
-          className={`admin-pill ${statusPill(t.status)}`} style={{ fontFamily: "var(--f)", border: "none", cursor: "pointer", minHeight: 36 }}>
-          {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => copyTicketPrompt(t)}>Kopiér prompt</button>
-        <span className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" aria-hidden="true" onClick={onOpen}>Åbn</span>
-      </div>
-    </div>
-  );
-}
-
-// Skærmbillede fra feedback (G15): hentes som tidsbegrænset link fra den lukkede bucket, når ticketen åbnes. Udseende: Bjørn.
-function TicketScreenshot({ path, getUrl }) {
-  const [url, setUrl] = useState(null);
-  const [failed, setFailed] = useState(false);
-  // getUrl skabes på ny ved hver gengivelse af admin-panelet; kun et nyt billede må hente et nyt link
-  const getUrlRef = useRef(getUrl);
-  getUrlRef.current = getUrl;
-  useEffect(() => {
-    let cancelled = false;
-    setUrl(null); setFailed(false);
-    getUrlRef.current(path).then((u) => { if (!cancelled) setUrl(u); }).catch(() => { if (!cancelled) setFailed(true); });
-    return () => { cancelled = true; };
-  }, [path]);
-  if (failed) return <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>Skærmbilledet kunne ikke hentes.</div>;
-  if (!url) return <div className="admin-loading-row" style={{ marginBottom: 16 }}><div className="admin-spinner" /> Henter skærmbillede…</div>;
-  return (
-    <div className="admin-field">
-      <label className="admin-label">Skærmbillede</label>
-      <a href={url} target="_blank" rel="noreferrer">
-        <img src={url} alt="Skærmbillede fra brugeren" style={{ width: "100%", maxHeight: 420, objectFit: "contain", borderRadius: 8, background: "var(--surface2)" }} />
-      </a>
-    </div>
-  );
-}
-
-// "Aktive" (standard) er åbne + i gang. Løst og Alle henter først de færdige tickets, når de åbnes.
-const TABS = ["active", "open", "in_progress", "resolved", "all"];
-const TAB_LABEL = { active: "Aktive", all: "Alle", ...STATUS_LABELS };
+export { ticketTitleParts };
+const FILTER_KEY = "eatsafe.ticketFilters";
+const DEFAULTS = { category: "", priority: "", assignee: "", blocking: false, q: "", sort: "newest" };
+const readFilters = () => { try { return { ...DEFAULTS, ...JSON.parse(sessionStorage.getItem(FILTER_KEY) || "{}") }; } catch { return DEFAULTS; } };
 const needsDone = (tab) => tab === "resolved" || tab === "all";
-const matchesTab = (t, tab) => tab === "all" || (tab === "active" ? t.status === "open" || t.status === "in_progress" : t.status === tab);
+const dateShort = (v) => new Date(v).toLocaleDateString("da-DK", { timeZone: "Europe/Copenhagen" });
 
-export default function TicketsSection({ adminTickets, ticketsHasMore, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus, getTicketScreenshotUrl }) {
-  // "Løst" kræver en kort afsluttende kommentar, som vises i beskeden til brugeren.
-  const [closing, setClosing] = useState(false);
-  const [note, setNote] = useState("");
-  const openModal = (t) => { setClosing(false); setNote(""); setOpenTicket(t); };
-  const closeModal = () => { setClosing(false); setNote(""); setOpenTicket(null); };
-  const pickStatus = (t, status) => {
-    if (status === t.status) return;
-    if (status === "resolved") { setNote(""); setClosing(true); setOpenTicket(t); return; }
-    updateTicketStatus(t.id, status);
-  };
-  const isMobile = useIsMobile();
-  const filtered = adminTickets.filter(t => matchesTab(t, adminTicketFilter));
-  const openCount = adminTickets.filter(t => t.status === "open").length;
+export default function TicketsSection({ adminTickets, ticketsHasMore, ticketsLoading, adminTicketFilter, setAdminTicketFilter, ticketsIncludeDone, loadTickets, openTicket, setOpenTicket, updateTicketStatus, getTicketScreenshotUrl, work }) {
+  const [f, setF] = useState(readFilters);
+  const setFilter = (p) => setF((s) => { const n = { ...s, ...p }; try { sessionStorage.setItem(FILTER_KEY, JSON.stringify(n)); } catch { /* ingen lagring: filtrene gælder kun nu */ } return n; });
+  const counts = useMemo(() => statusCounts(adminTickets), [adminTickets]);
+  const ctx = { meta: work.meta, todos: work.todos };
+  const tab = adminTicketFilter;
+  const list = useMemo(() => filterTickets(adminTickets, { ...f, tab }, ctx), [adminTickets, f, tab, work.meta, work.todos]); // eslint-disable-line react-hooks/exhaustive-deps -- ctx følger work.meta/todos
+  const filtered = hasFilters({ ...f, status: ["open", "in_progress", "resolved"].includes(tab) ? tab : "" });
 
   useEffect(() => {
-    if (needsDone(adminTicketFilter) && !ticketsIncludeDone) loadTickets({ includeDone: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: henter kun, når fanen kræver færdige tickets; loadTickets genskabes hver gang og må ikke udløse nyt hent
-  }, [adminTicketFilter, ticketsIncludeDone]);
+    if (needsDone(tab) && !ticketsIncludeDone) loadTickets({ includeDone: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: henter kun, når fanen kræver færdige tickets
+  }, [tab, ticketsIncludeDone]);
+  useEffect(() => { work.load(); /* eslint-disable-next-line react-hooks/exhaustive-deps -- ét hent ved åbning */ }, []);
+
+  const copyOne = (t) => {
+    const text = buildTicketPrompt(t, { priority: effectivePriority(t, work.meta[t.id]), launchBlocking: !!work.meta[t.id]?.launch_blocking, tasks: work.tasks[t.id] });
+    (navigator.clipboard?.writeText(text) || Promise.reject(new Error("Udklipsholderen er ikke tilgængelig")))
+      .then(() => showToast("Prompt kopieret", "success")).catch((e) => showToast("Kunne ikke kopiere: " + e.message, "error"));
+  };
+  const manyText = () => buildManyPrompts(adminTickets.filter((t) => t.status === "open").map((ticket) => ({ ticket, extra: { priority: effectivePriority(ticket, work.meta[ticket.id]), launchBlocking: !!work.meta[ticket.id]?.launch_blocking, tasks: work.tasks[ticket.id] } })));
+  const copyMany = () => { (navigator.clipboard?.writeText(manyText()) || Promise.reject(new Error("Udklipsholderen er ikke tilgængelig")))
+    .then(() => showToast(`${counts.open} prompts kopieret`, "success")).catch((e) => showToast("Kunne ikke kopiere: " + e.message, "error")); };
+  const download = () => {
+    const blob = new Blob([manyText()], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a");
+    a.href = url; a.download = `eatsafe-tickets-open-${new Date().toISOString().slice(0, 10)}.txt`; a.click(); URL.revokeObjectURL(url);
+    showToast("Eksport gennemført", "success");
+  };
+  const changeStatus = (t, status, note) => updateTicketStatus(t.id, status, note);
+  const reset = () => { setFilter({ ...DEFAULTS, sort: f.sort }); setAdminTicketFilter("active"); };
+
+  let body;
+  if (ticketsLoading && adminTickets.length === 0) body = <div className="admin-loading-row"><div className="admin-spinner" /> Henter tickets…</div>;
+  else if (list.length === 0) {
+    body = (
+      <div className="admin-table-empty audit-state mi-empty">
+        <div className="audit-state-icon" aria-hidden="true"><Icon name="search" size={22} color="var(--muted)" /></div>
+        <div className="audit-state-title">{filtered ? "Ingen tickets matcher" : "Ingen tickets her"}</div>
+        <div>{filtered ? "Prøv at ændre søgningen eller filtrene." : "Der er ingen tickets i denne visning."}</div>
+        {filtered && <div style={{ marginTop: 12 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={reset}>Nulstil</button></div>}
+      </div>
+    );
+  } else {
+    body = (
+      <div className="admin-card-list">
+        {list.map((t) => {
+          const { title, excerpt } = ticketTitleParts(t.description);
+          const meta = work.meta[t.id]; const pr = effectivePriority(t, meta); const todo = work.todos[t.id];
+          const prog = progress(work.tasks[t.id] || []);
+          return (
+            <button key={t.id} type="button" className="admin-item-card usr-row tk-card" onClick={() => setOpenTicket(t)}>
+              <div className="usr-row-name tk-title">{title}</div>
+              {excerpt && <div className="admin-item-excerpt tk-excerpt">{excerpt}</div>}
+              <div className="admin-item-pills">
+                <span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span>
+                <span className={`admin-pill ${statusPill(t.status)}`}>{STATUS_LABELS[t.status] || t.status}</span>
+                {pr !== "normal" && <span className={`admin-pill ${PRIORITY_PILL[pr]}`}>{PRIORITY_LABEL[pr]}</span>}
+                {meta?.launch_blocking && <span className="admin-pill admin-pill-red">Lanceringsblokerende</span>}
+                {!meta?.launch_blocking && isLegalCandidate(t) && <span className="admin-pill admin-pill-amber">Mulig lanceringsblokering</span>}
+              </div>
+              <div className="usr-row-meta">
+                {originLabel(t)} · {todo?.assignee_id ? work.nameOf(todo.assignee_id) : "Ikke tildelt"} · {dateShort(t.created_at)}{prog.total ? ` · ${prog.done}/${prog.total}` : ""}
+              </div>
+              <span className="audit-card-chev" aria-hidden="true"><Icon name="chevronRight" size={16} color="var(--muted2)" /></span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  const tabBtn = (id, label, n) => <button key={id} type="button" className={`admin-tab-btn${tab === id ? " active" : ""}`} aria-pressed={tab === id} onClick={() => setAdminTicketFilter(id)}>{label} ({n})</button>;
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+      <div className="tk-top">
         <div className="admin-tabs" style={{ marginBottom: 0, border: "none", flex: "1 1 auto", minWidth: 0 }}>
-          {TABS.map(s => (
-            <button key={s} className={`admin-tab-btn${adminTicketFilter === s ? " active" : ""}`} aria-pressed={adminTicketFilter === s} onClick={() => setAdminTicketFilter(s)}>
-              {TAB_LABEL[s]}{needsDone(s) && !ticketsIncludeDone ? "" : ` (${adminTickets.filter(t => matchesTab(t, s)).length})`}
-            </button>
-          ))}
+          {tabBtn("active", "Aktive", counts.active)}
+          {tabBtn("all", "Alle", ticketsIncludeDone ? counts.all : "…")}
         </div>
         <ActionsMenu items={[
-          openCount > 0 && { label: `Download åbne + prompts (${openCount})`, hint: "Én tekstfil med alle åbne tickets som færdige prompts", onClick: () => { exportOpenTickets(adminTickets); showToast("Eksport gennemført", "success"); } },
+          counts.open > 0 && { label: `Kopiér åbne som prompts (${counts.open})`, hint: "Alle åbne tickets, tydeligt adskilt", onClick: copyMany },
+          counts.open > 0 && { label: `Download åbne + prompts (${counts.open})`, hint: "Én tekstfil med alle åbne tickets", onClick: download },
         ]} />
       </div>
 
-      {ticketsHasMore && !ticketsLoading && (
-        <div className="admin-info-note">Der er flere tickets end de {adminTickets.length}, der vises. Luk nogle, og opdatér listen for at se resten.</div>
-      )}
-      {ticketsLoading && adminTickets.length === 0 ? (
-        <div className="admin-loading-row"><div className="admin-spinner" /> Henter tickets…</div>
-      ) : filtered.length === 0 ? (
-        <div className="admin-table-empty">Ingen tickets her</div>
-      ) : isMobile ? (
-        <div className="admin-card-list">
-          {filtered.map(t => <TicketCard key={t.id} t={t} onOpen={() => openModal(t)} onStatus={pickStatus} />)}
+      <div className="prd-search">
+        <label htmlFor="tk-q" className="np-vars-label">Søg i titel og beskrivelse</label>
+        <div className="prd-search-row">
+          <input id="tk-q" type="search" enterKeyHint="search" autoComplete="off" className="admin-search" placeholder="Fx menu eller crash" value={f.q} onChange={(e) => setFilter({ q: e.target.value })} />
+          {f.q && <button type="button" className="admin-iconbtn" aria-label="Ryd søgning" onClick={() => setFilter({ q: "" })}><Icon name="x" size={18} color="var(--ink2)" /></button>}
         </div>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead><tr><th>Type</th><th>Beskrivelse</th><th>Bruger</th><th>Skærm</th><th>Dato</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              {filtered.map(t => (
-                <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => openModal(t)}>
-                  <td><span className="admin-pill admin-pill-neutral">{TYPE_LABELS[t.type] || t.type}</span></td>
-                  <td style={{ maxWidth: 380, minWidth: 220 }}><div className="admin-item-excerpt" style={{ marginTop: 0, color: "var(--ink)", WebkitLineClamp: 3 }}>{t.description}</div></td>
-                  <td>{ticketReporter(t)}</td>
-                  <td>{t.context?.screen_label || t.context?.screen || "–"}</td>
-                  <td style={{ whiteSpace: "nowrap" }}>{new Date(t.created_at).toLocaleDateString("da-DK")}</td>
-                  <td onClick={e => e.stopPropagation()}>
-                    <select value={t.status} onChange={e => pickStatus(t, e.target.value)}
-                      className={`admin-pill ${statusPill(t.status)}`}
-                      style={{ fontFamily: "var(--f)", border: "none", cursor: "pointer" }}>
-                      {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
-                  </td>
-                  <td onClick={e => e.stopPropagation()}>
-                    <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => copyTicketPrompt(t)}>Kopiér prompt</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      </div>
+      <div className="prd-filters tk-filters">
+        <div className="admin-field"><label htmlFor="tk-fs">Status</label>
+          <select id="tk-fs" className="admin-select" value={["open", "in_progress", "resolved"].includes(tab) ? tab : ""} onChange={(e) => setAdminTicketFilter(e.target.value || "active")}>
+            <option value="">Aktive</option><option value="open">Åben ({counts.open})</option><option value="in_progress">I gang ({counts.in_progress})</option><option value="resolved">Løst{ticketsIncludeDone ? ` (${counts.resolved})` : ""}</option>
+          </select></div>
+        <div className="admin-field"><label htmlFor="tk-fc">Kategori</label>
+          <select id="tk-fc" className="admin-select" value={f.category} onChange={(e) => setFilter({ category: e.target.value })}><option value="">Alle</option>{Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="tk-fp">Prioritet</label>
+          <select id="tk-fp" className="admin-select" value={f.priority} onChange={(e) => setFilter({ priority: e.target.value })}><option value="">Alle</option>{PRIORITIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="tk-fa">Ansvarlig</label>
+          <select id="tk-fa" className="admin-select" value={f.assignee} onChange={(e) => setFilter({ assignee: e.target.value })}><option value="">Alle</option><option value="none">Ikke tildelt</option>{work.admins.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="tk-so">Sortér</label>
+          <select id="tk-so" className="admin-select" value={f.sort} onChange={(e) => setFilter({ sort: e.target.value })}>{TICKET_SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+        <label className="usr-check tk-block"><input type="checkbox" checked={f.blocking} onChange={(e) => setFilter({ blocking: e.target.checked })} /><span>Kun lanceringsblokerende</span></label>
+      </div>
 
-      {openTicket && (
-        <div className="admin-modal-overlay" onClick={closeModal}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div>
-                <span className="admin-pill admin-pill-neutral">{TYPE_LABELS[openTicket.type] || openTicket.type}</span>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-                  {ticketReporter(openTicket)}{openTicket.context?.user_email ? ` (${openTicket.context.user_email})` : ""} · {new Date(openTicket.created_at).toLocaleString("da-DK")}
-                </div>
-              </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={closeModal}>Luk</button>
-            </div>
-            <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 16, whiteSpace: "pre-wrap" }}>{openTicket.description}</div>
-            <div style={{ fontSize: 11.5, color: "var(--muted)", marginBottom: 16 }}>
-              Skærm: {openTicket.context?.screen_label || openTicket.context?.screen || "–"}
-            </div>
-            {openTicket.image_path && getTicketScreenshotUrl && <TicketScreenshot path={openTicket.image_path} getUrl={getTicketScreenshotUrl} />}
-            {closing && (
-              <div style={{ marginBottom: 16 }}>
-                <label htmlFor="ticket-closing-note" style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", marginBottom: 6 }}>Afsluttende kommentar til brugeren (vises i beskeden)</label>
-                <textarea id="ticket-closing-note" value={note} onChange={e => setNote(e.target.value)} rows={3} maxLength={500}
-                  placeholder="Fx: Problemet med den grønne prik i menuen er rettet. Ændringen er med i den nyeste version."
-                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", fontFamily: "var(--f)", fontSize: 13, resize: "vertical" }} />
-                <button className="admin-btn admin-btn-primary admin-btn-sm" style={{ marginTop: 8 }} disabled={!note.trim()}
-                  onClick={() => updateTicketStatus(openTicket.id, "resolved", note)}>Markér som løst</button>
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 6 }}>
-              {["open", "in_progress", "resolved"].map(s => (
-                <button key={s} className={`admin-btn admin-btn-sm ${openTicket.status === s ? "admin-btn-primary" : "admin-btn-ghost"}`}
-                  onClick={() => pickStatus(openTicket, s)}>{STATUS_LABELS[s]}</button>
-              ))}
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" style={{ marginLeft: "auto" }}
-                onClick={() => copyTicketPrompt(openTicket)}>
-                Kopiér prompt
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="audit-results">
+        <span aria-live="polite">{list.length} {list.length === 1 ? "ticket" : "tickets"}</span>
+        <span className="prd-actions">{filtered && <button type="button" className="todo-link-btn" onClick={reset}>Nulstil</button>}</span>
+      </div>
+      {ticketsHasMore && !ticketsLoading && <div className="admin-info-note">Der er flere tickets end de {adminTickets.length}, der vises. Luk nogle, og opdatér listen for at se resten.</div>}
+      {body}
+
+      {openTicket && <TicketDetail ticket={openTicket} work={work} onClose={() => setOpenTicket(null)} onStatus={changeStatus} onCopy={copyOne} getTicketScreenshotUrl={getTicketScreenshotUrl} />}
     </>
   );
 }
