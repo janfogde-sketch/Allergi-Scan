@@ -329,7 +329,7 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .fam-line-title{font-size:14px;font-weight:700;overflow-wrap:anywhere;}
 .fam-line-meta{font-size:12px;color:var(--muted);margin-top:2px;}
 .fam-reason{margin-top:10px;}
-.usr-export{font-size:12.5px;font-weight:700;color:var(--ink2);}
+.usr-export{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink2);}
 .usr-export:hover{color:var(--green);}
 .usr-export:disabled{opacity:.5;cursor:default;}
 .usr-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0;}

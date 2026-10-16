@@ -154,3 +154,11 @@ Fejl, del 2 (16. okt. 2026): **Build-id** (ikke appversion): værdien er de før
 - **Uafhængige sektioner:** familier og invitationer hentes hver for sig. Antal vises kun, når hentningen er lykkedes; ved fejl vises en fejltilstand, aldrig 0. En mislykket opdatering viser de gamle oplysninger med markering.
 - **Søgning:** panelet har sin egen søgning (knappen "Søg"), fordi headerens søgning er global (brugere, produkter, tickets) og ikke ændres. Søgningen går til hele datasættet på serveren.
 - **Tidligere dataproblemer:** "Ukendt bruger" = medlemsrække uden `family_owner_id` (brugerens egen profil); ejeren er nu `coalesce(family_owner_id, user_id)`. En accepteret invitation uden `accepted_by` vises som "modtager ikke registreret" (kolonnen nulstilles, når kontoen slettes; kan ikke afgøres bagefter). En ventende invitation med overskredet udløb vises som udløbet; serveren afviser udløbne invitationer ved accept (kontrolleret i alle fire accept-funktioner).
+
+### Brugere: detaljevisning (16. okt. 2026)
+
+- **Årsag til "Brugeren kunne ikke hentes":** `admin_get_user` (og `admin_set_role`, `admin_user_delete_summary`) fra migration `20261016110000` findes ikke i produktionsdatabasen, så opslaget gav 404 (PGRST202). Listen virkede, fordi den læser tabellen direkte. Kontrolleret i databasen; ikke en RLS- eller id-fejl.
+- **Midlertidig læsning:** ved 404 læses brugeren direkte (`users` og brugerens egne rækker i `user_allergens`). Oversigt og Præferencer vises skrivebeskyttet; redigering, rolleændring og sletning er slået fra, til migrationen er udgivet. Andre fejl omdannes ikke til tomme værdier.
+- **Fejltilstande:** adgang (403), session udløbet (401), bruger findes ikke (P0002), forbindelse og serverfejl har hver deres tekst. Oversigt og Præferencer fejler uafhængigt af hinanden.
+- **Eksport:** "Eksportér CSV" er en kompakt sekundær knap med downloadikon. Dialogen viser stadig antal, omfang og felter.
+- **Søgning:** headerens søgeikon er global (brugere, produkter, tickets); et valgt brugerresultat sætter søgningen på Brugere. Ikke ændret.

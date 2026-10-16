@@ -103,15 +103,51 @@ export function useAdminUsers(/** @type {string} */ accessToken) {
     setRows(rowsRef.current);
   }, []);
 
-  /** @returns {Promise<{ ok: true, user: any } | { ok: false, error: string, denied: boolean }>} */
+  /** Fejlens art ud fra svaret: adgang, session, ikke fundet, forbindelse eller server. @param {any} e */
+  const kindOf = (e) => {
+    let code = "";
+    try { code = JSON.parse(e?.body || "{}").code || ""; } catch { /* ingen kode */ }
+    if (e?.status === 401) return "session";
+    if (e?.status === 403 || code === "42501") return "denied";
+    if (code === "P0002") return "notfound";
+    if (!e?.status) return "network";
+    return "server";
+  };
+
+  /** Den midlertidige læsning direkte fra tabellerne, til databasefunktionen admin_get_user er udgivet. Ingen version, og redigering er slået fra. @param {string} id @param {boolean} withPreferences */
+  const getUserLegacy = useCallback(async (id, withPreferences) => {
+    const cols = `id,name,email,role,created_at,onboarding_completed,onboarding_step,birth_year,gender${withPreferences ? ",e_numbers,allergen_levels" : ""}`;
+    const rowsOut = await apiCall(`${SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(id)}&select=${cols}`, { headers: headers() });
+    const u = Array.isArray(rowsOut) ? rowsOut[0] : null;
+    if (!u) throw Object.assign(new Error("not found"), { status: 404, body: JSON.stringify({ code: "P0002" }) });
+    const user = { ...u, version: null, legacy: true };
+    if (withPreferences) {
+      const al = await apiCall(`${SUPABASE_URL}/rest/v1/user_allergens?user_id=eq.${encodeURIComponent(id)}&family_member_id=is.null&select=allergen,type&order=allergen.asc`, { headers: headers() });
+      const list = Array.isArray(al) ? al : [];
+      user.allergens = list.filter((x) => x.type === "allergen").map((x) => x.allergen);
+      user.custom = list.filter((x) => x.type === "custom").map((x) => x.allergen);
+    }
+    return user;
+  }, [headers]);
+
+  /** @returns {Promise<{ ok: true, user: any } | { ok: false, error: string, denied: boolean, kind: string }>} */
   const getUser = useCallback(async (/** @type {string} */ id, /** @type {boolean} */ withPreferences = false) => {
     try {
-      const user = await rpc("admin_get_user", { p_user: id, p_with_preferences: withPreferences });
+      let user;
+      try { user = await rpc("admin_get_user", { p_user: id, p_with_preferences: withPreferences }); }
+      catch (e) {
+        // Funktionen er ikke udgivet endnu (PGRST202, 404): læs i stedet direkte. Alle andre fejl (også "bruger findes ikke") videregives.
+        let code = "";
+        try { code = JSON.parse(/** @type {any} */ (e)?.body || "{}").code || ""; } catch { /* ingen kode */ }
+        if (/** @type {any} */ (e)?.status === 404 && code !== "P0002") user = await getUserLegacy(id, withPreferences); else throw e;
+      }
       return { ok: true, user };
     } catch (e) {
-      return { ok: false, error: userErrorText(e, "Brugeren kunne ikke hentes."), denied: /** @type {any} */ (e)?.status === 403 };
+      const kind = kindOf(e);
+      if (kind === "server" || kind === "network") console.warn("Bruger kunne ikke hentes", { status: /** @type {any} */ (e)?.status ?? null, kind });
+      return { ok: false, error: userErrorText(e, "Brugeren kunne ikke hentes."), denied: kind === "denied", kind };
     }
-  }, [rpc]);
+  }, [rpc, getUserLegacy]);
 
   /** @returns {Promise<{ ok: true, version: string, preferencesChanged: boolean } | { ok: false, error: string, conflict: boolean }>} */
   const saveProfile = useCallback(async (/** @type {string} */ id, /** @type {{ profile: Record<string, any>, allergens?: string[]|null, custom?: string[]|null, reason?: string, version?: string|null }} */ a) => {
