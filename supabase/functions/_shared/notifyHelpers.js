@@ -64,7 +64,7 @@ const ALLERGEN_LABELS = {
   bloeddyr: "Bløddyr", jordnoedder: "Jordnødder", maelkeallergi: "Mælkeprotein",
   coeliaki: "Cøliaki",
 };
-const CHANGE_WORDS = { yes: "indeholder nu", traces: "kan nu indeholde spor", unknown: "er nu uoplyst" };
+const CHANGE_WORDS = { yes: "er nu registreret som indeholdt", traces: "kan nu indeholde spor", unknown: "er nu uoplyst" };
 
 /** Risikotrin for et allergenflag — samme skala som allergen_risk_rank() i databasen. */
 export function allergenRiskRank(v) {
@@ -97,13 +97,13 @@ export function affectedAllergenChanges(changes, current, profileAllergens, trac
   return out;
 }
 
-/** "Æg indeholder nu, Fisk kan nu indeholde spor" — bruges i besked og mail. */
+/** "Æg er nu registreret som indeholdt, Fisk kan nu indeholde spor" — bruges i besked og mail. */
 export function summarizeAllergenChanges(list) {
   return list.map((c) => `${c.label} ${CHANGE_WORDS[c.value] ?? "er ændret"}`).join(", ");
 }
 
 // Lavere risiko (Jan 16. okt. 2026): ord til beskeden om en rettelse, hvor risikoen er sænket.
-const DECREASE_WORDS = { no: "står nu som ikke indeholdt", traces: "står nu som kan indeholde spor", unknown: "er nu uoplyst" };
+const DECREASE_WORDS = { no: "er nu registreret som ikke indeholdt", traces: "kan nu kun indeholde spor", unknown: "er nu uoplyst" };
 
 /**
  * Hvilke sænkede flag gælder stadig og berører denne modtagers profiler? Samme form som affectedAllergenChanges.
@@ -122,7 +122,7 @@ export function affectedAllergenDecreases(changes, current, profileAllergens) {
   return out;
 }
 
-/** "Mælkeprotein står nu som ikke indeholdt, Æg står nu som kan indeholde spor". */
+/** "Mælkeprotein er nu registreret som ikke indeholdt, Æg kan nu kun indeholde spor". */
 export function summarizeAllergenDecreases(list) {
   return list.map((c) => `${c.label} ${DECREASE_WORDS[c.value] ?? "er rettet"}`).join(", ");
 }

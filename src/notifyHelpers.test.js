@@ -66,7 +66,7 @@ describe("P1: ændrede allergenoplysninger", () => {
   });
   it("formulerer resumeet", () => {
     const hits = affectedAllergenChanges(changes, current, ["aeg", "fisk"]);
-    expect(summarizeAllergenChanges(hits)).toBe("Æg indeholder nu, Fisk kan nu indeholde spor");
+    expect(summarizeAllergenChanges(hits)).toBe("Æg er nu registreret som indeholdt, Fisk kan nu indeholde spor");
   });
 });
 
@@ -106,7 +106,7 @@ describe("affectedAllergenDecreases (lavere risiko, 16. okt. 2026)", () => {
   it("tager kun modtagerens egne allergener (og gluten/hvede via cøliaki) med", () => {
     const hits = affectedAllergenDecreases(changes, { maelkeallergi: "no", aeg: "no", gluten: "traces" }, ["maelkeallergi", "coeliaki"]);
     expect(hits.map(h => h.key).sort()).toEqual(["gluten", "maelkeallergi"]);
-    expect(summarizeAllergenDecreases(hits.filter(h => h.key === "maelkeallergi"))).toBe("Mælkeprotein står nu som ikke indeholdt");
+    expect(summarizeAllergenDecreases(hits.filter(h => h.key === "maelkeallergi"))).toBe("Mælkeprotein er nu registreret som ikke indeholdt");
   });
   it("springer over, når risikoen er hævet igen siden", () => {
     expect(affectedAllergenDecreases(changes, { maelkeallergi: "yes" }, ["maelkeallergi"])).toEqual([]);

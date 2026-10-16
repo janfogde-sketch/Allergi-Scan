@@ -11,7 +11,7 @@ const SAMPLE = {
   reason: "Ingredienslisten er ikke læsbar.\nIndsend et skarpere billede.",
   memberName: "Frederikke", inviteId: "inv-1",
   description: "Kameraet åbner ikke, når jeg vælger Scan.", message: "Vi har rettet fejlen. Prøv gerne igen.", ticketId: "tik-1",
-  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", adders: "Jan og Bjørn", countText: "4 varer", itemList: "• Mælk\n• Æg", changeSummary: "Æg indeholder nu",
+  expiresAt: "i dag kl. 18:35", listName: "Familiens indkøb", listId: "list-1", adders: "Jan og Bjørn", countText: "4 varer", itemList: "• Mælk\n• Æg", changeSummary: "Æg er nu registreret som indeholdt",
   recallReason: "For højt indhold af glycerol.", affectedBatches: "Frosty Pocket Lemon\nLotnr.: L1", recallAction: "Kassér produktet.", recallUrl: "https://foedevarestyrelsen.dk/nyheder/a", recallId: "r1",
 };
 const KEYS = Object.keys(DEFINITIONS);
@@ -75,10 +75,10 @@ describe("renderNotification — alle definitioner", () => {
 
   it("lavere allergenrisiko (P1:lowered) er kun en besked i appen: ingen push og ingen mail (Jan 16. okt. 2026)", () => {
     expect(KEYS.filter((k) => DEFINITIONS[k].inAppOnly)).toEqual(["P1:lowered"]);
-    const n = renderNotification("P1:lowered", { ...SAMPLE, productName: "Chokolade", changeSummary: "Mælkeprotein står nu som ikke indeholdt" });
+    const n = renderNotification("P1:lowered", { ...SAMPLE, productName: "Chokolade", changeSummary: "Mælkeprotein er nu registreret som ikke indeholdt" });
     expect(n.inAppOnly).toBe(true);
     expect(n.category).toBe("product_changes");
-    expect(JSON.stringify(n.blocks)).toContain("Mælkeprotein står nu som ikke indeholdt");
+    expect(JSON.stringify(n.blocks)).toContain("Mælkeprotein er nu registreret som ikke indeholdt");
     expect(renderNotification("P1:default", SAMPLE).inAppOnly).toBe(false);
   });
 
