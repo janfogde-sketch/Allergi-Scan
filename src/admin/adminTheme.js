@@ -355,6 +355,31 @@ textarea.todo-title-input:focus{outline:2px solid var(--green);outline-offset:-1
 .pe-t-red{border-left-color:var(--red);background:var(--red-lt);}
 .pe-t-amber{border-left-color:var(--amber);background:var(--amber-lt);}
 .pe-t-green{border-left-color:var(--green);}
+.kb-top{display:flex;align-items:flex-end;gap:10px;}
+.kb-new{flex:none;}
+.kb-name{overflow-wrap:anywhere;white-space:normal;}
+.kb-sum{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;white-space:normal;}
+.kb-none{font-style:italic;color:var(--muted);}
+.kb-miss{color:var(--amber-dk,var(--ink2));font-weight:700;}
+.kb-loading{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;font-size:13px;box-shadow:0 6px 20px -8px rgba(21,32,26,.25);}
+.kb-chips .usr-chips{margin-bottom:8px;}
+.kb-chip{cursor:default;}
+.kb-rel-group{margin:0 0 12px;}
+.kb-rel-title{font-size:12.5px;font-weight:800;color:var(--ink2);margin-bottom:6px;}
+.kb-emoji-btn{min-width:56px;}
+.kb-emoji-cur{font-size:20px;}
+.kb-emoji-grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.kb-emoji{min-width:40px;min-height:40px;border:1px solid var(--border2);border-radius:10px;background:var(--surface);font-size:20px;cursor:pointer;}
+.kb-emoji.on{border-color:var(--green);background:var(--green-lt);}
+.kb-preview{display:flex;flex-direction:column;gap:8px;}
+.kb-pv-cat{font-size:11.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2);}
+.kb-pv-title{font-size:20px;margin:0;overflow-wrap:anywhere;}
+.kb-pv-status{font-size:12px;color:var(--ink2);}
+.kb-pv-sum{font-weight:700;margin:0;}
+.kb-pv-desc{margin:0;line-height:1.5;white-space:pre-wrap;}
+.kb-pv-note{background:var(--amber-lt);border:1px solid var(--amber-md);border-radius:10px;padding:8px 10px;font-size:13px;}
+.kb-pv-list{font-size:13px;color:var(--ink2);}
+@media (max-width:520px){.kb-top{flex-direction:column;align-items:stretch;}}
 .pe-conflict{outline:2px solid var(--amber);outline-offset:-2px;}
 .pe-legend{margin:6px 0 0;padding-left:18px;}
 .pe-legend li{margin-bottom:4px;}
