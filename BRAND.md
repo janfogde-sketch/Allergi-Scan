@@ -33,7 +33,7 @@ Ingen gradient i logoet.
 | Tekst-ordmærke | appens header | `<EatSafeWordmark />` (`.topbar-wordmark`, 26 px, vægt 800) |
 | App-ikon | hjemmeskærm, butikker | `public/brand/EatSafe_AppIcon_Master.svg` → `icon-*.png`, `apple-touch-icon.png` |
 | Favicon | browserfane | `public/favicon.svg` |
-| Mail-logo | alle 29 mails | `public/brand/EatSafe_Logo_Email_Light*.png` (lys) og `..._Dark.png` (mørk) |
+| Mail-logo | alle 29 mails | `public/brand/EatSafe_Logo_Email_Plate_White.png`/`..._Plate_Cream.png` (lys, rund plade) og `..._Dark.png` (mørk) |
 | Print/vektor | eksterne parter | `public/brand/EatSafe_Master_*.svg/.pdf`, `EatSafe_Brand_Reference.pdf` |
 
 Master-SVG'erne i `src/assets/logo/` og `public/brand/` er kilden; PNG'er gengives fra dem (`public/brand/README.txt`).
