@@ -44,7 +44,7 @@ Outlook (web) ignorerer vores mørke CSS og vender selv farverne: lyse baggrunde
 - Al tekst har en inline farve, der enten er nær-sort (`#15201A`, kan vendes) eller hvid. Sekundær tekst er nær-sort med `opacity` (.72), ikke en grå mellemtone
   (vores mørke CSS sætter `opacity:1`). Grøn tekst er `#042B1A`, som kan vendes. Brug aldrig en mellemtone (fx `#647167`) som tekstfarve.
 - Ingen lyse kanter på kort og kodeboks (de lyser op i mørk tilstand). Afgrænsningen sker med baggrund.
-- Det lyse logo (`EatSafe_Logo_Email_Light.png` til auth, `..._Light_Cream.png` til Resend) har kortets baggrund bagt ind i billedet, ellers bliver dens gennemsigtige baggrund
+- Det lyse logo er en rund plade med logoet nøjagtigt centreret (48 px luft på alle fire sider i filen, gennemsigtige hjørner): `EatSafe_Logo_Email_Plate_White.png` til auth (hvidt kort) og `EatSafe_Logo_Email_Plate_Cream.png` til de øvrige (creme kort, `#FBFAF7`), 654 x 209 px (17. okt. 2026, Bjørn). De gamle `EatSafe_Logo_Email_Light*.png` og `EatSafe_Logo_Email.png` ligger kun til mails, der allerede er sendt. Pladen har kortets baggrund, ellers bliver dens gennemsigtige baggrund
   gjort mørk, og det mørke "Eat" forsvinder. I klienter, der understøtter mørk tilstand, skifter mailen til det gennemsigtige mørke logo.
 - `src/mailDarkMode.test.js` håndhæver reglerne.
 

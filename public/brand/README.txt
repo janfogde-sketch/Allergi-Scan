@@ -18,6 +18,7 @@ TRANSPARENT EXPORTS
 - EatSafe_BrandMark_Transparent_2048.png
 - EatSafe_Monochrome_Transparent_2048.png
 - EatSafe_Logo_Horizontal_2400.png
+- EatSafe_Logo_Email_Plate_White.png og EatSafe_Logo_Email_Plate_Cream.png: lyst logo til mails med rund plade (hvid til auth, creme til de øvrige), logoet nøjagtigt centreret, 654x209. De ældre EatSafe_Logo_Email_Light*.png er kun til mails, der allerede er sendt.
 - EatSafe_Logo_Email_Dark.png: logo til mails i mørk tilstand (hvid 'Eat'/stregkode, lysegrøn #79D5A7 'Safe'/flueben, gennemsigtig; 1200x360).
 
 COLORS (7. okt. 2026: ingen gradient længere)

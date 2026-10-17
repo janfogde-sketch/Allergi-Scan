@@ -69,7 +69,9 @@ describe.each(files)("%s", (file) => {
   it("har ingen lyse kanter, som lyser op i mørk tilstand, og logoets plade ligger i selve billedet", () => {
     expect(html).not.toContain("border:1px solid #E6EAE1");
     expect(html).not.toMatch(/class="logo logo-light"[^>]*background-color/);
-    expect(html).toMatch(/EatSafe_Logo_Email(_Light|_Light_Cream)?\.png/);
+    // Det lyse logo er en rund plade med logoet nøjagtigt centreret (hvid til auth-mails, creme til de øvrige), ikke de gamle kantede billeder.
+    expect(html).toMatch(/class="logo logo-light" src="https:\/\/www\.eatsafe\.dk\/brand\/EatSafe_Logo_Email_Plate_(White|Cream)\.png"/);
+    expect(html).not.toMatch(/EatSafe_Logo_Email(_Light|_Light_Cream)?\.png/);
   });
   it("skifter logo: lyst som standard, mørkt (hvid Eat, grøn Safe) i mørk tilstand", () => {
     expect(html).toContain("logo-light");
@@ -93,6 +95,13 @@ describe.each(files)("%s", (file) => {
 
 describe("logoer til mails", () => {
   it("findes som filer, så mailene kan hente dem", () => {
-    for (const f of ["Dark", "Light", "Light_Cream"]) expect(existsSync(`public/brand/EatSafe_Logo_Email_${f}.png`)).toBe(true);
+    for (const f of ["Dark", "Light", "Light_Cream", "Plate_White", "Plate_Cream"]) expect(existsSync(`public/brand/EatSafe_Logo_Email_${f}.png`)).toBe(true);
+  });
+  it("pladerne har billedforholdet fra mailenes width/height, så logoet ikke strækkes", () => {
+    for (const f of ["Plate_White", "Plate_Cream"]) {
+      const buf = readFileSync(`public/brand/EatSafe_Logo_Email_${f}.png`);
+      const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20); // PNG IHDR
+      expect(w / h).toBeCloseTo(1307 / 418, 1);
+    }
   });
 });
