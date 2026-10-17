@@ -2,7 +2,6 @@
 // Bottom-sheets til indkøbslisten: listevælger (skift/opret/tilslut/slet) og deling, samt bekræftelsen af en familie-invitation (samme sheet-skelet). Listenavne er brugerdata og vises kun som tekst
 // (ellipsis/ombrydning), aldrig som faste systemtekster. Portal til body, fordi .screen.fade-in fanger position:fixed (CLAUDE.md §3 regel 4).
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { CloseButton } from "./Sheets.jsx";
 import { createPortal } from "react-dom";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useDialogA11y } from "./useDialogA11y.js";
@@ -50,7 +49,10 @@ function SheetHeader({ title, sub, note, onClose, right }) {
           {sub && <div style={{ fontSize:13, fontWeight:600, color:"var(--ink2)", marginTop:4, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden", ...WRAP }}>{sub}</div>}
         </div>
         {right}
-        <CloseButton onClick={onClose} />
+        <button type="button" onClick={onClose} aria-label="Luk"
+          style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
+          <Icon name="x" size={16} color="var(--ink)" />
+        </button>
       </div>
       {note && <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, marginTop:8 }}>{note}</div>}
     </div>

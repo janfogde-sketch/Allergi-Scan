@@ -5,7 +5,6 @@
 // installations-dialog med ét tryk — ingen browser tillader et helt automatisk,
 // tryk-frit install, men dette er det tætteste man kommer.
 import React from "react";
-import { CloseButton } from "./Sheets.jsx";
 import { usePwaInstall } from "./usePwaInstall.js";
 import { Icon } from "./SharedComponents.jsx";
 
@@ -40,7 +39,10 @@ export default function InstallPrompt() {
       onClick={() => setDismissed(true)}>
       <div onClick={e => e.stopPropagation()}
         style={{ background:"var(--sheet)", borderRadius:24, padding:"28px 24px", maxWidth:340, width:"100%", textAlign:"center", position:"relative" }}>
-        <div style={{ position:"absolute", top:8, right:8 }}><CloseButton onClick={() => setDismissed(true)} /></div>
+        <button onClick={() => setDismissed(true)} aria-label="Luk" className="icon-btn"
+          style={{ position:"absolute", top:8, right:8, background:"var(--surface2)", border:"none" }}>
+          <Icon name="x" size={16} color="var(--muted)" />
+        </button>
 
         <div style={{ width:56, height:56, margin:"0 auto 14px", borderRadius:16, background:"var(--green-lt)", display:"flex", alignItems:"center", justifyContent:"center" }}>
           <Icon name="home" size={26} color="var(--green)" />

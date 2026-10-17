@@ -1,6 +1,5 @@
 // @ts-nocheck
 import React from "react";
-import { CloseButton } from "./Sheets.jsx";
 import { createPortal } from "react-dom";
 import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
@@ -94,7 +93,10 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
         onClick={e => e.stopPropagation()}>
         <div style={UI.rowBetweenMb16}>
           <div id="help-modal-title" style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
-          <CloseButton onClick={onClose} />
+          <button type="button" onClick={onClose} aria-label="Luk"
+            style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
+            <Icon name="x" size={16} color="var(--ink)" />
+          </button>
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
           {content.tips.map((tip, i) => (

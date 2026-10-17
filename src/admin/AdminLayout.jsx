@@ -7,7 +7,6 @@ import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
 import RefreshButton from "./RefreshButton.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
 import { MenuButton } from "../IconButton.jsx";
-import { NAV_ICON } from "../navIcon.js";
 import { CloseButton } from "../Sheets.jsx";
 import { NAV_GROUPS, NAV_ITEMS, BADGE_INFO, groupOfSection, formatBadge, worstTone } from "./navLogic.js";
 
@@ -121,7 +120,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
           <CloseButton ref={closeBtnRef} className="admin-nav-close" label="Luk menu" onClick={closeNav} />
         </div>
         <div className="admin-sidebar-back">
-          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={NAV_ICON.size} strokeWidth={NAV_ICON.stroke} color={NAV_ICON.color} /><span>Tilbage til EatSafe</span></a>
+          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={17} color="var(--ink)" /><span>Tilbage til EatSafe</span></a>
         </div>
         <nav className="admin-nav" aria-label="Administration">
           {NAV_GROUPS.map((group) => {

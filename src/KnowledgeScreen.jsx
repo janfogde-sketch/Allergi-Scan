@@ -1,6 +1,5 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
-import { BackButton } from "./IconButton.jsx";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
 import { Icon, EmptyState, ScrollToTop } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -115,6 +114,7 @@ const S = {
   factCard: { padding:"10px 12px", alignItems:"center", background:"rgba(232,168,124,.07)", border:"1px solid rgba(232,168,124,.16)" },
   factSummary: { color:"var(--ink2)", lineHeight:1.4 },
   label: { fontSize:10.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".9px", marginBottom:8 },
+  backBtn: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 8px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, flexShrink:0 },
   section: { marginBottom:16 },
   sectionLabel: { fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"1.4px", color:"var(--neutral)", marginBottom:8 },
   // pre-line: beskrivelser kan bestå af flere afsnit adskilt af tomme linjer
@@ -307,7 +307,9 @@ export default function KnowledgeScreen({ openSlug, onSlugHandled, onExit }) {
         {/* Tydelig tilbageknap øverst til venstre + kategori-label OVER
             titlen (fx "ALLERGENER"). */}
         <div style={{ display:"flex", alignItems:"center", gap:10, padding:"4px 0 0" }}>
-          <BackButton onClick={() => (openedFromOutside && onExit ? onExit() : setSelectedEntry(null))} />
+          <button onClick={() => (openedFromOutside && onExit ? onExit() : setSelectedEntry(null))} aria-label="Tilbage" style={S.backBtn}>
+            <Icon name="chevronLeft" size={17} color="var(--ink)" />
+          </button>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontWeight:700, color:cat.color||"var(--muted)", textTransform:"uppercase", letterSpacing:"1.2px" }}>
             {cat.icon && <Icon name={cat.icon} size={12} color={cat.color||"var(--muted)"} />} {cat.label}
           </div>

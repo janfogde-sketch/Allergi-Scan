@@ -4,8 +4,8 @@
 // felt eller knap, og arket dækker bundnavigationen, mens det er åbent. Arket ligger lige under appens scan-loadingskærm (z-index
 // 9994), så en søgning ser ud som en scanning; fejler den, står arket der igen med koden og fejlen. Kameraet pauses af ScannerScreen, mens arket er åbent.
 import React, { useState, useEffect, useRef } from "react";
-import { CloseButton } from "./Sheets.jsx";
 import { createPortal } from "react-dom";
+import { Icon } from "./SharedComponents.jsx";
 import { useDialogA11y } from "./useDialogA11y.js";
 import { normalizeScannedBarcode } from "./helpers.js";
 
@@ -67,7 +67,10 @@ export default function ManualBarcodeSheet({ onClose, onSubmit, submitting, subm
             <div id="mb-title" style={{ fontSize:18, fontWeight:800, color:"var(--ink)", lineHeight:1.25 }}>Indtast stregkode</div>
             <div style={{ fontSize:13, color:"var(--muted)", lineHeight:1.5, marginTop:4 }}>Indtast tallene under produktets stregkode.</div>
           </div>
-          <CloseButton onClick={onClose} disabled={submitting} />
+          <button type="button" onClick={onClose} disabled={submitting} aria-label="Luk"
+            style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
+            <Icon name="x" size={16} color="var(--ink)" />
+          </button>
         </div>
         <form onSubmit={e => { e.preventDefault(); submit(); }} style={{ marginTop:16 }}>
           <input
