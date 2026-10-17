@@ -890,6 +890,10 @@ export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranc
 // (fx en brugerskrevet "Mælk") matches på navnetekst (≥3 tegn, begge veje).
 // Bruges af ResultScreen til at vælge mellem "Tilføj", "Markér som købt" og "Købt",
 // og af addToList til at undgå dubletter.
+// Navn på en almindelig vare (uden produktvalg), sammenlignet uden hensyn til store/små bogstaver og ekstra mellemrum. Bogstaver som æ, ø og å bevares, så forskellige varer ikke slås sammen.
+export const normalizeItemName = (s) => String(s ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("da");
+export const ITEM_EXISTS_TEXT = "Varen findes allerede på din indkøbsliste.";
+
 export function findProductOnList(listItems, product) {
   const items = listItems || [];
   if (items.length === 0 || !product) return null;
