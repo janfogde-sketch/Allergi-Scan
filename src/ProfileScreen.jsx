@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { allergenChoiceLabel, initials } from "./helpers.js";
 import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
@@ -143,9 +143,14 @@ export default function ProfileScreen({
   // `history`, fx GamificationCard/"Senest scannet", uden selv at besøge
   // Historik-fanen) — uden dette viser de 0 scanninger indtil et separat
   // besøg på Historik tilfældigvis trigger et hent.
+  // `loadHistory` skifter identitet, når historyScope skifter. Den må derfor ikke stå i dependencies, og effekten
+  // må ikke køre, mens Historik er åben: ellers nulstilles "Familien" til "Mine" lige efter tryk.
+  const loadHistoryRef = useRef(loadHistory);
+  loadHistoryRef.current = loadHistory;
   useEffect(() => {
-    if (userId && accessToken) Promise.resolve(loadHistory("own")).finally(() => setHistReady(true)); // tallene her gælder altid brugerens egne scanninger, også efter familievisning i Historik
-  }, [userId, accessToken, loadHistory]);
+    if (screen === SCREENS.HISTORY) return;
+    if (userId && accessToken) Promise.resolve(loadHistoryRef.current("own")).finally(() => setHistReady(true)); // tallene her gælder altid brugerens egne scanninger, også efter familievisning i Historik
+  }, [screen, userId, accessToken]);
 
   const stats = useMemo(
     () => computeScanStats(history, { user, family: scanFamily, allergens, customAllerg, selectedENumbers, activeProfiles }),
