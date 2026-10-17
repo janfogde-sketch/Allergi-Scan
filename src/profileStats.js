@@ -12,9 +12,9 @@ export const HISTORY_PAGE_SIZE = 50;
 
 /** @param {any[]} history @param {any} ctx */
 export function computeScanStats(history, ctx) {
-  let total = 0, withWarning = 0, withoutConflict = 0;
+  let total = 0, withWarning = 0, withoutConflict = 0, searches = 0;
   for (const h of history || []) {
-    if (historyVia(h) !== "scan") continue;
+    if (historyVia(h) !== "scan") { searches += 1; continue; }
     total += 1;
     const e = evaluateHistoryEntry(h, ctx);
     if (e.kind !== "evaluated") continue;
@@ -22,5 +22,5 @@ export function computeScanStats(history, ctx) {
     if (level === "danger" || level === "warn") withWarning += 1;
     else if (level === "safe" && e.hasLive) withoutConflict += 1;
   }
-  return { total, withWarning, withoutConflict, truncated: (history || []).length >= HISTORY_PAGE_SIZE };
+  return { total, withWarning, withoutConflict, searches, truncated: (history || []).length >= HISTORY_PAGE_SIZE };
 }

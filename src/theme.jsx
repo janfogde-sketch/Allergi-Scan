@@ -1028,6 +1028,8 @@ button.filter-chip{width:auto;}
 @keyframes emptyFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 .empty-txt{font-size:15.5px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
 .empty-sub{font-size:13px;margin-top:6px;color:var(--muted);font-weight:400;line-height:1.55;max-width:260px;margin-left:auto;margin-right:auto;}
+.profile-edit-btn{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-height:44px;padding:0 14px;background:transparent;border:1px solid var(--border2);border-radius:10px;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--ink2);cursor:pointer;transition:background .15s;}
+.profile-edit-btn:hover,.profile-edit-btn:active{background:var(--surface2);}
 .settings-screen .card{padding:14px;margin-bottom:8px;}
 .settings-screen .mp-lang-dropdown,.settings-screen .mp-lang-list{margin-bottom:0;}
 .settings-account-actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 0;}
