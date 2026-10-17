@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { CloseButton } from "./Sheets.jsx";
 import { ALLERGENS, SCREENS, MADPAS_LANGUAGES } from "./constants.jsx";
 import { initials } from "./helpers.js";
 import { Icon, AllergenGlyph, InfoSheet } from "./SharedComponents.jsx";
@@ -167,9 +168,7 @@ export default function MadpasScreen({
             <Icon name="globe" size={24} color="var(--ink2)" />
             <span style={{ fontSize:17, color:"var(--ink2)", fontWeight:700, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{langInfo?.name}</span>
           </div>
-          <button className="mp-close-btn" lang="da" onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} aria-label="Luk">
-            <Icon name="x" size={20} color="var(--ink2)" />
-          </button>
+          <CloseButton lang="da" onClick={() => { setMadpasWaiterView(false); if(madpasSpeaking){ window.speechSynthesis?.cancel(); setMadpasSpeaking(false); } }} />
         </div>
 
         {/* Ren fremvisningsskærm — ingen hovedmenu/feedback/bundnav, kun
