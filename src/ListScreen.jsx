@@ -3,7 +3,6 @@ import { setSearchReturn } from "./searchReturn.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
 import { findProductOnList, normalizeItemName, ITEM_EXISTS_TEXT, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, profilesReady, STATUS_TEXT } from "./helpers.js";
-import ReactDOM from "react-dom";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -12,6 +11,7 @@ import { useNavigationContext } from "./NavigationContext.jsx";
 import { useShoppingContext } from "./ShoppingContext.jsx";
 import { useAllergenPrefsContext } from "./AllergenPrefsContext.jsx";
 import { UI } from "./styleUtils.js";
+import { IconButton } from "./IconButton.jsx";
 import { ListSwitcherSheet, ShareListSheet, ShareStatus } from "./ListSheets.jsx";
 
 const S = {
@@ -72,7 +72,6 @@ export default function ListScreen({
   const [resultFilter, setResultFilter] = useState("all"); // all | clean | trace | conflict | unknown
   const resultsRef = useRef(null);
   const [confirmAdd, setConfirmAdd] = useState(null); // produkt med rød konflikt, der afventer et bevidst valg
-  const [navH, setNavH] = useState(80);
   const topH = useMeasuredHeight(() => document.querySelector(".topbar"));
   useEffect(() => {
     if (!itemFocused) return undefined;
@@ -248,10 +247,6 @@ export default function ListScreen({
   const resultOnList = (p) => !!findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id });
   const noMatches = !!newItemName.trim() && !itemSearching && itemResults.length === 0 && itemSearchedQuery === newItemName.trim();
   const hasResultPanel = !!newItemName.trim() && (itemSearching || itemResults.length > 0 || noMatches);
-  useEffect(() => {
-    const el = document.querySelector(".bottom-nav");
-    if (el) setNavH(Math.round(el.getBoundingClientRect().height));
-  }, [hasResultPanel, itemFocused]);
 
   const activeFamily = family.filter(m => activeProfiles.includes(m.id));
   const meActive = activeProfiles.includes("me");
@@ -274,24 +269,15 @@ export default function ListScreen({
 
   return (
     <div className="screen fade-in">
-      {/* Titlen fik sin egen fulde linje/zone (29. sept. 2026, bruger-
-          feedback) — lå tidligere i en delt space-between-flexrække med
-          "Sådan fungerer listen", hvor den delte klasses egen
-          width:100%/text-align:center kolliderede med flex-rækkens layout.
-          Venstrestillet + margin uændret fra den delte .screen-title-klasse
-          (samme mønster som ProfileScreen.jsx's Historik/Favoritter-titler,
-          "samme reference som Indkøbslistens [titel]" — den reference
-          havde ikke slået igennem her endnu). Hjælpelinket er flyttet ned
-          på sin egen linje og gjort tydeligt sekundært (lettere vægt,
-          --muted i stedet for --ink2, mindre ikon), så det ikke længere
-          konkurrerer visuelt med sidetitlen. */}
-      <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Indkøbsliste</div>
-      {onOpenHelp && (
-        <button type="button" onClick={onOpenHelp}
-          style={{ display:"flex", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", padding:0, marginBottom:12, fontFamily:"var(--f)", fontSize:11, fontWeight:500, color:"var(--ink2)" }}>
-          <Icon name="info" size={11} color="var(--ink2)" /> Sådan fungerer listen
-        </button>
-      )}
+      {/* Titel til venstre og et diskret infoikon til højre på samme linje (ingen tekstlink under titlen). Ikonet åbner hjælpearket. */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, margin:"2px 0 2px" }}>
+        <div className="screen-title" style={{ textAlign:"left", width:"auto", margin:0 }}>Indkøbsliste</div>
+        {onOpenHelp && (
+          <IconButton label="Sådan bruger du indkøbslisten" onClick={onOpenHelp} style={{ margin:"-3px -11px -3px 0" }}>
+            <Icon name="info" size={22} color="var(--muted)" />
+          </IconButton>
+        )}
+      </div>
 
       {/* ── Tilføj vare/søg: søgefelt (og filter) øverst; resultaterne står direkte i siden under feltet ── */}
       <div style={{ position:"sticky", top:topH, zIndex:20, margin:"0 -16px 4px", padding:"8px 16px", background: hasResultPanel ? "var(--surface)" : "transparent", borderBottom: hasResultPanel ? "1px solid var(--border)" : "1px solid transparent" }}>
@@ -314,13 +300,11 @@ export default function ListScreen({
               </button>
             )}
           </div>
-          {/* Den store "Tilføj"-knap skjules, mens der vises søgeresultater: der er produktkortenes "+" og rækken "Tilføj … uden produktvalg". */}
-          {!hasResultPanel && (
-            <button className="btn btn-primary btn-sm" style={{ ...UI.uwsnowrap, height:40, minHeight:40, padding:"0 12px", borderRadius:10 }}
-              onClick={addPlain} disabled={!plainName || addingPlain}>
-              Tilføj
-            </button>
-          )}
+          {/* "Tilføj" er altid synlig (også under søgning): tilføjer teksten som manuel vare uden produktvalg. Produktkortenes "+" tilføjer databaseprodukter. */}
+          <button className="btn btn-primary btn-sm" style={{ ...UI.uwsnowrap, height:40, minHeight:40, padding:"0 12px", borderRadius:10 }}
+            onClick={addPlain} disabled={!plainName || addingPlain || plainExists}>
+            {plainExists ? "På listen" : "Tilføj"}
+          </button>
         </div>
         {hasResultPanel && showResultFilter && (
           <div className="hist-filters-wrap" style={{ margin:"6px -16px 0" }}>
@@ -337,7 +321,7 @@ export default function ListScreen({
       </div>
 
       {hasResultPanel && (
-        <div ref={resultsRef} style={{ marginBottom:12, paddingBottom:72, scrollMarginTop:topH + 96 }}>
+        <div ref={resultsRef} style={{ marginBottom:12, paddingBottom:16, scrollMarginTop:topH + 96 }}>
           <div style={{ display:"flex", alignItems:"center", gap:5, fontSize:10, fontWeight:800, color:"var(--neutral)", textTransform:"uppercase", letterSpacing:".6px", margin:"4px 2px 8px" }}>
             <Icon name="search" size={11} color="var(--neutral)" /> Søgeresultater
           </div>
@@ -372,6 +356,9 @@ export default function ListScreen({
             <div style={{ padding:"22px 8px", textAlign:"center" }}>
               <div style={{ fontSize:13, fontWeight:700, color:"var(--ink2)" }}>Ingen produkter matcher "{newItemName.trim()}"</div>
               <div style={{ fontSize:12, color:"var(--muted)", marginTop:4, lineHeight:1.45 }}>Tjek stavningen, eller tilføj den som en almindelig vare.</div>
+              <button type="button" className="btn btn-outline btn-sm" style={{ marginTop:10, maxWidth:"100%" }} onClick={addPlain} disabled={addingPlain || plainExists}>
+                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? "Findes allerede på listen" : `Tilføj "${plainName}" som manuel vare`}</span>
+              </button>
             </div>
           )}
           {itemResults.length > 0 && visibleItemResults.length === 0 && (
@@ -402,42 +389,28 @@ export default function ListScreen({
               )}
             </div>
           )}
-          {!itemSearching && plainName && ReactDOM.createPortal(
-            // Sekundær, men altid tilgængelig: fast lige over bundnavigationen (portal: .screen har en transform, som ville fange position:fixed).
-            <div style={{ position:"fixed", left:0, right:0, bottom:navH + 8, zIndex:40, display:"flex", justifyContent:"center", pointerEvents:"none" }}>
-              <button type="button" onClick={addPlain}
-                style={{ pointerEvents:"auto", display:"flex", alignItems:"center", gap:6, width:"calc(100% - 32px)", maxWidth:448, minHeight:36, padding:"6px 12px", fontSize:12, fontWeight:600, fontFamily:"var(--f)", textAlign:"left", color: plainExists ? "var(--muted)" : "var(--green)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", cursor:"pointer" }}>
-                <Icon name={plainExists ? "check" : "plus"} size={13} color={plainExists ? "var(--muted)" : "var(--green)"} />
-                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? `"${plainName}" findes allerede på din indkøbsliste` : `Tilføj "${plainName}" som almindelig vare`}</span>
-              </button>
-            </div>,
-            document.body
-          )}
         </div>
       )}
 
       {!hasResultPanel && (
       <>
-      {/* ── Aktiv liste ──
-          Én sektion: label, brugerdefineret listenavn (ellipsis, aldrig afhængig af navnet) og en sekundær delt-status. Tryk åbner
-          listevælgeren (bottom-sheet) til at skifte, oprette, tilslutte og slette lister, så administration ikke fylder på siden. */}
-      <div style={{ display:"flex", alignItems:"stretch", marginBottom:12, minHeight:50, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)", overflow:"hidden" }}>
-        <button type="button" aria-haspopup="dialog" aria-label={`Aktiv liste: ${activeList?.name || "ingen valgt"}. Skift eller administrér lister`}
+      {/* ── Listevælger ──
+          Kompakt række: listenavn med pil (åbner vælgeren til at skifte, oprette, tilslutte og administrere lister), diskret delt-status
+          under navnet og Del-ikonet til højre. Del vises kun for egne lister: en liste, en anden har delt med mig, deles ikke videre. */}
+      <div style={{ display:"flex", alignItems:"stretch", marginBottom:10, minHeight:46, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)", overflow:"hidden" }}>
+        <button type="button" aria-haspopup="dialog" aria-label={`Liste: ${activeList?.name || "ingen valgt"}. Skift eller administrér lister`}
           onClick={() => setShowListPicker(true)}
-          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:10, padding:"6px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer", background:"none", border:"none" }}>
+          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:8, padding:"6px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer", background:"none", border:"none" }}>
           <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Aktiv liste</div>
-            <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginTop:1 }}>{activeList?.name || "Vælg liste"}</div>
+            <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{activeList?.name || "Vælg liste"}</div>
             {activeList && <ShareStatus list={activeList} userId={userId} />}
           </div>
-          <Icon name="chevronDown" size={18} color="var(--ink2)" />
+          <Icon name="chevronDown" size={18} color="var(--muted)" />
         </button>
-        {/* Del vises kun for egne lister: en liste, en anden har delt med mig, kan jeg ikke dele videre (den forlades under Dine lister → Rediger). */}
         {activeList && activeList.owner_id === userId && (
           <button type="button" aria-label={`Del listen ${activeList.name}`} onClick={() => setShareListId(activeList.id)}
-            style={{ flexShrink:0, minWidth:56, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"0 12px", fontFamily:"var(--f)", fontSize:11, fontWeight:700, color:"var(--ink2)", cursor:"pointer", background:"none", border:"none", borderLeft:"1px solid var(--border)" }}>
-            <Icon name="share" size={18} color="var(--ink2)" />
-            Del
+            style={{ flexShrink:0, minWidth:48, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 12px", cursor:"pointer", background:"none", border:"none", borderLeft:"1px solid var(--border)" }}>
+            <Icon name="share" size={20} color="var(--ink2)" />
           </button>
         )}
       </div>
