@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { CloseButton } from "./Sheets.jsx";
 import { createPortal } from "react-dom";
 import { Icon } from "./SharedComponents.jsx";
 import { UI } from "./styleUtils.js";
@@ -12,11 +13,12 @@ const HELP_CONTENT = {
     { icon:"zap", title:"Hurtig scanning", desc:"God belysning og rolig hånd giver hurtigere og mere præcist resultat." },
     { icon:"list", title:"Historik", desc:"Dine scanninger gemmes automatisk. Find dem under Historik i bundmenuen." },
   ]},
-  "list": { title:"Indkøbsliste", titleIcon:"cart", tips:[
-    { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet øverst for at skifte mellem lister eller oprette en ny." },
-    { icon:"link", title:"Del listen", desc:"Tryk på Del ved siden af listenavnet på dine egne lister. Vælg: kun dig, hele familien eller bestemte personer. Du kan også sende et link til en, der ikke er i familien. Lister, andre har delt med dig, forlader du under listenavnet → Rediger." },
-    { icon:"edit", title:"Tilføj varer", desc:"Skriv en vare og tryk Tilføj — eller send direkte fra en opskrift eller et søgeresultat." },
-    { icon:"check", title:"Afkryds og ryd", desc:"Tryk på en vare for at markere den som købt, og brug 'Ryd' for at fjerne alle købte varer på én gang." },
+  // compact: kompakte rækker uden kort og uden feedback-knap (indkøbslistens hjælp, 17. okt. 2026, Bjørn).
+  "list": { compact:true, title:"Sådan bruger du indkøbslisten", titleIcon:"cart", tips:[
+    { icon:"list", title:"Flere lister", desc:"Tryk på listenavnet for at skifte liste eller oprette en ny." },
+    { icon:"share", title:"Del din liste", desc:"Del med familien, bestemte personer eller via et link." },
+    { icon:"plus", title:"Tilføj varer", desc:"Søg efter produkter, eller skriv selv en vare." },
+    { icon:"check", title:"Afkryds og ryd", desc:"Markér varer som købt, og fjern dem samlet med \"Ryd\"." },
   ]},
   "profile": { title:"Profil", titleIcon:"profile", tips:[
     { icon:"edit", title:"Mine præferencer", desc:"Allergier, intolerancer og E-numre du overvåges for — tryk 'Rediger' for at ændre dem." },
@@ -84,20 +86,38 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
   ]};
   const panelRef = React.useRef(null);
   useDialogA11y(panelRef, onClose);
+  // Træk nedad lukker arket (kun når indholdet står øverst, så rulning ikke forveksles med et træk).
+  const dragRef = React.useRef(null);
+  const onTouchStart = (e) => { dragRef.current = (panelRef.current?.scrollTop || 0) <= 0 ? e.touches[0].clientY : null; };
+  const onTouchEnd = (e) => {
+    const y0 = dragRef.current; dragRef.current = null;
+    if (y0 != null && e.changedTouches[0].clientY - y0 > 70) onClose();
+  };
   // Portal til body: .screen.fade-in fanger ellers position:fixed (CLAUDE.md §3 regel 4), når modalen åbnes fra en skærm.
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="help-modal-title" tabIndex={-1}
-        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding:"20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", outline:"none" }}
-        onClick={e => e.stopPropagation()}>
-        <div style={UI.rowBetweenMb16}>
+        style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding: content.compact ? "16px 16px calc(12px + env(safe-area-inset-bottom))" : "20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", outline:"none" }}
+        onClick={e => e.stopPropagation()} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div style={content.compact ? { ...UI.rowBetweenMb16, marginBottom:4 } : UI.rowBetweenMb16}>
           <div id="help-modal-title" style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
-          <button type="button" onClick={onClose} aria-label="Luk"
-            style={{ width:44, height:44, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"50%", cursor:"pointer" }}>
-            <Icon name="x" size={16} color="var(--ink)" />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
+        {content.compact ? (
+          // Kompakte rækker: ikon direkte på bundvinduet, overskrift og kort forklaring, tynd skillelinje imellem.
+          <div role="list" style={{ display:"flex", flexDirection:"column" }}>
+            {content.tips.map((tip, i) => (
+              <div key={i} role="listitem" style={{ display:"flex", gap:12, alignItems:"flex-start", padding:"10px 0", borderTop: i === 0 ? "none" : "1px solid var(--border)" }}>
+                <div style={{ flexShrink:0, display:"flex", marginTop:1 }}><Icon name={tip.icon} size={20} color="var(--ink2)" /></div>
+                <div style={{ minWidth:0 }}>
+                  <div style={{ ...UI.ufs13_fw800_cink_mb3, marginBottom:2 }}>{tip.title}</div>
+                  <div style={UI.ufs12_cmuted2_lh16}>{tip.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
           {content.tips.map((tip, i) => (
             <div key={i} style={{ display:"flex", gap:12, padding:"12px 14px", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12 }}>
@@ -111,7 +131,8 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
             </div>
           ))}
         </div>
-        {closeLabel ? (
+        )}
+        {content.compact && !closeLabel ? null : closeLabel ? (
           <button type="button" onClick={onClose}
             style={{ width:"100%", minHeight:44, padding:12, background:"var(--green)", border:"none", borderRadius:12, fontFamily:"var(--f)", fontSize:14, fontWeight:800, color:"var(--on-green)", cursor:"pointer" }}>
             {closeLabel}

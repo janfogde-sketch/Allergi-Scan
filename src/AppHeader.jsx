@@ -40,6 +40,7 @@
 // ene, kompakte header-kontekst (og onboarding) er tekst-only.
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
+import { MenuButton } from "./IconButton.jsx";
 import { EatSafeWordmark } from "./SharedComponents.jsx";
 import { isStoreBuild } from "./storeBuild.js";
 
@@ -64,13 +65,8 @@ export default function AppHeader({ onFeedback, onMenu, unread = 0 }) {
           Feedback
         </button>
         {/* Menu-knap — profil, familie, favoritter, historik, opskrifter, viden m.m. */}
-        <button onClick={onMenu} aria-label={unread > 0 ? `Åbn menu (${unread} ulæste ${unread === 1 ? "besked" : "beskeder"})` : "Åbn menu"}
-          style={{ position:"relative", background:"var(--paper2)", border:"1px solid var(--border2)", borderRadius:"50%", width:38, height:38, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh)" }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-          {unread > 0 && (
-            <span style={{ position:"absolute", top:-1, right:-1, width:9, height:9, borderRadius:"50%", background:"var(--green)", border:"1.5px solid var(--paper)" }} />
-          )}
-        </button>
+        <MenuButton onClick={onMenu} badge={unread > 0}
+          label={unread > 0 ? `Åbn menu (${unread} ulæste ${unread === 1 ? "besked" : "beskeder"})` : "Åbn menu"} />
       </div>
     </header>
   );

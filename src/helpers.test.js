@@ -785,3 +785,14 @@ describe("stretchLevels: gør mørke billeder tydeligere", () => {
     expect(stretchLevels(d)).toBe(false);
   });
 });
+
+describe("normalizeItemName (dubletkontrol af almindelige varer)", () => {
+  it("ser bort fra store/små bogstaver og ekstra mellemrum, men bevarer æ, ø og å", async () => {
+    const { normalizeItemName } = await import("./helpers.js");
+    expect(normalizeItemName("  Havre   Mælk ")).toBe("havre mælk");
+    expect(normalizeItemName("HAVREMÆLK")).toBe(normalizeItemName("havremælk"));
+    expect(normalizeItemName("Å")).not.toBe(normalizeItemName("A"));
+    expect(normalizeItemName("Øl")).not.toBe(normalizeItemName("Ol"));
+    expect(normalizeItemName(null)).toBe("");
+  });
+});

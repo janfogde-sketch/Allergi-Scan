@@ -8,6 +8,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useIsMobile } from "./useIsMobile.js";
 import CloseX from "./CloseX.jsx";
+import { SearchButton } from "../IconButton.jsx";
 
 export default function GlobalSearchBox({
   globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,
@@ -102,9 +103,7 @@ export default function GlobalSearchBox({
   if (isMobile) {
     return (
       <>
-        <button type="button" className="admin-iconbtn" aria-label="Søg i admin" onClick={() => setSheetOpen(true)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path strokeLinecap="round" d="M20 20l-4-4"/></svg>
-        </button>
+        <SearchButton label="Søg i admin" onClick={() => setSheetOpen(true)} />
         {sheetOpen && (
           <div className="admin-search-sheet" role="dialog" aria-modal="true" aria-label="Søg i admin">
             <div className="admin-search-sheet-bar">

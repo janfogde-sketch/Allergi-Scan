@@ -18,13 +18,14 @@ describe("CloseX", () => {
     render(<CloseX onClick={onClick} />);
     const b = screen.getByRole("button", { name: "Luk" });
     expect(b.textContent).toBe("");
-    expect(b.className).toContain("admin-iconbtn");
+    expect(b.className).toContain("icon-btn"); // samme luk-knap som i appen
     fireEvent.click(b);
     expect(onClick).toHaveBeenCalled();
   });
   it("trykfladen er mindst 44 × 44 px i stilarket, og ingen admin-modal bruger en tekstknap 'Luk' til navigation", () => {
-    const css = readFileSync(join(process.cwd(), "src/admin/adminTheme.js"), "utf8");
-    expect(css).toMatch(/\.admin-iconbtn\{[^}]*width:44px;height:44px/);
+    const css = readFileSync(join(process.cwd(), "src/iconButtonCss.js"), "utf8");
+    expect(css).toMatch(/\.icon-btn\{[^}]*width:44px;height:44px/);
+    expect(css).toMatch(/\.ibtn\{[^}]*width:44px;height:44px/);
     const dir = join(process.cwd(), "src/admin");
     const files = [...readdirSync(join(dir, "sections")).filter((f) => f.endsWith(".jsx") && !f.includes(".test.")).map((f) => join(dir, "sections", f)), join(dir, "GlobalSearchBox.jsx"), join(dir, "FeedbackButton.jsx")];
     for (const f of files) {

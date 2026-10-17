@@ -15,10 +15,12 @@ function jsonResponse(body, ok = true) {
   return { ok, status: ok ? 200 : 500, text: async () => JSON.stringify(body) };
 }
 
-function setup({ familyOk = true } = {}) {
+function setup({ familyOk = true, householdOk } = {}) {
   const setters = {
     setUser: vi.fn(), setSelectedENumbers: vi.fn(), setAllergens: vi.fn(), setCustomAllerg: vi.fn(),
     loadFamily: vi.fn(async () => familyOk), loadShoppingList: vi.fn(), loadFavorites: vi.fn(),
+    // Husstanden (16. okt. 2026): sendes kun med, når testen beder om det, så de ældre tests er uændrede.
+    ...(householdOk === undefined ? {} : { loadHousehold: vi.fn(async () => householdOk) }),
   };
   const hook = renderHook(() => useLoadUserData({ accessToken: "tok", userId: "u1", ...setters }));
   return { ...hook, setters };
@@ -54,6 +56,23 @@ describe("useLoadUserData profileLoadStatus", () => {
       .mockResolvedValueOnce(jsonResponse([{ name: "Anna" }]))
       .mockResolvedValueOnce(jsonResponse([]));
     const { result } = setup({ familyOk: false });
+    await waitFor(() => expect(result.current.profileLoadStatus).toBe("error"));
+  });
+
+  it("bliver 'ok', når husstanden også er hentet", async () => {
+    global.fetch
+      .mockResolvedValueOnce(jsonResponse([{ name: "Anna" }]))
+      .mockResolvedValueOnce(jsonResponse([]));
+    const { result, setters } = setup({ householdOk: true });
+    await waitFor(() => expect(result.current.profileLoadStatus).toBe("ok"));
+    expect(setters.loadHousehold).toHaveBeenCalled();
+  });
+
+  it("bliver 'error', når husstanden ikke kan hentes (en valgt husstandskonto må ikke falde stille ud af vurderingen)", async () => {
+    global.fetch
+      .mockResolvedValueOnce(jsonResponse([{ name: "Anna" }]))
+      .mockResolvedValueOnce(jsonResponse([]));
+    const { result } = setup({ householdOk: false });
     await waitFor(() => expect(result.current.profileLoadStatus).toBe("error"));
   });
 
