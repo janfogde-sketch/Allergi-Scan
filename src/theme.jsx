@@ -283,7 +283,8 @@ body::-webkit-scrollbar{display:none;}
   mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
 /* Dækkende header (9. okt. 2026, Bjørn): på alle skærme undtagen forsiden (kamera/baggrundsfoto) står indholdet ikke og skinner igennem ved scroll. */
-.app-solid-header .topbar::before{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;-webkit-mask-image:none;mask-image:none;box-shadow:0 1px 0 var(--border);}
+/* Baggrundslaget rækker 160 px op over headeren og maler et dækkende bånd: på iPhone (hjemmeskærm) ruller indhold ellers synligt op bag statuslinjen, hvor sticky-headeren ikke når. Uafhængigt af den enkelte iOS-version og af safe-area-værdier. */
+.app-solid-header .topbar::before{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;-webkit-mask-image:none;mask-image:none;top:-160px;box-shadow:0 1px 0 var(--border);}
 /* Produktsiden (9. okt. 2026): flade kort med diskret kant, produktbilledet er det primære element. */
 .result-page .card,.result-page .product-hero{box-shadow:none;}
 .topbar-logo{display:flex;align-items:center;gap:8px;}
