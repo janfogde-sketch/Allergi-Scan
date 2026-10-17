@@ -3,8 +3,8 @@ import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { setProductReturn } from "./searchReturn.js";
-import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
-import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
+import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, buildActiveProfileList, evaluateProductForProfiles, profilesReady } from "./helpers.js";
+import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -51,7 +51,8 @@ function HistoryFilters({ filters, value, onChange }) {
 export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
+  const { allergens, customAllerg, scanFamily: family, activeProfiles, profileLoadStatus, retryProfileLoad } = useProfileContext();
+  const ready = profilesReady(profileLoadStatus);
   const { setScreen } = useNavigationContext();
   const { history, historyLoading, historyScope, historyError, loadHistory, clearHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
@@ -115,7 +116,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     const flags = hasLive ? liveFlags : (h.flags_triggered || {});
     // Fælles statussystem (helpers.js): rød/orange/grå/grøn. Ingredienser kommer fra produktet (history sender ingredients_text), så E-numre og egne
     // allergier kan kontrolleres; uden dem er resultatet "Kan ikke vurderes", aldrig grønt.
-    const ev = evaluateProductForProfiles(profiles, { allergen_flags: flags, ingredients_text: h.products?.ingredients_text || "" });
+    const ev = evaluateProductForProfiles(profiles, { allergen_flags: flags, ingredients_text: h.products?.ingredients_text || "" }, { profilesReady: ready });
     const multi = profiles.length > 1;
     const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
     const text = detail ? `${ev.label} · ${detail}` : ev.label;
@@ -204,6 +205,8 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       )}
 
       {!historyLoading && historyError && <LoadErrorBox what="Historikken" onRetry={() => loadHistory(historyScope)} />}
+      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
 
       {!historyLoading && !historyError && history.length===0 && (
         <div className="empty-state">

@@ -2,10 +2,10 @@
 import { setSearchReturn } from "./searchReturn.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, STATUS_TEXT } from "./helpers.js";
+import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, profilesReady, STATUS_TEXT } from "./helpers.js";
 import ReactDOM from "react-dom";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
-import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
+import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -29,7 +29,8 @@ export default function ListScreen({
 }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { scanFamily: family, allergens, customAllerg, activeProfiles, setActiveProfiles } = useProfileContext();
+  const { scanFamily: family, allergens, customAllerg, activeProfiles, setActiveProfiles, profileLoadStatus, retryProfileLoad } = useProfileContext();
+  const ready = profilesReady(profileLoadStatus);
   const { selectedENumbers } = useAllergenPrefsContext();
   const { setScreen } = useNavigationContext();
   const {
@@ -212,7 +213,7 @@ export default function ListScreen({
     const product = productDetails[item.ean];
     if (product === undefined || !product) return null; // stadig henter, eller ikke fundet — vis intet frem for et gæt
     // Fælles statussystem (helpers.js): grøn kun med tilstrækkelige data, ellers orange/rød/grå.
-    const ev = evaluateProductForProfiles(activeProfileList, product);
+    const ev = evaluateProductForProfiles(activeProfileList, product, { profilesReady: ready });
     const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
     return { status: ev.level, text: detail ? `${ev.label} · ${detail}` : ev.label };
   };
@@ -222,7 +223,7 @@ export default function ListScreen({
 
   // ── Søgeresultater: rækkefølgen er søgerelevans (fra serveren); status ændrer ALDRIG rækkefølgen eller skjuler et præcist match.
   // Grupper til filtrene: "Uden konflikt" = grøn (tilstrækkelige data, ingen konflikt), "Med advarsel" = orange + rød; grå kun under "Alle".
-  const itemResultsWithSafety = itemResults.map(p => ({ product: p, level: evaluateProductForProfiles(activeProfileList, p).level }));
+  const itemResultsWithSafety = itemResults.map(p => ({ product: p, level: evaluateProductForProfiles(activeProfileList, p, { profilesReady: ready }).level }));
   const levelCounts = { safe:0, warn:0, danger:0, unknown:0 };
   itemResultsWithSafety.forEach(r => { levelCounts[r.level] = (levelCounts[r.level] || 0) + 1; });
   // Filtre (9. okt. 2026): Alle / Uden konflikt (grøn: fuld data, ingen konflikt eller spor) / Spor (orange) / Konflikt (rød) / Kan ikke vurderes (grå).
@@ -376,7 +377,7 @@ export default function ListScreen({
             </div>
           )}
           {visibleItemResults.map(({ product: p }) => (
-            <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList}
+            <SearchResultRow key={p.ean||p.id} product={p} effectiveIds={activeIds} effectiveLevels={activeLevels} profiles={activeProfileList} profilesReady={ready}
               onList={resultOnList(p)}
               onOpen={() => { blurInput(); logSearchSelection(newItemName, p, accessToken); setSearchReturn(newItemName, p.ean||p.code||p.id, SCREENS.LIST); lookupProduct(p.ean||p.code||p.id, { via: "search" }); setNewItemName(""); }}
               onAddToList={() => pickItemProduct(p)}
@@ -459,6 +460,8 @@ export default function ListScreen({
           delte klasser brugt uændret af MadpasScreen.jsx og tre steder i
           ProfileScreen.jsx, som ikke skal påvirkes. */}
       {listsError && <LoadErrorBox what="Indkøbslisterne" onRetry={() => loadShoppingList()} />}
+      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
 
       {!listsError && shoppingList.length === 0 && (
         <div className="empty-state" style={{ paddingTop:16 }}>

@@ -743,7 +743,15 @@ export function profileMatchLabel() {
 // Samlet vurdering af ét produkt mod de valgte profiler: { level: danger|warn|unknown|safe, label, reasons, missing }.
 // Rækkefølge: direkte konflikt vinder visuelt, så spor, så for lidt data; grøn kun uden fund OG med tilstrækkelige data.
 // `reasons` er konkrete og eksplicitte ("Indeholder æg", "Spor af æg", "Indeholder E120"); `missing` nævner, hvad der mangler.
-export function evaluateProductForProfiles(profiles, product) {
+// Er profilerne hentet, så de kan stoles på? (16. okt. 2026) Kun status "ok" fra useLoadUserData. I artifact-preview findes ingen session,
+// og profilerne er mock-data. Mens de ikke er hentet, mangler allergener og/eller familie, og et "ingen konflikt" ville være falsk grønt.
+export function profilesReady(profileLoadStatus) {
+  return profileLoadStatus === "ok" || import.meta.env?.MODE === "artifact-preview";
+}
+
+// opts.profilesReady === false: profilerne er ikke (alle) hentet. Et fund (rød/orange) står stadig, fordi det er den forsigtige side,
+// men "grøn" bliver aldrig vist: den bliver til "Kan ikke vurderes" med forklaringen "Din profil er ikke hentet".
+export function evaluateProductForProfiles(profiles, product, opts = {}) {
   const ingredientsText = product?.ingredients || product?.ingredients_text || "";
   const results = computeProfileResults(profiles || [], {
     allergen_flags: normalizeProductFlagsFor(product || {}), ingredients: ingredientsText, nutrition: product?.nutrition,
@@ -777,6 +785,9 @@ export function evaluateProductForProfiles(profiles, product) {
   // Ingen profil at vurdere imod er aldrig "sikkert": manglende oplysninger er ikke sikkerhed.
   if (noProfiles && !missing.length) missing.push("Ingen profil valgt");
   if (nothingToCheck) missing.push("Ingen fødevarehensyn valgt");
+  if (opts.profilesReady === false && level === "safe") {
+    return { level: "unknown", label: STATUS_TEXT.unknown, reasons: [], missing: ["Din profil er ikke hentet", ...missing], results };
+  }
   return { level, label, reasons, missing, results };
 }
 

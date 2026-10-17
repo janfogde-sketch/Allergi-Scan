@@ -19,12 +19,14 @@ export function useHousehold({ accessToken }) {
   // fejlet hentning må aldrig se ud som "husstanden er tom".
   const [householdLoaded, setHouseholdLoaded] = useState(false);
 
+  // Returnerer true, når husstanden er hentet, ellers false (16. okt. 2026): useLoadUserData regner husstanden med i profilens status,
+  // for en valgt husstandskonto, der ikke kunne hentes, ville ellers stille falde ud af vurderingen (falsk grønt for den persons allergier).
   const loadHousehold = useCallback(() => {
-    if (!accessToken) return Promise.resolve();
+    if (!accessToken) return Promise.resolve(false);
     setHouseholdLoading(true);
     return apiCall(`${SUPABASE_URL}/functions/v1/family/group`, { headers: makeHeaders(accessToken) })
-      .then(data => { if (data?.success) { setHousehold(data.members || []); setHouseholdLoaded(true); } })
-      .catch(() => {})
+      .then(data => { if (data?.success) { setHousehold(data.members || []); setHouseholdLoaded(true); return true; } return false; })
+      .catch(() => false)
       .finally(() => setHouseholdLoading(false));
   }, [accessToken]);
 
