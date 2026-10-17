@@ -7,7 +7,8 @@ import { buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js
  * kind: "not_found" (intet produkt at vurdere) | "no_profiles" (ingen kendt valgt profil) | "evaluated".
  * Ved "evaluated": ev = resultat fra evaluateProductForProfiles (level danger/warn/unknown/safe), hasLive = produktets nuværende allergenflag findes.
  * Uden nuværende flag bruges flagene fra scanningstidspunktet, og et "safe" er da kun historisk, aldrig bekræftet.
- * @param {any} h @param {{ user: any, family: any[], allergens: string[], customAllerg: any[], selectedENumbers: any[], activeProfiles: string[] }} ctx
+ * ctx.profilesReady === false: profilen er ikke hentet, så "safe" bliver "unknown" (se evaluateProductForProfiles, 17. okt. 2026).
+ * @param {any} h @param {{ user: any, family: any[], allergens: string[], customAllerg: any[], selectedENumbers: any[], activeProfiles: string[], profilesReady?: boolean }} ctx
  */
 export function evaluateHistoryEntry(h, ctx) {
   const rawStatus = h.result || h.status;
@@ -18,6 +19,6 @@ export function evaluateHistoryEntry(h, ctx) {
   const liveFlags = h.products?.allergen_flags;
   const hasLive = !!liveFlags && typeof liveFlags === "object" && Object.keys(liveFlags).length > 0;
   const flags = hasLive ? liveFlags : (h.flags_triggered || {});
-  const ev = evaluateProductForProfiles(profiles, { allergen_flags: flags, ingredients_text: h.products?.ingredients_text || "" });
+  const ev = evaluateProductForProfiles(profiles, { allergen_flags: flags, ingredients_text: h.products?.ingredients_text || "" }, { profilesReady: ctx.profilesReady });
   return { kind: "evaluated", ids, profiles, ev, hasLive };
 }

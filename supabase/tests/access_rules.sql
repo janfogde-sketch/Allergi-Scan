@@ -9,6 +9,7 @@
 -- 2) Læsning: B ser ingen af A's rækker i nogen brugertabel (og A ser sine egne, så testen ikke er tom).
 -- 3) Ændring/sletning: B rammer 0 af A's rækker.
 -- 4) Oprettelse på andres vegne og selvophøjelse (rolle/abonnement/e-mail) afvises.
+--    4c) Familieprofil med user_id = en anden konto afvises (SIK-1, 17. okt. 2026).
 -- 5) Anon: ser intet i brugertabeller, men godkendte allergener; is_admin kan ikke kaldes af anon.
 -- Backup-tabeller (…_backup_…, …_diff_…, …_ÅÅÅÅMMDD) er IKKE undtaget: appens roller må hverken tømme, skrive eller læse dem.
 begin;
@@ -180,6 +181,18 @@ begin
     res := res || 'FREMMED-PROFIL-I-ANDENS-LISTE | ';
   exception when others then null;
   end;
+  -- 4c) SIK-1 (17. okt. 2026): B må ikke oprette en profil med user_id = en ANDEN konto (C), selv om family_owner_id er B selv.
+  -- Før rettelsen gik det igennem, fordi B altid er med i family_group(B), og profilen dukkede op i C's familie.
+  begin
+    execute format('insert into family_members(name,user_id,family_owner_id) values (''injiceret2'',%L,%L)', c, b);
+    res := res || 'PROFIL-MED-ANDENS-USER_ID | ';
+  exception when others then null;
+  end;
+  -- B må stadig oprette sin egen profil (positiv kontrol, så reglen ikke er strammet for meget)
+  begin
+    execute format('insert into family_members(name,user_id) values (''Mit barn'',%L)', b);
+  exception when others then res := res || 'EGEN-PROFIL-AFVIST(' || sqlstate || ') | ';
+  end;
   execute 'reset role';
 
   -- 4b) Selvophøjelse: B må ikke kunne give sig selv admin, abonnement eller ændre e-mail
@@ -230,6 +243,7 @@ begin
   if not exists (select 1 from public.users where id=a and name='Test A') then res := res || 'A-PROFIL-ÆNDRET '; end if;
   select count(*) into n from user_allergens where user_id=a; if n<>2 then res := res || 'A-ALLERGIER-ÆNDRET(' || n || ') '; end if;
   select count(*) into n from family_members where family_owner_id=a and name='Barn'; if n<>1 then res := res || 'A-FAMILIE-ÆNDRET(' || n || ') '; end if;
+  select count(*) into n from family_members where user_id=c; if n<>0 then res := res || 'C-FIK-FREMMED-PROFIL(' || n || ') '; end if;
   select count(*) into n from shopping_list_items where list_id=lid; if n<>1 then res := res || 'A-LISTE-ÆNDRET(' || n || ') '; end if;
   select count(*) into n from push_tokens where user_id=a; if n<>1 then res := res || 'A-PUSH-ÆNDRET(' || n || ') '; end if;
 

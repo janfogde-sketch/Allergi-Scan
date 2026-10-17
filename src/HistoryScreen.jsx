@@ -3,9 +3,9 @@ import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { setProductReturn } from "./searchReturn.js";
-import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, profilesReady } from "./helpers.js";
 import { evaluateHistoryEntry } from "./historyEval.js";
-import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox } from "./SharedComponents.jsx";
+import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useNavigationContext } from "./NavigationContext.jsx";
@@ -52,7 +52,8 @@ function HistoryFilters({ filters, value, onChange }) {
 export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   const { user, userId, accessToken } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
+  const { allergens, customAllerg, scanFamily: family, activeProfiles, profileLoadStatus, retryProfileLoad } = useProfileContext();
+  const ready = profilesReady(profileLoadStatus);
   const { setScreen } = useNavigationContext();
   const { history, historyLoading, historyScope, historyError, loadHistory, clearHistory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
@@ -88,7 +89,7 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // her, kun det primære allergen-match, som er den dominerende faktor bag
   // "Allergi-advarsel"/"Kan indeholde spor" alligevel.
   const historyDetails = (h) => {
-    const base = evaluateHistoryEntry(h, { user, family, allergens, customAllerg, selectedENumbers, activeProfiles });
+    const base = evaluateHistoryEntry(h, { user, family, allergens, customAllerg, selectedENumbers, activeProfiles, profilesReady: ready });
     const { ids, profiles } = base;
     // "Tjekket for: Alle" når scanningen dækkede ALLE nuværende profiler (mig
     // + hele familien), "Carsten + Kaj" ved specifikke navne, ellers et enkelt
@@ -197,6 +198,8 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       )}
 
       {!historyLoading && historyError && <LoadErrorBox what="Historikken" onRetry={() => loadHistory(historyScope)} />}
+      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
 
       {!historyLoading && !historyError && history.length===0 && (
         <div className="empty-state">
