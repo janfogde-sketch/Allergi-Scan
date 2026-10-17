@@ -3,7 +3,8 @@ import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { setProductReturn } from "./searchReturn.js";
-import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, buildActiveProfileList, evaluateProductForProfiles, profilesReady } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, profilesReady } from "./helpers.js";
+import { evaluateHistoryEntry } from "./historyEval.js";
 import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -88,9 +89,8 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
   // her, kun det primære allergen-match, som er den dominerende faktor bag
   // "Allergi-advarsel"/"Kan indeholde spor" alligevel.
   const historyDetails = (h) => {
-    const rawStatus = h.result || h.status;
-    const ids = (h.active_profiles && h.active_profiles.length) ? h.active_profiles : activeProfiles;
-    const profiles = buildActiveProfileList({ user, family, allergens, customAllerg, selectedENumbers, activeProfiles: ids });
+    const base = evaluateHistoryEntry(h, { user, family, allergens, customAllerg, selectedENumbers, activeProfiles, profilesReady: ready });
+    const { ids, profiles } = base;
     // "Tjekket for: Alle" når scanningen dækkede ALLE nuværende profiler (mig
     // + hele familien), "Carsten + Kaj" ved specifikke navne, ellers et enkelt
     // navn (26. sept. 2026, opfølgning — eksplicit ordlyd fra brugeren).
@@ -105,18 +105,11 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
     // ekstra statuslinje med samme tekst er ren gentagelse (26. sept. 2026,
     // brugerfeedback: "fjern den dobbelte tekst"). Ingen `text` her betyder
     // ingen tredje linje overhovedet, se render-koden.
-    if (rawStatus === "not_found") return { status:"not_found", text:null, checkedFor };
-    if (profiles.length === 0) return { status:null, text:null, checkedFor: null };
-    // Aktuelle valg: vurderingen regnes altid mod brugerens NUVÆRENDE allergivalg (profiles ovenfor), aldrig mod en frossen status.
-    // Aktuelle produktdata: har produktet stadig allergenflag, bruges de (9. okt. 2026, Bjørn). Findes de ikke (produktet er slettet,
-    // eller historikken er ældre end data), bruges flagene fra scanningstidspunktet, og et "ingen match" vises da ikke som grønt:
-    // det markeres som historisk og ikke verificeret. Advarsler (rød/gul) bevares, fordi de er den forsigtige side.
-    const liveFlags = h.products?.allergen_flags;
-    const hasLive = !!liveFlags && typeof liveFlags === "object" && Object.keys(liveFlags).length > 0;
-    const flags = hasLive ? liveFlags : (h.flags_triggered || {});
-    // Fælles statussystem (helpers.js): rød/orange/grå/grøn. Ingredienser kommer fra produktet (history sender ingredients_text), så E-numre og egne
-    // allergier kan kontrolleres; uden dem er resultatet "Kan ikke vurderes", aldrig grønt.
-    const ev = evaluateProductForProfiles(profiles, { allergen_flags: flags, ingredients_text: h.products?.ingredients_text || "" }, { profilesReady: ready });
+    if (base.kind === "not_found") return { status:"not_found", text:null, checkedFor };
+    if (base.kind === "no_profiles") return { status:null, text:null, checkedFor: null };
+    // Aktuelle valg og produktdata, se evaluateHistoryEntry (historyEval.js). Findes de aktuelle flag ikke, markeres et "ingen match" som historisk og ikke
+    // verificeret, aldrig som grønt; advarsler (rød/gul) bevares, fordi de er den forsigtige side. Uden ingredienser er resultatet "Kan ikke vurderes".
+    const { ev, hasLive } = base;
     const multi = profiles.length > 1;
     const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
     const text = detail ? `${ev.label} · ${detail}` : ev.label;
