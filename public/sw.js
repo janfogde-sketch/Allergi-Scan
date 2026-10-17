@@ -12,7 +12,10 @@
 // Offline-side (8. okt. 2026): ved en navigation uden net vises den forhåndshentede /offline.html i stedet for
 // browserens fejlside (vigtigt i en TWA). Alt andet går direkte til netværket uden om service workeren.
 // Selve fetch-handleren skal fortsat findes: det er et af Chromes kriterier for, at appen kan installeres.
-const OFFLINE_CACHE = "eatsafe-offline-v1";
+// Rettet 17. okt. 2026: offline-sidens egne filer (script, skrift, logo) er underkald, ikke navigationer, og blev derfor hentet fra
+// nettet og fejlede uden net: logoet var et ødelagt billede, og "Prøv igen" gjorde intet, fordi offline.js aldrig blev indlæst.
+// De serveres nu fra nettet, og uden net fra den forhåndshentede cache (v2 tvinger en frisk forhåndshentning).
+const OFFLINE_CACHE = "eatsafe-offline-v2";
 const OFFLINE_URL = "/offline.html";
 const OFFLINE_FILES = [OFFLINE_URL, "/js/offline.js", "/fonts/fonts.css", "/fonts/dm-sans-latin-opsz-normal.woff2", "/fonts/dm-sans-latin-ext-opsz-normal.woff2", "/brand/EatSafe_Master_Logo_Horizontal.svg", "/favicon.svg"];
 
@@ -36,10 +39,21 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.mode !== "navigate" || new URL(req.url).origin !== self.location.origin) return;
-  event.respondWith(
-    fetch(req).catch(async () => (await caches.match(OFFLINE_URL)) || Response.error())
-  );
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req).catch(async () => (await caches.match(OFFLINE_URL)) || Response.error())
+    );
+    return;
+  }
+  // Offline-sidens egne filer: nettet først (de bruges også af appen, så de må ikke blive forældede), og først når nettet svigter, den
+  // forhåndshentede kopi.
+  if (req.method === "GET" && OFFLINE_FILES.includes(url.pathname)) {
+    event.respondWith(
+      fetch(req).catch(async () => (await caches.match(req, { ignoreSearch: true })) || Response.error())
+    );
+  }
 });
 
 // Push er kun den korte tekst; den fulde besked ligger i appen og åbnes via
