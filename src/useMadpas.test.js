@@ -35,6 +35,10 @@ describe("Madpas-sætninger", () => {
 
   it("har cøliaki-budskab (navn, sætning, strengt glutenfrit) på alle 17 sprog", () => {
     expect(MADPAS_LANGUAGES).toHaveLength(17);
+    // Vælgere og beskeder bruger sprogets danske navn, så ingen skal gætte, om skriften er kinesisk eller thailandsk
+    expect(MADPAS_LANGUAGES.find(l => l.code === "th").dansk).toBe("Thailandsk");
+    expect(MADPAS_LANGUAGES.find(l => l.code === "zh").dansk).toBe("Kinesisk");
+    MADPAS_LANGUAGES.forEach(l => expect(l.dansk).toBeTruthy());
     MADPAS_LANGUAGES.forEach(({ code }) => {
       const t = MADPAS_COELIAC_T[code];
       expect(t?.n, code).toBeTruthy();
@@ -81,6 +85,6 @@ describe("Oplæsning uden stemme", () => {
     expect(hasVoiceFor("th-TH", [{ lang: "en-US" }, { lang: "da-DK" }])).toBe(false);
   });
   it("siger tydeligt, hvilket sprog der mangler", () => {
-    expect(noVoiceMessage("Thai")).toContain("ingen stemme til Thai");
+    expect(noVoiceMessage("Thailandsk")).toContain("ingen stemme til Thailandsk");
   });
 });

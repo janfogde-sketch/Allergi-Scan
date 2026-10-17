@@ -370,7 +370,7 @@ export default function MadpasScreen({
                 {!langOpen ? (
                   <div className="mp-lang-dropdown" onClick={() => setLangOpen(true)}>
                     <span className="mp-lang-flag">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.flag||"🌍"}</span>
-                    <span className="mp-lang-name">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.name||"English"}</span>
+                    <span className="mp-lang-name">{MADPAS_LANGUAGES.find(l=>l.code===madpasLang)?.dansk||"Engelsk"}</span>
                     <span className="mp-lang-arrow"><Icon name="chevronDown" size={14} color="var(--muted)" /></span>
                   </div>
                 ) : (
@@ -379,7 +379,7 @@ export default function MadpasScreen({
                       <div key={l.code} className={`mp-lang-opt${madpasLang===l.code?" on":""}`}
                         onClick={() => { setMadpasLang(l.code); localStorage.setItem("as_madpas_lang", l.code); setLangOpen(false); if (madpasSpeaking) { window.speechSynthesis.cancel(); setMadpasSpeaking(false); }}}>
                         <span style={UI.fs20}>{l.flag}</span>
-                        <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.name}</span>
+                        <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.dansk}</span>
                         {madpasLang===l.code && <span style={{ marginLeft:"auto", display:"flex" }}><Icon name="check" size={13} color="var(--green)" /></span>}
                       </div>
                     ))}
