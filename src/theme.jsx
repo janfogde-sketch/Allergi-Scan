@@ -1028,6 +1028,11 @@ button.filter-chip{width:auto;}
 @keyframes emptyFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 .empty-txt{font-size:15.5px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
 .empty-sub{font-size:13px;margin-top:6px;color:var(--muted);font-weight:400;line-height:1.55;max-width:260px;margin-left:auto;margin-right:auto;}
+.settings-screen .card{padding:14px;margin-bottom:8px;}
+.settings-screen .mp-lang-dropdown,.settings-screen .mp-lang-list{margin-bottom:0;}
+.settings-account-actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 0;}
+.btn.settings-logout{background:var(--surface);border-color:var(--border2);color:var(--ink);min-height:48px;}
+.btn.settings-delete{min-height:48px;min-width:48px;padding:8px 20px;}
 .screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
 #qr-reader{width:100%!important;border:none!important;min-height:200px;}
