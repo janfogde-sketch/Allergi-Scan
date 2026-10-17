@@ -103,7 +103,14 @@ export function summarizeAllergenChanges(list) {
 }
 
 // Lavere risiko (Jan 16. okt. 2026): ord til beskeden om en rettelse, hvor risikoen er sænket.
-const DECREASE_WORDS = { no: "er nu registreret som ikke indeholdt", traces: "kan nu kun indeholde spor", unknown: "er nu uoplyst" };
+// "Ikke påvist" bruges kun, når produktets flag udtrykkeligt er registreret som "no"; manglende eller ukendte oplysninger er "uoplyst".
+const lowerFirst = (s) => s.charAt(0).toLocaleLowerCase("da") + s.slice(1);
+const decreaseSentence = (c) => {
+  const label = lowerFirst(c.label);
+  if (c.value === "no") return `Status for ${label} er ændret til ‘Ikke påvist’.`;
+  if (c.value === "traces") return `Status for ${label} er ændret til ‘Kan indeholde spor’.`;
+  return `${c.label} ${c.value === "unknown" ? "er nu uoplyst" : "er rettet"}.`;
+};
 
 /**
  * Hvilke sænkede flag gælder stadig og berører denne modtagers profiler? Samme form som affectedAllergenChanges.
@@ -122,9 +129,9 @@ export function affectedAllergenDecreases(changes, current, profileAllergens) {
   return out;
 }
 
-/** "Mælkeprotein er nu registreret som ikke indeholdt, Æg kan nu kun indeholde spor". */
+/** "Status for mælkeprotein er ændret til ‘Ikke påvist’. Status for æg er ændret til ‘Kan indeholde spor’." */
 export function summarizeAllergenDecreases(list) {
-  return list.map((c) => `${c.label} ${DECREASE_WORDS[c.value] ?? "er rettet"}`).join(", ");
+  return list.map(decreaseSentence).join(" ");
 }
 
 // F1-12 (6. okt. 2026): ventetid før næste forsøg efter et midlertidigt fejlet forsøg nr. `attempt`

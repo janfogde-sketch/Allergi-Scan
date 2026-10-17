@@ -195,7 +195,7 @@ export const STORE_SOURCES = ["katalog"];
 // en importdato er ikke en verificering, så uden dato står der tydeligt, at det ikke er kontrolleret.
 // hasIngredients === false: ingredienslisten mangler helt, hvilket er noget andet end en liste, der blot ikke er kontrolleret.
 export const ingredientsVerifiedText = (iso, hasIngredients = true) => {
-  if (hasIngredients === false) return "Ingredienslisten mangler for dette produkt.";
+  if (hasIngredients === false) return "Vi har endnu ikke en ingrediensliste for dette produkt.";
   const d = iso ? new Date(iso) : null;
   if (!d || Number.isNaN(d.getTime())) return "Ingredienslisten er endnu ikke kontrolleret mod emballagen.";
   return `Ingredienslisten er kontrolleret mod emballagen den ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}.`;

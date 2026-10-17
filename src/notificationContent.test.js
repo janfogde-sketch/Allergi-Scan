@@ -75,10 +75,10 @@ describe("renderNotification — alle definitioner", () => {
 
   it("rettede allergenoplysninger (P1:lowered) er kun en besked i appen: ingen push og ingen mail (Jan 16. okt. 2026)", () => {
     expect(KEYS.filter((k) => DEFINITIONS[k].inAppOnly)).toEqual(["P1:lowered"]);
-    const n = renderNotification("P1:lowered", { ...SAMPLE, productName: "Chokolade", changeSummary: "Mælkeprotein er nu registreret som ikke indeholdt" });
+    const n = renderNotification("P1:lowered", { ...SAMPLE, productName: "Chokolade", changeSummary: "Status for mælkeprotein er ændret til ‘Ikke påvist’." });
     expect(n.inAppOnly).toBe(true);
     expect(n.category).toBe("product_changes");
-    expect(JSON.stringify(n.blocks)).toContain("Mælkeprotein er nu registreret som ikke indeholdt");
+    expect(JSON.stringify(n.blocks)).toContain("Status for mælkeprotein er ændret til ‘Ikke påvist’.");
     expect(renderNotification("P1:default", SAMPLE).inAppOnly).toBe(false);
   });
 

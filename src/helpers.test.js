@@ -742,8 +742,8 @@ describe("ingredientsVerifiedText", () => {
   });
   it("en manglende ingrediensliste er noget andet end en ikke kontrolleret liste, og en dato gør den ikke til en kontrol", async () => {
     const { ingredientsVerifiedText, PACKAGING_REMINDER_TEXT } = await import("./helpers.js");
-    expect(ingredientsVerifiedText(null, false)).toBe("Ingredienslisten mangler for dette produkt.");
-    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z", false)).toBe("Ingredienslisten mangler for dette produkt.");
+    expect(ingredientsVerifiedText(null, false)).toBe("Vi har endnu ikke en ingrediensliste for dette produkt.");
+    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z", false)).toBe("Vi har endnu ikke en ingrediensliste for dette produkt.");
     expect(PACKAGING_REMINDER_TEXT).toBe("Tjek altid emballagen – oplysninger kan ændre sig.");
   });
 });
