@@ -250,4 +250,9 @@ describe("P6: tilbagekaldelse", () => {
     expect(renderNotification("P6:updated", data).pushTitle).toBe("Tilbagekaldelsen er opdateret");
     expect(renderNotification("P6:updated", data).pushBody).toContain("Frosty Pocket Lemon");
   });
+  it("N3 (afvist indsendelse): aftalt titel og forhåndsvisning med produktnavnet (Bjørn, 17. okt. 2026)", () => {
+    const n = renderNotification("N3:default", { ...SAMPLE, productName: "Osk", reason: "Mangler oplysninger" });
+    expect(n.title).toBe("Din indsendelse blev ikke godkendt");
+    expect(n.pushBody).toBe("Vi kunne ikke godkende din indsendelse om Osk. Se begrundelsen.");
+  });
 });

@@ -9,7 +9,7 @@ import { isOfficialRecallUrl } from "../supabase/functions/_shared/recallParser.
 const S = {
   h: { fontSize:19, fontWeight:800, color:"var(--ink)", letterSpacing:"-.3px", lineHeight:1.25, margin:"0 0 12px" },
   p: { fontSize:14, color:"var(--ink2)", lineHeight:1.55, margin:"0 0 12px" },
-  panel: { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:"14px 16px", margin:"0 0 12px", boxShadow:"var(--sh)" },
+  panel: { background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:"var(--r)", padding:"12px 14px", margin:"0 0 12px" },
   panelTitle: { fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:1.4, color:"var(--muted)", marginBottom:8 },
   quote: { borderLeft:"3px solid var(--border2)", padding:"2px 0 2px 12px", margin:"0 0 12px" },
   quoteLabel: { fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:1.4, color:"var(--muted)", marginBottom:4 },
