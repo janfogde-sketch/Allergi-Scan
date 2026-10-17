@@ -17,13 +17,13 @@ describe("BootScreen: indlæsning", () => {
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/kunne ikke|Ingen forbindelse|logge ind/i)).toBeNull();
   });
-  it("efter ca. 6 sekunder kommer en rolig besked og Prøv igen, men ingen fejltekst og intet login", () => {
+  it("efter ca. 6 sekunder kommer kun en rolig besked: ingen knapper (forsøget kører stadig), ingen fejltekst og intet login", () => {
     render(<BootScreen onRetry={() => {}} onLogin={() => {}} />);
     act(() => { vi.advanceTimersByTime(BOOT_HELP_DELAY_MS - 1); });
     expect(screen.queryByText(/længere end normalt/)).toBeNull();
     act(() => { vi.advanceTimersByTime(2); });
     expect(screen.getByText("Det tager lidt længere end normalt …")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Prøv igen" })).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/Log ind/i)).toBeNull();
     expect(screen.queryByText(/Ingen forbindelse|kunne ikke starte/)).toBeNull();
   });

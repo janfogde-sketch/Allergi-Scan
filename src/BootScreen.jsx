@@ -3,7 +3,9 @@
 // BootScreen.jsx — SCREENS.BOOT (G6, 14. okt. 2026; ny opførsel 17. okt. 2026)
 // Vises ved appstart, mens login gendannes og onboarding-status hentes (useAuth.js).
 //  - Straks: et diskret indlæsningsikon (aldrig en tom skærm).
-//  - Efter ca. 6 s uden svar: en rolig statusbesked og "Prøv igen" (en almindelig genindlæsning, rydder intet).
+//  - Efter ca. 6 s uden svar: kun en rolig statusbesked. "Prøv igen" vises ikke, mens det oprindelige forsøg stadig kører; knappen kommer først
+//    sammen med en konstateret fejl eller timeout (failure). OBS: uden timeout i useAuth.js (kræver Jans godkendelse) kan et hængende forsøg
+//    derfor ikke afbrydes af brugeren.
 //  - Først når en fejl er konstateret (failure), vises den passende fejlboks. Fejlbeskeden følger årsagen:
 //      offline  → "Ingen forbindelse"
 //      server   → "EatSafe kunne ikke starte" (tjenesten svarer ikke eller fejler; ukendte fejl hører også hertil, aldrig "ingen forbindelse")
@@ -58,11 +60,6 @@ export default function BootScreen({ failure = null, onRetry, onLogin }) {
           {slow ? "Det tager lidt længere end normalt …" : <span className="sr-only">Åbner EatSafe …</span>}
         </span>
       </div>
-      {slow && (
-        <button type="button" className="btn btn-recover" onClick={retry} disabled={retrying} aria-busy={retrying || undefined}>
-          {retrying ? "Prøver igen …" : "Prøv igen"}
-        </button>
-      )}
     </div>
   );
 }
