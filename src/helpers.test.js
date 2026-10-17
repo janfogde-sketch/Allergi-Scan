@@ -202,6 +202,13 @@ describe("normalizeProductFlags (Q1/Q2)", () => {
     expect(f.gluten).toBe("unknown");
     expect(compareAllergens(f, ["gluten"]).hasUnknown).toBe(true);
   });
+  it("produktnavnet med en tilføjelse i parentes tæller ikke som ingrediensliste (17. okt. 2026)", () => {
+    const info = { ingredientsText: "Carlsberg Pilsner (alkoholholdig drik)", productName: "Carlsberg Pilsner" };
+    expect(normalizeProductFlags(ALL_NO, info).gluten).toBe("unknown");
+    expect(normalizeProductFlags({ ...ALL_NO, maelkeallergi: "yes" }, { ingredientsText: "Økologisk letmælk (1,5% fedt)", productName: "Økologisk Letmælk" }).maelkeallergi).toBe("yes");
+    expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Vand, bygmalt (40%), humle", productName: "Carlsberg Pilsner" }).gluten).toBe("no");
+  });
+
   it("pladsholderen 'Ingen ingrediensliste' tæller ikke som data", () => {
     expect(normalizeProductFlags(ALL_NO, { ingredientsText: "Ingen ingrediensliste" }).noedder).toBe("unknown");
   });
