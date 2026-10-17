@@ -12,6 +12,15 @@ export const initials = n => (n||"").split(" ").filter(Boolean).map(w=>w[0]).joi
 
 // Relativ tid: minutter, timer og dage op til 7 dage; derefter selve datoen ("3. maj 2026"), så "143 d siden" aldrig vises (F5-16).
 const TIME_AGO_MONTHS = ["jan.","feb.","mar.","apr.","maj","jun.","jul.","aug.","sep.","okt.","nov.","dec."];
+// "17. oktober 2026 kl. 19:55" i dansk tid (Beskeders detaljevisning); tom tekst ved en ugyldig dato.
+export const formatDateTimeDa = (ts) => {
+  const d = ts ? new Date(ts) : null;
+  if (!d || Number.isNaN(d.getTime())) return "";
+  const date = d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Copenhagen" });
+  const time = d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/Copenhagen" }).replace(".", ":");
+  return `${date} kl. ${time}`;
+};
+
 export const timeAgo = (ts, now = Date.now()) => {
   const t = new Date(ts).getTime(); const d = now - t;
   if (d < 60000) return "Lige nu";

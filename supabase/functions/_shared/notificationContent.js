@@ -139,7 +139,7 @@ export const DEFINITIONS = {
 
   "N3:default": {
     type: "N3", variant: "default", category: "submission_status", version: 1, ttl: 86400,
-    push: { title: "Din indsendelse er ikke godkendt", body: "Vores team kunne ikke godkende din indsendelse af {{productName}}." },
+    push: { title: "Din indsendelse blev ikke godkendt", body: "Vi kunne ikke godkende din indsendelse om {{productName}}. Se begrundelsen." },
     mail: { subject: "Din indsendelse kunne ikke godkendes", preheader: "Læs teamets begrundelse og se, hvordan du kan indsende oplysningerne igen." },
     vars: { ...PRODUCT_VARS, reason: { fallback: "", multiline: true } },
     // Begrundelsen er obligatorisk: en afvisning uden forklaring må aldrig sendes.
