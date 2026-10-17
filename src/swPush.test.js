@@ -89,3 +89,36 @@ describe("public/sw.js offline-side", () => {
     expect(e.respondWith).not.toHaveBeenCalled();
   });
 });
+
+// Offline-siden (17. okt. 2026): dens egne filer skal kunne hentes uden net, ellers er logoet ødelagt og "Prøv igen" virker ikke.
+describe("public/sw.js offline", () => {
+  const load = ({ online }) => {
+    const listeners = {};
+    const cache = new Map([["/js/offline.js", "SCRIPT"], ["/brand/EatSafe_Master_Logo_Horizontal.svg", "LOGO"], ["/offline.html", "PAGE"]]);
+    const self = { addEventListener: (t, fn) => { listeners[t] = fn; }, location: { origin: "https://www.eatsafe.dk" }, skipWaiting: () => Promise.resolve(), clients: { claim: () => Promise.resolve() } };
+    const caches = { match: (req) => Promise.resolve(cache.get(new URL(typeof req === "string" ? req : req.url, "https://www.eatsafe.dk").pathname)), open: () => Promise.resolve({ add: () => Promise.resolve() }), keys: () => Promise.resolve([]) };
+    const fetchFn = vi.fn(() => (online ? Promise.resolve("NET") : Promise.reject(new Error("offline"))));
+    const context = { self, clients: self.clients, caches, fetch: fetchFn, URL, Response: { error: () => "ERR" }, Date, console };
+    vm.runInNewContext(readFileSync(resolve(__dirname, "../public/sw.js"), "utf8"), context);
+    const request = async (url, mode = "no-cors") => {
+      let out; const event = { request: { url: "https://www.eatsafe.dk" + url, mode, method: "GET" }, respondWith: (p) => { out = p; } };
+      listeners.fetch(event);
+      return out === undefined ? undefined : await out;
+    };
+    return { request, fetchFn };
+  };
+  it("uden net: offline-sidens script og logo kommer fra cachen, og en navigation får offline-siden", async () => {
+    const { request } = load({ online: false });
+    expect(await request("/js/offline.js")).toBe("SCRIPT");
+    expect(await request("/brand/EatSafe_Master_Logo_Horizontal.svg")).toBe("LOGO");
+    expect(await request("/", "navigate")).toBe("PAGE");
+  });
+  it("med net: filerne hentes fra nettet (ikke forældede), og andre filer røres ikke", async () => {
+    const { request, fetchFn } = load({ online: true });
+    expect(await request("/js/offline.js")).toBe("NET");
+    fetchFn.mockClear();
+    expect(await request("/assets/index-abc.js")).toBeUndefined();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
