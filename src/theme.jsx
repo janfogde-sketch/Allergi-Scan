@@ -377,8 +377,8 @@ body::-webkit-scrollbar{display:none;}
    dynamic-island-telefoner får den ekstra plads de faktisk bruger. */
 .home-hero-frame{
   position:relative;
-  height:calc(100vh - 143px - env(safe-area-inset-bottom));
-  height:calc(100dvh - 143px - env(safe-area-inset-bottom));
+  height:calc(100vh - 143px - var(--offline-bar-h, 0px) - env(safe-area-inset-bottom));
+  height:calc(100dvh - 143px - var(--offline-bar-h, 0px) - env(safe-area-inset-bottom));
   max-height:820px;
   /* container-type:size gør 1cqh = 1% af DENNE boks' egen (variable) højde
      tilgængelig for alt indhold herinde — hilsen/knap/pille/fod bruger
@@ -969,7 +969,9 @@ button.filter-chip{width:auto;}
 .state-text{font-size:13px;line-height:1.5;color:var(--ink2);margin-top:2px;}
 .state-action{margin-top:16px;}
 .btn-recover{background:var(--surface);color:var(--green);border:1.5px solid var(--green);padding:8px 16px;font-size:13px;}
-.offline-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border2);color:var(--ink2);font-size:13px;font-weight:600;text-align:center;}
+/* Fast højde (34px), så Hjem-skærmen kan trække den fra: har siden en offline-bjælke, mister .home-hero-frame lige så meget højde (ellers skubbes "Vidste du, at" ned bag bundmenuen). */
+:root:has(.offline-bar){--offline-bar-h:34px;}
+.offline-bar{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box;height:34px;padding:0 16px;background:var(--surface2);border-bottom:1px solid var(--border2);color:var(--ink2);font-size:13px;font-weight:600;text-align:center;}
 .state-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:40px 24px;text-align:center;}
 .state-page-icon{width:56px;height:56px;border-radius:50%;background:var(--red-lt);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
 .state-page-title{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;}
