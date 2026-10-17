@@ -68,13 +68,21 @@ describe("nativePush", () => {
 });
 
 describe("push i iPhone-rammen via usePush", () => {
-  it("gemmer Apples token for kontoen, når tilladelsen allerede er givet", async () => {
+  it("gemmer Apples token for kontoen, når tilladelsen allerede er givet og push er slået til", async () => {
     stubNative();
+    await nativeRegister(false); // push er slået til: telefonen har et gemt token
     const res = await syncPushToken("tok-1");
     expect(res.ok).toBe(true);
     const [url, init] = global.fetch.mock.calls[0];
     expect(url).toMatch(/rpc\/claim_push_token$/);
     expect(JSON.parse(init.body)).toEqual({ p_token: nativeTokenJson("abcdef0123456789abcdef0123456789") });
+  });
+  it("registrerer ikke af sig selv ved login, når push er slået fra (intet gemt token)", async () => {
+    const { push } = stubNative(); // tilladelsen er givet, men der er intet gemt token
+    const res = await syncPushToken("tok-1");
+    expect(res).toEqual({ ok: false, reason: "Ikke slået til" });
+    expect(push.register).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
   it("gør intet uden tilladelse", async () => {
     stubNative({ receive: "prompt" });
@@ -83,11 +91,13 @@ describe("push i iPhone-rammen via usePush", () => {
   });
   it("melder, hvis serveren ikke tog imod token", async () => {
     stubNative();
+    await nativeRegister(false);
     global.fetch.mockResolvedValue({ ok: false, status: 500 });
     expect(await syncPushToken("tok")).toEqual({ ok: false, reason: SAVE_FAILED_REASON });
   });
   it("fjerner kontoens række ved logout", async () => {
     stubNative();
+    await nativeRegister(false);
     await syncPushToken("tok");
     global.fetch.mockClear();
     await forgetPushTokenForDevice("tok");

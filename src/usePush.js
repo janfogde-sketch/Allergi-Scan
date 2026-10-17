@@ -67,11 +67,16 @@ const pushSupported = () =>
  * gælder for enheden, ikke for kontoen: logger man ind med en anden konto på en enhed, der allerede har
  * givet tilladelse, bliver abonnementet ellers aldrig gemt for den nye konto (appen viser push som
  * "slået til", men der kommer intet). Spørger aldrig om tilladelse; gør intet uden den.
+ * Gemmer KUN et abonnement, der allerede findes på enheden (17. okt. 2026): har brugeren slået push fra, er abonnementet
+ * fjernet, men tilladelsen står stadig som givet, og et nyt abonnement må aldrig oprettes af sig selv ved login.
+ * Det slår brugeren til i Indstillinger (usePush().subscribe).
  */
 export async function syncPushToken(accessToken) {
   // iPhone-rammen: Apples push i stedet for service worker (kun hvis tilladelsen allerede er givet).
   if (accessToken && nativePushAvailable()) {
     if ((await nativePermission()) !== "granted") return { ok: false, reason: "Ingen tilladelse" };
+    // Intet gemt token = push er slået fra på denne telefon (afmelding rydder det): registrér ikke hos Apple af sig selv.
+    if (!storedNativeToken()) return { ok: false, reason: "Ikke slået til" };
     const reg = await nativeRegister(false);
     if (!reg.ok) return { ok: false, reason: "reason" in reg ? reg.reason : "Ukendt fejl" };
     return (await saveRawToken(nativeTokenJson(reg.token), accessToken)) ? { ok: true } : { ok: false, reason: SAVE_FAILED_REASON };
@@ -80,10 +85,8 @@ export async function syncPushToken(accessToken) {
   try {
     const reg = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
-    }
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return { ok: false, reason: "Ikke slået til" };
     const saved = await saveTokenToSupabase(sub.toJSON(), accessToken);
     return saved ? { ok: true, subscription: sub } : { ok: false, reason: SAVE_FAILED_REASON };
   } catch (e) {
