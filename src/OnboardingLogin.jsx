@@ -220,7 +220,7 @@ export function renderLogin(c) {
               {/* Apple (8. okt. 2026) — vises først, når Apple er slået til i Supabase (useOAuthProviders), og
                   øverst, som Apples retningslinjer anbefaler. Samme neutrale knap som de andre, Apple-mærket i tekstfarven. */}
               {oauthProviders.apple && (
-                <button className="social-btn" onClick={() => handleOAuth("apple")} disabled={authLoading}>
+                <button className="social-btn social-btn-apple" onClick={() => handleOAuth("apple")} disabled={authLoading}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M16.365 1.43c0 1.14-.47 2.23-1.18 3.03-.76.86-2 1.53-3.03 1.45-.13-1.11.42-2.27 1.13-3.03.79-.86 2.13-1.5 3.08-1.45zM20.5 17.3c-.55 1.27-.82 1.84-1.53 2.96-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06.99-1.73-.02-3.05-1.77-4.04-3.33C-.04 16.08-.33 11 1.42 8.3c1.24-1.92 3.2-3.04 5.04-3.04 1.88 0 3.06 1.03 4.61 1.03 1.51 0 2.43-1.03 4.6-1.03 1.64 0 3.38.89 4.62 2.43-4.06 2.22-3.4 8.02.21 9.61z"/>
                   </svg>

@@ -823,6 +823,8 @@ ${iconButtonCss}
 .social-btn:hover{background:var(--surface2);border-color:var(--ink2);}
 .social-btn:active{transform:scale(.98);}
 .social-btn:disabled{opacity:.5;cursor:not-allowed;}
+/* Apple-knappen må afvige (Bjørn, 17. okt. 2026): Apples retningslinjer kræver rent sort mærke og tekst på den hvide knap med kant, ikke --ink. */
+.social-btn.social-btn-apple{color:#000;}
 
 /* ── ONBOARDING ── */
 .onboard-wrap{padding:20px 16px 100px;}
