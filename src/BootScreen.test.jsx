@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); });
 describe("BootScreen: indlæsning", () => {
   it("viser straks et indlæsningsikon og ingen fejl eller knapper", () => {
     const { container } = render(<BootScreen onRetry={() => {}} onLogin={() => {}} />);
-    expect(container.querySelector(".spinner")).toBeTruthy();
+    expect(container.querySelector("svg.scan-loading-mark")).toBeTruthy();
     expect(screen.getByRole("status").textContent).toContain("Åbner EatSafe");
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/kunne ikke|Ingen forbindelse|logge ind/i)).toBeNull();
