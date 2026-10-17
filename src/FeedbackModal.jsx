@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef } from "react";
-import { CloseButton } from "./Sheets.jsx";
 import { PAGE_IDS } from "./constants.jsx";
 import { submitFeedback } from "./submitFeedback.js";
 import { BUILD_TIME, COMMIT_SHA, formatBuildTime, buildScreenLabel } from "./utils.jsx";
@@ -156,7 +155,11 @@ export default function FeedbackModal({
                   {PAGE_IDS[screen] || "—"} · Beta v1.0
                 </div>
               </div>
-              <CloseButton onClick={close} />
+              <button type="button" onClick={close} aria-label="Luk" className="member-pick"
+                style={{ flex:"none", background:"var(--surface2)", border:"none", borderRadius:"50%", width:44, height:44,
+                  display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <Icon name="x" size={18} color="var(--ink)" />
+              </button>
             </div>
 
             {/* Indhold — det eneste, der scroller */}
