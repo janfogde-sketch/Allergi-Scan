@@ -8,6 +8,7 @@ export const iconButtonCss = `
 .ibtn:active .ibtn-c{background:rgba(21,32,26,.10);}
 @media (hover:hover){.ibtn:hover:not(:disabled) .ibtn-c{background:rgba(21,32,26,.06);}}
 .ibtn:focus-visible{outline:2px solid var(--green);outline-offset:0;}
+html[data-modality="pointer"] .ibtn:focus-visible,html[data-modality="pointer"] .icon-btn:focus-visible{outline:none;}
 .ibtn:disabled{cursor:default;opacity:.5;}
 .ibtn.spinning{opacity:1;}
 .ibtn.spinning .ibtn-c svg{animation:ibtn-spin .8s linear infinite;}
