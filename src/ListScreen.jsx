@@ -283,7 +283,7 @@ export default function ListScreen({
       <div style={{ position:"sticky", top:topH, zIndex:20, margin:"0 -16px 4px", padding:"8px 16px", background: hasResultPanel ? "var(--surface)" : "transparent", borderBottom: hasResultPanel ? "1px solid var(--border)" : "1px solid transparent" }}>
         <div className="input-row" style={{ marginBottom:0 }}>
           <div style={{ position:"relative", flex:1, minWidth:0 }}>
-            <input ref={inputRef} className="field search-field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
+            <input ref={inputRef} className="field search-field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv…"
               type="search" enterKeyHint="search" autoComplete="off" autoCorrect="off"
               style={{ height:40, padding:"0 36px 0 12px", width:"100%", boxSizing:"border-box" }}
               value={newItemName}
@@ -402,7 +402,8 @@ export default function ListScreen({
           onClick={() => setShowListPicker(true)}
           style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:8, padding:"6px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer", background:"none", border:"none" }}>
           <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{activeList?.name || "Vælg liste"}</div>
+            {/* Højst to linjer, derefter "…"; rækken vokser med højden, og Del-knappen strækkes (alignItems: stretch) og centreres lodret. */}
+            <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", lineHeight:1.25, overflow:"hidden", display:"-webkit-box", WebkitBoxOrient:"vertical", WebkitLineClamp:2, overflowWrap:"anywhere" }}>{activeList?.name || "Vælg liste"}</div>
             {activeList && <ShareStatus list={activeList} userId={userId} />}
           </div>
           <Icon name="chevronDown" size={18} color="var(--muted)" />

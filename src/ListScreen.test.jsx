@@ -106,4 +106,9 @@ describe("ListScreen: tilføj vare", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Tilføj "Zzxq" som manuel vare/ })); });
     expect(addToList).toHaveBeenCalledWith("Zzxq");
   });
+  it("søgefeltet har en kort pladsholder, der kan stå på 320 px, og et fuldt navn til skærmlæsere", () => {
+    setup();
+    const input = screen.getByLabelText("Søg eller skriv en vare");
+    expect(input.getAttribute("placeholder")).toBe("Søg eller skriv…");
+  });
 });
