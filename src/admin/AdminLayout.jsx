@@ -6,6 +6,8 @@ import { installModalGuard } from "./modalGuard.js";
 import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
 import RefreshButton from "./RefreshButton.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
+import { MenuButton } from "../IconButton.jsx";
+import { CloseButton } from "../Sheets.jsx";
 import { NAV_GROUPS, NAV_ITEMS, BADGE_INFO, groupOfSection, formatBadge, worstTone } from "./navLogic.js";
 
 const SWIPE_MIN = 60; // px mod venstre for at lukke menuen på mobil
@@ -115,12 +117,10 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="admin-sidebar-head">
           <div className="admin-sidebar-brand"><EatSafeLogo variant="horizontal" size={24} /><span className="admin-sidebar-section">Administration</span></div>
-          <button type="button" ref={closeBtnRef} className="admin-nav-close" aria-label="Luk menu" onClick={closeNav}>
-            <Icon name="x" size={18} color="var(--ink2)" />
-          </button>
+          <CloseButton ref={closeBtnRef} className="admin-nav-close" label="Luk menu" onClick={closeNav} />
         </div>
         <div className="admin-sidebar-back">
-          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={16} color="var(--ink2)" /><span>Tilbage til EatSafe</span></a>
+          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={17} color="var(--ink)" /><span>Tilbage til EatSafe</span></a>
         </div>
         <nav className="admin-nav" aria-label="Administration">
           {NAV_GROUPS.map((group) => {
@@ -183,9 +183,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
       </aside>
       <div className="admin-main" {...(drawerOpen ? { inert: "" } : {})}>
         <div className="admin-topbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <button type="button" ref={menuBtnRef} className="admin-menu-btn" aria-label="Åbn menu" aria-expanded={navOpen} aria-controls="admin-sidebar" onClick={() => (navOpen ? closeNav() : openNav())}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-          </button>
+          <MenuButton ref={menuBtnRef} className="admin-menu-btn" aria-expanded={navOpen} aria-controls="admin-sidebar" onClick={() => (navOpen ? closeNav() : openNav())} />
           <h1>{NAV_ITEMS.find((i) => i.id === section)?.label || "Admin"}</h1>
           <div className="admin-topbar-actions">
             {onRefresh && <RefreshButton variant="header" label={refreshLabel} loading={refreshing} onClick={onRefresh} />}

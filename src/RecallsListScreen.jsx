@@ -3,6 +3,7 @@
 // Fødevarestyrelsen, også dem uden stregkode. Åbnes fra Indstillinger. Kun tekst fra Fødevarestyrelsen
 // (recalls-tabellen); linket vises kun til deres eget domæne. Ingen matching på navn.
 import React, { useState } from "react";
+import { BackButton } from "./IconButton.jsx";
 import { Icon, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useRecentRecalls } from "./useRecentRecalls.js";
@@ -17,9 +18,7 @@ export default function RecallsListScreen({ onBack }) {
   return (
     <div className="screen fade-in">
       <div style={{ display:"flex", alignItems:"center", gap:8, margin:"4px 0 6px" }}>
-        <button type="button" onClick={onBack} aria-label="Tilbage" className="legal-topbar-back">
-          <span className="legal-topbar-back-circle"><Icon name="chevronLeft" size={17} color="var(--ink)" /></span>
-        </button>
+        <BackButton onClick={onBack} />
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Aktuelle tilbagekaldelser</div>
       </div>
       <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginBottom:14 }}>

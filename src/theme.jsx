@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
+import { iconButtonCss } from "./iconButtonCss.js";
 
 const THEME = {
   // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
@@ -359,28 +360,6 @@ body::-webkit-scrollbar{display:none;}
      bred desktop-skærm. */
   position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:60;
 }
-/* 44×44px touch-target BEVARET (eksplicit krav), men det SYNLIGE, farvede
-   spor er nu en mindre, lettere cirkel centreret indeni — samme "usynlig
-   trykflade rundt om et mindre synligt element"-mønster som Settings-
-   skærmens Toggle-komponent bruger andre steder i appen. Selve knappen
-   (.legal-topbar-back) er nu uden baggrund/kant/skygge — kun den indre
-   .legal-topbar-back-circle bærer det visuelle udtryk, mindre og lettere
-   end før (44px farvet cirkel + skygge → 32px, ingen skygge). */
-.legal-topbar-back{
-  background:none;border:none;padding:0;
-  width:44px;height:44px;flex-shrink:0;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-/* 32→36px (29. sept. 2026, "Polér designet... så de ser ens og mere
-   gennemførte ud" — "tilbageknappen en anelse større visuelt, men stadig
-   diskret") — stadig ingen skygge/mørk kant, kun en let baggrund + tynd,
-   neutral kant, så den forbliver diskret trods den lidt større flade. */
-.legal-topbar-back-circle{
-  width:36px;height:36px;border-radius:50%;
-  background:var(--paper2);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-}
-
 /* ── LAYOUT ── */
 .screen{flex:1;padding:0 16px calc(110px + env(safe-area-inset-bottom));position:relative;z-index:1;}
 /* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID
@@ -597,9 +576,7 @@ body::-webkit-scrollbar{display:none;}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
 .tag-x{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:-4px -6px -4px 0;padding:0;border:none;border-radius:50%;background:none;color:inherit;cursor:pointer;opacity:.6;}.tag-x::before{content:"";position:absolute;inset:-10px;}.tag-x:active{background:rgba(21,32,26,.08);}
 /* Klump 6b (6. okt. 2026): runde ikon-knapper (luk, ryd) og tekstlinks tilbage, altid mindst 44 px trykflade. */
-.icon-btn{width:44px;height:44px;min-height:44px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--ink);cursor:pointer;transition:transform .15s;}
-.icon-btn:active{transform:scale(.97);}
-.icon-btn.is-plain{background:none;border:none;}
+${iconButtonCss}
 .link-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 4px;background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;color:var(--muted);}
 .link-back:active{transform:scale(.97);}
 

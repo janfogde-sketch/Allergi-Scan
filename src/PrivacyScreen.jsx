@@ -13,7 +13,7 @@
 // både JS-bundlen og privacy.html er offentligt tilgængelige.
 // ─────────────────────────────────────────────────────────────────────────────
 import React from "react";
-import { Icon } from "./SharedComponents.jsx";
+import { BackButton } from "./IconButton.jsx";
 import LegalContent from "./LegalContent.jsx";
 import doc from "./legalText/privacy.js";
 
@@ -21,11 +21,7 @@ export default function PrivacyScreen({ onBack }) {
   return (
     <>
       <header className="legal-topbar">
-        <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back">
-          <span className="legal-topbar-back-circle">
-            <Icon name="chevronLeft" size={17} color="var(--ink)" />
-          </span>
-        </button>
+        <BackButton onClick={onBack} />
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Privatlivspolitik</div>
       </header>
       {/* paddingTop matcher .legal-topbar's egen renderede højde (header er
