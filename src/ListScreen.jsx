@@ -2,7 +2,7 @@
 import { setSearchReturn } from "./searchReturn.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { findProductOnList, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, profilesReady, STATUS_TEXT } from "./helpers.js";
+import { findProductOnList, normalizeItemName, ITEM_EXISTS_TEXT, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, profilesReady, STATUS_TEXT } from "./helpers.js";
 import ReactDOM from "react-dom";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
@@ -167,20 +167,25 @@ export default function ListScreen({
   };
   const pickItemProduct = async (p) => {
     blurInput();
-    if (findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id })) { showToast("Står allerede på listen", "info"); return false; }
+    if (findProductOnList(shoppingList, { code: p.ean || p.code, id: p.id })) { showToast(ITEM_EXISTS_TEXT, "info"); return false; }
     // Rød konflikt: kort advarsel først, men brugeren kan stadig vælge at tilføje produktet. Orange spor tilføjes uden ekstra bekræftelse.
     if (evaluateProductForProfiles(activeProfileList, p).level === "danger") { setConfirmAdd(p); return false; }
     return addProductNow(p);
   };
   // Almindelig vare uden produktvalg: aldrig to ens fritekst-varer på listen.
   const plainName = newItemName.trim();
-  const plainExists = !!plainName && shoppingList.some(i => !i.ean && (i.name || "").trim().toLowerCase() === plainName.toLowerCase());
+  const plainExists = !!plainName && shoppingList.some(i => !i.ean && normalizeItemName(i.name) === normalizeItemName(plainName));
+  const [addingPlain, setAddingPlain] = useState(false);
+  const addingPlainRef = useRef(false); // låser straks (state opdateres først ved næste visning), så gentagne tryk ikke opretter varen flere gange
   const addPlain = async () => {
     blurInput();
-    if (!plainName) return;
-    if (plainExists) { showToast(`"${plainName}" står allerede på listen`, "info"); return; }
-    const ok = await addToList(plainName);
-    if (ok !== false) showToast(`"${plainName}" tilføjet`, "success");
+    if (!plainName || addingPlainRef.current) return;
+    if (plainExists) { showToast(ITEM_EXISTS_TEXT, "info"); return; }
+    addingPlainRef.current = true; setAddingPlain(true);
+    try {
+      const ok = await addToList(plainName);
+      if (ok !== false) showToast(`"${plainName}" tilføjet`, "success");
+    } finally { addingPlainRef.current = false; setAddingPlain(false); }
   };
 
   // ── EatSafe-status pr. vare på listen (25. sept. 2026, brugerfeedback) ──────
@@ -289,7 +294,7 @@ export default function ListScreen({
       )}
 
       {/* ── Tilføj vare/søg: søgefelt (og filter) øverst; resultaterne står direkte i siden under feltet ── */}
-      <div style={{ position:"sticky", top:topH, zIndex:20, margin:"0 -16px 8px", padding:"8px 16px", background: hasResultPanel ? "var(--surface)" : "transparent", borderBottom: hasResultPanel ? "1px solid var(--border)" : "1px solid transparent" }}>
+      <div style={{ position:"sticky", top:topH, zIndex:20, margin:"0 -16px 4px", padding:"8px 16px", background: hasResultPanel ? "var(--surface)" : "transparent", borderBottom: hasResultPanel ? "1px solid var(--border)" : "1px solid transparent" }}>
         <div className="input-row" style={{ marginBottom:0 }}>
           <div style={{ position:"relative", flex:1, minWidth:0 }}>
             <input ref={inputRef} className="field search-field" aria-label="Søg eller skriv en vare" placeholder="Søg eller skriv en vare…"
@@ -312,7 +317,7 @@ export default function ListScreen({
           {/* Den store "Tilføj"-knap skjules, mens der vises søgeresultater: der er produktkortenes "+" og rækken "Tilføj … uden produktvalg". */}
           {!hasResultPanel && (
             <button className="btn btn-primary btn-sm" style={{ ...UI.uwsnowrap, height:40, minHeight:40, padding:"0 12px", borderRadius:10 }}
-              onClick={addPlain}>
+              onClick={addPlain} disabled={!plainName || addingPlain}>
               Tilføj
             </button>
           )}
@@ -403,7 +408,7 @@ export default function ListScreen({
               <button type="button" onClick={addPlain}
                 style={{ pointerEvents:"auto", display:"flex", alignItems:"center", gap:6, width:"calc(100% - 32px)", maxWidth:448, minHeight:36, padding:"6px 12px", fontSize:12, fontWeight:600, fontFamily:"var(--f)", textAlign:"left", color: plainExists ? "var(--muted)" : "var(--green)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, boxShadow:"var(--sh)", cursor:"pointer" }}>
                 <Icon name={plainExists ? "check" : "plus"} size={13} color={plainExists ? "var(--muted)" : "var(--green)"} />
-                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? `"${plainName}" står allerede på listen` : `Tilføj "${plainName}" som almindelig vare`}</span>
+                <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plainExists ? `"${plainName}" findes allerede på din indkøbsliste` : `Tilføj "${plainName}" som almindelig vare`}</span>
               </button>
             </div>,
             document.body
@@ -416,10 +421,10 @@ export default function ListScreen({
       {/* ── Aktiv liste ──
           Én sektion: label, brugerdefineret listenavn (ellipsis, aldrig afhængig af navnet) og en sekundær delt-status. Tryk åbner
           listevælgeren (bottom-sheet) til at skifte, oprette, tilslutte og slette lister, så administration ikke fylder på siden. */}
-      <div style={{ display:"flex", alignItems:"stretch", marginBottom:12, minHeight:56, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)", overflow:"hidden" }}>
+      <div style={{ display:"flex", alignItems:"stretch", marginBottom:12, minHeight:50, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, boxShadow:"var(--sh2)", overflow:"hidden" }}>
         <button type="button" aria-haspopup="dialog" aria-label={`Aktiv liste: ${activeList?.name || "ingen valgt"}. Skift eller administrér lister`}
           onClick={() => setShowListPicker(true)}
-          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:10, padding:"8px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer", background:"none", border:"none" }}>
+          style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:10, padding:"6px 14px", textAlign:"left", fontFamily:"var(--f)", cursor:"pointer", background:"none", border:"none" }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".8px" }}>Aktiv liste</div>
             <div style={{ fontSize:16, fontWeight:800, color:"var(--ink)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginTop:1 }}>{activeList?.name || "Vælg liste"}</div>
@@ -466,8 +471,8 @@ export default function ListScreen({
       {!listsError && shoppingList.length === 0 && (
         <div className="empty-state" style={{ paddingTop:16 }}>
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="cart" size={23} color="var(--muted)" /></span>
-          <div className="empty-txt">Listen er tom</div>
-          <div className="empty-sub" style={{ lineHeight:1.35, color:"var(--ink2)" }}>Søg efter produkter eller tilføj en vare manuelt</div>
+          <div className="empty-txt">Din indkøbsliste er tom</div>
+          <div className="empty-sub" style={{ lineHeight:1.35, color:"var(--ink2)" }}>Søg efter et produkt ovenfor, eller skriv en vare, du vil tilføje.</div>
         </div>
       )}
 
