@@ -157,7 +157,38 @@ describe("Tickets: detaljer", () => {
     await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "Tilføj" })); });
     expect(work.addTask).toHaveBeenCalledWith("t1", "Tjek desktop", 2);
     expect(work.saveMeta).not.toHaveBeenCalled(); // ingen automatisk verificering
+    expect(within(d).queryByText(/ikke en faglig eller juridisk godkendelse/)).toBeNull(); // forklaringen ligger bag infoknappen
+    fireEvent.click(within(d).getByRole("button", { name: /Hvad betyder de fire felter/ }));
     expect(within(d).getByText(/ikke en faglig eller juridisk godkendelse/)).toBeTruthy();
+  });
+  it("tjekliste: afkrydsning markerer en delopgave som udført i ét tryk, og en tom liste viser en tomtilstand", async () => {
+    const work = makeWork({ tasks: { t1: [{ id: "k2", title: "Tjek Android", status: "todo" }] } });
+    const d = open({}, T(), { work });
+    await act(async () => { fireEvent.click(within(d).getByLabelText("Afsluttet: Tjek Android")); });
+    expect(work.setTaskStatus).toHaveBeenCalledWith("t1", "k2", "done");
+    cleanup();
+    const d2 = open({ tasks: {} });
+    expect(within(d2).getByText("Ingen delopgaver endnu.")).toBeTruthy();
+  });
+  it("en fejlet gemning rydder hverken kommentar eller delopgave, og tom/mellemrums-tekst kan ikke sendes", async () => {
+    const work = makeWork({ addComment: vi.fn(async () => ({ ok: false })), addTask: vi.fn(async () => ({ ok: false })), tasks: {} });
+    const d = open({}, T(), { work });
+    const send = within(d).getByRole("button", { name: "Send" });
+    fireEvent.change(within(d).getByLabelText("Ny kommentar"), { target: { value: "   " } });
+    expect(send.disabled).toBe(true);
+    fireEvent.change(within(d).getByLabelText("Ny kommentar"), { target: { value: "Vigtig note" } });
+    await act(async () => { fireEvent.click(send); });
+    expect(within(d).getByLabelText("Ny kommentar").value).toBe("Vigtig note");
+    fireEvent.change(within(d).getByLabelText("Ny delopgave"), { target: { value: "Ny ting" } });
+    await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "Tilføj" })); });
+    expect(within(d).getByLabelText("Ny delopgave").value).toBe("Ny ting");
+  });
+  it("modstridende verificering advarer uden at fjerne markeringer", () => {
+    const work = makeWork({ meta: { t1: { priority: "normal", tested_at: "2026-10-10T10:00:00Z" } } });
+    const d = open({}, T(), { work });
+    expect(within(d).getByText(/Testet er markeret, men ikke Implementeret/)).toBeTruthy();
+    expect(within(d).getByLabelText(/^Testet/).checked).toBe(true);
+    expect(work.saveMeta).not.toHaveBeenCalled();
   });
   it("verificering: implementeret og testet er adskilte, og løst + krævet gennemgang uden udført gennemgang advares", async () => {
     const work = makeWork({ meta: { t1: { priority: "normal", requires_review: true, launch_blocking: true } } });

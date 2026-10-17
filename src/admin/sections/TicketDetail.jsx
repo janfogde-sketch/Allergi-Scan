@@ -9,6 +9,7 @@ import { ticketReporter } from "../../ticketReporter.js";
 import { statusPill } from "../statusTone.js";
 import { fmtLocalFull } from "../importLogic.js";
 import CloseX from "../CloseX.jsx";
+import ImageViewer from "../ImageViewer.jsx";
 import {
   TYPE_LABELS, STATUS_LABELS, PRIORITIES, PRIORITY_PILL, PRIORITY_LABEL, TASK_STATUS, ticketTitleParts, effectivePriority, originLabel, isLegalCandidate, progress, buildActivity,
 } from "../ticketsLogic.js";
@@ -26,6 +27,7 @@ export function Description({ text }) {
 function Screenshot({ path, getUrl }) {
   const [url, setUrl] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [big, setBig] = useState(false);
   const ref = useRef(getUrl); ref.current = getUrl;
   useEffect(() => {
     let off = false; setUrl(null); setFailed(false);
@@ -34,7 +36,13 @@ function Screenshot({ path, getUrl }) {
   }, [path]);
   if (failed) return <div className="pe-muted">Skærmbilledet kunne ikke hentes.</div>;
   if (!url) return <div className="admin-loading-row"><div className="admin-spinner" /> Henter skærmbillede…</div>;
-  return <a href={url} target="_blank" rel="noreferrer"><img src={url} alt="Skærmbillede fra brugeren" className="tk-shot" /></a>;
+  return (
+    <>
+      <button type="button" className="tk-shot-btn" onClick={() => setBig(true)} aria-label="Åbn skærmbillede i fuld skærm"><img src={url} alt="Skærmbillede fra brugeren" className="tk-shot" /></button>
+      <div className="usr-hint">Tryk for at forstørre</div>
+      {big && <ImageViewer images={[{ src: url, title: "Skærmbillede fra brugeren" }]} onClose={() => setBig(false)} />}
+    </>
+  );
 }
 
 export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCopy, getTicketScreenshotUrl }) {
@@ -60,14 +68,25 @@ export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCop
   const setStage = (k, on) => run(() => work.saveMeta(t.id, { [`${k}_at`]: on ? new Date().toISOString() : null }));
   const activity = buildActivity(detail, work.nameOf);
   const prog = progress(tasks);
+  // Tekst i felterne ryddes kun, når gemningen lykkedes; ellers bliver kommentaren/delopgaven stående, så intet går tabt.
+  const addTask = async () => { const r = await run(() => work.addTask(t.id, newTask, tasks.length)); if (r.ok) setNewTask(""); };
+  const addComment = async () => { const r = await run(() => work.addComment(t.id, comment)); if (r.ok) setComment(""); };
+  // Fast bundbjælke skjules, mens et tekstfelt er i fokus (tastaturet fylder), og feltet rulles ind i synsfeltet.
+  const [typing, setTyping] = useState(false);
+  const onFocusIn = (e) => { if (e.target.matches("input[type=text],input:not([type]),textarea")) { setTyping(true); const el = e.target; setTimeout(() => { try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch { /* ingen */ } }, 250); } };
+  const onFocusOut = () => setTyping(false);
+  const [info, setInfo] = useState(false);
+  const conflicts = [];
+  if (meta?.tested_at && !meta?.implemented_at) conflicts.push("Testet er markeret, men ikke Implementeret.");
+  if (meta?.reviewed_at && !meta?.implemented_at) conflicts.push("Gennemgået er markeret, men ikke Implementeret.");
   const needs = work.available;
 
   return ReactDOM.createPortal(
     <div className="admin-modal-overlay" onClick={onClose}>
-      <div className="admin-modal todo-panel pe-panel" role="dialog" aria-modal="true" aria-labelledby="tk-title" onClick={(e) => e.stopPropagation()}>
+      <div className={`admin-modal todo-panel pe-panel${typing ? " tk-typing" : ""}`} role="dialog" aria-modal="true" aria-labelledby="tk-title" onClick={(e) => e.stopPropagation()}>
         <div className="todo-panel-head">
           <div style={{ minWidth: 0 }}>
-            <div id="tk-title" className="audit-sheet-title tk-title">{title}</div>
+            <div id="tk-title" className="audit-sheet-title tk-title" title={title}>{title}</div>
             <div className="tk-pills">
               <span className={`admin-pill ${statusPill(t.status)}`}>{STATUS_LABELS[t.status] || t.status}</span>
               <span className={`admin-pill ${PRIORITY_PILL[pr]}`}>{PRIORITY_LABEL[pr]}</span>
@@ -78,7 +97,7 @@ export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCop
           <CloseX onClick={onClose} />
         </div>
 
-        <div className="todo-panel-body">
+        <div className="todo-panel-body tk-body" onFocus={onFocusIn} onBlur={onFocusOut}>
           {err && <div className="pe-notice pe-red" role="alert">{err}</div>}
           {closing && (
             <div className="todo-confirm" role="group" aria-label="Markér som løst">
@@ -133,10 +152,11 @@ export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCop
           {needs && (
             <>
               <div className="pe-section">Tjekliste{prog.text ? ` · ${prog.text}` : ""}</div>
-              {tasks.length === 0 && <div className="pe-muted">Ingen delopgaver.</div>}
+              {tasks.length === 0 && <div className="pe-muted tk-empty">Ingen delopgaver endnu.</div>}
               <ul className="tk-tasks">
                 {tasks.map((k) => (
                   <li key={k.id}>
+                    <label className="tk-done" aria-label={`Afsluttet: ${k.title}`}><input type="checkbox" checked={k.status === "done"} disabled={busy} onChange={(e) => run(() => work.setTaskStatus(t.id, k.id, e.target.checked ? "done" : "todo"))} /></label>
                     <span className={`tk-task-t${k.status === "done" ? " done" : ""}`}>{k.title}</span>
                     <select aria-label={`Status for ${k.title}`} className="admin-select tk-task-s" value={k.status} disabled={busy} onChange={(e) => run(() => work.setTaskStatus(t.id, k.id, e.target.value))}>
                       {TASK_STATUS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -145,23 +165,25 @@ export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCop
                   </li>
                 ))}
               </ul>
-              <div className="usr-add">
+              <div className="usr-add tk-add">
                 <input aria-label="Ny delopgave" value={newTask} maxLength={200} placeholder="Ny delopgave" onChange={(e) => setNewTask(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && newTask.trim()) { e.preventDefault(); run(() => work.addTask(t.id, newTask, tasks.length)).then(() => setNewTask("")); } }} />
-                <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={!newTask.trim() || busy} onClick={() => run(() => work.addTask(t.id, newTask, tasks.length)).then(() => setNewTask(""))}>Tilføj</button>
+                  onKeyDown={(e) => { if (e.key === "Enter" && newTask.trim() && !busy) { e.preventDefault(); addTask(); } }} />
+                <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={!newTask.trim() || busy} onClick={addTask}>Tilføj</button>
               </div>
 
               <div className="pe-section">Verificering</div>
-              <div className="usr-hint" style={{ marginTop: 0 }}>Implementeret og testet er to forskellige ting. En afsluttet tjekliste eller et løst ticket er ikke en faglig eller juridisk godkendelse.</div>
+              <button type="button" className="tk-info" aria-expanded={info} aria-controls="tk-info" onClick={() => setInfo((v) => !v)}><Icon name="info" size={16} color="var(--ink2)" /> Hvad betyder de fire felter?</button>
+              {info && <div id="tk-info" className="usr-hint tk-info-text">Implementeret og testet er to forskellige ting. En afsluttet tjekliste eller et løst ticket er ikke en faglig eller juridisk godkendelse.</div>}
               {[["implemented", "Implementeret"], ["tested", "Testet"], ["reviewed", "Gennemgået fagligt/juridisk af et menneske"]].map(([k, l]) => (
-                <label key={k} className="usr-check"><input type="checkbox" checked={!!meta?.[`${k}_at`]} disabled={busy} onChange={(e) => setStage(k, e.target.checked)} /><span>{l}{meta?.[`${k}_at`] ? ` · ${fmtLocalFull(meta[`${k}_at`])}` : ""}</span></label>
+                <label key={k} className="usr-check tk-check"><input type="checkbox" checked={!!meta?.[`${k}_at`]} disabled={busy} onChange={(e) => setStage(k, e.target.checked)} /><span>{l}{meta?.[`${k}_at`] ? ` · ${fmtLocalFull(meta[`${k}_at`])}` : ""}</span></label>
               ))}
-              <label className="usr-check"><input type="checkbox" checked={!!meta?.requires_review} disabled={busy} onChange={(e) => run(() => work.saveMeta(t.id, { requires_review: e.target.checked }))} /><span>Kræver faglig eller juridisk gennemgang</span></label>
+              <label className="usr-check tk-check"><input type="checkbox" checked={!!meta?.requires_review} disabled={busy} onChange={(e) => run(() => work.saveMeta(t.id, { requires_review: e.target.checked }))} /><span>Kræver faglig eller juridisk gennemgang</span></label>
+              {conflicts.map((c) => <div key={c} className="pe-notice pe-amber" role="status">{c} Ret den ene af dem; markeringerne ændres ikke automatisk.</div>)}
               {t.status === "resolved" && meta?.requires_review && !meta?.reviewed_at && <div className="pe-notice pe-amber">Løst, men den krævede gennemgang er ikke registreret som udført.</div>}
               {t.status === "resolved" && meta?.launch_blocking && !meta?.tested_at && <div className="pe-notice pe-amber">Lanceringsblokerende og løst, men ikke registreret som testet.</div>}
               <div className="admin-field">
                 <label htmlFor="tk-tn">Hvordan er det testet? (intern)</label>
-                <textarea id="tk-tn" className="admin-textarea" rows={2} maxLength={1000} value={testNote} onChange={(e) => setTestNote(e.target.value)}
+                <textarea id="tk-tn" className="admin-textarea tk-note" rows={3} maxLength={1000} value={testNote} onChange={(e) => setTestNote(e.target.value)}
                   onBlur={() => { if ((meta?.test_note || "") !== testNote.trim()) run(() => work.saveMeta(t.id, { test_note: testNote.trim() || null })); }} />
               </div>
             </>
@@ -169,13 +191,13 @@ export default function TicketDetail({ ticket: t, work, onClose, onStatus, onCop
 
           <div className="pe-section">Aktivitet</div>
           {todo && (
-            <div className="usr-add">
-              <input aria-label="Ny kommentar" value={comment} maxLength={2000} placeholder="Skriv en kommentar (kun for administratorer)" onChange={(e) => setComment(e.target.value)} />
-              <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" disabled={!comment.trim() || busy} onClick={() => run(() => work.addComment(t.id, comment)).then(() => setComment(""))}>Send</button>
+            <div className="tk-comment">
+              <textarea aria-label="Ny kommentar" className="admin-textarea" rows={3} value={comment} maxLength={2000} placeholder="Skriv en kommentar (kun for administratorer)" onChange={(e) => setComment(e.target.value)} />
+              <button type="button" className="admin-btn admin-btn-primary admin-btn-sm admin-touch" disabled={!comment.trim() || busy} onClick={addComment}>Send</button>
             </div>
           )}
           {detail.loading ? <div className="pe-muted">Henter aktivitet…</div> : !detail.ok ? <div className="pe-muted" role="alert">Aktiviteten kunne ikke hentes helt. <button type="button" className="todo-link-btn" onClick={refresh}>Prøv igen</button></div>
-            : activity.length === 0 ? <div className="pe-muted">Ingen registreret aktivitet endnu.</div> : (
+            : activity.length === 0 ? <div className="pe-muted">Ingen aktivitet endnu.</div> : (
               <ul className="pe-history tk-activity">
                 {activity.map((a) => (
                   <li key={a.key}><span>{fmtLocalFull(a.at)}{a.actor ? ` · ${a.actor}` : ""}</span><span>{a.body ? <><b>Kommentar:</b> {a.body}</> : a.text}</span></li>
