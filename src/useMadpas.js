@@ -44,7 +44,7 @@ export function useMadpas({ allergens, customAllerg, user, madpasLang, family, m
     const lang = madpasLang;
     const langInfo = MADPAS_LANGUAGES.find(l => l.code === lang);
     const bcp = langInfo?.bcp || "en-US";
-    const langName = langInfo?.name || lang;
+    const langName = langInfo?.dansk || lang;
     let voices = [];
     try { voices = window.speechSynthesis.getVoices() || []; } catch { /* ignoreres */ }
     if (!hasVoiceFor(bcp, voices)) { showToast(noVoiceMessage(langName), "error"); return; }

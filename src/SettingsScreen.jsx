@@ -230,7 +230,7 @@ export default function SettingsScreen({
         {!langOpen ? (
           <div className="mp-lang-dropdown" onClick={() => setLangOpen(true)}>
             <span className="mp-lang-flag">{currentLang?.flag || "🌍"}</span>
-            <span className="mp-lang-name">{currentLang?.name || "English"}</span>
+            <span className="mp-lang-name">{currentLang?.dansk || "Engelsk"}</span>
             <span className="mp-lang-arrow"><Icon name="chevronDown" size={14} color="var(--muted)" /></span>
           </div>
         ) : (
@@ -239,7 +239,7 @@ export default function SettingsScreen({
               <div key={l.code} className={`mp-lang-opt${madpasLang===l.code?" on":""}`}
                 onClick={() => { setMadpasLang(l.code); try { localStorage.setItem("as_madpas_lang", l.code); } catch { /* ignoreres */ } setLangOpen(false); }}>
                 <span style={{ fontSize:20 }}>{l.flag}</span>
-                <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.name}</span>
+                <span style={{ fontSize:14, fontWeight:madpasLang===l.code?800:600, color:madpasLang===l.code?"var(--green)":"var(--ink)" }}>{l.dansk}</span>
                 {madpasLang===l.code && <span style={{ marginLeft:"auto", display:"flex" }}><Icon name="check" size={13} color="var(--green)" /></span>}
               </div>
             ))}
