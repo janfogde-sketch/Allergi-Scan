@@ -181,7 +181,7 @@ export default function TodoSection({ onOpenTicket, preset, todos, admins, loadi
       <div className="admin-toolbar todo-toolbar">
         <div className="todo-search">
           <span className="todo-search-icon" aria-hidden="true"><Icon name="search" size={16} color="var(--muted)" /></span>
-          <input ref={searchRef} type="search" className="admin-search" value={query} placeholder="Søg i titel og beskrivelse…" aria-label="Søg i opgaver" enterKeyHint="search"
+          <input ref={searchRef} type="search" className="admin-search" value={query} placeholder="Søg i opgaver…" aria-label="Søg i opgaver" enterKeyHint="search"
             onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} onChange={(e) => setQuery(e.target.value)} />
           {query && (
             <button type="button" className="todo-search-clear" aria-label="Ryd søgning" onClick={() => { setQuery(""); searchRef.current?.focus(); }}>
