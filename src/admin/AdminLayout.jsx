@@ -82,6 +82,19 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   useEffect(() => installModalGuard(), []);
 
   const pick = (id) => { setSection(id); setNavOpen(false); };
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const accountRef = useRef(null);
+  // Kontomenuen lukker med Escape, tryk uden for kontoområdet og når hovedmenuen lukkes
+  useEffect(() => {
+    if (!accountOpen) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); setAccountOpen(false); } };
+    const onDown = (e) => { if (accountRef.current && !accountRef.current.contains(e.target)) setAccountOpen(false); };
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("pointerdown", onDown);
+    return () => { document.removeEventListener("keydown", onKey, true); document.removeEventListener("pointerdown", onDown); };
+  }, [accountOpen]);
+  const accountShown = accountOpen && (navOpen || !isMobile); // en lukket hovedmenu viser aldrig en åben kontomenu
   const toggleGroup = (id) => setExpanded((prev) => (prev === id ? null : id));
 
   // Swipe mod venstre lukker (kun et overvejende vandret træk, så lodret rulning i menuen ikke rammes)
@@ -105,6 +118,9 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
           <button type="button" ref={closeBtnRef} className="admin-nav-close" aria-label="Luk menu" onClick={closeNav}>
             <Icon name="x" size={18} color="var(--ink2)" />
           </button>
+        </div>
+        <div className="admin-sidebar-back">
+          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={16} color="var(--ink2)" /><span>Tilbage til EatSafe</span></a>
         </div>
         <nav className="admin-nav" aria-label="Administration">
           {NAV_GROUPS.map((group) => {
@@ -142,11 +158,27 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
             );
           })}
         </nav>
-        <div className="admin-sidebar-footer">
-          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={16} color="var(--ink2)" /><span>Tilbage til EatSafe</span></a>
-          <div className="admin-sidebar-user" title={userEmail}><Icon name="profile" size={14} color="var(--muted)" /><span>{userEmail}</span></div>
-          <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} />
-          <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm admin-btn-quiet" onClick={logout}><Icon name="logout" size={14} color="var(--muted)" />Log ud</button>
+        <div className="admin-sidebar-footer" ref={accountRef}>
+          {accountShown && (
+            <div id="admin-account-menu" className="admin-account-menu" role="menu" aria-label="Konto">
+              <button type="button" role="menuitem" className="admin-account-item" onClick={() => { setAccountOpen(false); if (drawerOpen) closeNav(); setFeedbackOpen(true); }}>
+                <Icon name="message" size={16} color="var(--ink2)" /><span>Send feedback</span>
+              </button>
+              <button type="button" role="menuitem" className="admin-account-item" onClick={() => { setAccountOpen(false); logout(); }}>
+                <Icon name="logout" size={16} color="var(--ink2)" /><span>Log ud</span>
+              </button>
+            </div>
+          )}
+          <button type="button" className="admin-account-row" aria-haspopup="menu" aria-expanded={accountShown} aria-controls="admin-account-menu"
+            onClick={() => setAccountOpen((v) => !v)}>
+            <span className="admin-account-avatar" aria-hidden="true"><Icon name="profile" size={16} color="var(--ink2)" /></span>
+            <span className="admin-account-text">
+              <span className="admin-account-title">Administratorkonto</span>
+              <span className="admin-account-mail" title={userEmail}>{userEmail}</span>
+            </span>
+            <span className={`admin-account-chev${accountShown ? " open" : ""}`} aria-hidden="true"><Icon name="chevronUp" size={16} color="var(--muted)" /></span>
+          </button>
+          <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
         </div>
       </aside>
       <div className="admin-main" {...(drawerOpen ? { inert: "" } : {})}>

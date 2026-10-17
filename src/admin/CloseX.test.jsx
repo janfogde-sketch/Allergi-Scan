@@ -49,7 +49,8 @@ describe("AdminLayout: header, hierarki og tilbage til EatSafe", () => {
     const back = screen.getByRole("link", { name: /Tilbage til EatSafe/ });
     expect(back.getAttribute("href")).toBe("/");
     expect(container.querySelector(".admin-nav").contains(back)).toBe(false);
-    expect(back.closest(".admin-sidebar-footer")).toBeTruthy();
+    expect(back.closest(".admin-sidebar-back")).toBeTruthy(); // lige under logoet, før navigationen
+    expect(back.closest(".admin-sidebar-footer")).toBeNull();
   });
   it("hovedgrupper er semibold og mørke, underpunkter normal vægt, og den aktive gruppe er udfoldet med roteret chevron", () => {
     const css = readFileSync(join(process.cwd(), "src/admin/adminTheme.js"), "utf8");

@@ -105,25 +105,59 @@ describe("antalsmarkeringer i menuen", () => {
 });
 
 describe("fast top og bund, og lukning", () => {
-  it("logo, Admin og luk-knap øverst; e-mail, feedback og Log ud nederst; kun navigationen ligger imellem", () => {
+  it("logo og Administration øverst, Tilbage til EatSafe lige under, kontorækken nederst; kun navigationen ligger imellem", () => {
     setMobile(false);
     const { container } = mount();
     const head = container.querySelector(".admin-sidebar-head");
-    expect(head.textContent).toContain("Admin");
+    expect(head.textContent).toContain("Administration");
     expect(within(head).getByRole("button", { name: "Luk menu" })).toBeTruthy();
+    const back = head.nextElementSibling;
+    expect(back.className).toBe("admin-sidebar-back");
+    const link = within(back).getByRole("link", { name: "Tilbage til EatSafe" });
+    expect(link.getAttribute("href")).toBe("/");
+    expect(back.nextElementSibling.tagName).toBe("NAV");
     const foot = container.querySelector(".admin-sidebar-footer");
-    expect(foot.textContent).toContain("bho@eatsafe.dk");
-    expect(within(foot).getByRole("button", { name: "Log ud" })).toBeTruthy();
-    expect(foot.querySelectorAll("button").length).toBe(2); // Send feedback + Log ud
-    expect(head.nextElementSibling.tagName).toBe("NAV");
     expect(foot.previousElementSibling.tagName).toBe("NAV");
+    expect(foot.textContent).toContain("Administratorkonto");
+    expect(foot.textContent).toContain("bho@eatsafe.dk");
+    expect(foot.querySelectorAll("button").length).toBe(1); // kun kontorækken, indtil den åbnes
+    expect(screen.queryByRole("menu")).toBeNull();
   });
-  it("Log ud virker som før", () => {
+  it("kontorækken åbner og lukker en kompakt menu med Send feedback og Log ud", () => {
+    setMobile(false);
+    mount();
+    const row = screen.getByRole("button", { name: /Administratorkonto/ });
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(row);
+    expect(row.getAttribute("aria-expanded")).toBe("true");
+    const menu = screen.getByRole("menu", { name: "Konto" });
+    expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Send feedback", "Log ud"]);
+    fireEvent.click(row);
+    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(row);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(row);
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+  it("Send feedback åbner det eksisterende feedbackvindue", () => {
+    setMobile(false);
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: /Administratorkonto/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Send feedback" }));
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByText("Beskriv problemet")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Luk" })).toBeTruthy();
+  });
+  it("Log ud virker som før, fra kontomenuen", () => {
     setMobile(false);
     const logout = vi.fn();
     mount({ logout });
-    fireEvent.click(screen.getByRole("button", { name: "Log ud" }));
+    fireEvent.click(screen.getByRole("button", { name: /Administratorkonto/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Log ud" }));
     expect(logout).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).toBeNull();
   });
   it("mobil: åbner som dialog, låser baggrunden og lukker med luk-knap, Escape, baggrund, swipe og Android-tilbage", () => {
     setMobile(true);
