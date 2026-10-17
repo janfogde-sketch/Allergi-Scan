@@ -18,7 +18,7 @@
 - **Databaseændringer** er en fil i `supabase/migrations/` (version = unikt tidsstempel), anvendt af `apply-migrations.yml` ved merge til main.
   Ikke `apply_migration`/`execute_sql` til skrivning; læsning er fint. Edge-funktioner deployes ved merge af `deploy-edge-functions.yml`.
   Detaljer: `docs/drift.md`.
-- **Pauser (Jan):** Supabase Pro er på pause (spørg kun, om han vil opgradere). Vercel er på Pro. Telefontestrunden er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X); opret tickets for `fail`.
+- **Pauser (Jan):** Supabase og Vercel er på Pro (Supabase opgraderet 17. okt.). Telefontestrunden er på pause (tjekliste: https://claude.ai/artifact/1YwwF252KhrCAWrgSssw1X); opret tickets for `fail`.
 - **Netværk:** cloud-miljøet når eatsafe.dk, Supabase og world.openfoodfacts.org. Testkonto med admin-rolle: kun efter Jans ja.
   Test-mail/-push kun til Jans og Bjørns egne konti.
 - **Login og mail:** egen SMTP via Resend; auth-mails sendes af `auth-send-email` (`supabase/templates/`). De 24 mailskabeloner deler

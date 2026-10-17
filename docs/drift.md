@@ -4,7 +4,7 @@ Detaljer bag afsnit 0 i `CLAUDE.md`.
 
 ## Betalte planer
 
-- **Supabase Pro er sat på pause (Jans beslutning):** backups, testmiljø og Leaked Password Protection venter. Spørg ikke, om det er glemt, kun om han vil opgradere.
+- **Supabase er på Pro (opgraderet 17. okt. 2026).** Åbent: Leaked Password Protection skal tændes i dashboardet, og Supabases egne backups/udgiftsloft skal tjekkes. Database-grene til dev er fravalgt (Jan, 17. okt.). Rapport: `eatsafe/supabase-pro-muligheder-2026-10-17.md` i projektfilerne.
 - **Vercel skal skifte til Pro, før appen går live.** Vercels DPA gælder kun Pro/Enterprise (to do på listen).
 
 ## Testrunden på rigtige telefoner
