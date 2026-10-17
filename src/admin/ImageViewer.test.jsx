@@ -26,4 +26,18 @@ describe("ImageViewer", () => {
     fireEvent.click(screen.getByRole("button", { name: "Luk" }));
     expect(onClose).toHaveBeenCalled();
   });
+  it("flere billeder: forrige/næste uden at lukke, og zoom nulstilles", () => {
+    render(<ImageViewer images={[{ src: "https://x/a.jpg", title: "Første" }, { src: "https://x/b.jpg", title: "Anden" }]} onClose={() => {}} />);
+    expect(screen.getByAltText("Første")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Forrige billede" }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Zoom ind" }));
+    fireEvent.click(screen.getByRole("button", { name: "Næste billede" }));
+    expect(screen.getByAltText("Anden")).toBeTruthy();
+    expect(screen.getByText("100 %")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Næste billede" }).disabled).toBe(true);
+  });
+  it("ét billede viser ingen billedpile", () => {
+    render(<ImageViewer src="https://x/y.jpg" title="Foto" onClose={() => {}} />);
+    expect(screen.queryByRole("button", { name: "Næste billede" })).toBeNull();
+  });
 });
