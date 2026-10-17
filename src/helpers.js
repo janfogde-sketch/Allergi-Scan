@@ -989,6 +989,8 @@ const PASSWORD_MIN_LENGTH = 10;
 // Hjælpetekst under feltet (vises kun, mens der ikke er en fejl) og den korte fejltekst, når kravene ikke er opfyldt
 export const PASSWORD_REQUIREMENTS_TEXT = "Mindst 10 tegn med store og små bogstaver og mindst ét tal.";
 export const PASSWORD_REQUIREMENTS_ERROR = "Brug mindst 10 tegn med store og små bogstaver og mindst ét tal.";
+// Supabase afviser en adgangskode, der står på lister over lækkede adgangskoder (reason "pwned"). Samme tekst ved oprettelse og nulstilling (Bjørn, 17. okt. 2026).
+export const PWNED_PASSWORD_ERROR = "Denne adgangskode findes på lister over lækkede adgangskoder og kan derfor ikke bruges. Vælg en anden, som du ikke bruger andre steder.";
 
 function passwordProblems(pw) {
   const p = pw || "";

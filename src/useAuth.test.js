@@ -192,7 +192,7 @@ describe("useAuth handleSignup — validation guards", () => {
     const { result, setScreen } = setup();
     act(() => { result.current.setLoginEmail("a@b.dk"); result.current.setLoginPassword("LongEnough2026"); });
     await act(async () => { await result.current.handleSignup(); });
-    expect(result.current.passwordError).toMatch(/kendt datalæk/);
+    expect(result.current.passwordError).toBe("Denne adgangskode findes på lister over lækkede adgangskoder og kan derfor ikke bruges. Vælg en anden, som du ikke bruger andre steder.");
     expect(setScreen).not.toHaveBeenCalledWith("verifyemail");
   });
 
@@ -332,6 +332,13 @@ describe("useAuth — ny adgangskode efter nulstillingslink", () => {
     expect(result.current.resetDone).toBe(false);
     expect(result.current.resetError).toMatch(/udløbet/);
     expect(result.current.resetError).not.toMatch(/JWT/);
+  });
+
+  it("viser samme tekst som ved oprettelse, når den nye adgangskode står på lister over lækkede (pwned)", async () => {
+    global.fetch.mockResolvedValue({ ok: false, status: 422, json: async () => ({ error_code: "weak_password", weak_password: { reasons: ["pwned"] } }) });
+    const { result } = await setupRestored("tok", "u1");
+    await act(async () => { await result.current.submitNewPassword("Stærk12345"); });
+    expect(result.current.resetError).toBe("Denne adgangskode findes på lister over lækkede adgangskoder og kan derfor ikke bruges. Vælg en anden, som du ikke bruger andre steder.");
   });
 
   it("fortæller, at den nye kode skal være forskellig fra den gamle (same_password)", async () => {

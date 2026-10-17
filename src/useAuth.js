@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, SCREENS } from "./constants.jsx";
-import { apiCall, configureApiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR } from "./helpers.js";
+import { apiCall, configureApiCall, decodeJwtPayload, passwordErrorText, PASSWORD_REQUIREMENTS_ERROR, PWNED_PASSWORD_ERROR } from "./helpers.js";
 import { showToast } from "./SharedComponents.jsx";
 import { forgetPushTokenForDevice } from "./usePush.js";
 import { getAccessToken, setMemoryToken, hasStoredSession, persistRefreshToken, restoreSession, endSession } from "./sessionStore.js";
@@ -593,7 +593,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
           // "characters", "pwned"). En lækket kode kan ikke fanges lokalt.
           const reasons = data.weak_password?.reasons || [];
           setPasswordError(reasons.includes("pwned")
-            ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
+            ? PWNED_PASSWORD_ERROR
             : (passwordErrorText(loginPassword) || PASSWORD_REQUIREMENTS_ERROR));
         } else if (msgLc.includes("invalid") && msgLc.includes("email")) {
           setEmailError("Indtast en gyldig e-mailadresse.");
@@ -854,7 +854,7 @@ export function useAuth({ setScreen, setUser, setAllergens, setCustomAllerg,
       } else if (data.error_code === "weak_password") {
         const reasons = data.weak_password?.reasons || [];
         setResetError(reasons.includes("pwned")
-          ? "Adgangskoden er fundet i et kendt datalæk og kan ikke bruges. Vælg en anden."
+          ? PWNED_PASSWORD_ERROR
           : (passwordErrorText(password) || PASSWORD_REQUIREMENTS_ERROR));
       } else if (res.status === 429) {
         setResetError("Der er forsøgt for mange gange. Vent et øjeblik, og prøv igen.");
