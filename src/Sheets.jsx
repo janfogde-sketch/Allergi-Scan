@@ -44,13 +44,13 @@ export function ScanLoadingOverlay({ show, onCancel, label = "Scanner produkt og
 
 
 
-export function CloseButton({ onClick, label = "Luk", plain = false }) {
+export const CloseButton = React.forwardRef(function CloseButton({ onClick, label = "Luk", plain = false, disabled = false, className = "" }, ref) {
   return (
-    <button type="button" className={`icon-btn${plain ? " is-plain" : ""}`} aria-label={label} onClick={onClick}>
+    <button type="button" ref={ref} className={`icon-btn${plain ? " is-plain" : ""}${className ? ` ${className}` : ""}`} aria-label={label} onClick={onClick} disabled={disabled}>
       <Icon name="x" size={18} color={plain ? "var(--muted)" : "var(--ink)"} />
     </button>
   );
-}
+});
 
 // ── Fælles "vælg liste"-ark ──────────────────────────────────────────────────
 // Vises når en bruger med mere end én indkøbsliste tilføjer et produkt, så de
