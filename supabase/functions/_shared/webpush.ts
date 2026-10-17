@@ -134,6 +134,7 @@ export async function sendWebPush(sub: PushSubscriptionJson, payload: unknown, o
         ...(opts.urgency ? { Urgency: opts.urgency } : {}),
       },
       body: await encryptPayload(JSON.stringify(payload), sub),
+      signal: AbortSignal.timeout(10_000), // et hængende push-endpoint må ikke blokere resten af notify-kørslen; timeout giver retryable
     });
     const ok = res.status === 200 || res.status === 201;
     const gone = res.status === 404 || res.status === 410;

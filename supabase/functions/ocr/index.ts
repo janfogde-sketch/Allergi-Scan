@@ -117,12 +117,13 @@ Deno.serve(async (req) => {
           ],
         }],
       }),
+      signal: AbortSignal.timeout(45_000),
     });
 
     if (!res.ok) {
-      const errText = await res.text();
+      console.error("ocr: Claude API fejl", res.status, (await res.text()).slice(0, 300)); // rå svartekst bliver i loggen, aldrig til klienten
       return new Response(
-        JSON.stringify({ error: `Claude API fejl: ${res.status}`, details: errText, success: false }),
+        JSON.stringify({ error: `Claude API fejl: ${res.status}`, success: false }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -141,9 +142,11 @@ Deno.serve(async (req) => {
     );
 
   } catch (err) {
+    const timedOut = (err as Error)?.name === "TimeoutError" || (err as Error)?.name === "AbortError";
+    console.error("ocr fejl:", (err as Error)?.message);
     return new Response(
-      JSON.stringify({ error: (err as Error).message, success: false }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: timedOut ? "Tidsgrænse overskredet" : "Intern fejl", success: false }),
+      { status: timedOut ? 504 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

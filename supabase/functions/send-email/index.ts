@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `welcome-${to}` },
         body: JSON.stringify({ from: FROM, to: [to], subject: WELCOME_MAIL_SUBJECT, html: renderWelcomeMail(data.name) }),
+        signal: AbortSignal.timeout(15_000),
       });
       // 409 = nøglen er brugt inden for 24 t med anden tekst: velkomstmailen er allerede sendt til adressen (fx ved gentest samme dag), så det er ikke en serverfejl.
       if (res.status === 409) {
@@ -97,6 +98,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ from: FROM, to: [to], subject, html }),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!res.ok) {

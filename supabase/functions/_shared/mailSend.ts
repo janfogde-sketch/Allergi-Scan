@@ -75,6 +75,7 @@ export async function sendTemplateMail(opts: {
         subject: opts.subject,
         template: { id: opts.templateId, variables: opts.variables },
       }),
+      signal: AbortSignal.timeout(15_000),
     });
     const body = await res.json().catch(() => ({}));
     if (res.ok) return { ok: true, status: res.status, retryable: false, id: body?.id };
@@ -103,6 +104,7 @@ export async function sendHtmlMail(opts: {
         "Idempotency-Key": opts.idempotencyKey,
       },
       body: JSON.stringify({ from: MAIL_FROM, to: [opts.to], subject: opts.subject, html: opts.html }),
+      signal: AbortSignal.timeout(15_000),
     });
     const body = await res.json().catch(() => ({}));
     if (res.ok) return { ok: true, status: res.status, retryable: false, id: body?.id };

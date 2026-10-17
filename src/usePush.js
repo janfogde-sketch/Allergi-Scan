@@ -3,7 +3,7 @@
 // Håndterer push-notifikation tilladelse, service worker og token-opbevaring
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { makeHeaders } from "./helpers.js";
+import { makeHeaders, decodeJwtPayload } from "./helpers.js";
 import { isNativeApp } from "./nativeShell.js";
 import {
   nativePushAvailable, nativeTokenJson, cachedNativePermission, nativePermission, nativeRegister,
@@ -20,6 +20,27 @@ function urlBase64ToUint8Array(base64String) {
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+// ── Brugerens eget fravalg af push (16. okt. 2026, frontend-gennemgang) ──────────────────────────────────────
+// Tilladelsen i browseren består, selv om brugeren slår push fra i Indstillinger. Uden et mærke ville syncPushToken
+// oprette og gemme et nyt abonnement ved næste appstart, og beskederne ville komme igen uden brugerens valg.
+// Mærket gælder pr. konto på denne enhed (nøglen er kontoens id fra login-nøglen), overlever log ud (så et nyt login
+// med samme konto ikke tænder push igen) og fjernes først, når brugeren selv slår push til. Kan kontoens id ikke
+// læses, huskes fravalget ikke (så er der heller ikke noget at tænde igen for den konto).
+const OPTOUT_PREFIX = "as_push_optout_";
+function optOutKey(accessToken) {
+  try { const sub = accessToken ? decodeJwtPayload(accessToken)?.sub : null; return sub ? OPTOUT_PREFIX + sub : null; } catch { return null; }
+}
+export function pushOptedOut(accessToken) {
+  try { const k = optOutKey(accessToken); return !!k && localStorage.getItem(k) === "1"; } catch { return false; }
+}
+function setPushOptOut(accessToken, value) {
+  try {
+    const k = optOutKey(accessToken);
+    if (!k) return;
+    if (value) localStorage.setItem(k, "1"); else localStorage.removeItem(k);
+  } catch { /* privat tilstand: fravalget huskes ikke */ }
 }
 
 export const SAVE_FAILED_REASON = "Kunne ikke gemme abonnementet";
@@ -58,6 +79,34 @@ async function saveRawToken(tokenText, accessToken) {
   }
 }
 
+// ── Abonnementet skal passe til appens VAPID-nøgle ──────────────────────────────────────────────────────────
+// Et abonnement er bundet til den nøgle, det blev oprettet med. Skiftes nøglen (den ligger både her og i sw.js),
+// afviser push-tjenesten alle afsendelser til det gamle abonnement, uden at appen opdager det: Indstillinger viser
+// "til", men der kommer intet. Derfor sammenlignes nøglen, og abonnementet oprettes på ny ved afvigelse. Kan nøglen
+// ikke aflæses (ældre browsere), beholdes abonnementet, så intet går tabt på en formodning.
+function sameVapidKey(sub) {
+  try {
+    const k = sub?.options?.applicationServerKey;
+    if (!k) return true;
+    const cur = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    const a = new Uint8Array(/** @type {ArrayBuffer} */ (k));
+    return a.length === cur.length && a.every((v, i) => v === cur[i]);
+  } catch { return true; }
+}
+// Henter enhedens abonnement, eller opretter det. Et abonnement med en forældet nøgle afmeldes først (og dets række
+// slettes på kontoen, så serveren ikke bliver ved med at sende til en død adresse); fejler oprettelsen af det nye,
+// kaster vi videre, og kalderen melder det. Det gamle var alligevel ubrugeligt.
+async function ensureSubscription(reg, accessToken) {
+  let sub = await reg.pushManager.getSubscription();
+  if (sub && !sameVapidKey(sub)) {
+    await deleteTokenFromSupabase(sub.toJSON(), accessToken);
+    try { await sub.unsubscribe(); } catch { /* oprettes på ny herunder */ }
+    sub = null;
+  }
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+  return sub;
+}
+
 const pushSupported = () =>
   typeof navigator !== "undefined" && "serviceWorker" in navigator &&
   typeof window !== "undefined" && "PushManager" in window && "Notification" in window;
@@ -66,24 +115,24 @@ const pushSupported = () =>
  * Sørger for, at den KONTO, der er logget ind, har enhedens push-abonnement gemt. Telefonens tilladelse
  * gælder for enheden, ikke for kontoen: logger man ind med en anden konto på en enhed, der allerede har
  * givet tilladelse, bliver abonnementet ellers aldrig gemt for den nye konto (appen viser push som
- * "slået til", men der kommer intet). Spørger aldrig om tilladelse; gør intet uden den.
+ * "slået til", men der kommer intet). Spørger aldrig om tilladelse; gør intet uden den, og intet, hvis
+ * brugeren selv har slået push fra på denne enhed (pushOptedOut).
  */
 export async function syncPushToken(accessToken) {
+  if (!accessToken) return { ok: false, reason: "Ingen tilladelse" };
+  if (pushOptedOut(accessToken)) return { ok: false, reason: "Slået fra af brugeren" };
   // iPhone-rammen: Apples push i stedet for service worker (kun hvis tilladelsen allerede er givet).
-  if (accessToken && nativePushAvailable()) {
+  if (nativePushAvailable()) {
     if ((await nativePermission()) !== "granted") return { ok: false, reason: "Ingen tilladelse" };
     const reg = await nativeRegister(false);
     if (!reg.ok) return { ok: false, reason: "reason" in reg ? reg.reason : "Ukendt fejl" };
     return (await saveRawToken(nativeTokenJson(reg.token), accessToken)) ? { ok: true } : { ok: false, reason: SAVE_FAILED_REASON };
   }
-  if (!accessToken || !pushSupported() || Notification.permission !== "granted") return { ok: false, reason: "Ingen tilladelse" };
+  if (!pushSupported() || Notification.permission !== "granted") return { ok: false, reason: "Ingen tilladelse" };
   try {
     const reg = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
-    }
+    const sub = await ensureSubscription(reg, accessToken);
     const saved = await saveTokenToSupabase(sub.toJSON(), accessToken);
     return saved ? { ok: true, subscription: sub } : { ok: false, reason: SAVE_FAILED_REASON };
   } catch (e) {
@@ -136,9 +185,10 @@ export function usePush() {
 
   const permission = native ? cachedNativePermission() : supported ? Notification.permission : "denied";
 
-  // Registrér SW og abonnér på push
+  // Registrér SW og abonnér på push. Kaldes fra et tryk i Indstillinger (brugerhandling).
   async function subscribe(accessToken) {
     if (!supported) return { ok: false, reason: "Ikke understøttet" };
+    setPushOptOut(accessToken, false); // brugeren slår selv push til
     if (native) {
       const reg = await nativeRegister(true);
       if (!reg.ok) return { ok: false, reason: "reason" in reg ? reg.reason : "Ukendt fejl" };
@@ -151,23 +201,17 @@ export function usePush() {
     }
 
     try {
+      // Tilladelsen bedes om FØRST, mens brugerens tryk stadig tæller som en brugerhandling: Safari (iPhone) afviser
+      // requestPermission, hvis den kommer efter længere ventetid (fx registrering af service workeren).
+      if (Notification.permission !== "granted") {
+        const result = await Notification.requestPermission();
+        if (result !== "granted") return { ok: false, reason: "Tilladelse afvist" };
+      }
+
       const reg = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
-      const result = await Notification.requestPermission();
-      if (result !== "granted") return { ok: false, reason: "Tilladelse afvist" };
-
-      const existing = await reg.pushManager.getSubscription();
-      if (existing) {
-        const saved = await saveTokenToSupabase(existing.toJSON(), accessToken);
-        return saved ? { ok: true, subscription: existing } : { ok: false, reason: SAVE_FAILED_REASON };
-      }
-
-      const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-
+      const subscription = await ensureSubscription(reg, accessToken);
       const saved = await saveTokenToSupabase(subscription.toJSON(), accessToken);
       return saved ? { ok: true, subscription } : { ok: false, reason: SAVE_FAILED_REASON };
     } catch (e) {
@@ -179,6 +223,7 @@ export function usePush() {
   // Afmeld push
   async function unsubscribe(accessToken) {
     if (!supported) return;
+    setPushOptOut(accessToken, true); // huskes, så syncPushToken ikke tænder push igen ved næste start
     if (native) {
       const t = storedNativeToken();
       if (t) await deleteRawToken(nativeTokenJson(t), accessToken);

@@ -52,6 +52,7 @@ Returner KUN JSON, ingen forklaring, ingen markdown.`;
         system: systemPrompt,
         messages: [{ role: "user", content: `Ingredienser: ${text}` }],
       }),
+      signal: AbortSignal.timeout(20_000), // timeout falder ned i catch og giver null (nøgleordsmotorens resultat bruges)
     });
 
     if (!res.ok) return null;

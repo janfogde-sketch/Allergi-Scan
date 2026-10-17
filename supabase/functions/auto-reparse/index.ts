@@ -134,6 +134,7 @@ Deno.serve(async (req) => {
             // force_ai: false → Haiku bruges kun ved behov (negationer, lange lister)
             force_ai: manual,
           }),
+          signal: AbortSignal.timeout(30_000), // ét hængende kald må ikke æde hele funktionens tid (cron-kaldet venter højst 110 s)
         });
 
         if (!allergenRes.ok) { errors++; continue; }

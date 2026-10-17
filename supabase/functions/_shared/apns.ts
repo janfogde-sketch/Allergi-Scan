@@ -88,6 +88,7 @@ export async function sendApns(token: ApnsToken, payload: ApnsPayload, cfg: Apns
     if (payload.tag) headers["apns-collapse-id"] = String(payload.tag).slice(0, 64);
     const res = await (opts.fetchImpl ?? fetch)(`https://${host}/3/device/${token.apns}`, {
       method: "POST", headers, body: JSON.stringify(buildApnsBody(payload)),
+      signal: AbortSignal.timeout(10_000),
     });
     if (res.status === 200) return { ok: true, status: 200, gone: false, retryable: false };
     let reason = "";

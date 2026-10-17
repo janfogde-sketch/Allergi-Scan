@@ -73,6 +73,7 @@ async function analyzeIngredientsViaKeywordEngine(text: string): Promise<Record<
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: serviceRoleKey },
       body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(15_000), // backend-gennemgang 16. okt.: intet kald uden tidsgrænse
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -107,7 +108,7 @@ async function fetchFromOFF(ean: string) {
     const res = await fetch(
       `https://world.openfoodfacts.org/api/v2/product/${ean}.json` +
       `?fields=product_name,brands,categories,image_url,ingredients_text,nutriments,allergens_tags,traces_tags`,
-      { headers: { "User-Agent": "EatSafe/1.0 (kontakt@eatsafe.dk)" } }
+      { headers: { "User-Agent": "EatSafe/1.0 (kontakt@eatsafe.dk)" }, signal: AbortSignal.timeout(8_000) } // timeout giver en teknisk fejl (som 5xx), aldrig "findes ikke"
     );
     // 404 og status 0 = produktet findes ikke hos OFF. Alt andet (netværk, 429, 5xx, ugyldigt svar) er en teknisk fejl og må ikke tælles som "manglende produkt".
     if (res.status === 404) return null;
