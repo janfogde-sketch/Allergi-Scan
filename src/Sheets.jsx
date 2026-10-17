@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { UI } from "./styleUtils.js";
 import { useDialogA11y } from "./useDialogA11y.js";
 import { Icon } from "./Icons.jsx";
+import { NAV_ICON } from "./navIcon.js";
 
 // ─── SCAN-LOADING OVERLAY ─────────────────────────────────────────────────────
 // Logo-baseret loading-animation, vist mens et scannet/søgt produkt slås op
@@ -44,10 +45,10 @@ export function ScanLoadingOverlay({ show, onCancel, label = "Scanner produkt og
 
 
 
-export const CloseButton = React.forwardRef(function CloseButton({ onClick, label = "Luk", plain = false, disabled = false, className = "" }, ref) {
+export const CloseButton = React.forwardRef(function CloseButton({ onClick, label = "Luk", plain = false, disabled = false, className = "", ...rest }, ref) {
   return (
-    <button type="button" ref={ref} className={`icon-btn${plain ? " is-plain" : ""}${className ? ` ${className}` : ""}`} aria-label={label} onClick={onClick} disabled={disabled}>
-      <Icon name="x" size={18} color={plain ? "var(--muted)" : "var(--ink)"} />
+    <button type="button" ref={ref} className={`icon-btn${plain ? " is-plain" : ""}${className ? ` ${className}` : ""}`} aria-label={label} onClick={onClick} disabled={disabled} {...rest}>
+      <Icon name="x" size={NAV_ICON.size} strokeWidth={NAV_ICON.stroke} color={NAV_ICON.color} />
     </button>
   );
 });
