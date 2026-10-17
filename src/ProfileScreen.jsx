@@ -27,19 +27,28 @@ import FamilyScreen from "./FamilyScreen.jsx";
 // ── Din aktivitet ─────────────────────────────────────────────────────────────
 // Tre tal, ingen belønninger (streak og "dage i træk" er fjernet fra visningen, 17. okt. 2026, Bjørn). Definitionerne står i profileStats.js.
 function StatCard({ icon, iconColor, value, label, big }) {
-  return (
-    <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding: big ? "14px 16px" : "12px 14px", display:"flex", alignItems:"center", gap:12, minWidth:0 }}>
-      <Icon name={icon} size={big ? 20 : 18} color={iconColor} />
-      <div style={{ minWidth:0 }}>
-        <div style={{ fontSize: big ? 28 : 22, fontWeight:800, color:"var(--ink)", lineHeight:1.1, letterSpacing:"-.3px" }}>{value}</div>
-        <div style={{ fontSize:12, color:"var(--ink2)", fontWeight:500, marginTop:2, lineHeight:1.3, overflowWrap:"break-word" }}>{label}</div>
+  const box = { background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, minWidth:0 };
+  const num = { fontSize: big ? 28 : 22, fontWeight:800, color:"var(--ink)", lineHeight:1.1, letterSpacing:"-.3px" };
+  const lbl = { fontSize:12, color:"var(--ink2)", fontWeight:500, lineHeight:1.3, overflowWrap:"break-word" };
+  if (big) {
+    return (
+      <div style={{ ...box, padding:"12px 14px", display:"flex", alignItems:"center", gap:12 }}>
+        <Icon name={icon} size={20} color={iconColor} />
+        <div style={{ minWidth:0 }}><div style={num}>{value}</div><div style={{ ...lbl, marginTop:2 }}>{label}</div></div>
       </div>
+    );
+  }
+  // Små kort: ikon og tal på én linje, teksten under med hele kortets bredde, så den ikke brydes i mange linjer på smalle skærme.
+  return (
+    <div style={{ ...box, padding:"10px 12px", display:"flex", flexDirection:"column", gap:4 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8 }}><Icon name={icon} size={18} color={iconColor} /><div style={num}>{value}</div></div>
+      <div style={lbl}>{label}</div>
     </div>
   );
 }
 
 // phase: "loading" | "error" | "empty" | "ok". Et tal vises kun, når historikken faktisk er hentet; aldrig 0 som erstatning for en fejl eller en hentning, der ikke er færdig.
-function ActivityCard({ phase, stats, onRetry, onScan, setScreen, SCREENS }) {
+function ActivityCard({ phase, stats, onRetry, setScreen, SCREENS }) {
   const more = stats.truncated ? "+" : "";
   const note = { fontSize:11, color:"var(--muted)", lineHeight:1.4 };
   let body;
@@ -52,20 +61,24 @@ function ActivityCard({ phase, stats, onRetry, onScan, setScreen, SCREENS }) {
         <button type="button" className="btn btn-outline btn-sm" onClick={onRetry}>Prøv igen</button>
       </div>
     );
-  } else if (phase === "empty") {
+  } else if (phase === "empty" || stats.total === 0) {
+    // Ingen scanninger (endnu): kompakt tekst i stedet for tre store nuller. Opslag via søgning er ikke scanninger og nævnes, så et nul ikke forvirrer.
     body = (
-      <div style={{ display:"flex", flexDirection:"column", gap:10, alignItems:"flex-start" }}>
-        <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.45 }}>Du har ikke scannet noget endnu.</div>
-        <button type="button" className="btn btn-outline btn-sm" onClick={onScan}>Scan et produkt</button>
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <Icon name="scanframe" size={20} color="var(--muted)" />
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.45 }}>Du har endnu ikke scannet nogen produkter.</div>
+          {stats.searches > 0 && <div style={{ ...note, marginTop:2 }}>{stats.searches} opslag via søgning er ikke talt med.</div>}
+        </div>
       </div>
     );
   } else {
     body = (
       <>
-        <StatCard big icon="search" iconColor="var(--green)" value={`${stats.total}${more}`} label="Scanninger i alt" />
+        <StatCard big icon="scanframe" iconColor="var(--green)" value={`${stats.total}${more}`} label="Scanninger i alt" />
         <div style={{ display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:12, alignItems:"stretch" }}>
           <StatCard icon="warning" iconColor="var(--amber)" value={`${stats.withWarning}${more}`} label="Scanninger med advarsel" />
-          <StatCard icon="check" iconColor="var(--green)" value={`${stats.withoutConflict}${more}`} label="Scanninger uden registrerede konflikter" />
+          <StatCard icon="check" iconColor="var(--green)" value={`${stats.withoutConflict}${more}`} label="Scanninger uden fundne konflikter" />
         </div>
         {(stats.truncated || stats.searches > 0) && (
           <div style={note}>
@@ -234,7 +247,7 @@ export default function ProfileScreen({
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0 }} aria-hidden="true"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <ActivityCard phase={activityPhase} stats={stats} onRetry={() => loadHistory("own")} onScan={onScanNow} setScreen={setScreen} SCREENS={SCREENS} />
+        <ActivityCard phase={activityPhase} stats={stats} onRetry={() => loadHistory("own")} setScreen={setScreen} SCREENS={SCREENS} />
 
         {/* Konto, Push-notifikationer og Notifikations-kategorier er
             flyttet til SettingsScreen.jsx (26. sept. 2026, bruger-
