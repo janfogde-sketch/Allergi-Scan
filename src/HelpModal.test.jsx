@@ -37,4 +37,15 @@ describe("HelpModal: indkøbsliste", () => {
     render(<HelpModal screen="profile" onClose={() => {}} onOpenFeedback={() => {}} />);
     expect(screen.getByText(/Send feedback/)).toBeTruthy();
   });
+  it("lukkes ved træk nedad, men ikke ved et lille træk", () => {
+    const onClose = vi.fn();
+    render(<HelpModal screen="list" onClose={onClose} onOpenFeedback={() => {}} />);
+    const panel = document.body.querySelector("[role=dialog]");
+    fireEvent.touchStart(panel, { touches: [{ clientY: 100 }] });
+    fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 130 }] });
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.touchStart(panel, { touches: [{ clientY: 100 }] });
+    fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 200 }] });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

@@ -55,9 +55,10 @@ describe("ListScreen: tilføj vare", () => {
   it("en almindelig vare, der allerede står på listen (uanset bogstaver og mellemrum), tilføjes ikke igen, og brugeren får en venlig besked", async () => {
     setup([{ id: "i1", name: "Havre  Mælk", ean: null, checked: false }]);
     fireEvent.change(screen.getByLabelText("Søg eller skriv en vare"), { target: { value: "havre mælk" } });
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Tilføj" })); });
+    const btn = screen.getByRole("button", { name: "På listen" });
+    expect(btn.disabled).toBe(true);
+    await act(async () => { fireEvent.click(btn); });
     expect(addToList).not.toHaveBeenCalled();
-    expect(showToast).toHaveBeenCalledWith("Varen findes allerede på din indkøbsliste.", "info");
   });
   it("en almindelig vare med samme navn som et databaseprodukt (med EAN) er en anden vare og tilføjes", async () => {
     setup([{ id: "i1", name: "Mælk", ean: "5701234567899", checked: false }]);
@@ -79,5 +80,30 @@ describe("ListScreen: tilføj vare", () => {
     setup();
     expect(screen.getByText("Din indkøbsliste er tom")).toBeTruthy();
     expect(screen.getByText("Søg efter et produkt ovenfor, eller skriv en vare, du vil tilføje.")).toBeTruthy();
+  });
+  it("infoikonet står på titellinjen og åbner hjælpen; teksten Sådan fungerer listen og overskriften Aktiv liste er væk", () => {
+    const { container } = setup();
+    expect(screen.queryByText("Sådan fungerer listen")).toBeNull();
+    expect(screen.queryByText(/aktiv liste/i)).toBeNull();
+    expect(screen.getByRole("button", { name: /Skift eller administrér lister/ })).toBeTruthy();
+    expect(screen.getByText("Min indkøbsliste")).toBeTruthy();
+    expect(container.querySelector(".ibtn")).toBeTruthy();
+  });
+  it("Tilføj står stadig, mens der vises søgeresultater, og en vare uden databasematch kan tilføjes manuelt", async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText("Søg eller skriv en vare"), { target: { value: "Zzxq" } });
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+    expect(screen.getByText(/Ingen produkter matcher/)).toBeTruthy();
+    const btn = screen.getByRole("button", { name: "Tilføj" });
+    expect(btn.disabled).toBe(false);
+    await act(async () => { fireEvent.click(btn); });
+    expect(addToList).toHaveBeenCalledWith("Zzxq");
+  });
+  it("tomtilstanden ved søgning har en knap til manuel tilføjelse", async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText("Søg eller skriv en vare"), { target: { value: "Zzxq" } });
+    await act(async () => { await new Promise((r) => setTimeout(r, 200)); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Tilføj "Zzxq" som manuel vare/ })); });
+    expect(addToList).toHaveBeenCalledWith("Zzxq");
   });
 });

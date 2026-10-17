@@ -86,13 +86,20 @@ export default function HelpModal({ screen, onClose, onOpenFeedback, closeLabel 
   ]};
   const panelRef = React.useRef(null);
   useDialogA11y(panelRef, onClose);
+  // Træk nedad lukker arket (kun når indholdet står øverst, så rulning ikke forveksles med et træk).
+  const dragRef = React.useRef(null);
+  const onTouchStart = (e) => { dragRef.current = (panelRef.current?.scrollTop || 0) <= 0 ? e.touches[0].clientY : null; };
+  const onTouchEnd = (e) => {
+    const y0 = dragRef.current; dragRef.current = null;
+    if (y0 != null && e.changedTouches[0].clientY - y0 > 70) onClose();
+  };
   // Portal til body: .screen.fade-in fanger ellers position:fixed (CLAUDE.md §3 regel 4), når modalen åbnes fra en skærm.
   return createPortal(
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,.85)", display:"flex", alignItems:"flex-end" }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="help-modal-title" tabIndex={-1}
         style={{ background:"var(--sheet)", borderRadius:"20px 20px 0 0", padding: content.compact ? "16px 16px calc(12px + env(safe-area-inset-bottom))" : "20px 16px 32px", width:"100%", maxHeight:"80vh", overflowY:"auto", outline:"none" }}
-        onClick={e => e.stopPropagation()}>
+        onClick={e => e.stopPropagation()} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div style={content.compact ? { ...UI.rowBetweenMb16, marginBottom:4 } : UI.rowBetweenMb16}>
           <div id="help-modal-title" style={{ ...UI.ufs18_fw900_cink, display:"flex", alignItems:"center", gap:8 }}><Icon name={content.titleIcon} size={17} color="var(--ink)" /> {content.title}</div>
           <CloseButton onClick={onClose} />
