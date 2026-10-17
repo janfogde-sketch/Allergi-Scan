@@ -55,7 +55,8 @@ function mentions(text, kw) {
   const re = k.length >= 5 ? new RegExp(esc, "u") : new RegExp(`(^|[^\\p{L}])${esc}($|[^\\p{L}])`, "u");
   if (!re.test(text)) return false;
   // "laktosefri", "uden laktose": nævnelsen er en negation og tæller ikke
-  if (new RegExp(`${esc}\\s*-?\\s*fri|uden\\s+${esc}|free\\s+from\\s+${esc}|${esc}[- ]free`, "u").test(text)) return false;
+  // Bøjningsendelse før "fri" ("laktos" + "efri") tæller også (16. okt. 2026, motoren har samme regel i NEGATION_AFTER)
+  if (new RegExp(`${esc}(?:e|s)?\\s*-?\\s*fri|uden\\s+${esc}|free\\s+from\\s+${esc}|${esc}[- ]free`, "u").test(text)) return false;
   return true;
 }
 

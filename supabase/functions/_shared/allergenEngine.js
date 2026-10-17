@@ -56,6 +56,8 @@ export const SUBSTRING_KEYWORDS = new Set([
   "milch", "weizen", "roggen", "gerste", "hafer", "sahne", "käse",
   "haselnuss", "haselnüsse", "erdnuss", "erdnüsse", "walnuss", "walnüsse",
   "fisch", "garnelen", "sellerie", "senf",
+  // ASCII-skrivemåde uden æ ("skummetMAELKspulver", set i butiksdata) (runde 2, 16. okt. 2026)
+  "maelk",
 ]);
 
 // Bogstavklasse til ordgrænser (æøå og tyske tegn; teksten er altid små bogstaver her).
@@ -66,7 +68,8 @@ export const L = "a-zæøåäöüß";
 // "Mandelflager", "Torskefilet"). Undtagelser er ord, der er egne ord og ikke
 // skal matche inde i andre. Korte nøgleord (4 tegn eller færre) matcher som hele ord,
 // med de eksplicitte sammensætningsregler i SHORT_PATTERNS nedenfor.
-const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke", "ising", "ørred", "silli", "kerma", "kalaa", "kalan", "pesto"]);
+// "latte" (ikke "lattergas") og "sigtemel" (ikke "rugsigtemel", som er ren rug) skal stå som hele ord (16. okt. 2026).
+const NO_SUBSTRING = new Set(["emmer", "snegle", "snegl", "molke", "ising", "ørred", "silli", "kerma", "kalaa", "kalan", "pesto", "latte", "sigtemel"]);
 
 export function isSubstringKeyword(kw) {
   return SUBSTRING_KEYWORDS.has(kw) || (kw.length >= 5 && !NO_SUBSTRING.has(kw));
@@ -77,7 +80,8 @@ export function isSubstringKeyword(kw) {
 // og som start ("æggepulver"); korn med kendte forled ("Fuldkornsbyg"); fisk/skaldyr
 // som første led ("Laksefilet", "Rejesalat").
 export const SHORT_PATTERNS = {
-  "æg": `[${L}]*æg|ægge[${L}]*`,
+  // … men ikke ord på "-læg" ("pålæg", "anlæg", "tillæg"): "Produceret på et anlæg, der også …" gav æg = ja (runde 2, 16. okt. 2026)
+  "æg": `(?!(?:på|an|til|ind|op|ud|be|af|for|ved|om|ned|over|sammen|hen|fore|frem|under)læg(?:get|gene|s)?(?![${L}]))[${L}]*æg|ægge[${L}]*`,
   "rug": `(?:fuldkorns?|hel)?rug`,
   "byg": `(?:fuldkorns?|hel|vinter|vår)?byg`,
   "laks": `[${L}]*laks(?:e[${L}]*)?`,
@@ -88,6 +92,12 @@ export const SHORT_PATTERNS = {
   "sej": `[${L}]*sej`,
   // Svensk/norsk hvede som led i sammensætninger ("fullkornsvete", "vetemjöl"), men ikke "bovete"/"vetenskap" (6. okt. 2026, G1)
   "vete": `(?:fullkorns?|hel|durum)?vete(?:mjöl|stärkelse|gluten|kli|fiber|kim|korn|protein|flingor)?`,
+  // "…fisk" som sidste led (rødfisk, hvidfisk, fladfisk, tunfisk); ikke "fiskefri" (16. okt. 2026, falsk-negativ-gennemgang)
+  // … og som første led ("FISKEROGN", "fiskefrikadeller", "fiskesovs"); ikke "fiskeri" (runde 2, 16. okt. 2026: 7 rogn-produkter stod med fisk = nej)
+  "fisk": `[${L}]*fisk|fiske(?!(?:fri|ri)(?![${L}]))[${L}]*`,
+  // Tofu og miso som første led ("Tofuskiver", "Misopasta") (16. okt. 2026)
+  "tofu": `tofu[${L}]*`,
+  "miso": `miso[${L}]*`,
 };
 
 function escapeRe(s) {
@@ -127,17 +137,41 @@ export function matchIndex(lower, kw) {
 // samme ord eller som næste ord ("mælkefri", "lactose free"), aldrig "freeze".
 // Kolon afslutter også et led: "Uden mørkt skind og ben Panering (33%): HVEDEMEL" er ikke "uden hvede" (6. okt. 2026, G1).
 const SEGMENT_BREAKS = ",;.!?:\n";
-const NEGATION_WORDS = new RegExp(`(^|[^${L}])(uden|ingen|ohne|sans|without|fri for|free from|free of|frei von|utan|uten|zonder|ilman)(?=[^${L}]|$)`);
+// En parentes starter en ny delliste ("uden gluten (hvedestivelse)", "uden tilsat sukker (sødmælk, …)"), og en tankestreg med mellemrum
+// adskiller led ("Ingen tilsat sukker - sødmælk"). Gælder kun negationen, ikke spor-sætningen (16. okt. 2026, falsk-negativ-gennemgang).
+const NEGATION_ONLY_BREAKS = "()[]–—";
+// "Indeholder ikke gluten" er en negation; "ikke" alene er det IKKE ("Ikke egnet til personer med mælkeallergi" nævner mælk med rette) (runde 2).
+const NEGATION_WORDS = new RegExp(`(^|[^${L}])(uden|ingen|ohne|sans|without|fri for|free from|free of|frei von|utan|uten|zonder|ilman|indeholder ikke|inneholder ikke|innehåller inte|contains no|does not contain|enthält keine?|bevat geen|ne contient pas)(?=[^${L}]|$)`);
+// "Fri for: gluten, mælk, æg" / "Uden: …": en negationsliste med kolon gælder hele sætningen, ikke kun leddet før kolonet (runde 2, 16. okt. 2026).
+const NEGATION_LIST_HEAD = new RegExp(`^\\s*(?:allergener\\s*[:\\-]?\\s*)?(?:fri for|uden|ingen|free from|without|frei von|ohne|utan|uten|sans|zonder)\\s*:`);
 const NEGATION_CUT = new RegExp(`(^|[^${L}])(med|men|but|with)(?=[^${L}]|$)`, "g");
 const NEGATION_AFTER = new RegExp(`^(?:e|s)?[\\s-]?(?:fri(?:t|e)?|frei|free|ton|tonta|vrij)(?![${L}])`);
+// "LAKTOSE OG GLUTENFRI", "mælke- og glutenfri.": fri-ordet efter "og" gælder også ordet før, men kun når det afslutter leddet
+// ("sennep og laktosefri mælk" negerer IKKE sennep) (16. okt. 2026).
+const NEGATION_AFTER_AND = new RegExp(`^(?:e|s)?-?\\s+(?:og|and|und|och|&)\\s+[${L}]+-?(?:fri(?:t|e)?|free|frei)\\s*(?:[.,;:!?)\\]\\n]|$)`);
 const UNDER_ZERO_AFTER = /^[\s(]*(?:under|<|mindre end|less than)\s*0/;
 
 function segmentStart(lower, idx) {
-  for (let i = idx - 1; i >= 0; i--) if (SEGMENT_BREAKS.includes(lower[i])) return i + 1;
+  for (let i = idx - 1; i >= 0; i--) {
+    const c = lower[i];
+    if (SEGMENT_BREAKS.includes(c) || NEGATION_ONLY_BREAKS.includes(c)) return i + 1;
+    if (c === "-" && lower[i - 1] === " " && lower[i + 1] === " ") return i + 1;
+  }
   return 0;
 }
 
+// "Kan ikke garantere fri for nødder" / "cannot guarantee free from nuts" er en sporadvarsel, ikke en negation (16. okt. 2026,
+// falsk-negativ-gennemgang). Står en garanti-forbeholdsfrase i samme sætning før ordet, ophæves negationen, og ordet bliver spor (TRACE_WORDS).
+const NO_GUARANTEE = /ikke\s+(?:kan\s+)?garanter|garanterer\s+ikke|ingen\s+garanti|kan\s+ikke\s+udelukke|cannot\s+guarantee|can\s*not\s+guarantee|can'?t\s+guarantee|not\s+guaranteed|no\s+guarantee|kann\s+nicht\s+garantier|keine\s+garantie|kan\s+inte\s+garanter|kan\s+ikke\s+garanter/;
+function sentenceBefore(lower, idx) {
+  for (let i = idx - 1; i >= 0; i--) if (".!?\n".includes(lower[i])) return lower.slice(i + 1, idx);
+  return lower.slice(0, idx);
+}
+
 export function isNegatedAt(lower, start, end) {
+  const sentence = sentenceBefore(lower, start);
+  if (NO_GUARANTEE.test(sentence)) return false;
+  if (NEGATION_LIST_HEAD.test(sentence)) return true;
   let before = lower.slice(segmentStart(lower, start), start);
   let m, cutAt = 0;
   NEGATION_CUT.lastIndex = 0;
@@ -145,7 +179,7 @@ export function isNegatedAt(lower, start, end) {
   before = before.slice(cutAt);
   if (NEGATION_WORDS.test(before)) return true;
   const rest = lower.slice(end, end + 24);
-  return NEGATION_AFTER.test(rest) || UNDER_ZERO_AFTER.test(rest);
+  return NEGATION_AFTER.test(rest) || NEGATION_AFTER_AND.test(lower.slice(end)) || UNDER_ZERO_AFTER.test(rest);
 }
 
 // Negation-detektion for første forekomst: "laktosefri", "uden mælk", "mælkefri", "under 0,01%"
@@ -174,14 +208,21 @@ export function keywordMatch(haystack, keyword) {
 // advarselsfrase om fælles anlæg ("fremstillet på et anlæg, der også ...").
 const SENTENCE_BREAKS = ".!?\n";
 const TRACE_WORDS = new RegExp(
-  `(^|[^${L}])(spor|spår|sporen|spuren|traces?(?!\\s+(?:elements?|minerals?|metals?))|may contain|can contain|kan indeholde|kann|samme fabrik|same facility|samme produktionsudstyr|samme anlæg|same equipment|samme linje|same line|kan innehålla|kan inneholde|kan bevatten|kan sisältää|saattaa sisältää|pieniä määriä|peut contenir|peuvent contenir)(?=[^${L}]|$)`
+  `(^|[^${L}])(spor|spår|sporen|spuren|traces?(?!\\s+(?:elements?|minerals?|metals?))|may contain|can contain|kan indeholde|kann|samme fabrik|same facility|samme produktionsudstyr|samme anlæg|same equipment|samme linje|same line|kan innehålla|kan inneholde|kan bevatten|kan sisältää|saattaa sisältää|pieniä määriä|peut contenir|peuvent contenir|puede contener|pueden contener|può contenere|puo contenere|pode conter|trazas|tracce|ikke garantere|ikke garanteres|ikke garanteret|garanterer ikke|ingen garanti|ikke udelukke|cannot guarantee|can't guarantee|not guaranteed|kan inte garantera)(?=[^${L}]|$)`
 );
 const TRACE_PRODUCED = new RegExp(`(fremstillet|produceret|produced|manufactured)[^.!?\\n]*(også|also|samme|same|shared|delt)`);
 
+// En ny ingrediensoverskrift afslutter en sporsætning, også uden punktum: "Kan indeholde spor af nødder Ingredienser: hvedemel" (16. okt. 2026,
+// falsk-negativ-gennemgang; ellers blev direkte hvede til spor og skjult for brugere med "kun ved ingrediens").
+const INGREDIENT_HEADER = /(?:ingredienser|ingrediens|ingredients|ingrediënten|zutaten|ingrédients|ingredientes|ingredienti|ainesosat|ingredienser|innehåll)\s*:|@ingredienser/g;
 export function isTracesAt(lower, start) {
   let from = 0;
   for (let i = start - 1; i >= 0; i--) if (SENTENCE_BREAKS.includes(lower[i])) { from = i + 1; break; }
-  const before = lower.slice(from, start);
+  let before = lower.slice(from, start);
+  INGREDIENT_HEADER.lastIndex = 0;
+  let h, cut = -1;
+  while ((h = INGREDIENT_HEADER.exec(before))) cut = h.index + h[0].length;
+  if (cut >= 0) before = before.slice(cut);
   return TRACE_WORDS.test(before) || TRACE_PRODUCED.test(before);
 }
 
@@ -217,10 +258,23 @@ export function stripHtml(text) {
 
 export function normalizeIngredientText(text) {
   return stripHtml(text)
+    // Bløde bindestreger og orddeling ved linjeskift ("Jord\u00adnødder", "Hvede-\nmel"), og "jord nødder"/"jord-nødder" som to led
+    // (16. okt. 2026, falsk-negativ-gennemgang: jordnødder blev kun til "nødder", ikke jordnødder).
+    .replace(/\u00ad/g, "")
+    .replace(/([a-zæøåäöü])-[ \t]*\r?\n[ \t]*([a-zæøåäöü])/gi, "$1$2")
+    .replace(/(^|[^a-zæøåäöü])jord[\s-]+(n[øö][dt])/gi, "$1jord$2")
+    // Semulje/couscous af ris, majs eller hirse er ikke hvede (hvede-listen har "semulje", "couscous")
+    .replace(/(ris|majs|hirse|boghvede|quinoa)[\s-]*(semulje|semolina|couscous)\w*/gi, "$1")
     // "Kan indeholde spor afæg" (manglende mellemrum, set i butiksdata): ellers matcher "æg" aldrig som eget ord
     .replace(/\bspor\s+af(?=[a-zæøå])/gi, "spor af ")
+    // Forkortelser med punktum må ikke afslutte en sporsætning ("Kan indeholde spor af mælk (inkl. laktose)") (16. okt. 2026)
+    .replace(/(^|[^a-zæøå])(inkl|ekskl|bl\.\s?a|f\.\s?eks|evt|incl|z\.\s?b|bzw|ggf)\./gi, "$1$2")
     // "glutenfri havregryn" er certificeret glutenfri havre: ingen glutenmatch (kun havre; hvede/spelt røres ikke, de er hvedeallergi)
     .replace(/gluten[\s-]?fri\w*\s+havre\w*/gi, " ")
+    // "glutenfri øl" (bygmalt med fjernet gluten) er ikke gluten; "øl" som ingrediens er det (runde 2, 16. okt. 2026)
+    .replace(/gluten[\s-]?fri\w*\s+(øl|beer|bier)\b/gi, " ")
+    // "Laktoseindhold under 0,01 %" skal læses som "laktose under 0,01 %" (runde 2)
+    .replace(/laktose-?indhold(?:\s+på)?/gi, "laktose")
     // Ord der indeholder et allergenord som understreng uden at være det (understrengs-matchning, 6. okt. 2026):
     // boghvede/buckwheat er ikke hvede, kanelsnegl er ikke et bløddyr, fløde/yoghurt af kokos er ikke mælk,
     // "cream of tartar" og kakao-/sheasmør er ikke mejeri.
@@ -228,7 +282,10 @@ export function normalizeIngredientText(text) {
     .replace(/buck[\s-]?wheat\w*/gi, " ")
     .replace(/kanel[\s-]?snegl\w*/gi, " ")
     .replace(/cream of tartar/gi, " ")
-    .replace(/(cocoa|cacao|shea|kakao)[\s-]+butter/gi, " ")
+    .replace(/(cocoa|cacao|shea|kakao)[\s-]*butter\w*/gi, " ")
+    // Nøddesmør og græskar: "peanutbutter", "Erdnussbutter", "almond butter", "butternut" er ikke mælk ("butter" matcher som understreng) (runde 2)
+    .replace(/(peanut|erdnuss|erdnuß|almond|cashew|hazelnut|pistachio|nut|pinda)[\s-]*butter\w*/gi, "$1")
+    .replace(/butternut\w*/gi, " ")
     .replace(/(kokos|mandel|havre|soja|ris|cashew|ærte|hamp|hasselnød)(mælk|drik|fløde|yoghurt|grädde|fløte)/gi, "$1")
     .replace(/\b(coconut|almond|oat|soy|rice|cashew|hazelnut|pea) milk\b/gi, "$1")
     .replace(/(vegansk\s+)?mælkesyre\w*/gi, " ")
@@ -247,7 +304,7 @@ export function normalizeIngredientText(text) {
 // Ord der aldrig må tælle med i ét bestemt allergen: jordnødder, muskatnød og kokosnød er ikke "nødder" (træ-nødder),
 // og de ender på "nødder" (6. okt. 2026, understrengs-matchning; kokosnød er ikke et EU-allergen).
 const ALLERGEN_MASKS = {
-  noedder: /jord-?nød\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*|kokos-?nød\w*|jord-?nöt\w*|muskot-?nöt\w*|kokos-?nöt\w*|maa-?pähkin\w*|kookos-?pähkin\w*|arachide\w*|cacahu[eè]te\w*|pinda\w*|kokosnoot\w*|noix de (?:coco|muscade)/g,
+  noedder: /jord-?nød\w*|jord-?noed\w*|jord-?nøt\w*|pean[øo]t\w*|cacahuet\w*|arachid\w*|erdn[uü]ss\w*|peanut\w*|groundnut\w*|arachis\w*|muskat\w*|kokos-?nød\w*|jord-?nöt\w*|muskot-?nöt\w*|kokos-?nöt\w*|maa-?pähkin\w*|kookos-?pähkin\w*|arachide\w*|cacahu[eè]te\w*|pinda\w*|kokosnoot\w*|noix de (?:coco|muscade)/g,
   // Solsikke-/rapslecithin er ikke soja (kilden er dokumenteret), også som sammensat ord "solsikkelecithin" (10. okt. 2026).
   soja: /(?:solsikke|raps|sunflower|rapeseed)\s*-?\s*le[ck]i?th?i?n\w*/g,
 };
@@ -255,6 +312,47 @@ const ALLERGEN_MASKS = {
 // Lecithin uden kilde kan være soja, men er ikke bekræftet → spor, ikke direkte.
 const SOY_FREE_LECITHIN = /(solsikke|raps|sunflower|rapeseed)\s*-?\s*le[ck]i?th?i?n/;
 const WEAK_SOY_WORDS = new Set(["lecithin", "lecitin", "lécithine", "lécithines", "lesitiini"]);
+// Ord, der KAN rumme allergenet uden at det er sikkert: giver spor, ikke direkte (runde 2, 16. okt. 2026). Worcestersauce er
+// klassisk lavet på ansjoser, men findes også uden fisk (og indeholder sammensætningen fisk, skal det stå i dens egen liste).
+// Caesar-dressing ligeså. Et direkte fiskeord i teksten vinder stadig.
+const WEAK_WORDS = {
+  soja: WEAK_SOY_WORDS,
+  fisk: new Set(["worcester", "worcestershire sauce", "worcestershiresauce", "caesar dressing"]),
+};
+
+// Laktosefri (runde 2, 16. okt. 2026): "laktosefri" som selvstændig påstand ("LAKTOSEFRI.", "Mælk, laktase. Laktosefri") gælder hele
+// produktet. Som tillægsord ("laktosefri fløde") gælder det kun det ord: "Kiks (skummetmælkspulver). Fyld: laktosefri fløde" har laktose.
+const LACTOSE_FREE_RE = /laktose[\s-]?fri\w*|laktos[\s-]?fri\w*|lactose[\s-]?free|laktosefrei|laktoositon/g;
+const DAIRY_NEXT_WORD = new RegExp(`^\\s+[${L}]*(?:mælk|maelk|milk|fløde|flode|cream|yoghurt|yogurt|skyr|kvark|quark|ost|oste|smør|butter|kefir|mjölk|melk|milch|sahne|grädde|fløte|kaas|lait|crème|mascarpone|ricotta|valle|whey|kasein|casein)`);
+// "Lavt laktoseindhold", "laktosereduceret": ikke laktosefri, men reduceret → spor (orange), ikke nej (runde 2).
+const LOW_LACTOSE_RE = /lavt laktose|laktosereduceret|laktosereduseret|low[\s-]?lactose|lactose[\s-]?reduced|låglaktos|laktosfattig|laktosearm/;
+// Står ordet i en parentes efter "laktosefri X (" (dellisten for den laktosefri ingrediens), dækker tillægsordet også dellisten.
+function lactoseFreeBeforeParen(lower, start) {
+  let depth = 0;
+  for (let i = start - 1; i >= 0; i--) {
+    const c = lower[i];
+    if (c === ")" || c === "]") depth++;
+    else if (c === "(" || c === "[") {
+      if (depth > 0) { depth--; continue; }
+      const seg = lower.slice(segmentStart(lower, i), i);
+      LACTOSE_FREE_RE.lastIndex = 0;
+      const hit = LACTOSE_FREE_RE.test(seg);
+      LACTOSE_FREE_RE.lastIndex = 0;
+      return hit;
+    }
+    else if (".!?\n".includes(c)) return false;
+  }
+  return false;
+}
+function lactoseFreeScope(lower) {
+  LACTOSE_FREE_RE.lastIndex = 0;
+  let m, found = false, adjectiveOnly = true;
+  while ((m = LACTOSE_FREE_RE.exec(lower))) {
+    found = true;
+    if (!DAIRY_NEXT_WORD.test(lower.slice(m.index + m[0].length, m.index + m[0].length + 40))) adjectiveOnly = false;
+  }
+  return found ? (adjectiveOnly ? "local" : "global") : null;
+}
 
 // Margarine/minarine er ikke i sig selv mælk (7. okt. 2026, E2): plantemargarine er veganske, og
 // indeholder en margarine mælk, står mælkeproteinet i dens egen ingrediensliste. Står der
@@ -308,9 +406,16 @@ export function analyzeIngredients(rawText) {
           continue; // en senere, direkte forekomst skal stadig kunne opgradere til "yes"
         }
 
-        if (allergen === "soja" && WEAK_SOY_WORDS.has(kw)) {
+        if (WEAK_WORDS[allergen]?.has(kw)) {
           if (status === "no") status = "traces";
           continue;
+        }
+        // Tillægsordet "laktosefri" foran ordet negerer kun laktose for netop det led (se lactoseFreeScope).
+        if (allergen === "laktose") {
+          LACTOSE_FREE_RE.lastIndex = 0;
+          const local = LACTOSE_FREE_RE.test(lower.slice(segmentStart(lower, start), start)) || lactoseFreeBeforeParen(lower, start);
+          LACTOSE_FREE_RE.lastIndex = 0;
+          if (local) continue;
         }
 
         status = "yes";
@@ -344,18 +449,15 @@ export function analyzeIngredients(rawText) {
     }
   }
 
-  // ── Global override: laktosefri produkter ─────────────────────────────────
-  // "Laktosefri mælk" har stadig mælkeprotein (maelkeallergi=yes) men INGEN laktose
-  if (
-    lower.includes("laktosefri") ||
-    lower.includes("laktose fri") ||
-    lower.includes("lactose free") ||
-    lower.includes("lactose-free") ||
-    lower.includes("laktosefrei") ||
-    /laktose\s+(under|<|mindre)/.test(lower)
- ) {
+  // ── Override: laktosefri produkter ─────────────────────────────────
+  // "Laktosefri mælk" har stadig mælkeprotein (maelkeallergi=yes) men INGEN laktose. En selvstændig påstand ("Laktosefri.",
+  // "laktose under 0,01 %") gælder hele produktet. Står "laktosefri" kun som tillægsord ("laktosefri fløde"), er det allerede
+  // negeret for det led i løkken ovenfor, og andre mælkeingredienser beholder laktose; er der tilsat laktase, bliver det spor.
+  const scope = lactoseFreeScope(lower);
+  const hasLactase = /\blaktase\b|laktaseenzym|lactase/.test(lower);
+  if (scope === "global" || (/laktose\s*(?::\s*)?(under|<|mindre|max)/.test(lower) && !LOW_LACTOSE_RE.test(lower))) {
     flags["laktose"] = "no";
-  } else if (flags.laktose === "yes" && /\blaktase\b|laktaseenzym|lactase/.test(lower) && !/laktose|lactose|mælkesukker/.test(lower)) {
+  } else if (flags.laktose === "yes" && (LOW_LACTOSE_RE.test(lower) || (hasLactase && (scope === "local" || !/laktose|lactose|mælkesukker/.test(lower))))) {
     // Tilsat laktase = laktosereduceret produkt. Ikke garanteret laktosefrit → gult, ikke rødt.
     flags["laktose"] = "traces";
   }

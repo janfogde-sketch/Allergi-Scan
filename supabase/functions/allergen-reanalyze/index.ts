@@ -14,10 +14,8 @@
 //   3. { "mode": "dry_run_down", "after": "<product_id>", "limit": 500 } (G1, 6. okt. 2026)
 //      Kun læsning: finder produkter hvor den nuværende motor giver et LAVERE svar end det gemte (ja/spor -> nej)
 //      og skriver dem med ingrediensliste i allergen_reanalysis_down_20261006 til gennemgang. Skriver aldrig til products.
-//   4. { "mode": "apply_down", "after": "<product_id>", "limit": 200 } (G1, 6. okt. 2026, Jans ja)
-//      Skriver KUN de nedgange, der er godkendt i allergen_reanalysis_down_20261006 (decision='approved', felterne i
-//      approved_allergens, dvs. allergenet nævnes slet ikke i ingredienslisten). Gemmer først det gamle svar i
-//      products_allergen_down_backup_20261006 og sænker kun et felt, hvis produktet stadig har den gamle, højere værdi.
+//   4. (fjernet 17. okt. 2026) "apply_down" sænkede godkendte felter. Den sænkede 7. okt. flag forkert på varer med allergener
+//      (gennemgang 16. okt. 2026, B1/B13), så vejen er fjernet: motoren må kun hæve. Rollback-tabellen products_allergen_down_backup_20261006 beholdes.
 //   5. { "mode": "claude_long", "limit": 10 } (8. okt. 2026, opfølgning på #621) kaldes af jobbet allergen-claude-long (service-role).
 //      Lader Claude læse lange lister (mindst 200 tegn) uden fund, via allergens (force_ai), så døgnloftet for interne kald gælder.
 //      Kun opadgående; gammelt svar gemmes først i allergen_claude_long_20261008. Stopper ved første kald uden Claude (loft/fejl).
@@ -30,7 +28,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
-import { analyzeIngredients, liftGlutenFromWheat, ALL_ALLERGENS } from "../_shared/allergenEngine.js";
+import { analyzeIngredients, liftGlutenFromWheat, ALL_ALLERGENS, mergeFlagsUpward } from "../_shared/allergenEngine.js";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +43,6 @@ const DIFF_TABLE = "allergen_reanalysis_diff_20261006";
 // Nedgang: "unknown" (ukendt) → "no" tæller også, fordi motoren så svarer "ingen allergen" i stedet for "ukendt".
 const DOWN_RANK: Record<string, number> = { no: 0, unknown: 1, traces: 2, yes: 3 };
 const DOWN_TABLE = "allergen_reanalysis_down_20261006";
-const DOWN_BACKUP_TABLE = "products_allergen_down_backup_20261006";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -78,7 +75,7 @@ Deno.serve(async (req) => {
   try {
     const { mode, after = null, limit = 500 } = await req.json().catch(() => ({}));
     const batch = Math.min(Number(limit) || 500, 1000);
-    if (mode !== "dry_run" && mode !== "dry_run_down" && mode !== "apply" && mode !== "apply_down" && mode !== "claude_long") return json({ error: "mode skal være dry_run, dry_run_down, apply, apply_down eller claude_long" }, 400);
+    if (mode !== "dry_run" && mode !== "dry_run_down" && mode !== "apply" && mode !== "claude_long") return json({ error: "mode skal være dry_run, dry_run_down, apply eller claude_long" }, 400);
 
     if (mode === "claude_long") {
       if (!isInternalCall) return json({ error: "Kun systemkald" }, 401);
@@ -117,60 +114,6 @@ Deno.serve(async (req) => {
         if (didChange) changed++;
       }
       return json({ mode, processed, changed, stopped });
-    }
-
-    if (mode === "apply_down") {
-      const size = Math.min(Number(limit) || 200, 200);
-      let dq = supabase
-        .from(DOWN_TABLE)
-        .select("product_id, new_flags, approved_allergens")
-        .eq("decision", "approved")
-        .is("applied_at", null)
-        .order("product_id", { ascending: true })
-        .limit(size);
-      if (after) dq = dq.gt("product_id", after);
-      const { data: dRows, error: dErr } = await dq;
-      if (dErr) throw dErr;
-
-      let applied = 0, skipped = 0, errors = 0;
-      for (const r of dRows ?? []) {
-        const { data: prod, error: pErr } = await supabase
-          .from("products")
-          .select("allergen_flags, allergen_quality, allergen_source_method")
-          .eq("id", r.product_id)
-          .single();
-        if (pErr || !prod) { errors++; continue; }
-        const cur = prod.allergen_flags ?? {};
-        const next = { ...cur };
-        let changed = false;
-        for (const a of r.approved_allergens ?? []) {
-          const fresh = r.new_flags?.[a] ?? "no";
-          // Kun ned, og kun hvis værdien stadig er den gamle, højere værdi (ingen overskrivning af nyere rettelser).
-          if ((DOWN_RANK[fresh] ?? 0) < (DOWN_RANK[cur[a] ?? "no"] ?? 0)) { next[a] = fresh; changed = true; }
-        }
-        if (!changed) {
-          skipped++;
-          await supabase.from(DOWN_TABLE).update({ applied_at: new Date().toISOString() }).eq("product_id", r.product_id);
-          continue;
-        }
-        const { error: bErr } = await supabase.from(DOWN_BACKUP_TABLE).upsert({
-          product_id: r.product_id, old_flags: cur,
-          old_quality: prod.allergen_quality, old_method: prod.allergen_source_method,
-        }, { onConflict: "product_id", ignoreDuplicates: true });
-        if (bErr) { errors++; continue; }
-        const { error: uErr } = await supabase
-          .from("products")
-          .update({ allergen_flags: next, reparsed_at: new Date().toISOString() })
-          .eq("id", r.product_id);
-        if (uErr) { errors++; continue; }
-        await supabase.from(DOWN_TABLE).update({ applied_at: new Date().toISOString() }).eq("product_id", r.product_id);
-        applied++;
-      }
-      await logRun(mode, applied, errors);
-      return json({
-        mode, applied, skipped, errors,
-        next: (dRows ?? []).length === size ? dRows[dRows.length - 1].product_id : null,
-      });
     }
 
     if (mode === "dry_run" || mode === "dry_run_down") {
@@ -248,10 +191,14 @@ Deno.serve(async (req) => {
 
     let applied = 0, errors = 0;
     for (const r of rows ?? []) {
+      // Flaget kan være hævet siden tørkørslen (natjob, admin, indsendelse). new_flags er beregnet ud fra den gamle værdi, så det flettes
+      // opad mod den aktuelle værdi; ellers kunne "apply" sænke et nyere ja/spor (16. okt. 2026, falsk-negativ-gennemgang).
+      const { data: cur, error: cErr } = await supabase.from("products").select("allergen_flags").eq("id", r.product_id).single();
+      if (cErr || !cur) { errors++; continue; }
       const { error: uErr } = await supabase
         .from("products")
         .update({
-          allergen_flags: r.new_flags,
+          allergen_flags: mergeFlagsUpward(cur.allergen_flags, r.new_flags),
           allergen_quality: String(r.old_method ?? "").includes("claude") ? "high" : "medium",
           allergen_source_method: r.old_method ?? "keyword",
           reparsed_at: new Date().toISOString(),

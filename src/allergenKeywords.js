@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { ALLERGEN_KEYWORDS } from "../supabase/functions/_shared/allergenKeywords.js";
-import { SUBSTRING_KEYWORDS, SHORT_PATTERNS, L, isNegatedAt } from "../supabase/functions/_shared/allergenEngine.js";
+import { SHORT_PATTERNS, L, isNegatedAt, isSubstringKeyword } from "../supabase/functions/_shared/allergenEngine.js";
 
 export { ALLERGEN_KEYWORDS };
 
@@ -47,7 +47,8 @@ function findAllKeywordIndices(text, kw) {
   // matche inde i "lægemiddel"). Før 30. sept. 2026 brugte frontenden kun
   // længden, så sammensatte mælkeord blev fremhævet i backend, men ikke i
   // ingredienslisten.
-  const wordBoundary = !SUBSTRING_KEYWORDS.has(kw) && kw.length <= 4;
+  // Samme regel som motoren (isSubstringKeyword, inkl. NO_SUBSTRING), så fremhævning og motor ikke driver fra hinanden (16. okt. 2026).
+  const wordBoundary = !isSubstringKeyword(kw.toLowerCase());
   // Korte nøgleord har samme sammensætningsregler som backend-motoren (SHORT_PATTERNS): "tøræg", "helæg", "skrabeæg" er æg, "lægemiddel" er det ikke.
   const pattern = wordBoundary
     ? new RegExp(`(^|[^${L}0-9])(${SHORT_PATTERNS[kw.toLowerCase()] || escaped})(?=[^${L}0-9]|$)`, "gi")
@@ -86,9 +87,42 @@ export function keywordMatches(text, keyword) {
 // Mindre pålideligt end de faste allergener af natur — vis derfor ALTID en
 // disclaimer i UI'et ved et match, og opfordr brugeren til selv at dobbelt-
 // tjekke samt til at fortælle os hvis vi overser noget.
+// Egne ord skrives typisk i grundform eller flertal ("Majs", "Ærter", "Løg", "Kiwi"), mens ingredienslisten bruger dem som led i
+// sammensatte ord ("majsstivelse", "ærteprotein", "hvidløg", "kiwifrugt"). Før 16. okt. 2026 matchede ord på højst 4 tegn kun som
+// hele ord, og flertal fandt aldrig stammen (falsk-negativ-gennemgang). Nu: ord på 3-4 tegn matcher som første eller sidste led i et
+// ord, og danske flertal på -er/-r prøves også uden endelsen. Ord på 2 tegn kræver stadig et helt ord. Negation som før.
+// Pris: flere "Muligvis"-fund (fx "ris" i "pris"); de vises altid med forbehold.
+function customVariants(term) {
+  const t = term.toLowerCase();
+  const out = new Set([t]);
+  if (t.length >= 5 && t.endsWith("er")) out.add(t.slice(0, -2));
+  else if (t.length >= 5 && /[aeiouyæøå]r$/.test(t)) out.add(t.slice(0, -1));
+  return [...out].filter(v => v.length >= 2);
+}
+
+function customTermIndices(text, v) {
+  const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (v.length >= 5) {
+    const out = [];
+    let i = text.indexOf(v);
+    while (i !== -1) { out.push(i); i = text.indexOf(v, i + v.length); }
+    return out;
+  }
+  const core = v.length <= 2 ? escaped : `[${L}]*${escaped}|${escaped}[${L}]*`;
+  const re = new RegExp(`(^|[^${L}0-9])(${core})(?=[^${L}0-9]|$)`, "g");
+  const out = [];
+  let m;
+  while ((m = re.exec(text))) {
+    const start = m.index + m[1].length;
+    out.push(start + m[2].indexOf(v));
+    re.lastIndex = Math.max(start + m[2].length, re.lastIndex);
+  }
+  return out;
+}
+
 export function matchCustomAllergens(ingredientsText, customTerms) {
   if (!ingredientsText || !customTerms?.length) return [];
-  const text = ingredientsText.toLowerCase();
+  const text = ingredientsText.toLowerCase().replace(/\bspor\s+af(?=[a-zæøå])/g, "spor af ");
   const matched = [];
   const seen = new Set();
   for (const raw of customTerms) {
@@ -96,7 +130,8 @@ export function matchCustomAllergens(ingredientsText, customTerms) {
     if (!term) continue;
     const key = term.toLowerCase();
     if (seen.has(key)) continue;
-    if (keywordMatches(text, term)) { matched.push(term); seen.add(key); }
+    const hit = customVariants(term).some(v => customTermIndices(text, v).some(idx => !isNegatedAt(text, idx, idx + v.length)));
+    if (hit) { matched.push(term); seen.add(key); }
   }
   return matched;
 }

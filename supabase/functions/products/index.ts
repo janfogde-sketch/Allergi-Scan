@@ -16,6 +16,8 @@ function mapAllergenTags(allergenTags: string[], tracesTags: string[]) {
     "en:fish": "fisk", "en:crustaceans": "skaldyr", "en:celery": "selleri",
     "en:mustard": "sennep", "en:sesame-seeds": "sesam",
     "en:sulphur-dioxide": "svovl", "en:lupin": "lupin", "en:molluscs": "bloeddyr",
+    // OFF's taksonomi hedder "en:sulphur-dioxide-and-sulphites" (verificeret mod OFF's API 16. okt. 2026); det gamle navn beholdes for en sikkerheds skyld.
+    "en:sulphur-dioxide-and-sulphites": "svovl",
   };
   const flags: Record<string, string> = {
     gluten:"unknown", hvede:"unknown", maelkeallergi:"unknown", laktose:"unknown", aeg:"unknown", noedder:"unknown",

@@ -346,6 +346,8 @@ const normName = (t) => (t || "").toLowerCase().replace(/[^a-zæøåäöü0-9]+/
 function hasRealIngredients(text, productName) {
   const t = (text || "").trim();
   if (t.length === 0 || /^ingen ingrediensliste/i.test(t)) return false;
+  // Pladsholdere ("Ingen", "-", "Se emballage", "Ikke oplyst") er ingen liste (gennemgang 16. okt. 2026, runde 2: to varer med "Ingen" stod grønne)
+  if (/^(?:ingen|nej|n\/a|ukendt|mangler|ikke oplyst|se (?:pakke\w*|emballage\w*|etiket\w*)|[-.?]+)\.?$/i.test(t)) return false;
   return !(productName && normName(t) === normName(productName));
 }
 
