@@ -6,6 +6,33 @@ import { useDialogA11y } from "./useDialogA11y.js";
 import { Icon } from "./Icons.jsx";
 import { NAV_ICON } from "./navIcon.js";
 
+// Logoets stregkodemærke med fluebenet, der tegnes ind og glider ud igen og igen: den fælles indlæsningsanimation (scan-opslag og appstart).
+// size: tal (px) eller en CSS-længde (fx "23.8vw"). startDrawn: animationen starter med fluebenet helt tegnet, så den går glat videre fra et
+// stillestående logo (iOS' opstartsbillede). Stregerne har logoets egen farve (--brand-ink).
+export function LogoLoader({ size = 92, startDrawn = false }) {
+  const dim = typeof size === "number" ? size : undefined;
+  const checkStyle = startDrawn ? { animationDelay: "-0.9s" } : undefined;
+  return (
+    <svg className="scan-loading-mark" width={dim} height={dim} viewBox="0 0 1000 1000" aria-hidden="true"
+      style={dim ? undefined : { width: size, height: size }}>
+      {/* Logoet (7 streger) med fluebenet, der tegnes ind og glider ud igen og igen (forslag D); stregen har runde ender og ingen cirkel. Ingen synlig tekst, kun animationen; skærmlæsere får label (Bjørn, 7. okt. 2026). */}
+      <g transform="translate(16.8,0)">
+        <g fill="var(--brand-ink)">
+          <rect x="104.8" y="158" width="102.396" height="684.495" rx="15.582" />
+          <rect x="247.264" y="221.441" width="53.424" height="557.613" rx="15.582" />
+          <rect x="340.756" y="158" width="80.136" height="684.495" rx="15.582" />
+          <rect x="460.96" y="221.441" width="66.78" height="557.613" rx="15.582" />
+          <rect x="567.808" y="158" width="62.328" height="684.495" rx="15.582" />
+          <rect x="670.204" y="221.441" width="80.136" height="557.613" rx="15.582" />
+          <rect x="790.408" y="158" width="71.232" height="684.495" rx="15.582" />
+        </g>
+        <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--paper)" strokeWidth="146.916" strokeLinejoin="round" strokeLinecap="round" style={checkStyle} />
+        <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" strokeLinecap="round" style={checkStyle} />
+      </g>
+    </svg>
+  );
+}
+
 // ─── SCAN-LOADING OVERLAY ─────────────────────────────────────────────────────
 // Logo-baseret loading-animation, vist mens et scannet/søgt produkt slås op
 // (fra scan:start til resultatet er klart, se runLookupProduct i useProduct.js).
@@ -18,22 +45,7 @@ export function ScanLoadingOverlay({ show, onCancel, label = "Scanner produkt og
   if (!show) return null;
   return createPortal(
     <div className="scan-loading-overlay" role="status" aria-live="polite" aria-label={label}>
-      <svg className="scan-loading-mark" width="92" height="92" viewBox="0 0 1000 1000" aria-hidden="true">
-        {/* Logoet (7 streger) med fluebenet, der tegnes ind og glider ud igen og igen (forslag D); stregen har runde ender og ingen cirkel. Ingen synlig tekst, kun animationen; skærmlæsere får label (Bjørn, 7. okt. 2026). */}
-        <g transform="translate(16.8,0)">
-          <g fill="var(--ink)">
-            <rect x="104.8" y="158" width="102.396" height="684.495" rx="15.582" />
-            <rect x="247.264" y="221.441" width="53.424" height="557.613" rx="15.582" />
-            <rect x="340.756" y="158" width="80.136" height="684.495" rx="15.582" />
-            <rect x="460.96" y="221.441" width="66.78" height="557.613" rx="15.582" />
-            <rect x="567.808" y="158" width="62.328" height="684.495" rx="15.582" />
-            <rect x="670.204" y="221.441" width="80.136" height="557.613" rx="15.582" />
-            <rect x="790.408" y="158" width="71.232" height="684.495" rx="15.582" />
-          </g>
-          <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--paper)" strokeWidth="146.916" strokeLinejoin="round" strokeLinecap="round" />
-          <polyline className="scan-loading-check" points="176.03,539.759 543.322,539.759 639.04,635.477 790.408,466.301" fill="none" stroke="var(--green)" strokeWidth="89.04" strokeLinejoin="round" strokeLinecap="round" />
-        </g>
-      </svg>
+      <LogoLoader />
       {onCancel && (
         <button type="button" className="btn btn-outline" onClick={onCancel} style={{ marginTop: 24 }}>Annuller</button>
       )}

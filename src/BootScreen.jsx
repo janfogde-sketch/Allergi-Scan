@@ -2,7 +2,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // BootScreen.jsx — SCREENS.BOOT (G6, 14. okt. 2026; ny opførsel 17. okt. 2026)
 // Vises ved appstart, mens login gendannes og onboarding-status hentes (useAuth.js).
-//  - Straks: et diskret indlæsningsikon (aldrig en tom skærm).
+//  - Straks: logoets stregkodemærke med fluebenet (LogoLoader, samme animation som scan-opslaget), i samme størrelse og midt på skærmen som iOS' opstartsbillede; aldrig en tom skærm.
 //  - Efter ca. 6 s uden svar: kun en rolig statusbesked. "Prøv igen" vises ikke, mens det oprindelige forsøg stadig kører; knappen kommer først
 //    sammen med en konstateret fejl eller timeout (failure). OBS: uden timeout i useAuth.js (kræver Jans godkendelse) kan et hængende forsøg
 //    derfor ikke afbrydes af brugeren.
@@ -15,7 +15,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useRef, useState } from "react";
-import { StateBox } from "./SharedComponents.jsx";
+import { createPortal } from "react-dom";
+import { StateBox, LogoLoader } from "./SharedComponents.jsx";
 
 export const BOOT_HELP_DELAY_MS = 6000;
 
@@ -52,14 +53,17 @@ export default function BootScreen({ failure = null, onRetry, onLogin }) {
       </div>
     );
   }
-  return (
-    <div className="screen fade-in" style={{ paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 24 }} role="status" aria-live="polite">
-        <div className="spinner" style={{ width: 24, height: 24 }} aria-hidden="true" />
-        <span style={{ fontSize: 13, color: "var(--muted)", minHeight: 20, textAlign: "center" }}>
-          {slow ? "Det tager lidt længere end normalt …" : <span className="sr-only">Åbner EatSafe …</span>}
-        </span>
-      </div>
-    </div>
+  // Samme størrelse og placering som iOS' opstartsbillede (scripts/build-splash.py: mærkets bredde = 18 % af skærmbredden, midt på skærmen),
+  // så overgangen fra opstartsbilledet til indlæsningen ikke hopper. Mærket (stregerne fylder ca. 75,7 % af svg'ens bredde) er derfor 23,8 vw.
+  // Portal: .screen.fade-in fanger position:fixed (arkitekturregel 4), og ingen fade-in, så logoet står stille fra første billede.
+  return createPortal(
+    <div role="status" aria-live="polite"
+      style={{ position: "fixed", inset: 0, zIndex: 20, background: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LogoLoader size="23.8vw" startDrawn />
+      <span style={{ position: "absolute", left: 16, right: 16, top: "calc(50% + 14vw)", fontSize: 13, color: "var(--muted)", textAlign: "center" }}>
+        {slow ? "Det tager lidt længere end normalt …" : <span className="sr-only">Åbner EatSafe …</span>}
+      </span>
+    </div>,
+    document.body
   );
 }
