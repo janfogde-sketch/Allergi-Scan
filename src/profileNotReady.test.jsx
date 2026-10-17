@@ -45,7 +45,7 @@ describe("evaluateProductForProfiles med profiler, der ikke er hentet", () => {
     const ev = evaluateProductForProfiles(me, cleanProduct, { profilesReady: false });
     expect(ev.level).toBe("unknown");
     expect(ev.label).toBe(STATUS_TEXT.unknown);
-    expect(ev.missing[0]).toBe("Din profil er ikke hentet");
+    expect(ev.missing[0]).toBe("Dine præferencer kunne ikke hentes.");
   });
   it("skjuler aldrig et fund: rød bliver rød", () => {
     const withNuts = [{ ...me[0], allergens: ["noedder"] }];

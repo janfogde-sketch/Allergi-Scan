@@ -37,7 +37,10 @@ describe("OcrUnreadableNotice", () => {
   it("siger, at listen ikke kunne læses, med gode råd og en knap til nyt billede", () => {
     render(<OcrUnreadableNotice onCapture={() => {}} />);
     expect(screen.getByText("Vi kunne ikke læse ingredienslisten")).toBeTruthy();
-    expect(screen.getByText(/Hold telefonen lige over teksten/)).toBeTruthy();
+    expect(screen.getByText("Billedet er ikke tydeligt nok til, at vi kan vurdere ingredienserne ud fra dine valgte præferencer. Prøv at tage et nyt billede.")).toBeTruthy();
+    expect(screen.getByText("Sørg for, at hele ingredienslisten er synlig og fylder det meste af billedet.")).toBeTruthy();
+    expect(screen.getByText("Tag billedet i godt lys uden skygger eller genskin.")).toBeTruthy();
+    expect(screen.getByText("Hold telefonen stille, og sørg for, at teksten er skarp.")).toBeTruthy();
     expect(screen.getByText("Tag nyt billede")).toBeTruthy();
   });
 });

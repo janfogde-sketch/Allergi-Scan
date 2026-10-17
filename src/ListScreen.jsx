@@ -2,7 +2,7 @@
 import { setSearchReturn } from "./searchReturn.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS, SUPABASE_URL } from "./constants.jsx";
-import { findProductOnList, normalizeItemName, ITEM_EXISTS_TEXT, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, profilesReady, STATUS_TEXT } from "./helpers.js";
+import { PREFS_LOAD_FAILED_TITLE, PREFS_LOAD_FAILED_TEXT, findProductOnList, normalizeItemName, ITEM_EXISTS_TEXT, productDisplayName, logSearchSelection, apiCall, makeHeaders, buildActiveProfileList, evaluateProductForProfiles, profilesReady, STATUS_TEXT } from "./helpers.js";
 import { useMeasuredHeight } from "./useMeasuredHeight.js";
 import { Icon, ProductImage, SearchResultRow, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -438,8 +438,8 @@ export default function ListScreen({
           delte klasser brugt uændret af MadpasScreen.jsx og tre steder i
           ProfileScreen.jsx, som ikke skal påvirkes. */}
       {listsError && <LoadErrorBox what="Indkøbslisterne" onRetry={() => loadShoppingList()} />}
-      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
-      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
+      {/* Præferencerne (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title={PREFS_LOAD_FAILED_TITLE} text={PREFS_LOAD_FAILED_TEXT} onAction={retryProfileLoad} />}
 
       {!listsError && shoppingList.length === 0 && (
         <div className="empty-state" style={{ paddingTop:16 }}>

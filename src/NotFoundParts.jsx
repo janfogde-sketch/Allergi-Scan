@@ -6,9 +6,9 @@ import { Icon } from "./SharedComponents.jsx";
 import { evaluateProductForProfiles, profilesHaveSelections } from "./helpers.js";
 
 export const OCR_TIPS = [
-  "Fotografér kun ingredienslisten, så den fylder det meste af billedet.",
-  "Hold telefonen lige over teksten, og sørg for godt lys uden skygger eller genskin.",
-  "Glat eventuelt emballagen ud, og hold telefonen stille, så teksten bliver skarp.",
+  "Sørg for, at hele ingredienslisten er synlig og fylder det meste af billedet.",
+  "Tag billedet i godt lys uden skygger eller genskin.",
+  "Hold telefonen stille, og sørg for, at teksten er skarp.",
 ];
 
 // Ingredienslisten kunne ikke læses: sig det tydeligt, giv gode råd, og lad brugeren tage et nyt billede.
@@ -20,9 +20,9 @@ export function OcrUnreadableNotice({ onCapture }) {
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ fontSize:14, fontWeight:800, color:"var(--ink)" }}>Vi kunne ikke læse ingredienslisten</div>
           <div style={{ fontSize:12.5, color:"var(--ink2)", lineHeight:1.5, marginTop:3 }}>
-            Vi kan derfor ikke kontrollere ingredienserne for dine valgte fødevarehensyn. Tag et nyt billede, hvor teksten er tydelig.
+            Billedet er ikke tydeligt nok til, at vi kan vurdere ingredienserne ud fra dine valgte præferencer. Prøv at tage et nyt billede.
           </div>
-          <ul style={{ margin:"8px 0 0", paddingLeft:18, fontSize:12.5, color:"var(--ink2)", lineHeight:1.5 }}>
+          <ul style={{ margin:"6px 0 0", paddingLeft:18, fontSize:12, color:"var(--ink2)", lineHeight:1.4 }}>
             {OCR_TIPS.map(t => <li key={t}>{t}</li>)}
           </ul>
         </div>

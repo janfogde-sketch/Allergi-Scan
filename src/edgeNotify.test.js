@@ -148,7 +148,7 @@ describe("edge: notify", () => {
     expect(recipients).toEqual(["user-a", "user-b"]);
   });
 
-  it("lavere allergenrisiko: kun besked i appen til dem med allergenet, aldrig push eller mail (Jan 16. okt. 2026)", async () => {
+  it("rettede allergenoplysninger: kun besked i appen til dem med allergenet, aldrig push eller mail (Jan 16. okt. 2026)", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: "m1" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     const ev = event({ kind: "product_allergen_lowered", payload: { product_id: "p1", changes: { maelkeallergi: { old: "yes", new: "no" } } } });

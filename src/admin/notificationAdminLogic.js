@@ -31,7 +31,7 @@ const NOTIFICATION_NAMES = {
   "N6:reopened": "Ticket: genåbnet",
   "N6:reply": "Ticket: svar fra teamet",
   "P1:default": "Allergener ændret på produkt",
-  "P1:lowered": "Allergen rettet ned på produkt (kun i appen)",
+  "P1:lowered": "Allergenoplysninger rettet på produkt (kun i appen)",
   "P2:default": "Invitation udløber snart",
   "P3:one": "Delt indkøbsliste: én vare",
   "P3:many": "Delt indkøbsliste: flere varer",

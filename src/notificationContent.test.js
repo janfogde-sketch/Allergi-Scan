@@ -67,13 +67,13 @@ describe("renderNotification — alle definitioner", () => {
     expect(preheader.length).toBeLessThanOrEqual(90);
   });
 
-  it("kun det delte invitationslink (N10, N11), annulleret/ændret tilbagekaldelse (P6) og lavere allergenrisiko (P1:lowered) er uden mail", () => {
+  it("kun det delte invitationslink (N10, N11), annulleret/ændret tilbagekaldelse (P6) og rettede allergenoplysninger (P1:lowered) er uden mail", () => {
     const NO_MAIL = ["N10:default", "N11:approved", "N11:declined", "P6:cancelled", "P6:updated", "P1:lowered"];
     expect(KEYS.filter((k) => !DEFINITIONS[k].mail).sort()).toEqual([...NO_MAIL].sort());
     for (const key of NO_MAIL) expect(renderNotification(key, SAMPLE).mail).toBeNull();
   });
 
-  it("lavere allergenrisiko (P1:lowered) er kun en besked i appen: ingen push og ingen mail (Jan 16. okt. 2026)", () => {
+  it("rettede allergenoplysninger (P1:lowered) er kun en besked i appen: ingen push og ingen mail (Jan 16. okt. 2026)", () => {
     expect(KEYS.filter((k) => DEFINITIONS[k].inAppOnly)).toEqual(["P1:lowered"]);
     const n = renderNotification("P1:lowered", { ...SAMPLE, productName: "Chokolade", changeSummary: "Mælkeprotein er nu registreret som ikke indeholdt" });
     expect(n.inAppOnly).toBe(true);
