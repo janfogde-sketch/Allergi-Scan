@@ -18,6 +18,18 @@ describe("installModalGuard", () => {
     await tick();
     expect(document.documentElement.classList.contains("admin-modal-open")).toBe(false);
   });
+  it("låser også op, når et vindue ligger inde i siden (ikke direkte under body) og lukkes, efter en menu har ændret body imens", async () => {
+    cleanup = installModalGuard();
+    const page = document.createElement("div"); document.body.appendChild(page);
+    const o = document.createElement("div"); o.className = "admin-modal-overlay"; page.appendChild(o);
+    await tick();
+    // en menu (portal) åbnes og lukkes, mens vinduet er åbent: låsen sættes af menuens ændring af body
+    const menu = document.createElement("div"); document.body.appendChild(menu); await tick(); menu.remove(); await tick();
+    expect(document.documentElement.classList.contains("admin-modal-open")).toBe(true);
+    o.remove(); // vinduet lukkes uden at body selv ændres
+    await tick();
+    expect(document.documentElement.classList.contains("admin-modal-open")).toBe(false);
+  });
   it("rydder helt op, når den afinstalleres", async () => {
     cleanup = installModalGuard();
     overlay();

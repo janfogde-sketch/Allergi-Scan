@@ -16,7 +16,7 @@ export function installModalGuard(doc = document, win = window) {
   const sync = () => root.classList.toggle("admin-modal-open", hasOverlay());
   sync();
   const observer = new win.MutationObserver(sync);
-  observer.observe(doc.body, { childList: true });
+  observer.observe(doc.body, { childList: true, subtree: true }); // også vinduer, der ligger inde i siden (ikke som portal): ellers bliver låsen stående, når de lukkes
 
   /** @param {Event} e */
   const onFocusIn = (e) => {
