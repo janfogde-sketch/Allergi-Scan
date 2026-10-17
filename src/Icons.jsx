@@ -20,8 +20,9 @@ import allergenSvovlImg from "./assets/icons/allergen-svovl.webp";
 // ─── E-NUMMER VÆLGER KOMPONENT ───────────────────────────────────────────────
 // ─── SIMPLE IKONER ────────────────────────────────────────────────────────────
 
-export const Icon = ({ name, size=18, color="currentColor", fill="none" }) => {
+export const Icon = ({ name, size=18, color="currentColor", fill="none", strokeWidth=1.75 }) => {
   const icons = {
+    menu: <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/>,
     home: <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>,
     scan: <><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h1M4 10h1M4 14h1M7 6h1M7 14h1M10 6h4M10 10h4M10 14h4M16 6h1M16 10h1M16 14h1"/><rect x="2" y="2" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="11" y="2" width="7" height="7" rx="1" strokeWidth="1.5"/><rect x="2" y="11" width="7" height="7" rx="1" strokeWidth="1.5"/></>,
     barcode: <><line x1="3" y1="5" x2="3" y2="19" strokeWidth="1.5"/><line x1="6" y1="5" x2="6" y2="19" strokeWidth="1"/><line x1="8.5" y1="5" x2="8.5" y2="19" strokeWidth="2.5"/><line x1="11.5" y1="5" x2="11.5" y2="19" strokeWidth="1"/><line x1="14" y1="5" x2="14" y2="19" strokeWidth="1.5"/><line x1="16.5" y1="5" x2="16.5" y2="19" strokeWidth="2.5"/><line x1="19" y1="5" x2="19" y2="19" strokeWidth="1"/><line x1="21" y1="5" x2="21" y2="19" strokeWidth="1.5"/></>,
@@ -118,7 +119,7 @@ export const Icon = ({ name, size=18, color="currentColor", fill="none" }) => {
     settings: <><line x1="4" y1="6" x2="20" y2="6" strokeLinecap="round"/><line x1="4" y1="12" x2="20" y2="12" strokeLinecap="round"/><line x1="4" y1="18" x2="20" y2="18" strokeLinecap="round"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></>,
   };
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="1.75" style={{ flexShrink:0, display:"block" }}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth} style={{ flexShrink:0, display:"block" }}>
       {icons[name]}
     </svg>
   );

@@ -1,10 +1,11 @@
 // @ts-nocheck
 import { scrollBehavior } from "./motion.js";
 import React, { useState } from "react";
+import { BackButton } from "./IconButton.jsx";
 import { createPortal } from "react-dom";
 import { SCREENS } from "./constants.jsx";
 import { traceEligible } from "./helpers.js";
-import { EatSafeWordmark, Icon, showToast } from "./SharedComponents.jsx";
+import { EatSafeWordmark, showToast } from "./SharedComponents.jsx";
 
 import { prevOnboardStep } from "./OnboardingParts.jsx";
 import { makeRenderStep1 } from "./OnboardingStep1.jsx";
@@ -248,10 +249,7 @@ export default function OnboardingScreen({
             {!editMode && (
               <div style={{ position:"relative", textAlign:"center", padding:"44px 0 20px" }}>
                 {onboardStep > 1 && (
-                  <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep, traceEligible(allergens).length > 0))} aria-label="Tilbage"
-                    style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)", background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0 }}>
-                    <Icon name="chevronLeft" size={18} color="var(--ink)" />
-                  </button>
+                  <div style={{ position:"absolute", left:20, top:"50%", transform:"translateY(-50%)" }}><BackButton onClick={() => setOnboardStep(prevOnboardStep(onboardStep, traceEligible(allergens).length > 0))} /></div>
                 )}
                 <div style={{ fontSize:20, fontWeight:800, color:"var(--ink)" }}>Opsæt din profil</div>
                 <div style={{ fontSize:13, color:"var(--ink2)", marginTop:4 }}>Tager under 2 minutter</div>
@@ -264,10 +262,7 @@ export default function OnboardingScreen({
                 tilbagepilen dér, samme boks-stil. */}
             <div style={UI.mb8}>
               {editMode && onboardStep > 1 && (
-                <button onClick={() => setOnboardStep(prevOnboardStep(onboardStep, traceEligible(allergens).length > 0))} aria-label="Tilbage"
-                  style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:10, padding:"8px 10px", cursor:"pointer", display:"flex", alignItems:"center", lineHeight:0, marginBottom:10 }}>
-                  <Icon name="chevronLeft" size={18} color="var(--ink)" />
-                </button>
+                <div style={{ marginBottom:4 }}><BackButton onClick={() => setOnboardStep(prevOnboardStep(onboardStep, traceEligible(allergens).length > 0))} /></div>
               )}
               {onboardStep > 0 && <StepBar total={5} current={onboardStep} />}
             </div>
