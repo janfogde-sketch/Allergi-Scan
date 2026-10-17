@@ -136,7 +136,7 @@ export function ConfirmDialog({ title, message, confirmLabel, cancelLabel = "Ann
 // ── Fejl- og informationstilstande (F2-4, finpudset af Bjørn 6. okt. 2026) ────
 // StateBox er den fælles inline-boks: tone "error" (rød, egentlig fejl) eller "info"
 // (neutral, fx offline med gemt resultat). Genopretning er en grøn, sekundær knap.
-export function StateBox({ tone = "info", icon, title, text, actionLabel, onAction }) {
+export function StateBox({ tone = "info", icon, title, text, actionLabel, onAction, actionDisabled = false }) {
   const isError = tone === "error";
   return (
     <div className={`state-box${isError ? " is-error" : ""}`} role={isError ? "alert" : "status"}>
@@ -144,7 +144,7 @@ export function StateBox({ tone = "info", icon, title, text, actionLabel, onActi
       <div className="state-body">
         <div className="state-title">{title}</div>
         {text && <div className="state-text">{text}</div>}
-        {onAction && <div className="state-action"><button className="btn btn-recover" onClick={onAction}>{actionLabel || "Prøv igen"}</button></div>}
+        {onAction && <div className="state-action"><button className="btn btn-recover" onClick={onAction} disabled={actionDisabled} aria-busy={actionDisabled || undefined}>{actionLabel || "Prøv igen"}</button></div>}
       </div>
     </div>
   );
