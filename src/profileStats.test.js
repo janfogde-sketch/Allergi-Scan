@@ -12,7 +12,7 @@ describe("computeScanStats", () => {
   });
   it("opslag via søgning er ikke scanninger, og et produkt, der ikke blev fundet, tæller kun i alt", () => {
     const h = [scan({ maelkeallergi: "no" }), scan({ maelkeallergi: "no" }, { found_via: "search" }), { found_via: "scan", result: "not_found" }];
-    expect(computeScanStats(h, ctx())).toMatchObject({ total: 2, withWarning: 0, withoutConflict: 1 });
+    expect(computeScanStats(h, ctx())).toMatchObject({ total: 2, withWarning: 0, withoutConflict: 1, searches: 1 });
   });
   it("ukendt data, historiske poster og scanninger uden valgte hensyn tæller aldrig som konfliktfri", () => {
     const unknown = scan({ maelkeallergi: "unknown" });
@@ -25,6 +25,6 @@ describe("computeScanStats", () => {
   it("markerer, at tallene kun gælder de seneste 50", () => {
     const h = Array.from({ length: 50 }, () => scan({ maelkeallergi: "no" }));
     expect(computeScanStats(h, ctx())).toMatchObject({ total: 50, truncated: true });
-    expect(computeScanStats([], ctx())).toEqual({ total: 0, withWarning: 0, withoutConflict: 0, truncated: false });
+    expect(computeScanStats([], ctx())).toEqual({ total: 0, withWarning: 0, withoutConflict: 0, searches: 0, truncated: false });
   });
 });

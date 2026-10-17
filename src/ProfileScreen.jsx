@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ALLERGENS, SCREENS } from "./constants.jsx";
 import { allergenChoiceLabel, initials } from "./helpers.js";
 import { Icon, AllergenGlyph } from "./SharedComponents.jsx";
@@ -28,49 +28,78 @@ import FamilyScreen from "./FamilyScreen.jsx";
 // Tre tal, ingen belønninger (streak og "dage i træk" er fjernet fra visningen, 17. okt. 2026, Bjørn). Definitionerne står i profileStats.js.
 function StatCard({ icon, iconColor, value, label, big }) {
   return (
-    <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding: big ? "12px 14px" : "10px 12px", display:"flex", alignItems:"center", gap:12, minWidth:0 }}>
+    <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding: big ? "14px 16px" : "12px 14px", display:"flex", alignItems:"center", gap:12, minWidth:0 }}>
       <Icon name={icon} size={big ? 20 : 18} color={iconColor} />
       <div style={{ minWidth:0 }}>
-        <div style={{ fontSize: big ? 26 : 22, fontWeight:800, color:"var(--ink)", lineHeight:1.1, letterSpacing:"-.3px" }}>{value}</div>
+        <div style={{ fontSize: big ? 28 : 22, fontWeight:800, color:"var(--ink)", lineHeight:1.1, letterSpacing:"-.3px" }}>{value}</div>
         <div style={{ fontSize:12, color:"var(--ink2)", fontWeight:500, marginTop:2, lineHeight:1.3, overflowWrap:"break-word" }}>{label}</div>
       </div>
     </div>
   );
 }
 
-function ActivityCard({ stats, setScreen, SCREENS }) {
+// phase: "loading" | "error" | "empty" | "ok". Et tal vises kun, når historikken faktisk er hentet; aldrig 0 som erstatning for en fejl eller en hentning, der ikke er færdig.
+function ActivityCard({ phase, stats, onRetry, onScan, setScreen, SCREENS }) {
   const more = stats.truncated ? "+" : "";
-  return (
-    <div style={{ ...CARD, boxShadow:"none" }}>
-      <div style={{ ...UI.boldInk13, marginBottom:10 }}>Din aktivitet</div>
-      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+  const note = { fontSize:11, color:"var(--muted)", lineHeight:1.4 };
+  let body;
+  if (phase === "loading") {
+    body = <div role="status" style={{ ...note, fontSize:13, padding:"4px 0" }}>Henter din aktivitet…</div>;
+  } else if (phase === "error") {
+    body = (
+      <div role="alert" style={{ display:"flex", flexDirection:"column", gap:10, alignItems:"flex-start" }}>
+        <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.45 }}>Kunne ikke hente din aktivitet. Det betyder ikke, at du ingen scanninger har.</div>
+        <button type="button" className="btn btn-outline btn-sm" onClick={onRetry}>Prøv igen</button>
+      </div>
+    );
+  } else if (phase === "empty") {
+    body = (
+      <div style={{ display:"flex", flexDirection:"column", gap:10, alignItems:"flex-start" }}>
+        <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.45 }}>Du har ikke scannet noget endnu.</div>
+        <button type="button" className="btn btn-outline btn-sm" onClick={onScan}>Scan et produkt</button>
+      </div>
+    );
+  } else {
+    body = (
+      <>
         <StatCard big icon="search" iconColor="var(--green)" value={`${stats.total}${more}`} label="Scanninger i alt" />
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:8 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:12, alignItems:"stretch" }}>
           <StatCard icon="warning" iconColor="var(--amber)" value={`${stats.withWarning}${more}`} label="Scanninger med advarsel" />
           <StatCard icon="check" iconColor="var(--green)" value={`${stats.withoutConflict}${more}`} label="Scanninger uden registrerede konflikter" />
         </div>
-        {stats.truncated && <div style={{ fontSize:11, color:"var(--muted)", lineHeight:1.4 }}>Opgjort for dine seneste 50 scanninger og opslag.</div>}
-        <button type="button" className="row-btn" onClick={() => setScreen(SCREENS.HISTORY)}
-          style={{ minHeight:44, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }}>
-          <div style={UI.boldInk12}>Se fuld scanningshistorik</div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
+        {(stats.truncated || stats.searches > 0) && (
+          <div style={note}>
+            {stats.truncated ? "Opgjort for dine seneste 50 scanninger og opslag. " : ""}
+            {stats.searches > 0 ? `${stats.searches} opslag via søgning er ikke talt med.` : ""}
+          </div>
+        )}
+      </>
+    );
+  }
+  return (
+    <div style={{ ...CARD, boxShadow:"none" }}>
+      <div style={{ ...UI.boldInk13, marginBottom:12 }}>Din aktivitet</div>
+      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>{body}</div>
+      <button type="button" className="row-btn" onClick={() => setScreen(SCREENS.HISTORY)}
+        style={{ width:"100%", minHeight:44, marginTop:12, background:"none", border:"none", borderTop:"1px solid var(--border)", borderRadius:0, padding:"12px 2px 0", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", fontFamily:"var(--f)" }}>
+        <span style={UI.boldInk12}>Se fuld scanningshistorik</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
     </div>
   );
 }
 
 // Præferencechips: samme størrelse, afstand og skrift; kun tonen skifter med typen.
 const CHIP_TONES = {
-  allergy:   { background:"var(--red-lt)",   color:"var(--red)",   borderColor:"var(--red-md)" },
-  intolerance: { background:"var(--amber-lt)", color:"var(--amber)", borderColor:"var(--amber-md)" },
-  enumber:   { background:"var(--blue-lt)",  color:"var(--blue)",  borderColor:"var(--blue-md)" },
-  custom:    { background:"var(--surface2)", color:"var(--ink2)",  borderColor:"var(--border2)" },
+  allergy:     { background:"var(--surface2)", color:"var(--ink)",  borderColor:"var(--border2)" },
+  intolerance: { background:"var(--blue-lt)",  color:"var(--blue)", borderColor:"var(--blue-md)" },
+  enumber:     { background:"var(--surface)",  color:"var(--ink2)", borderColor:"var(--border2)" },
+  custom:      { background:"var(--surface)",  color:"var(--ink2)", borderColor:"var(--border2)" },
 };
 function PrefGroup({ label, children }) {
   return (
-    <div style={{ marginTop:10 }}>
-      <div style={{ ...UI.sectionLbl4Ink, marginBottom:6 }}>{label}</div>
+    <div style={{ marginTop:12 }}>
+      <div style={{ ...UI.sectionLbl4Ink, marginBottom:4 }}>{label}</div>
       <div className="tags">{children}</div>
     </div>
   );
@@ -79,7 +108,7 @@ const PrefChip = ({ tone, icon, children }) => (
   <div className="tag" style={CHIP_TONES[tone]}>{icon} {children}</div>
 );
 
-const CARD = { ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, marginBottom:8 };
+const CARD = { ...UI.ubgsurface_bd1pxsolid_br14_p14px16px_mb10, padding:16, marginBottom:16 };
 
 export default function ProfileScreen({
   customInput, setCustomInput,
@@ -88,7 +117,8 @@ export default function ProfileScreen({
   const { user, setUser, userId, accessToken, loginEmail } = useAuthContext();
   const { allergens, customAllerg, family, scanFamily, activeProfiles, household, setHousehold, householdLoading, loadHousehold } = useProfileContext();
   const { screen, setScreen, openLegal } = useNavigationContext();
-  const { history, loadHistory } = useHistoryContext();
+  const { history, historyLoading, historyError, loadHistory } = useHistoryContext();
+  const [histReady, setHistReady] = useState(false); // første hentning er færdig (lykkedes eller ej)
   const { selectedENumbers } = useAllergenPrefsContext();
   // Husstanden (rigtige konti) hentes nu i App.jsx (useHousehold, 1. okt. 2026), så den også kan
   // vælges som profil ved scanning m.m. — her læses den kun fra ProfileContext.
@@ -98,7 +128,7 @@ export default function ProfileScreen({
   // Historik-fanen) — uden dette viser de 0 scanninger indtil et separat
   // besøg på Historik tilfældigvis trigger et hent.
   useEffect(() => {
-    if (userId && accessToken) loadHistory("own"); // tallene her gælder altid brugerens egne scanninger, også efter familievisning i Historik
+    if (userId && accessToken) Promise.resolve(loadHistory("own")).finally(() => setHistReady(true)); // tallene her gælder altid brugerens egne scanninger, også efter familievisning i Historik
   }, [userId, accessToken, loadHistory]);
 
   const stats = useMemo(
@@ -119,16 +149,22 @@ export default function ProfileScreen({
   if (screen === SCREENS.FAMILY) return <FamilyScreen household={household} setHousehold={setHousehold} loadHousehold={loadHousehold} />;
   if (screen !== SCREENS.PROFILE) return null;
 
+  // Tal vises kun, når historikken er hentet: ellers loading, fejl eller en ægte tom tilstand (aldrig 0 som erstatning).
+  const activityPhase = history.length > 0 ? "ok"
+    : historyError ? "error"
+    : (historyLoading || !histReady) ? "loading"
+    : "empty";
+
   // Præferencerne grupperes efter den faktiske type: intolerancer og medicinske tilstande (fx cøliaki) for sig, resten er allergier.
   const allergenIds = allergens.filter(id => ALLERGENS.some(a => a.id === id));
   const allergyList = allergenIds.map(id => ALLERGENS.find(a => a.id === id)).filter(a => a && a.type !== "intolerance");
   const intoleranceList = allergenIds.map(id => ALLERGENS.find(a => a.id === id)).filter(a => a && a.type === "intolerance");
 
   return (
-      <div className="screen fade-in">
+      <div className="screen fade-in" style={{ paddingTop:24 }}>
 
         {/* Profilkort: kompakt, initialer til venstre, navn og e-mail, Rediger til højre */}
-        <div style={{ ...CARD, background:"var(--surface2)", display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ ...CARD, padding:"12px 16px", background:"var(--surface2)", display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ width:48, height:48, borderRadius:"50%", background:"var(--green)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, fontWeight:800, color:"var(--on-green)", flexShrink:0 }}>
             {initials(user.name||"?")}
           </div>
@@ -136,20 +172,20 @@ export default function ProfileScreen({
             <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)", letterSpacing:"-.3px", lineHeight:1.2, overflowWrap:"break-word" }}>{user.name||"Din profil"}</div>
             <div style={{ fontSize:12, color:"var(--muted)", marginTop:2, overflowWrap:"anywhere" }}>{user.email||loginEmail||""}</div>
           </div>
-          <button type="button" className="btn btn-outline btn-sm" style={{ flexShrink:0 }} onClick={() => setScreen(SCREENS.EDITPROFILE)}>Rediger</button>
+          <button type="button" className="profile-edit-btn" onClick={() => setScreen(SCREENS.EDITPROFILE)}>Rediger</button>
         </div>
 
         {/* Mine præferencer: sikkerhedskritisk, driver appens allergitjek. Kun grupper med valg vises, og alt kommer fra brugerens faktiske valg. */}
         <div style={{ ...CARD, boxShadow:"var(--sh2)" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
             <div style={UI.boldInk13}>Mine præferencer</div>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Rediger</button>
+            <button type="button" className="profile-edit-btn" onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Rediger</button>
           </div>
           {allergenIds.length + customAllerg.length + (selectedENumbers?.length || 0) === 0
             ? (
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:10 }}>
-                <Icon name="info" size={18} color="var(--muted)" />
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:10, marginTop:12 }}>
                 <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.45 }}>Du har ikke valgt nogen fødevarehensyn endnu. Tilføj dem, så EatSafe kan vurdere produkter for dig.</div>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Tilføj fødevarehensyn</button>
               </div>
             )
             : (
@@ -166,7 +202,7 @@ export default function ProfileScreen({
                 )}
                 {selectedENumbers && selectedENumbers.length > 0 && (
                   <PrefGroup label="Overvågede E-numre">
-                    {selectedENumbers.map((e,i) => <PrefChip key={`${e}-${i}`} tone="enumber" icon={<Icon name="hash" size={11} color="var(--blue)" />}>{e}</PrefChip>)}
+                    {selectedENumbers.map((e,i) => <PrefChip key={`${e}-${i}`} tone="enumber" icon={<Icon name="hash" size={11} color="var(--ink2)" />}>{e}</PrefChip>)}
                   </PrefGroup>
                 )}
                 {customAllerg.length > 0 && (
@@ -181,7 +217,7 @@ export default function ProfileScreen({
 
         {/* Familie: kun en genvej til den eksisterende Familie-side, ingen duplikeret administration. Tæller både administrerede profiler og husstandskonti. */}
         <button type="button" className="row-btn" onClick={() => setScreen(SCREENS.FAMILY)}
-          style={{ ...CARD, width:"100%", minHeight:44, display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)" }}>
+          style={{ ...CARD, width:"100%", minHeight:56, padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
             <Icon name="family" size={16} color="var(--ink)" />
             <div style={{ minWidth:0 }}>
@@ -190,15 +226,15 @@ export default function ProfileScreen({
                 {householdLoading
                   ? "Henter…"
                   : (family.length + household.length) === 0
-                    ? "Ingen i familien endnu"
-                    : `${family.length + household.length} ${family.length + household.length === 1 ? "person" : "personer"}`}
+                    ? "Ingen familiemedlemmer endnu"
+                    : `${family.length + household.length} ${family.length + household.length === 1 ? "familiemedlem" : "familiemedlemmer"}`}
               </div>
             </div>
           </div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2" style={{ flexShrink:0 }} aria-hidden="true"><path strokeLinecap="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <ActivityCard stats={stats} setScreen={setScreen} SCREENS={SCREENS} />
+        <ActivityCard phase={activityPhase} stats={stats} onRetry={() => loadHistory("own")} onScan={onScanNow} setScreen={setScreen} SCREENS={SCREENS} />
 
         {/* Konto, Push-notifikationer og Notifikations-kategorier er
             flyttet til SettingsScreen.jsx (26. sept. 2026, bruger-
@@ -206,7 +242,7 @@ export default function ProfileScreen({
             ProfileMenu.jsx's "Indstillinger", ikke længere herfra. */}
 
         {/* Footer: diskret. Bunden friholdes for den faste bundnavigation (ca. 77 px + safe area) af .screen og denne bund-padding. */}
-        <div style={{ marginTop:16, paddingBottom:"calc(64px + env(safe-area-inset-bottom))", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+        <div style={{ marginTop:8, paddingBottom:"calc(64px + env(safe-area-inset-bottom))", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
           <a href="mailto:hej@eatsafe.dk"
             style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:6, minHeight:44, padding:"0 12px", fontSize:12, fontWeight:600, color:"var(--muted)", textDecoration:"none" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
