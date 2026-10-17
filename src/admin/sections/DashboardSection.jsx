@@ -4,6 +4,7 @@ import { Icon } from "../../SharedComponents.jsx";
 import { fmtNum, lastDays, axisScale, labelIndexes } from "../statsLogic.js";
 import { useIsMobile } from "../useIsMobile.js";
 import { betaOverview } from "../todoLogic.js";
+import CloseX from "../CloseX.jsx";
 
 // Overblik: nøgletal. `to` er den naturlige administrationsside, hvis der findes en; `hint` er en kort, diskret sekundær oplysning.
 const STATS = [
@@ -162,7 +163,7 @@ function StatsInfo({ onClose }) {
       <div className="admin-modal" role="dialog" aria-modal="true" aria-label="Hvad tæller tallene" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
         <div className="admin-modal-header">
           <div style={{ fontSize: 15, fontWeight: 800 }}>Hvad tæller tallene?</div>
-          <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={onClose}>Luk</button>
+          <CloseX onClick={onClose} />
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.55 }}>
           <Row t="Brugere i alt">alle oprettede konti, også admin- og testkonti. "Nye brugere i dag" er konti oprettet siden midnat.</Row>

@@ -528,7 +528,7 @@ export default function EatSafe() {
   // ── Load brugerdata ved login → useLoadUserData ──
   const { profileLoadStatus, retryProfileLoad } = useLoadUserData({
     accessToken, userId, setUser, setSelectedENumbers, setAllergens, setCustomAllerg,
-    loadFamily, loadShoppingList, loadFavorites,
+    loadFamily, loadShoppingList, loadFavorites, loadHousehold,
   });
 
   const isOnboard = AUTH_FLOW_SCREENS.includes(screen) || editMode;

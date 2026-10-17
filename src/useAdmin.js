@@ -10,10 +10,8 @@ import { mergeFlagsUpward } from "../supabase/functions/_shared/allergenEngine.j
 const SUBMISSIONS_PAGE = 100;
 const TICKETS_PAGE = 100;
 const TICKETS_PAGE_ALL = 200;
-// Hver AI-reparse koster et AI-kald; loftet holder "Kør nu" til et overskueligt antal pr. tryk.
-const MANUAL_REPARSE_LIMIT = 25;
 // Serveren svarer ai_skipped:"daily_limit", når AI blev sprunget over pga. adminpuljen eller det samlede dagsloft (G29).
-const AI_LIMIT_TEXT = "AI-loftet for i dag er nået. Produktet er gemt med nøgleordsmotoren (middel kvalitet); \"Kør nu\" under Import kan tage det igen i morgen.";
+const AI_LIMIT_TEXT = "AI-loftet for i dag er nået. Produktet er gemt med nøgleordsmotoren (middel kvalitet); \"Kør genanalyse\" under Dataimport kan tage det igen i morgen.";
 
 export function useAdmin(accessToken, userId) {
   // State
@@ -28,9 +26,6 @@ export function useAdmin(accessToken, userId) {
   // Standard: kun aktive tickets (åbne og i gang). Løste hentes først, når nogen beder om det.
   const [adminTicketFilter, setAdminTicketFilter] = useState("active");
   const [ticketsIncludeDone, setTicketsIncludeDone] = useState(false);
-  const [revisionLog, setRevisionLog] = useState([]);
-  const [revisionLogLoading, setRevisionLogLoading] = useState(false);
-  const [revisionLogFilter, setRevisionLogFilter] = useState("all");
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState(null);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
@@ -47,8 +42,6 @@ export function useAdmin(accessToken, userId) {
   const [openTicket, setOpenTicket] = useState(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ocrImagePreview, setOcrImagePreview] = useState(null);
-  const [reparseLoading, setReparseLoading] = useState(false);
-  const [reparseLog, setReparseLog] = useState(null);
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
@@ -62,13 +55,6 @@ export function useAdmin(accessToken, userId) {
   const [openProduct, setOpenProduct] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productActionLoading, setProductActionLoading] = useState(false);
-  const [knowledgeEntries, setKnowledgeEntries] = useState([]);
-  const [knowledgeLoading, setKnowledgeLoading] = useState(false);
-  const [knowledgeSearch, setKnowledgeSearch] = useState("");
-  const [knowledgeCategoryFilter, setKnowledgeCategoryFilter] = useState("all");
-  const [openKnowledgeEntry, setOpenKnowledgeEntry] = useState(null);
-  const [editingKnowledgeEntry, setEditingKnowledgeEntry] = useState(null);
-  const [knowledgeActionLoading, setKnowledgeActionLoading] = useState(false);
 
   // Functions
   // Værn mod hurtige fane-skift: uden et token-tjek kan et ældre, langsomt
@@ -294,44 +280,6 @@ export function useAdmin(accessToken, userId) {
     return signed.startsWith("http") ? signed : `${SUPABASE_URL}/storage/v1${signed}`;
   };
 
-  // ── Ændringshistorik (revision_log) — read-only viewer ─────────────────────
-  // Bliver allerede skrevet til (submissions-godkendelse, produkt-redigering)
-  // men havde ingen visning. Product/bruger-navne på rækkerne findes ikke i
-  // selve revision_log (kun uuid'er), så de slås op i to batch-kald efter
-  // hovedlisten er hentet i stedet for én ekstra roundtrip pr. række.
-  const loadRevisionLog = async (filter) => {
-    setRevisionLogLoading(true);
-    try {
-      const f = filter ?? revisionLogFilter;
-      const typeFilter = f && f !== "all" ? `change_type=eq.${f}&` : "";
-      const rows = await apiCall(
-        `${SUPABASE_URL}/rest/v1/revision_log?${typeFilter}order=created_at.desc&limit=100`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      const entries = Array.isArray(rows) ? rows : [];
-      const productIds = [...new Set(entries.map(r => r.product_id).filter(Boolean))];
-      const userIds = [...new Set(entries.map(r => r.changed_by).filter(Boolean))];
-      const [productRows, userRows] = await Promise.all([
-        productIds.length
-          ? apiCall(`${SUPABASE_URL}/rest/v1/products?id=in.(${productIds.join(",")})&select=id,name,ean`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
-          : [],
-        userIds.length
-          ? apiCall(`${SUPABASE_URL}/rest/v1/users?id=in.(${userIds.join(",")})&select=id,name,email`, { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }).catch(() => [])
-          : [],
-      ]);
-      const productMap = Object.fromEntries((Array.isArray(productRows) ? productRows : []).map(p => [p.id, p]));
-      const userMap = Object.fromEntries((Array.isArray(userRows) ? userRows : []).map(u => [u.id, u]));
-      setRevisionLog(entries.map(r => ({
-        ...r,
-        product: r.product_id ? productMap[r.product_id] : null,
-        user: r.changed_by ? userMap[r.changed_by] : null,
-      })));
-    } catch (e) {
-      setRevisionLog([]);
-      showToast("Kunne ikke hente ændringshistorik: " + e.message, "error");
-    }
-    setRevisionLogLoading(false);
-  };
 
   // ── Global søgning ──────────────────────────────────────────────────────────
   // Søger på tværs af brugere/produkter/tickets i ét kald hver, ikke via en
@@ -358,135 +306,6 @@ export function useAdmin(accessToken, userId) {
       setGlobalSearchResults(null);
     }
     setGlobalSearchLoading(false);
-  };
-
-  // ── Leksikon (knowledge_base) — CRUD ───────────────────────────────────────
-  // RLS på knowledge_base tillader allerede insert/update/delete for admins
-  // direkte (users.role='admin'-tjek i policyen), så der er ikke brug for en
-  // separat Edge Function her — samme direkte REST-mønster som Produkter.
-  const KB_ARRAY_FIELDS = ["found_in", "alternatives", "diet_tags", "allergen_ids", "aliases", "tags", "sources"];
-
-  const kbArraysToText = (row) => {
-    const out = {};
-    for (const f of KB_ARRAY_FIELDS) out[f] = (row?.[f] || []).join(", ");
-    return out;
-  };
-  const kbTextToArrays = (form) => {
-    const out = {};
-    for (const f of KB_ARRAY_FIELDS) {
-      out[f] = (form[f] || "").split(",").map(s => s.trim()).filter(Boolean);
-    }
-    return out;
-  };
-
-  const loadKnowledgeEntries = async (query, category) => {
-    setKnowledgeLoading(true);
-    try {
-      const q = (query ?? knowledgeSearch).trim();
-      const cat = category ?? knowledgeCategoryFilter;
-      const filters = [];
-      if (q) filters.push(`or=(title.ilike.*${encodeURIComponent(q)}*,slug.ilike.*${encodeURIComponent(q)}*,summary.ilike.*${encodeURIComponent(q)}*)`);
-      if (cat && cat !== "all") filters.push(`category=eq.${cat}`);
-      const filter = filters.length ? filters.join("&") + "&" : "";
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/knowledge_base?${filter}select=id,category,title,slug,emoji,summary,status_label,updated_at&order=sort_order.asc,title.asc&limit=100`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      setKnowledgeEntries(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setKnowledgeEntries([]);
-      showToast("Kunne ikke hente leksikon-entries: " + e.message, "error");
-    }
-    setKnowledgeLoading(false);
-  };
-
-  const openKnowledgeEntryForEdit = async (row) => {
-    setOpenKnowledgeEntry(row);
-    setEditingKnowledgeEntry(null);
-    try {
-      const rows = await apiCall(
-        `${SUPABASE_URL}/rest/v1/knowledge_base?id=eq.${row.id}&select=*`,
-        { headers: { ...makeHeaders(accessToken), "Accept": "application/json" } }
-      );
-      const full = Array.isArray(rows) ? rows[0] : null;
-      if (!full) throw new Error("Entry ikke fundet");
-      setEditingKnowledgeEntry({
-        category: full.category, title: full.title, slug: full.slug, emoji: full.emoji || "",
-        summary: full.summary || "", description: full.description || "", health_notes: full.health_notes || "",
-        status_label: full.status_label || "", sort_order: full.sort_order ?? 0,
-        ...kbArraysToText(full),
-      });
-    } catch (e) {
-      showToast("Kunne ikke hente entry: " + e.message, "error");
-      setOpenKnowledgeEntry(null);
-    }
-  };
-
-  const openNewKnowledgeEntry = () => {
-    setOpenKnowledgeEntry({ id: null, isNew: true });
-    setEditingKnowledgeEntry({
-      category: "ingredient", title: "", slug: "", emoji: "", summary: "", description: "", health_notes: "",
-      status_label: "", sort_order: 0, found_in: "", alternatives: "", diet_tags: "", allergen_ids: "", aliases: "", tags: "", sources: "",
-    });
-  };
-
-  const saveKnowledgeEntry = async () => {
-    if (!openKnowledgeEntry || !editingKnowledgeEntry) return;
-    if (!editingKnowledgeEntry.title.trim() || !editingKnowledgeEntry.slug.trim()) {
-      showToast("Titel og slug er påkrævet", "error"); return;
-    }
-    setKnowledgeActionLoading(true);
-    try {
-      const body = JSON.stringify({
-        category: editingKnowledgeEntry.category,
-        title: editingKnowledgeEntry.title.trim(),
-        slug: editingKnowledgeEntry.slug.trim(),
-        emoji: editingKnowledgeEntry.emoji || null,
-        summary: editingKnowledgeEntry.summary || null,
-        description: editingKnowledgeEntry.description || null,
-        health_notes: editingKnowledgeEntry.health_notes || null,
-        status_label: editingKnowledgeEntry.status_label?.trim() || null,
-        sort_order: editingKnowledgeEntry.sort_order || 0,
-        ...kbTextToArrays(editingKnowledgeEntry),
-      });
-      if (openKnowledgeEntry.isNew) {
-        await apiCall(`${SUPABASE_URL}/rest/v1/knowledge_base`, {
-          method: "POST",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-          body,
-        });
-      } else {
-        await apiCall(`${SUPABASE_URL}/rest/v1/knowledge_base?id=eq.${openKnowledgeEntry.id}`, {
-          method: "PATCH",
-          headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-          body,
-        });
-      }
-      showToast(openKnowledgeEntry.isNew ? "Entry oprettet" : "Entry opdateret");
-      setOpenKnowledgeEntry(null); setEditingKnowledgeEntry(null);
-      loadKnowledgeEntries();
-    } catch (e) {
-      // Fanger bl.a. en dubleret slug (unique constraint) — vis den reelle
-      // Postgres-fejl i stedet for at lade gemningen fejle stille.
-      showToast("Kunne ikke gemme entry: " + e.message, "error");
-    }
-    setKnowledgeActionLoading(false);
-  };
-
-  const deleteKnowledgeEntry = async (id) => {
-    setKnowledgeActionLoading(true);
-    try {
-      await apiCall(`${SUPABASE_URL}/rest/v1/knowledge_base?id=eq.${id}`, {
-        method: "DELETE",
-        headers: { ...makeHeaders(accessToken), "Prefer": "return=minimal" },
-      });
-      setKnowledgeEntries(es => es.filter(e => e.id !== id));
-      setOpenKnowledgeEntry(null); setEditingKnowledgeEntry(null);
-      showToast("Entry slettet");
-    } catch (e) {
-      showToast("Kunne ikke slette entry: " + e.message, "error");
-    }
-    setKnowledgeActionLoading(false);
   };
 
   const updateSubmissionAndApprove = async (submission, edited) => {
@@ -703,7 +522,7 @@ export function useAdmin(accessToken, userId) {
     setBulkActionLoading(false);
     const parts = [failed > 0 ? `${succeeded} af ${ids.length} godkendt, ${failed} fejlede` : `${succeeded} indsendelser godkendt`];
     if (aiFailed > 0) parts.push(`${aiFailed} uden AI-tjek (tjek dem under Produkter)`);
-    if (aiLimited > 0) parts.push(`${aiLimited} uden AI-tjek, fordi AI-loftet for i dag er nået ("Kør nu" under Import kan tage dem igen i morgen)`);
+    if (aiLimited > 0) parts.push(`${aiLimited} uden AI-tjek, fordi AI-loftet for i dag er nået ("Kør genanalyse" under Dataimport kan tage dem igen i morgen)`);
     if (skipped > 0) parts.push(`${skipped} sprunget over`);
     showToast(parts.join(". "), failed > 0 || aiFailed > 0 || aiLimited > 0 ? "error" : "success");
     if (failed > 0) loadSubmissions(submissionFilter);
@@ -796,25 +615,6 @@ export function useAdmin(accessToken, userId) {
     setCleaningOcr(false);
   };
 
-  const runReparse = async (manual = false) => {
-    if (reparseLoading) return;
-    setReparseLoading(true);
-    setReparseLog(null);
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/auto-reparse`, {
-        method: "POST",
-        headers: { ...makeHeaders(accessToken), "Content-Type": "application/json" },
-        body: JSON.stringify({ manual, limit: manual ? MANUAL_REPARSE_LIMIT : 50 }),
-      });
-      const data = await res.json();
-      setReparseLog(data);
-    } catch (e) {
-      console.error("runReparse fejl:", e);
-      setReparseLog({ error: e.message });
-    }
-    setReparseLoading(false);
-  };
-
   return {
     // State
     submissions, setSubmissions,
@@ -844,17 +644,10 @@ export function useAdmin(accessToken, userId) {
     rejectSubmission,
     updateTicketStatus,
     cleanOcrWithAI,
-    reparseLoading, reparseLog, runReparse,
     products, productsLoading, productSearch, setProductSearch, loadProducts,
     productFilters, setProductFilters, productTotal, productHasMore, productsError, productsLoadingMore,
     openProduct, setOpenProduct, editingProduct, setEditingProduct,
     productActionLoading, openProductForEdit, saveProductEdit, deleteProduct, loadProductHistory,
-    knowledgeEntries, knowledgeLoading, knowledgeSearch, setKnowledgeSearch,
-    knowledgeCategoryFilter, setKnowledgeCategoryFilter, loadKnowledgeEntries,
-    openKnowledgeEntry, setOpenKnowledgeEntry, editingKnowledgeEntry, setEditingKnowledgeEntry,
-    knowledgeActionLoading, openKnowledgeEntryForEdit, openNewKnowledgeEntry,
-    saveKnowledgeEntry, deleteKnowledgeEntry,
-    revisionLog, revisionLogLoading, revisionLogFilter, setRevisionLogFilter, loadRevisionLog,
     selectedSubmissionIds, toggleSubmissionSelection, selectAllSubmissions, clearSubmissionSelection,
     bulkActionLoading, bulkApproveSubmissions, bulkRejectSubmissions,
     globalSearch, setGlobalSearch, globalSearchResults, setGlobalSearchResults, globalSearchLoading, runGlobalSearch,

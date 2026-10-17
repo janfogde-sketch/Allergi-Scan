@@ -30,6 +30,7 @@
 
 import { mergeFlagsUpward } from "../_shared/allergenEngine.js";
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { startRun, finishRun, runStatus } from "../_shared/runLog.ts";
 import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
 
 const CORS = {
@@ -75,8 +76,14 @@ Deno.serve(async (req) => {
     actorId = caller.id;
   }
 
+  let runId: string | null = null;
   try {
     const { manual = false, limit = 50 } = await req.json().catch(() => ({}));
+    // Kørselslog: kun én genanalyse ad gangen (automatisk og manuel kørsel kan ikke løbe samtidigt)
+    runId = await startRun(supabase, "reanalyze", isInternalCall ? "cron" : "manual");
+    if (runId === null) return new Response(JSON.stringify({ busy: true, error: "Der kører allerede en genanalyse. Prøv igen om lidt." }), {
+      status: 409, headers: { ...CORS, "Content-Type": "application/json" },
+    });
     // "Kør nu" fra admin højst 25 også her (ikke kun i panelet); cron-jobbet højst 200 som før.
     const batchLimit = Math.min(Number(limit) || 50, manual ? 25 : 200);
 
@@ -96,6 +103,7 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
     if (!products || products.length === 0) {
+      await finishRun(supabase, runId, "ok", { processed: 0, nothing_to_do: 1 }, ["Ingen produkter at genanalysere"]);
       return new Response(JSON.stringify({ reparsed: 0, skipped: 0, errors: 0, reason: "Ingen produkter at reparsere" }), {
         headers: { ...CORS, "Content-Type": "application/json" },
       });
@@ -104,6 +112,8 @@ Deno.serve(async (req) => {
     let reparsed = 0;
     let skipped = 0;
     let errors = 0;
+    let changed = 0; // produkter hvor mindst ét allergen blev hævet (nej -> spor -> ja)
+    let aiCalls = 0; // analyser hvor AI-modellen blev brugt
 
     for (const product of products) {
       if (!product.ingredients_text?.trim()) { skipped++; continue; }
@@ -134,13 +144,16 @@ Deno.serve(async (req) => {
         // Beregn kvalitetsscore baseret på metode
         const method = allergenData.method || "keyword";
         const quality = method.includes("claude") ? "high" : "medium";
+        if (method.includes("claude")) aiCalls++;
+        const merged = mergeFlagsUpward(product.allergen_flags, allergenData.allergen_flags);
+        if (JSON.stringify(merged) !== JSON.stringify(product.allergen_flags)) changed++;
 
         // Opdater produkt
         const { error: updateError } = await supabase
           .from("products")
           .update({
             // Kun opadgående (G4): en håndrettet eller deklareret værdi må aldrig sænkes af en ny beregning.
-            allergen_flags: mergeFlagsUpward(product.allergen_flags, allergenData.allergen_flags),
+            allergen_flags: merged,
             allergen_quality: quality,
             // Herkomst — se kolonnekommentaren for den fulde betydning af
             // hver værdi (forslag F fra allergen-detektions-gennemgangen,
@@ -162,6 +175,7 @@ Deno.serve(async (req) => {
       await new Promise(r => setTimeout(r, 100));
     }
 
+    await finishRun(supabase, runId, runStatus(reparsed, errors), { processed: products.length, reparsed, skipped, errors, changed, ai_calls: aiCalls }, [`${reparsed} genanalyseret, ${changed} med hævet allergen, ${errors} fejl`]);
     console.log(`auto-reparse: reparsed=${reparsed}, skipped=${skipped}, errors=${errors}, manual=${manual}`);
 
     if (actorId) {
@@ -174,6 +188,7 @@ Deno.serve(async (req) => {
 
   } catch (e) {
     console.error("auto-reparse fejl:", e);
+    await finishRun(supabase, runId, "failed", {}, [], fejlkode(e));
     if (actorId) {
       await logAdminEvent(supabase, actorId, "genanalyse_koert", "edge_function", "auto-reparse", { funktion: "auto-reparse", fejl: fejlkode(e) }, "mislykket");
     }

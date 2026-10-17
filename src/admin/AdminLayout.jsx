@@ -2,9 +2,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useIsMobile } from "./useIsMobile.js";
 import { watchTableCells } from "./tableCards.js";
+import { installModalGuard } from "./modalGuard.js";
 import { Icon, EatSafeLogo } from "../SharedComponents.jsx";
 import RefreshButton from "./RefreshButton.jsx";
 import FeedbackButton from "./FeedbackButton.jsx";
+import { MenuButton } from "../IconButton.jsx";
+import { NAV_ICON } from "../navIcon.js";
+import { CloseButton } from "../Sheets.jsx";
 import { NAV_GROUPS, NAV_ITEMS, BADGE_INFO, groupOfSection, formatBadge, worstTone } from "./navLogic.js";
 
 const SWIPE_MIN = 60; // px mod venstre for at lukke menuen på mobil
@@ -77,8 +81,23 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
   }, [drawerOpen, closeNav]);
   // Desktop: Escape gør ingenting, fordi sidebaren altid er synlig
   useEffect(() => { if (!isMobile) setNavOpen(false); }, [isMobile]);
+  // Fælles modalopførsel: ingen baggrundsscroll, felter scrolles frem, tastaturet skjules ved tryk uden for felterne
+  useEffect(() => installModalGuard(), []);
 
   const pick = (id) => { setSection(id); setNavOpen(false); };
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const accountRef = useRef(null);
+  // Kontomenuen lukker med Escape, tryk uden for kontoområdet og når hovedmenuen lukkes
+  useEffect(() => {
+    if (!accountOpen) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); setAccountOpen(false); } };
+    const onDown = (e) => { if (accountRef.current && !accountRef.current.contains(e.target)) setAccountOpen(false); };
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("pointerdown", onDown);
+    return () => { document.removeEventListener("keydown", onKey, true); document.removeEventListener("pointerdown", onDown); };
+  }, [accountOpen]);
+  const accountShown = accountOpen && (navOpen || !isMobile); // en lukket hovedmenu viser aldrig en åben kontomenu
   const toggleGroup = (id) => setExpanded((prev) => (prev === id ? null : id));
 
   // Swipe mod venstre lukker (kun et overvejende vandret træk, så lodret rulning i menuen ikke rammes)
@@ -98,10 +117,11 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
         {...(drawerOpen ? { role: "dialog", "aria-modal": "true" } : {})}
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="admin-sidebar-head">
-          <div className="admin-sidebar-logo"><EatSafeLogo variant="horizontal" size={20} /> Admin</div>
-          <button type="button" ref={closeBtnRef} className="admin-nav-close" aria-label="Luk menu" onClick={closeNav}>
-            <Icon name="x" size={18} color="var(--ink2)" />
-          </button>
+          <div className="admin-sidebar-brand"><EatSafeLogo variant="horizontal" size={24} /><span className="admin-sidebar-section">Administration</span></div>
+          <CloseButton ref={closeBtnRef} className="admin-nav-close" label="Luk menu" onClick={closeNav} />
+        </div>
+        <div className="admin-sidebar-back">
+          <a className="admin-nav-back" href="/"><Icon name="chevronLeft" size={NAV_ICON.size} strokeWidth={NAV_ICON.stroke} color={NAV_ICON.color} /><span>Tilbage til EatSafe</span></a>
         </div>
         <nav className="admin-nav" aria-label="Administration">
           {NAV_GROUPS.map((group) => {
@@ -112,7 +132,7 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
               <div key={group.id} className="admin-nav-group">
                 <button type="button" className="admin-nav-group-head" aria-expanded={isOpen} aria-controls={`nav-group-${group.id}`}
                   onClick={() => toggleGroup(group.id)}>
-                  <span className={`admin-nav-chev${isOpen ? "" : " closed"}`} aria-hidden="true"><Icon name="chevronDown" size={12} color="var(--muted)" /></span>
+                  <span className={`admin-nav-chev${isOpen ? "" : " closed"}`} aria-hidden="true"><Icon name="chevronDown" size={14} color="var(--ink2)" /></span>
                   <span className="admin-nav-group-label">{group.label}</span>
                   {!isOpen && <NavBadge count={groupTotal} tone={worstTone(groupBadges.filter((b) => b.n > 0).map((b) => b.tone))} />}
                 </button>
@@ -139,17 +159,32 @@ export default function AdminLayout({ section, setSection, userEmail, userId, ac
             );
           })}
         </nav>
-        <div className="admin-sidebar-footer">
-          <div className="admin-sidebar-user" title={userEmail}><Icon name="profile" size={14} color="var(--muted)" /><span>{userEmail}</span></div>
-          <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} />
-          <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm admin-btn-quiet" onClick={logout}><Icon name="logout" size={14} color="var(--muted)" />Log ud</button>
+        <div className="admin-sidebar-footer" ref={accountRef}>
+          {accountShown && (
+            <div id="admin-account-menu" className="admin-account-menu" role="menu" aria-label="Konto">
+              <button type="button" role="menuitem" className="admin-account-item" onClick={() => { setAccountOpen(false); if (drawerOpen) closeNav(); setFeedbackOpen(true); }}>
+                <Icon name="message" size={16} color="var(--ink2)" /><span>Send feedback</span>
+              </button>
+              <button type="button" role="menuitem" className="admin-account-item" onClick={() => { setAccountOpen(false); logout(); }}>
+                <Icon name="logout" size={16} color="var(--ink2)" /><span>Log ud</span>
+              </button>
+            </div>
+          )}
+          <button type="button" className="admin-account-row" aria-haspopup="menu" aria-expanded={accountShown} aria-controls="admin-account-menu"
+            onClick={() => setAccountOpen((v) => !v)}>
+            <span className="admin-account-avatar" aria-hidden="true"><Icon name="profile" size={16} color="var(--ink2)" /></span>
+            <span className="admin-account-text">
+              <span className="admin-account-title">Administratorkonto</span>
+              <span className="admin-account-mail" title={userEmail}>{userEmail}</span>
+            </span>
+            <span className={`admin-account-chev${accountShown ? " open" : ""}`} aria-hidden="true"><Icon name="chevronUp" size={16} color="var(--muted)" /></span>
+          </button>
+          <FeedbackButton accessToken={accessToken} userId={userId} userEmail={userEmail} section={section} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
         </div>
       </aside>
       <div className="admin-main" {...(drawerOpen ? { inert: "" } : {})}>
         <div className="admin-topbar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <button type="button" ref={menuBtnRef} className="admin-menu-btn" aria-label="Åbn menu" aria-expanded={navOpen} aria-controls="admin-sidebar" onClick={() => (navOpen ? closeNav() : openNav())}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" strokeWidth="2.2"><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-          </button>
+          <MenuButton ref={menuBtnRef} className="admin-menu-btn" aria-expanded={navOpen} aria-controls="admin-sidebar" onClick={() => (navOpen ? closeNav() : openNav())} />
           <h1>{NAV_ITEMS.find((i) => i.id === section)?.label || "Admin"}</h1>
           <div className="admin-topbar-actions">
             {onRefresh && <RefreshButton variant="header" label={refreshLabel} loading={refreshing} onClick={onRefresh} />}

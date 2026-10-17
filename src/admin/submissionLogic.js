@@ -150,3 +150,46 @@ export function submissionMissingFields(s) {
   if (!String((s && s.ocr_raw_text) || "").trim()) missing.push("ingrediensliste");
   return missing;
 }
+
+/**
+ * Energi i en indsendelse er ét tekstfelt ("1560/373", "1560 kJ / 373 kcal", "373 kcal", "1560 kJ" eller et tal, der regnes som kcal),
+ * som serveren læser (_shared/nutrition.js). Admin ser to felter; her deles og samles teksten uden at ændre, hvad serveren får.
+ * @param {unknown} raw
+ * @returns {{ kj: string, kcal: string }}
+ */
+export function splitEnergy(raw) {
+  const s = String(raw ?? "").replace(/,/g, ".").trim();
+  if (!s) return { kj: "", kcal: "" };
+  const kcalM = s.match(/(\d+(?:\.\d+)?)\s*kcal/i);
+  const kjM = s.match(/(\d+(?:\.\d+)?)\s*kj/i);
+  if (kcalM || kjM) return { kj: kjM ? kjM[1] : "", kcal: kcalM ? kcalM[1] : "" };
+  const nums = s.match(/\d+(?:\.\d+)?/g) || [];
+  if (nums.length >= 2 && s.includes("/")) return { kj: nums[0], kcal: nums[1] };
+  if (nums.length === 1) return { kj: "", kcal: nums[0] };
+  return { kj: "", kcal: "" };
+}
+
+/** @param {string} kj @param {string} kcal */
+export function joinEnergy(kj, kcal) {
+  const a = String(kj ?? "").trim(), b = String(kcal ?? "").trim();
+  if (a && b) return `${a}/${b}`;
+  if (b) return `${b} kcal`;
+  if (a) return `${a} kJ`;
+  return "";
+}
+
+/**
+ * Tæller indsendelsens allergener pr. tilstand, så administratoren får overblikket før den lange liste.
+ * @param {Record<string, string|undefined>} flags @param {{ id: string, label: string, type?: string }[]} list
+ */
+export function allergenGroups(flags, list) {
+  const out = { yes: [], traces: [], no: [], unset: [] };
+  for (const a of list) {
+    const v = flags ? flags[a.id] : undefined;
+    if (v === "yes") out.yes.push(a.label);
+    else if (v === "traces") out.traces.push(a.label);
+    else if (v === "no") out.no.push(a.label);
+    else out.unset.push(a.label);
+  }
+  return out;
+}

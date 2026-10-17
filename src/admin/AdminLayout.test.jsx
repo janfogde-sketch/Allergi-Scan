@@ -56,7 +56,7 @@ describe("kategorier", () => {
     setMobile(false);
     const setSection = vi.fn();
     mount({ setSection });
-    const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Ukendte stregkoder": "missing", Import: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", "Frafald i onboarding": "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
+    const expected = { Dashboard: "dashboard", Opgaver: "todo", Indsendelser: "submissions", Tilbagekald: "recalls", Tickets: "tickets", Produkter: "products", Leksikon: "knowledge", "Ukendte stregkoder": "missing", Dataimport: "import", Ændringshistorik: "history", Brugere: "users", Familie: "family", Notifikationer: "notifications", "Frafald i onboarding": "onboarding", Fejl: "errors", "AI-forbrug": "ai-usage", Aktivitetslog: "audit" };
     for (const [label, id] of Object.entries(expected)) {
       setSection.mockClear();
       const find = () => [...document.querySelectorAll(".admin-nav-item")].find((b) => b.querySelector(".admin-nav-label").textContent === label);
@@ -105,25 +105,59 @@ describe("antalsmarkeringer i menuen", () => {
 });
 
 describe("fast top og bund, og lukning", () => {
-  it("logo, Admin og luk-knap øverst; e-mail, feedback og Log ud nederst; kun navigationen ligger imellem", () => {
+  it("logo og Administration øverst, Tilbage til EatSafe lige under, kontorækken nederst; kun navigationen ligger imellem", () => {
     setMobile(false);
     const { container } = mount();
     const head = container.querySelector(".admin-sidebar-head");
-    expect(head.textContent).toContain("Admin");
+    expect(head.textContent).toContain("Administration");
     expect(within(head).getByRole("button", { name: "Luk menu" })).toBeTruthy();
+    const back = head.nextElementSibling;
+    expect(back.className).toBe("admin-sidebar-back");
+    const link = within(back).getByRole("link", { name: "Tilbage til EatSafe" });
+    expect(link.getAttribute("href")).toBe("/");
+    expect(back.nextElementSibling.tagName).toBe("NAV");
     const foot = container.querySelector(".admin-sidebar-footer");
-    expect(foot.textContent).toContain("bho@eatsafe.dk");
-    expect(within(foot).getByRole("button", { name: "Log ud" })).toBeTruthy();
-    expect(foot.querySelectorAll("button").length).toBe(2); // Send feedback + Log ud
-    expect(head.nextElementSibling.tagName).toBe("NAV");
     expect(foot.previousElementSibling.tagName).toBe("NAV");
+    expect(foot.textContent).toContain("Administratorkonto");
+    expect(foot.textContent).toContain("bho@eatsafe.dk");
+    expect(foot.querySelectorAll("button").length).toBe(1); // kun kontorækken, indtil den åbnes
+    expect(screen.queryByRole("menu")).toBeNull();
   });
-  it("Log ud virker som før", () => {
+  it("kontorækken åbner og lukker en kompakt menu med Send feedback og Log ud", () => {
+    setMobile(false);
+    mount();
+    const row = screen.getByRole("button", { name: /Administratorkonto/ });
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(row);
+    expect(row.getAttribute("aria-expanded")).toBe("true");
+    const menu = screen.getByRole("menu", { name: "Konto" });
+    expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Send feedback", "Log ud"]);
+    fireEvent.click(row);
+    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(row);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(row);
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+  it("Send feedback åbner det eksisterende feedbackvindue", () => {
+    setMobile(false);
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: /Administratorkonto/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Send feedback" }));
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByText("Beskriv problemet")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Luk" })).toBeTruthy();
+  });
+  it("Log ud virker som før, fra kontomenuen", () => {
     setMobile(false);
     const logout = vi.fn();
     mount({ logout });
-    fireEvent.click(screen.getByRole("button", { name: "Log ud" }));
+    fireEvent.click(screen.getByRole("button", { name: /Administratorkonto/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Log ud" }));
     expect(logout).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).toBeNull();
   });
   it("mobil: åbner som dialog, låser baggrunden og lukker med luk-knap, Escape, baggrund, swipe og Android-tilbage", () => {
     setMobile(true);
@@ -201,18 +235,17 @@ describe("opdatering i headeren", () => {
     const btn = screen.getByRole("button", { name: "Opdater siden" });
     expect(btn.disabled).toBe(true);
     expect(btn.className).toContain("spinning");
-    rerender(<AdminLayout {...base} section="import"><div /></AdminLayout>);
+    rerender(<AdminLayout {...base} section="import" onRefresh={undefined}><div /></AdminLayout>);
     expect(container.querySelector("[aria-label='Opdater siden']")).toBeNull();
   });
-  it("alle sider med data har en opdatering i AdminApp, kun Import har ingen", async () => {
+  it("alle sider med data har en opdatering i AdminApp", async () => {
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
     const { NAV_ITEMS } = await import("./navLogic.js");
     const src = readFileSync(join(process.cwd(), "src/admin/AdminApp.jsx"), "utf8");
     const block = src.slice(src.indexOf("const REFRESHERS"), src.indexOf("const refreshCurrent"));
     for (const item of NAV_ITEMS) {
-      if (item.id === "import") expect(block).not.toMatch(/\bimport\s*:/);
-      else expect(block, item.id).toMatch(new RegExp(`(^|\\s|")${item.id}"?\\s*:`));
+      expect(block, item.id).toMatch(new RegExp(`(^|\\s|")${item.id}"?\\s*:`));
     }
   });
 });

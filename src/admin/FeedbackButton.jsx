@@ -8,9 +8,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
+import ReactDOM from "react-dom";
 import { submitFeedback } from "../submitFeedback.js";
 import { compressImageToBase64 } from "../helpers.js";
 import { showToast, Icon } from "../SharedComponents.jsx";
+import CloseX from "./CloseX.jsx";
 
 const TYPES = [
   { id: "bug", label: "Fejl / bug" },
@@ -20,20 +22,27 @@ const TYPES = [
   { id: "suggestion", label: "Forslag" },
 ];
 
-export default function FeedbackButton({ accessToken, userId, userEmail, section }) {
-  const [open, setOpen] = useState(false);
+// open/onOpenChange: styres udefra (fx fra kontomenuen), og så vises ingen egen knap. Uden dem ligger knappen her som før.
+export default function FeedbackButton({ accessToken, userId, userEmail, section, open: openProp, onOpenChange }) {
+  const controlled = typeof openProp === "boolean";
+  const [openLocal, setOpenLocal] = useState(false);
+  const open = controlled ? openProp : openLocal;
+  const setOpen = (v) => { if (controlled) onOpenChange?.(v); else setOpenLocal(v); };
   const [type, setType] = useState("bug");
   const [text, setText] = useState("");
   const [image, setImage] = useState(null);
   const [imageB64, setImageB64] = useState(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [ask, setAsk] = useState(false);
 
   const reset = () => {
     if (image) URL.revokeObjectURL(image);
     setType("bug"); setText(""); setImage(null); setImageB64(null); setSending(false); setDone(false);
   };
-  const close = () => { setOpen(false); reset(); };
+  const close = () => { setOpen(false); setAsk(false); reset(); };
+  // Skrevet tekst eller billede er ikke-gemte ændringer: kassering kræver bekræftelse
+  const requestClose = () => { if (!done && !sending && (text.trim() || image)) setAsk(true); else close(); };
 
   const submit = async () => {
     if (!text.trim()) return;
@@ -64,12 +73,23 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
 
   return (
     <>
-      <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)}>
-        <Icon name="message" size={14} color="var(--ink2)" />Send feedback
-      </button>
-      {open && (
-        <div className="admin-modal-overlay" onClick={close}>
+      {!controlled && (
+        <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)}>
+          <Icon name="message" size={14} color="var(--ink2)" />Send feedback
+        </button>
+      )}
+      {open && ReactDOM.createPortal(
+        <div className="admin-modal-overlay" onClick={requestClose}>
           <div className="admin-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+            {ask && (
+              <div className="todo-confirm" role="alertdialog" aria-label="Ikke-gemte ændringer" style={{ marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Din feedback er ikke sendt endnu.</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setAsk(false)}>Bliv og skriv</button>
+                  <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={close}>Kassér</button>
+                </div>
+              </div>
+            )}
             {done ? (
               <div style={{ textAlign: "center", padding: "24px 0" }}>
                 <div style={{ fontSize: 15, fontWeight: 800 }}>Tak for din feedback!</div>
@@ -79,7 +99,7 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
               <>
                 <div className="admin-modal-header">
                   <div style={{ fontSize: 16, fontWeight: 800 }}>Send feedback</div>
-                  <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
+                  <CloseX onClick={requestClose} />
                 </div>
 
                 <div className="admin-field">
@@ -131,7 +151,8 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

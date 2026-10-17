@@ -4,8 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import AppHeader from "./AppHeader.jsx";
 
 const render = (props) => renderToStaticMarkup(React.createElement(AppHeader, { onFeedback() {}, onMenu() {}, ...props }));
-// Prikken er det eneste element med en grøn 9x9-cirkel på menuknappen.
-const hasDot = (html) => html.includes("width:9px;height:9px");
+// Prikken er den lille grønne cirkel (ibtn-dot) på den fælles menuknap.
+const hasDot = (html) => html.includes("ibtn-dot");
 
 describe("AppHeader — prik ved hamburgermenuen", () => {
   it("vises ikke, når der ingen ulæste beskeder er", () => {

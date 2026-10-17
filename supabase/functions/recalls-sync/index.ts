@@ -10,6 +10,7 @@
 // Sider uden gyldig EAN får status 'needs_review' og vises kun til admin.
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
+import { startRun, finishRun, runStatus } from "../_shared/runLog.ts";
 import {
   parseRecallFeed, parseRecallPage, isOfficialRecallUrl,
   originalTitleOfCancelled, normalizeRecallTitle, recallFingerprintText, sameEanSet,
@@ -49,6 +50,24 @@ async function findCancelledOriginal(db: Db, title: string, eans: string[]) {
   return rows.find((r) => r.status === "ready" && (r.eans ?? []).some((e) => eans.includes(e))) ?? null;
 }
 
+/** Hændelseslog (recall_events). En fejl her stopper aldrig synkroniseringen. */
+async function logEvent(db: Db, recallId: string, kind: string, details: Record<string, unknown> = {}) {
+  try { await db.from("recall_events").insert({ recall_id: recallId, kind, details }); } catch { /* aldrig blokere */ }
+}
+
+/** Skriver med de nye kolonner (raw_text, source_checked_at); findes de ikke endnu (databaseopdateringen er ikke udgivet), skrives uden dem. */
+const NEW_COLS = /raw_text|source_checked_at|schema cache/i;
+async function insertRecall(db: Db, base: Record<string, unknown>, extra: Record<string, unknown>) {
+  let r = await db.from("recalls").insert({ ...base, ...extra }).select("id").single();
+  if (r.error && NEW_COLS.test(r.error.message ?? "")) r = await db.from("recalls").insert(base).select("id").single();
+  return r;
+}
+async function updateRecall(db: Db, id: string, base: Record<string, unknown>, extra: Record<string, unknown>) {
+  let r = await db.from("recalls").update({ ...base, ...extra }).eq("id", id);
+  if (r.error && NEW_COLS.test(r.error.message ?? "")) r = await db.from("recalls").update(base).eq("id", id);
+  return r;
+}
+
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html,application/rss+xml,*/*" }, signal: AbortSignal.timeout(20000) });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
@@ -59,10 +78,17 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!serviceKey || req.headers.get("Authorization") !== `Bearer ${serviceKey}`) return json({ error: "Forbidden" }, 403);
   const db = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
+  // Kørselslog: tidspunkt og resultat af hver synkronisering, så admin kan se, om den virker (et tomt resultat er ikke bevis for, at der ingen tilbagekaldelser er)
+  const runId = await startRun(db, "recalls_sync", "cron");
+  if (runId === null) return json({ ok: false, busy: true }, 409);
+  const results = { added: 0, ready: 0, review: 0, archived: 0, failed: 0, cancelledLinked: 0, updated: 0, checked: 0 };
 
   try {
     const feed = parseRecallFeed(await fetchText(FEED_URL));
-    if (feed.length === 0) return json({ ok: true, note: "Feedet var tomt" });
+    if (feed.length === 0) {
+      await finishRun(db, runId, "failed", { ...results, feed_items: 0 }, ["Feedet var tomt eller kunne ikke læses"], "tomt_feed");
+      return json({ ok: false, note: "Feedet var tomt" }, 502);
+    }
 
     const { data: known, error: knownErr } = await db.from("recalls").select("source_url");
     if (knownErr) throw knownErr;
@@ -70,7 +96,6 @@ Deno.serve(async (req) => {
     const firstRun = seen.size === 0;
 
     const fresh = feed.filter((f) => !seen.has(f.url)).slice(0, firstRun ? 100 : MAX_NEW_PER_RUN);
-    const results = { added: 0, ready: 0, review: 0, archived: 0, failed: 0, cancelledLinked: 0, updated: 0 };
 
     for (const item of fresh) {
       if (!isOfficialRecallUrl(item.url)) continue;
@@ -83,14 +108,15 @@ Deno.serve(async (req) => {
           : ageDays > NOTIFY_WINDOW_DAYS ? "archived"
           : "ready";
 
-        const { data: row, error } = await db.from("recalls").insert({
+        const { data: row, error } = await insertRecall(db, {
           source_url: item.url, title: item.title, published_at: item.publishedAt,
           intro: page.intro, affected: page.affected, reason: page.reason, action: page.action,
           eans: page.eans, unverified_eans: page.unverifiedEans, status,
           content_hash: await sha256Hex(recallFingerprintText(page)),
-        }).select("id").single();
+        }, { raw_text: page.rawText, source_checked_at: new Date().toISOString() });
         if (error) throw error;
         results.added++;
+        await logEvent(db, row.id, "imported", { status, eans: page.eans.length, ubekraeftede: page.unverifiedEans.length, kilde: item.url });
 
         // En annulleringsside ophæver den oprindelige tilbagekaldelse; de, der fik den første besked, får besked om annulleringen.
         if (page.cancelled && !firstRun) {
@@ -98,6 +124,7 @@ Deno.serve(async (req) => {
           if (orig) {
             const { error: upErr } = await db.from("recalls").update({ status: "cancelled", cancelled_at: new Date().toISOString(), cancelled_by_url: item.url, updated_at: new Date().toISOString() }).eq("id", orig.id);
             if (upErr) throw upErr;
+            await logEvent(db, orig.id, "cancelled", { af: "Fødevarestyrelsens annulleringsside", kilde: item.url });
             await db.from("notification_events").upsert({
               event_key: `p6c:${orig.id}`, kind: "recall_cancelled", payload: { recall_id: orig.id, cancel_recall_id: row.id },
               available_at: new Date().toISOString(),
@@ -147,14 +174,21 @@ Deno.serve(async (req) => {
           const newHash = await sha256Hex(recallFingerprintText(page));
           const oldHash = row.content_hash ?? await sha256Hex(recallFingerprintText(row));
           const eansChanged = page.eans.length > 0 && !sameEanSet(page.eans, row.eans);
-          if (newHash === oldHash && !eansChanged) { if (!row.content_hash) await db.from("recalls").update({ content_hash: newHash }).eq("id", row.id); continue; }
+          results.checked++;
+          if (newHash === oldHash && !eansChanged) {
+            if (!row.content_hash) await db.from("recalls").update({ content_hash: newHash }).eq("id", row.id);
+            await updateRecall(db, row.id, {}, { source_checked_at: new Date().toISOString() });
+            continue;
+          }
           const revision = (row.revision ?? 0) + 1;
-          const { error: upErr } = await db.from("recalls").update({
+          const changed = [row.reason !== page.reason && "årsag", row.affected !== page.affected && "berørte produkter og partier", row.action !== page.action && "vejledning", eansChanged && "stregkoder"].filter(Boolean);
+          const { error: upErr } = await updateRecall(db, row.id, {
             intro: page.intro, affected: page.affected, reason: page.reason, action: page.action,
             ...(page.eans.length > 0 ? { eans: page.eans, unverified_eans: page.unverifiedEans } : {}),
             content_hash: newHash, revision, updated_at: new Date().toISOString(),
-          }).eq("id", row.id);
+          }, { raw_text: page.rawText, source_checked_at: new Date().toISOString() });
           if (upErr) throw upErr;
+          await logEvent(db, row.id, "updated", { revision, aendret: changed, varsling: "lagt i kø" });
           await db.from("notification_events").upsert({
             event_key: `p6u:${row.id}:${revision}`, kind: "recall_updated", payload: { recall_id: row.id },
             available_at: new Date().toISOString(),
@@ -166,9 +200,12 @@ Deno.serve(async (req) => {
         }
       }
     }
+    await finishRun(db, runId, runStatus(results.added + results.updated + results.checked, results.failed), results,
+      [`${results.added} nye, ${results.updated} opdateret, ${results.checked} genlæst, ${results.failed} fejl`]);
     return json({ ok: true, firstRun, ...results });
   } catch (e) {
     try { await db.rpc("log_client_error", { p_message: String((e as Error)?.message ?? e), p_source: "edge:recalls-sync", p_context: {} }); } catch { /* ignorer */ }
+    await finishRun(db, runId, "failed", results, [], /HTTP \d+/.test(String((e as Error)?.message)) ? "kilde_svarer_ikke" : "sync_fejlede");
     return json({ ok: false, error: "Sync fejlede" }, 500);
   }
 });

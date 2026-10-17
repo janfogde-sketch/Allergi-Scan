@@ -2,7 +2,7 @@
 // SCREENS.TICKET — brugerens egen feedback-ticket (åbnes fra "Se din feedback" på en besked).
 // Kun ejeren kan læse den (RLS). Viser den oprindelige feedback, status og teamets seneste svar.
 import React, { useEffect, useState, useCallback } from "react";
-import { Icon } from "./SharedComponents.jsx";
+import { BackButton } from "./IconButton.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { timeAgo } from "./helpers.js";
 import { fetchTicket, TICKET_STATUS_LABELS } from "./notificationsApi.js";
@@ -24,9 +24,7 @@ export default function TicketScreen({ ticketId, onBack }) {
   return (
     <div className="screen fade-in">
       <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 14px" }}>
-        <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back" style={{ position:"static" }}>
-          <span className="legal-topbar-back-circle"><Icon name="chevronLeft" size={17} color="var(--ink)" /></span>
-        </button>
+        <BackButton onClick={onBack} />
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Din feedback</div>
       </div>
 

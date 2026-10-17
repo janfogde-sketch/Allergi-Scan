@@ -92,7 +92,7 @@ const SmallToggle = (p) => <Toggle {...p} w={36} h={20} knob={16} disabledOpacit
 // On/off-række — Vibration/Lyd/Push-notifikationer.
 function ToggleRow({ label, sub, note, on, onToggle, disabled, last }) {
   return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 0", borderBottom: last ? "none" : "1px solid var(--border)" }}>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", minHeight:48, padding:"10px 0", borderBottom: last ? "none" : "1px solid var(--border)" }}>
       <div style={{ flex:1, minWidth:0, paddingRight:12 }}>
         <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)" }}>{label}</div>
         {sub && <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginTop:2 }}>{sub}</div>}
@@ -110,7 +110,7 @@ function ChevronRow({ icon, label, sub, value, onClick, last, danger }) {
   const Tag = onClick ? "button" : "div";
   return (
     <Tag {...(onClick ? { type:"button", className:"row-btn", onClick } : {})}
-      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, width:"100%", minHeight:44, padding:"12px 0", borderBottom: last ? "none" : "1px solid var(--border)", cursor: onClick ? "pointer" : "default" }}>
+      style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, width:"100%", minHeight:48, padding:"10px 0", borderBottom: last ? "none" : "1px solid var(--border)", cursor: onClick ? "pointer" : "default" }}>
       <div style={{ display:"flex", alignItems:"center", gap:10, flex:1, minWidth:0 }}>
         {icon && <Icon name={icon} size={15} color={danger ? "var(--red)" : "var(--ink2)"} />}
         <div style={{ minWidth:0 }}>
@@ -212,7 +212,7 @@ export default function SettingsScreen({
   const pushChannelUsable = pushStatus === "granted";
 
   return (
-    <div className="screen fade-in">
+    <div className="screen fade-in settings-screen">
       <div className="screen-title" style={{ textAlign:"left", width:"auto" }}>Indstillinger</div>
 
       {/* ── Madpas-sprog ── (omdøbt fra "Sprog" 28. sept. 2026, FINAL
@@ -220,11 +220,11 @@ export default function SettingsScreen({
           under et generisk "Sprog", kun Madpas har reel sprog-
           understøttelse, se filhoved-kommentaren) */}
       <div className="card">
-        <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:14, fontWeight:800, color:"var(--ink)", marginBottom:8 }}>
           <Icon name="globe" size={14} color="var(--ink)" /> Madpas-sprog
         </div>
         <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)", marginBottom:2 }}>Standardsprog til Madpas</div>
-        <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginBottom:10 }}>
+        <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginBottom:8 }}>
           Sproget dit madpas åbner i, medmindre du vælger et andet direkte på Madpas-siden.
         </div>
         {!langOpen ? (
@@ -302,7 +302,7 @@ export default function SettingsScreen({
 
         <div>
           {notifCategories.map((cat, i) => (
-            <div key={cat.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 0", borderBottom: i === notifCategories.length - 1 ? "none" : "1px solid var(--border)" }}>
+            <div key={cat.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"10px 0", borderBottom: i === notifCategories.length - 1 ? "none" : "1px solid var(--border)" }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:12.5, fontWeight:700, color:"var(--ink)" }}>{cat.label}</div>
                 <div style={{ fontSize:10.5, color:"var(--muted)", lineHeight:1.4, marginTop:2 }}>{cat.description}</div>
@@ -331,7 +331,7 @@ export default function SettingsScreen({
       </div>
 
       {/* ── Tilbagekaldelser ── (to do 0255840a) */}
-      <div className="card">
+      <div className="card" style={{ paddingTop:4, paddingBottom:4 }}>
         <ChevronRow icon="warning" label="Aktuelle tilbagekaldelser" sub="Seneste fra Fødevarestyrelsen"
           onClick={onOpenRecalls} last />
       </div>
@@ -365,9 +365,10 @@ export default function SettingsScreen({
                   onClick={() => setConfirmWithdraw(true)}>{withdrawing ? "Sletter…" : "Træk samtykke tilbage"}</button>
                 {/* Appens egen bekræftelse i stedet for window.confirm (F2-8): handlingen sletter helbredsdata permanent. */}
                 {confirmWithdraw && (
-                  <ConfirmDialog title="Træk samtykket tilbage?"
-                    message="Dine allergi- og helbredsoplysninger og din scanningshistorik slettes permanent."
-                    confirmLabel="Træk tilbage og slet"
+                  <ConfirmDialog title="Vil du trække dit samtykke tilbage?"
+                    message="Hvis du trækker dit samtykke tilbage, sletter vi de oplysninger, der behandles på grundlag af samtykket, herunder dine allergi- og helbredsoplysninger og din scanningshistorik. Sletningen gennemføres efter de frister, der er beskrevet i privatlivspolitikken."
+                    confirmLabel="Træk samtykke tilbage og slet"
+                    cancelLabel="Behold mit samtykke"
                     onCancel={() => setConfirmWithdraw(false)}
                     onConfirm={async () => {
                     setConfirmWithdraw(false);
@@ -432,25 +433,14 @@ export default function SettingsScreen({
         </div>
       </div>
 
-      {/* ── Log ud / Slet konto — flyttet til bunden af siden (29. sept.
-          2026, brugerønske, mønster fra et andet reference-screenshot) —
-          lå tidligere hhv. i et eget "Konto"-kort øverst og som et diskret
-          rødt tekstlink i "Privatliv & data"s Farezone. Nu to fulde,
-          solide knapper nederst, i den rækkefølge: Log ud (appens egen
-          mørke --ink-farve, ikke reference-billedets navy) → Slet konto
-          (rød, som brugeren eksplicit tillod). Bekræftelses-trinnet
-          ("skriv 'slet'") ligger fortsat i den delte DeleteAccountModal.jsx,
-          uændret. Bund-margin (var tidligere på "Om EatSafe"-kortet, 28.
-          sept. 2026 FINAL POLISH) er flyttet hertil, da dette nu er
-          sidens reelle sidste indhold — sikrer stadig at "Slet konto"
-          altid kan scrolles helt fri af den faste bundnavigation. */}
-      <div style={{ marginBottom:"calc(96px + env(safe-area-inset-bottom))" }}>
-        <button className="btn btn-full" onClick={clearAuth}
-          style={{ background:"var(--ink)", color:"var(--on-green)", marginBottom:10 }}>
-          Log ud
+      {/* ── Log ud / Slet konto ── nederst på siden og bevidst diskrete: Log ud som hvid knap med neutral kant, Slet konto som lille
+          rød outlineknap under den (ingen massiv fyldfarve). Bekræftelsen ("skriv 'slet'") ligger uændret i DeleteAccountModal.jsx.
+          Afstanden til den faste bundnavigation kommer fra .screen (padding-bund), så der ikke lægges luft oveni. */}
+      <div className="settings-account-actions">
+        <button type="button" className="btn btn-outline btn-full settings-logout" onClick={clearAuth}>
+          <Icon name="logout" size={16} color="var(--ink)" /> Log ud
         </button>
-        <button className="btn btn-full" onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}
-          style={{ background:"var(--red)", color:"var(--on-green)" }}>
+        <button type="button" className="btn btn-danger btn-sm settings-delete" onClick={() => { setShowDeleteAccount(true); setDeleteConfirmText(""); }}>
           Slet konto
         </button>
       </div>

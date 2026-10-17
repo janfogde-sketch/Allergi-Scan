@@ -14,6 +14,11 @@ import MissingSection from "./sections/MissingSection.jsx";
 import ImportSection from "./sections/ImportSection.jsx";
 import ProductsSection from "./sections/ProductsSection.jsx";
 import KnowledgeSection from "./sections/KnowledgeSection.jsx";
+import { useAdminKnowledge } from "./useAdminKnowledge.js";
+import { useAdminMissing } from "./useAdminMissing.js";
+import { useAdminImport } from "./useAdminImport.js";
+import { useAdminHistory } from "./useAdminHistory.js";
+import { useTicketWork } from "./useTicketWork.js";
 import HistorySection from "./sections/HistorySection.jsx";
 import FamilySection from "./sections/FamilySection.jsx";
 import ErrorsSection from "./sections/ErrorsSection.jsx";
@@ -47,6 +52,11 @@ export default function AdminApp() {
   const [section, setSection] = useState("dashboard");
   const [refreshing, setRefreshing] = useState(false);
   const clientErrors = useClientErrors(accessToken);
+  const knowledge = useAdminKnowledge(isAdmin ? accessToken : null);
+  const missing = useAdminMissing(isAdmin ? accessToken : null);
+  const dataImport = useAdminImport(isAdmin ? accessToken : null);
+  const history = useAdminHistory(isAdmin ? accessToken : null);
+  const ticketWork = useTicketWork(isAdmin ? accessToken : null, userId);
   const adminUsers = useAdminUsers(accessToken);
   const auditLog = useAuditLog(accessToken);
   const [todoPreset, setTodoPreset] = useState(null);
@@ -57,54 +67,8 @@ export default function AdminApp() {
   const adminFamily = useAdminFamily(accessToken);
   const [familySearch, setFamilySearch] = useState("");
   const todos = useAdminTodos(isAdmin ? accessToken : null, { active: section === "todo" });
-  const recalls = useAdminRecalls(isAdmin ? accessToken : null);
+  const recalls = useAdminRecalls(isAdmin ? accessToken : null, (id) => (id ? (todos.admins || []).find((a) => a.id === id)?.name || "Administrator" : "Ingen"));
   const notifications = useAdminNotifications(isAdmin ? accessToken : null, userId);
-
-  // ── Manglende EAN'er (porteret fra App.jsx — samme logik) ────────────────
-  const [missingEans, setMissingEans] = useState([]);
-  const [missingEansLoading, setMissingEansLoading] = useState(false);
-  const loadMissingEans = async () => {
-    setMissingEansLoading(true);
-    try {
-      const data = await apiCall(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?select=ean,count,first_seen,last_seen&order=count.desc&limit=100`,
-        { headers: makeHeaders(accessToken) }
-      );
-      if (Array.isArray(data)) setMissingEans(data);
-    } catch (e) {
-      showToast("Kunne ikke hente manglende EAN'er: " + e.message, "error");
-    }
-    setMissingEansLoading(false);
-  };
-  const deleteMissingEan = async (ean) => {
-    try {
-      await apiCall(
-        `${SUPABASE_URL}/rest/v1/missing_ean_log?ean=eq.${encodeURIComponent(ean)}`,
-        { method: "DELETE", headers: makeHeaders(accessToken) }
-      );
-      setMissingEans(prev => prev.filter(r => r.ean !== ean));
-    } catch (e) {
-      showToast("Kunne ikke slette EAN: " + e.message, "error");
-    }
-  };
-
-  // ── OFF-import (porteret fra App.jsx — samme logik) ───────────────────────
-  const [importLog, setImportLog] = useState(null);
-  const [importLoading, setImportLoading] = useState(false);
-  const runImport = async () => {
-    setImportLoading(true);
-    setImportLog(null);
-    try {
-      const data = await apiCall(`${SUPABASE_URL}/functions/v1/auto-import-off`, {
-        method: "POST", headers: makeHeaders(accessToken), body: JSON.stringify({}),
-      });
-      setImportLog(data);
-    } catch (e) {
-      setImportLog({ ok: false, error: e.message, stats: { imported: 0, not_on_off: 0, error: 1 }, log: [] });
-      showToast("Import fejlede: " + e.message, "error");
-    }
-    setImportLoading(false);
-  };
 
   // ── Sektion-skift henter frisk data ────────────────────────────────────────
   useEffect(() => {
@@ -112,10 +76,11 @@ export default function AdminApp() {
     if (section === "dashboard") admin.loadAdminStats();
     if (section === "submissions") admin.loadSubmissions(admin.submissionFilter);
     if (section === "tickets") admin.loadTickets();
-    if (section === "missing") loadMissingEans();
+    if (section === "missing") missing.load({});
+    if (section === "import") dataImport.load();
     if (section === "products") admin.loadProducts();
-    if (section === "knowledge") admin.loadKnowledgeEntries();
-    if (section === "history") admin.loadRevisionLog();
+    if (section === "knowledge") knowledge.load({});
+    if (section === "history") history.load({});
     if (section === "errors") clientErrors.load();
     if (section === "ai-usage") aiUsage.load();
     if (section === "todo") todos.load();
@@ -133,9 +98,10 @@ export default function AdminApp() {
     recalls: () => recalls.load(),
     tickets: () => admin.loadTickets(),
     products: () => admin.loadProducts(),
-    knowledge: () => admin.loadKnowledgeEntries(),
-    missing: () => loadMissingEans(),
-    history: () => admin.loadRevisionLog(),
+    knowledge: () => knowledge.load({}),
+    missing: () => missing.load({}),
+    import: () => dataImport.load(),
+    history: () => history.load({}),
     users: () => adminUsers.load(),
     family: () => adminFamily.load(),
     notifications: () => notifications.load(),
@@ -253,21 +219,14 @@ export default function AdminApp() {
           ticketsIncludeDone={admin.ticketsIncludeDone} loadTickets={admin.loadTickets}
           openTicket={admin.openTicket} setOpenTicket={admin.setOpenTicket}
           getTicketScreenshotUrl={admin.getTicketScreenshotUrl}
-          updateTicketStatus={async (id, status, note) => { await admin.updateTicketStatus(id, status, note); todos.load({ quiet: true }); }}
+          work={ticketWork}
+          updateTicketStatus={async (id, status, note) => { await admin.updateTicketStatus(id, status, note); todos.load({ quiet: true }); ticketWork.load(); }}
         />
       )}
       {section === "missing" && (
-        <MissingSection
-          missingEans={missingEans} missingEansLoading={missingEansLoading}
-          loadMissingEans={loadMissingEans} deleteMissingEan={deleteMissingEan}
-        />
+        <MissingSection missing={missing} onOpenProduct={(ean) => { admin.setProductSearch(ean); admin.loadProducts(ean); setSection("products"); }} />
       )}
-      {section === "import" && (
-        <ImportSection
-          importLog={importLog} importLoading={importLoading} runImport={runImport}
-          reparseLog={admin.reparseLog} reparseLoading={admin.reparseLoading} runReparse={admin.runReparse}
-        />
-      )}
+      {section === "import" && <ImportSection imp={dataImport} />}
       {section === "products" && (
         <ProductsSection
           products={admin.products} productsLoading={admin.productsLoading}
@@ -283,30 +242,14 @@ export default function AdminApp() {
         />
       )}
       {section === "knowledge" && (
-        <KnowledgeSection
-          knowledgeEntries={admin.knowledgeEntries} knowledgeLoading={admin.knowledgeLoading}
-          knowledgeSearch={admin.knowledgeSearch} setKnowledgeSearch={admin.setKnowledgeSearch}
-          knowledgeCategoryFilter={admin.knowledgeCategoryFilter} setKnowledgeCategoryFilter={admin.setKnowledgeCategoryFilter}
-          loadKnowledgeEntries={admin.loadKnowledgeEntries}
-          openKnowledgeEntry={admin.openKnowledgeEntry} setOpenKnowledgeEntry={admin.setOpenKnowledgeEntry}
-          editingKnowledgeEntry={admin.editingKnowledgeEntry} setEditingKnowledgeEntry={admin.setEditingKnowledgeEntry}
-          knowledgeActionLoading={admin.knowledgeActionLoading}
-          openKnowledgeEntryForEdit={admin.openKnowledgeEntryForEdit} openNewKnowledgeEntry={admin.openNewKnowledgeEntry}
-          saveKnowledgeEntry={admin.saveKnowledgeEntry} deleteKnowledgeEntry={admin.deleteKnowledgeEntry}
-        />
+        <KnowledgeSection knowledge={knowledge} />
       )}
-      {section === "history" && (
-        <HistorySection
-          revisionLog={admin.revisionLog} revisionLogLoading={admin.revisionLogLoading}
-          revisionLogFilter={admin.revisionLogFilter} setRevisionLogFilter={admin.setRevisionLogFilter}
-          loadRevisionLog={admin.loadRevisionLog}
-        />
-      )}
+      {section === "history" && <HistorySection history={history} onOpenProduct={(ean) => { admin.setProductSearch(ean); admin.loadProducts(ean); setSection("products"); }} />}
       {section === "errors" && <ErrorsSection {...clientErrors} />}
       {section === "audit" && <AuditLogSection {...auditLog} />}
       {section === "ai-usage" && <AiUsageSection {...aiUsage} />}
       {section === "onboarding" && <OnboardingFunnelSection {...onboardingFunnel} />}
-      {section === "recalls" && <RecallsSection {...recalls} />}
+      {section === "recalls" && <RecallsSection recalls={recalls} />}
       {section === "notifications" && <NotificationsSection {...notifications} userId={userId} />}
       {section === "todo" && (
         <TodoSection {...todos} userId={userId} preset={todoPreset}

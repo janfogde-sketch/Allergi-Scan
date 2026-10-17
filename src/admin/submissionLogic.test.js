@@ -74,3 +74,36 @@ describe("komplette indsendelser til massegodkendelse (G16)", () => {
     expect(submissionMissingFields({ type: "edit", ean: "1" })).toEqual(["produkt"]);
   });
 });
+
+import { splitEnergy, joinEnergy, allergenGroups } from "./submissionLogic.js";
+import { parseEnergyKcal } from "../../supabase/functions/_shared/nutrition.js";
+
+describe("energi i to felter", () => {
+  it("deler de formater, serveren læser", () => {
+    expect(splitEnergy("1560/373")).toEqual({ kj: "1560", kcal: "373" });
+    expect(splitEnergy("1560 kJ / 373 kcal")).toEqual({ kj: "1560", kcal: "373" });
+    expect(splitEnergy("373 kcal")).toEqual({ kj: "", kcal: "373" });
+    expect(splitEnergy("1560 kJ")).toEqual({ kj: "1560", kcal: "" });
+    expect(splitEnergy("373")).toEqual({ kj: "", kcal: "373" });
+    expect(splitEnergy("")).toEqual({ kj: "", kcal: "" });
+    expect(splitEnergy(undefined)).toEqual({ kj: "", kcal: "" });
+  });
+  it("samler til tekst, serveren læser som før", () => {
+    expect(joinEnergy("1560", "373")).toBe("1560/373");
+    expect(joinEnergy("", "373")).toBe("373 kcal");
+    expect(joinEnergy("1560", "")).toBe("1560 kJ");
+    expect(joinEnergy("", "")).toBe("");
+    for (const [kj, kcal] of [["1560", "373"], ["", "373"], ["1560", ""]]) {
+      const parsed = parseEnergyKcal(joinEnergy(kj, kcal));
+      expect(parsed).toBe(kcal ? Number(kcal) : Math.round(Number(kj) / 4.184));
+    }
+  });
+});
+
+describe("allergenGroups", () => {
+  it("deler efter tilstand, og manglende er ikke angivet", () => {
+    const list = [{ id: "a", label: "A" }, { id: "b", label: "B" }, { id: "c", label: "C" }, { id: "d", label: "D" }];
+    expect(allergenGroups({ a: "yes", b: "traces", c: "no" }, list)).toEqual({ yes: ["A"], traces: ["B"], no: ["C"], unset: ["D"] });
+    expect(allergenGroups(undefined, list).unset).toEqual(["A", "B", "C", "D"]);
+  });
+});

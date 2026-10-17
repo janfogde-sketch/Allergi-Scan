@@ -30,11 +30,11 @@ describe("opdatering beholder data", () => {
     expect(container.textContent).toContain("Henter…");
   });
   it("Ukendte stregkoder og Ændringshistorik følger samme regel", () => {
-    const m = <MissingSection missingEans={missing} missingEansLoading loadMissingEans={() => {}} deleteMissingEan={() => {}} />;
+    const m = <MissingSection missing={{ rows: missing.map((r) => ({ ean: r.ean, attempts: r.count, first_seen: r.first_seen, last_seen: r.last_seen, status: "new" })), loading: true, total: missing.length, summary: null, error: null, hasMore: false, load: () => {} }} />;
     let r = render(ui(m, true));
     expect(r.container.textContent).toContain("5701234000011");
     r.unmount();
-    const h = <HistorySection revisionLog={[]} revisionLogLoading revisionLogFilter="all" setRevisionLogFilter={() => {}} loadRevisionLog={() => {}} />;
+    const h = <HistorySection history={{ rows: [], loading: true, total: null, error: null, hasMore: false, load: () => {} }} />;
     r = render(ui(h, true));
     expect(r.container.textContent).toContain("Henter ændringshistorik…");
   });

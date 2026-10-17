@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import AdminApp from './AdminApp.jsx'
 import { adminCss } from './adminTheme.js'
+import { installInputModality } from '../inputModality.js'
+
+installInputModality()
 
 const styleEl = document.createElement('style')
 styleEl.textContent = adminCss

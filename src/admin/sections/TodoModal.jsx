@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { showToast, Icon } from "../../SharedComponents.jsx";
 import ActionsMenu from "../ActionsMenu.jsx";
 import { useIsMobile } from "../useIsMobile.js";
+import CloseX from "../CloseX.jsx";
 import {
   STATUS_LABELS, PRIORITY_LABELS, TRACK_LABELS, ACTIVITY_FIELD_LABELS, activityValue, activityActor, personName, authorName, fmtDanishDateTime, fmtDanishDate, isLongComment, buildTodoPrompt,
 } from "../todoLogic.js";
@@ -188,7 +189,7 @@ export default function TodoModal({ todo, isNew = false, admins, userId, comment
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
             <ActionsMenu items={menuItems} compact={isMobile} />
-            <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={requestClose} aria-label="Luk">Luk</button>
+            <CloseX onClick={requestClose} />
           </div>
         </div>
 

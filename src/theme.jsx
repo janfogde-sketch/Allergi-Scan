@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import scanHeroBg from "./assets/home/scan-hero-bg.webp";
+import { iconButtonCss } from "./iconButtonCss.js";
 
 const THEME = {
   // Baggrunde — ren hvid, ingen farvet undertone (24. sept. 2026-redesign)
@@ -283,7 +284,8 @@ body::-webkit-scrollbar{display:none;}
   mask-image:linear-gradient(to bottom, black 0%, black 65%, transparent 100%);
 }
 /* Dækkende header (9. okt. 2026, Bjørn): på alle skærme undtagen forsiden (kamera/baggrundsfoto) står indholdet ikke og skinner igennem ved scroll. */
-.app-solid-header .topbar::before{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;-webkit-mask-image:none;mask-image:none;box-shadow:0 1px 0 var(--border);}
+/* Baggrundslaget rækker 160 px op over headeren og maler et dækkende bånd: på iPhone (hjemmeskærm) ruller indhold ellers synligt op bag statuslinjen, hvor sticky-headeren ikke når. Uafhængigt af den enkelte iOS-version og af safe-area-værdier. */
+.app-solid-header .topbar::before{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;-webkit-mask-image:none;mask-image:none;top:-160px;box-shadow:0 1px 0 var(--border);}
 /* Produktsiden (9. okt. 2026): flade kort med diskret kant, produktbilledet er det primære element. */
 .result-page .card,.result-page .product-hero{box-shadow:none;}
 .topbar-logo{display:flex;align-items:center;gap:8px;}
@@ -358,28 +360,6 @@ body::-webkit-scrollbar{display:none;}
      bred desktop-skærm. */
   position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:60;
 }
-/* 44×44px touch-target BEVARET (eksplicit krav), men det SYNLIGE, farvede
-   spor er nu en mindre, lettere cirkel centreret indeni — samme "usynlig
-   trykflade rundt om et mindre synligt element"-mønster som Settings-
-   skærmens Toggle-komponent bruger andre steder i appen. Selve knappen
-   (.legal-topbar-back) er nu uden baggrund/kant/skygge — kun den indre
-   .legal-topbar-back-circle bærer det visuelle udtryk, mindre og lettere
-   end før (44px farvet cirkel + skygge → 32px, ingen skygge). */
-.legal-topbar-back{
-  background:none;border:none;padding:0;
-  width:44px;height:44px;flex-shrink:0;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-/* 32→36px (29. sept. 2026, "Polér designet... så de ser ens og mere
-   gennemførte ud" — "tilbageknappen en anelse større visuelt, men stadig
-   diskret") — stadig ingen skygge/mørk kant, kun en let baggrund + tynd,
-   neutral kant, så den forbliver diskret trods den lidt større flade. */
-.legal-topbar-back-circle{
-  width:36px;height:36px;border-radius:50%;
-  background:var(--paper2);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-}
-
 /* ── LAYOUT ── */
 .screen{flex:1;padding:0 16px calc(110px + env(safe-area-inset-bottom));position:relative;z-index:1;}
 /* Scan-forsidens hero-boks (idle-tilstand, kamera ikke aktivt) — skal ALTID
@@ -596,9 +576,7 @@ body::-webkit-scrollbar{display:none;}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--green-lt);border:1px solid var(--green-mid);border-radius:100px;font-size:12px;color:var(--green);font-weight:600;}
 .tag-x{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:-4px -6px -4px 0;padding:0;border:none;border-radius:50%;background:none;color:inherit;cursor:pointer;opacity:.6;}.tag-x::before{content:"";position:absolute;inset:-10px;}.tag-x:active{background:rgba(21,32,26,.08);}
 /* Klump 6b (6. okt. 2026): runde ikon-knapper (luk, ryd) og tekstlinks tilbage, altid mindst 44 px trykflade. */
-.icon-btn{width:44px;height:44px;min-height:44px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--ink);cursor:pointer;transition:transform .15s;}
-.icon-btn:active{transform:scale(.97);}
-.icon-btn.is-plain{background:none;border:none;}
+${iconButtonCss}
 .link-back{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 4px;background:none;border:none;cursor:pointer;font-family:var(--f);font-size:12px;font-weight:700;color:var(--muted);}
 .link-back:active{transform:scale(.97);}
 
@@ -1028,6 +1006,13 @@ button.filter-chip{width:auto;}
 @keyframes emptyFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 .empty-txt{font-size:15.5px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
 .empty-sub{font-size:13px;margin-top:6px;color:var(--muted);font-weight:400;line-height:1.55;max-width:260px;margin-left:auto;margin-right:auto;}
+.profile-edit-btn{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-height:44px;padding:0 14px;background:transparent;border:1px solid var(--border2);border-radius:10px;font-family:var(--f);font-size:12.5px;font-weight:600;color:var(--ink2);cursor:pointer;transition:background .15s;}
+.profile-edit-btn:hover,.profile-edit-btn:active{background:var(--surface2);}
+.settings-screen .card{padding:14px;margin-bottom:8px;}
+.settings-screen .mp-lang-dropdown,.settings-screen .mp-lang-list{margin-bottom:0;}
+.settings-account-actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0 0;}
+.btn.settings-logout{background:var(--surface);border-color:var(--border2);color:var(--ink);min-height:48px;}
+.btn.settings-delete{min-height:48px;min-width:48px;padding:8px 20px;}
 .screen-title{font-size:16px;font-weight:800;color:var(--ink);margin:10px 0 3px;letter-spacing:-.2px;text-align:center;width:100%;text-shadow:0 1px 2px rgba(255,255,255,.85),0 2px 12px rgba(255,255,255,.6);}
 .screen-sub{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4;font-weight:400;}
 #qr-reader{width:100%!important;border:none!important;min-height:200px;}

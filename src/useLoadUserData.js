@@ -7,7 +7,7 @@ import { apiCall, makeHeaders } from "./helpers.js";
 
 export function useLoadUserData({
   accessToken, userId, setUser, setSelectedENumbers, setAllergens, setCustomAllerg,
-  loadFamily, loadShoppingList, loadFavorites,
+  loadFamily, loadShoppingList, loadFavorites, loadHousehold,
 }) {
   // Status for hentningen af profil, allergener og familie (6. okt. 2026, hotfix F2-1):
   // "idle" (ikke logget ind) | "loading" | "ok" | "error". Så længe den ikke er "ok",
@@ -99,6 +99,13 @@ export function useLoadUserData({
         const familyOk = await loadFamily();
         if (cancelled) return;
         if (familyOk === false) throw new Error("Familien kunne ikke hentes");
+        // Husstandens konti (useHousehold) kan vælges som profiler ved scanning. Kan de ikke hentes, falder de stille ud af
+        // vurderingen, og et produkt kunne se grønt ud for en person, hvis allergier aldrig blev tjekket (16. okt. 2026).
+        if (loadHousehold) {
+          const householdOk = await loadHousehold();
+          if (cancelled) return;
+          if (householdOk === false) throw new Error("Husstanden kunne ikke hentes");
+        }
         setProfileLoadStatus("ok");
       } catch (e) {
         console.error("loadAll fejl:", e);

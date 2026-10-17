@@ -117,6 +117,8 @@ export function parseRecallPage(html, { title = "" } = {}) {
     eans: [...eans],
     unverifiedEans: [...unverifiedEans],
     cancelled: /^\s*ANNULLERET/i.test(title),
+    // Hele artiklen som ren tekst (afkortet), gemt som dokumentation ved siden af de udtrukne felter
+    rawText: cap(art.join("\n"), 20000),
   };
 }
 
@@ -144,4 +146,105 @@ export function sameEanSet(a, b) {
   const x = new Set(a ?? []);
   const y = new Set(b ?? []);
   return x.size === y.size && [...x].every((e) => y.has(e));
+}
+
+// ── Strukturerede berørte produkter (16. okt. 2026) ──────────────────────────────────────────────────────────────────────────────
+// Siderne er fri tekst. Her udtrækkes produktblokke (navn, stregkoder, lot, datoer) uden at gætte: det, der ikke tydeligt hører til ét produkt, markeres uncertain,
+// og den fulde originale tekst gemmes fortsat som dokumentation. Hvilken dato der hører til hvilket lot gættes aldrig, når der er flere af begge.
+
+const MONTHS = "januar|februar|marts|april|maj|juni|juli|august|september|oktober|november|december";
+const DATE_RE = new RegExp(`\\d{1,2}\\s*[.\\-/]\\s*\\d{1,2}\\s*[.\\-/]\\s*\\d{2,4}|\\d{1,2}\\.?\\s+(?:${MONTHS})\\s+\\d{4}|(?:${MONTHS})\\s+\\d{4}`, "gi");
+const K_LOT = /^(lot\s*(?:nummer|nr\.?)?|lotnr\.?|batch\s*(?:nummer|nr\.?)?|l-kode|parti\s*(?:nummer|nr\.?)?|partinr\.?)\s*[:#.]?\s*(.*)$/i;
+const K_BEST = /^(bedst før(?:-dato)?|holdbarhed\w*|sidste anvendelsesdato|udløbsdato)\s*[:.]?\s*(.*)$/i;
+const K_PROD = /^(produktionsdato|tappet|produceret|pakket)\s*[:.]?\s*(.*)$/i;
+const K_NET = /^(nettoindhold|nettovægt|vægt)\s*[:.]?\s*(.*)$/i;
+const K_BRAND = /^(mærke|brand|producent)\s*[:.]?\s*(.*)$/i;
+const K_ART = /^(varenr\.?|varenummer|art\.?\s*nr\.?)\s*[:.]?\s*(.*)$/i;
+const CARTON_WORDS = /karton|kolli|ydre|trayes?|tray|case|display|pall/i;
+const UNIT_WORDS = /styk|enhed|salgs|tube|pakke|dåse|flaske|forbruger/i;
+
+/** Tjekciffer for de første cifre i en GTIN (uden tjekcifret). */
+function gtinCheckDigit(digitsWithoutCheck) {
+  const d = String(digitsWithoutCheck).split("").map(Number).reverse();
+  let sum = 0;
+  d.forEach((n, i) => { sum += n * (i % 2 === 0 ? 3 : 1); });
+  return (10 - (sum % 10)) % 10;
+}
+
+/** GTIN-14 med indikator 1-8 er en kartonkode; den indeholdte salgsenhed er de 12 cifre efter indikatoren + nyt tjekciffer (EAN-13). Ellers null. */
+export function deriveUnitFromCarton(code) {
+  const c = String(code ?? "");
+  if (!/^[1-8]\d{13}$/.test(c) || !isValidGtin(c)) return null;
+  const base = c.slice(1, 13);
+  return base + gtinCheckDigit(base);
+}
+
+/** @returns {"carton"|"unit"|"unknown"} */
+export function gtinKind(code, hint = "") {
+  if (CARTON_WORDS.test(hint)) return "carton";
+  if (UNIT_WORDS.test(hint) && !/^[1-8]\d{13}$/.test(String(code))) return "unit";
+  if (/^[1-8]\d{13}$/.test(String(code))) return "carton";
+  return "unknown";
+}
+
+const dates = (v) => { const m = String(v ?? "").match(DATE_RE); return m ? m.map((x) => x.replace(/\s+/g, " ").trim()) : (String(v ?? "").trim() ? [String(v).trim()] : []); };
+const splitList = (v) => String(v ?? "").split(/\s*[,;]\s*|\s+og\s+|\s*\/\s*(?=[A-Za-z0-9]{3})/i).map((x) => x.trim()).filter(Boolean);
+
+function newBlock() { return { name: "", brand: null, net: null, article_no: null, eans: [], lots: [], production_dates: [], best_before: [], notes: [], lines: [] }; }
+const hasData = (b) => b.eans.length > 0 || b.lots.length > 0 || b.production_dates.length > 0 || b.best_before.length > 0;
+
+/**
+ * Tekst fra "Hvilken fødevare tilbagekaldes" → liste af produktblokke.
+ * @param {string} text
+ * @returns {Array<{ name: string, brand: string|null, net: string|null, article_no: string|null, eans: Array<{ code: string, kind: string, valid: boolean }>, lots: string[], production_dates: string[], best_before: string[], flags: string[], uncertain: boolean, raw: string }>}
+ */
+export function extractAffectedProducts(text) {
+  const lines = String(text ?? "").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const blocks = [];
+  let cur = newBlock();
+  const push = () => { if (cur.name || hasData(cur)) blocks.push(cur); cur = newBlock(); };
+  for (const line of lines) {
+    cur.lines.push(line);
+    let m;
+    if (/\b(EAN|GTIN)\b/i.test(line) && /\d{8,14}/.test(line)) {
+      const hint = line.replace(/\d{8,14}.*$/s, "");
+      for (const c of line.matchAll(/\d{8,14}/g)) cur.eans.push({ code: c[0], kind: gtinKind(c[0], hint), valid: isValidGtin(c[0]) });
+      continue;
+    }
+    if ((m = line.match(K_LOT)) && m[1]) {
+      // "Lot nr. L:007221 med bedst før den 15. 09.2027": lot og dato i samme linje hører sammen
+      const inline = m[2].match(/^(.*?)\s+med\s+(?:bedst før|holdbarhed\w*)\s+(?:den\s+)?(.*)$/i);
+      if (inline) {
+        if (cur.lots.length && cur.best_before.length) cur.notes.push("Flere partier med hver sin dato i samme blok");
+        cur.lots.push(...splitList(inline[1].replace(/^L:/i, "L:")));
+        cur.best_before.push(...dates(inline[2]));
+      } else cur.lots.push(...splitList(m[2]));
+      continue;
+    }
+    if ((m = line.match(K_BEST))) { cur.best_before.push(...dates(m[2])); continue; }
+    if ((m = line.match(K_PROD))) { cur.production_dates.push(...dates(m[2])); continue; }
+    if ((m = line.match(K_NET))) { cur.net = m[2] || null; continue; }
+    if ((m = line.match(K_BRAND))) { cur.brand = m[2] || null; continue; }
+    if ((m = line.match(K_ART))) { cur.article_no = m[2].replace(/[.,]$/, "") || null; continue; }
+    // Alt andet: en overskrift, en sætning eller et produktnavn
+    if (/:\s*$/.test(line)) { cur.lines.pop(); continue; } // "Følgende produkter er omfattet:"
+    const art = line.match(/^(.*?)[.,]?\s*Varenr\.?\s*([\d ]+)[.,]?$/i);
+    const name = art ? art[1].trim() : line;
+    if (name.length > 110 || /[.!?]\s+[A-ZÆØÅ]/.test(name)) { cur.lines.pop(); cur.notes.push(name); continue; } // sætning, ikke et navn
+    if (cur.name && (hasData(cur) || cur.name)) { cur.lines.pop(); push(); cur.lines.push(line); }
+    cur.name = name;
+    if (art) cur.article_no = art[2].trim();
+  }
+  push();
+
+  return blocks.map((b) => {
+    const flags = [];
+    if (b.eans.length === 0) flags.push("no_barcode");
+    if (b.eans.some((e) => !e.valid)) flags.push("invalid_barcode");
+    if (b.lots.length === 0 && b.best_before.length === 0 && b.production_dates.length === 0) flags.push("no_batch_info");
+    if (b.lots.length > 1 && (b.best_before.length > 1 || b.production_dates.length > 1)) flags.push("lot_date_pairing_unknown");
+    if (!b.name) flags.push("no_name");
+    if (b.notes.length && hasData(b) === false) flags.push("sentence_only");
+    return { name: b.name, brand: b.brand, net: b.net, article_no: b.article_no, eans: b.eans, lots: b.lots, production_dates: b.production_dates, best_before: b.best_before, flags, uncertain: flags.length > 0, raw: b.lines.join("\n") };
+  }).filter((b) => b.name || b.eans.length || b.lots.length);
 }

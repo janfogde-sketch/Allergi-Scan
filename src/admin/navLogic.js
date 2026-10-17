@@ -23,7 +23,7 @@ export const NAV_GROUPS = [
     { id: "knowledge",   icon: "book",     label: "Leksikon" },
     // Siden viser stregkoder, brugerne har scannet uden at finde produktet (ikke produkter uden EAN).
     { id: "missing",     icon: "barcode",  label: "Ukendte stregkoder" },
-    { id: "import",      icon: "download", label: "Import" },
+    { id: "import",      icon: "download", label: "Dataimport" },
     { id: "history",     icon: "edit",     label: "Ændringshistorik" },
   ] },
   { id: "people", label: "Brugere & kommunikation", items: [

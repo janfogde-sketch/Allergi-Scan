@@ -9,7 +9,7 @@ describe("menuens navne og ruter", () => {
     expect(label.todo).toBe("Opgaver");
     expect(label.onboarding).toBe("Frafald i onboarding");
     expect(label.history).toBe("Ændringshistorik");
-    for (const keep of [["dashboard", "Dashboard"], ["submissions", "Indsendelser"], ["recalls", "Tilbagekald"], ["tickets", "Tickets"], ["products", "Produkter"], ["knowledge", "Leksikon"], ["import", "Import"], ["users", "Brugere"], ["family", "Familie"], ["notifications", "Notifikationer"], ["errors", "Fejl"], ["ai-usage", "AI-forbrug"], ["audit", "Aktivitetslog"]]) expect(label[keep[0]]).toBe(keep[1]);
+    for (const keep of [["dashboard", "Dashboard"], ["submissions", "Indsendelser"], ["recalls", "Tilbagekald"], ["tickets", "Tickets"], ["products", "Produkter"], ["knowledge", "Leksikon"], ["import", "Dataimport"], ["users", "Brugere"], ["family", "Familie"], ["notifications", "Notifikationer"], ["errors", "Fejl"], ["ai-usage", "AI-forbrug"], ["audit", "Aktivitetslog"]]) expect(label[keep[0]]).toBe(keep[1]);
     // Siden viser stregkoder, som brugerne har scannet uden at finde produktet (ikke produkter uden EAN)
     expect(label.missing).toBe("Ukendte stregkoder");
   });

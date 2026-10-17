@@ -7,12 +7,13 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2.117.2";
 import { logAdminEvent, logAccessDenied, fejlkode } from "../_shared/adminAudit.ts";
+import { startRun, finishRun, runStatus } from "../_shared/runLog.ts";
 import { analyzeIngredients, liftGlutenFromWheat, stripHtml } from "../_shared/allergenEngine.js";
 
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const OFF_API              = "https://world.openfoodfacts.org/api/v2/product";
-const OFF_FIELDS           = "code,product_name,product_name_da,brands,categories_tags,image_url,ingredients_text,allergens_tags,nutriments";
+const OFF_FIELDS           = "code,product_name,product_name_da,brands,categories_tags,image_url,ingredients_text,allergens_tags,traces_tags,nutriments";
 const LIMIT                = 50;
 const DELAY_MS             = 500; // rate limiting mod OFF
 const RECHECK_DAYS         = 30;  // koder, der ikke findes på OFF, slås først op igen efter så mange dage
@@ -95,10 +96,17 @@ function buildAllergenFlags(product: any): Record<string, string> {
     const key = ALLERGEN_MAP[tag];
     if (key) flags[key] = "yes";
   }
+  // OFF's sporoplysninger (traces_tags) står uden for ingredienslisten og blev tabt (gennemgang 16. okt. 2026, A12):
+  // fx "Mandler med røgsmag" har spor af jordnødder hos OFF og stod med jordnødder = nej.
+  for (const tag of (product.traces_tags || [])) {
+    const key = ALLERGEN_MAP[tag];
+    if (key && flags[key] !== "yes") flags[key] = "traces";
+  }
   // en:milk dækker både mælkeprotein og mælkesukker (laktose) — OFF skelner
   // ikke mellem dem, så vi sætter konservativt begge ved mælk-indhold
   // (samme model som allergens-funktionens keyword-engine bruger)
   if (flags["maelkeallergi"] === "yes") flags["laktose"] = "yes";
+  else if (flags["maelkeallergi"] === "traces" && flags["laktose"] === "no") flags["laktose"] = "traces";
 
   // OFF's tags alene er ikke nok: de mangler spor og sammensatte ord, og "no" som standard
   // gav falske "ingen advarsler" (kodegennemgang fase 2, F3, 6. okt. 2026). Kør derfor også
@@ -179,8 +187,12 @@ Deno.serve(async (req) => {
         { funktion: "auto-import-off", antal: stats.imported, fejl_antal: stats.error, ...extra }, outcome)
     : Promise.resolve();
 
-  const stats = { imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
+  const stats = { attempted: 0, found: 0, imported: 0, not_on_off: 0, already_exists: 0, error: 0 };
   const log: string[] = [];
+  // Kørselslog: kun én import ad gangen (automatisk og manuel kørsel kan ikke løbe samtidigt)
+  const runId = await startRun(supabase, "off_import", isCron ? "cron" : "manual");
+  if (runId === null) return Response.json({ ok: false, busy: true, error: "Der kører allerede en import. Prøv igen om lidt." }, { status: 409 });
+  let stoppedEarly = false;
 
   try {
     // 1. Hent top-50 manglende EAN'er (spring koder over, som er tjekket for nylig)
@@ -194,6 +206,7 @@ Deno.serve(async (req) => {
 
     if (fetchErr) throw new Error(`missing_ean_log fejl: ${fetchErr.message}`);
     if (!missing || missing.length === 0) {
+      await finishRun(supabase, runId, "ok", { ...stats, nothing_to_do: 1 }, ["Ingen kvalificerede manglende EAN'er"]);
       return Response.json({ ok: true, message: "Ingen manglende EAN'er", stats });
     }
 
@@ -201,7 +214,7 @@ Deno.serve(async (req) => {
 
     const startedAt = Date.now();
     for (const row of missing) {
-      if (Date.now() - startedAt > 110000) { log.push("Stoppet tidligt (tidsgrænse); resten tages i nat"); break; }
+      if (Date.now() - startedAt > 110000) { log.push("Stoppet tidligt (tidsgrænse); resten tages i nat"); stoppedEarly = true; break; }
       const ean = row.ean;
 
       // 2. Tjek om den allerede eksisterer
@@ -219,6 +232,7 @@ Deno.serve(async (req) => {
       }
 
       // 3. Hent fra OFF
+      stats.attempted++;
       await sleep(DELAY_MS);
       let product: any = null;
       try {
@@ -230,6 +244,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      if (product) stats.found++;
       if (!product) {
         stats.not_on_off++;
         await supabase.from("missing_ean_log").update({ last_checked: new Date().toISOString() }).eq("ean", ean);
@@ -288,10 +303,12 @@ Deno.serve(async (req) => {
       }
     }
   } catch (e: any) {
+    await finishRun(supabase, runId, "failed", stats, log, fejlkode(e));
     await logRun("mislykket", { fejl: fejlkode(e) });
     return Response.json({ ok: false, error: e.message, stats }, { status: 500 });
   }
 
+  await finishRun(supabase, runId, runStatus(stats.imported + stats.not_on_off + stats.already_exists, stats.error, stoppedEarly), stats, log);
   await logRun("ok");
   return Response.json({ ok: true, stats, log });
 });

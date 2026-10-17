@@ -58,6 +58,8 @@ export const ALLERGEN_KEYWORDS = {
     "blé", "froment", "seigle", "orge", "avoine", "épeautre",
     // Fund fra gennemgang af nedgange (6. okt. 2026, G1): bygmalt/perlebyg manglede, plus spansk
     "bygmalt", "perlebyg", "bygflager", "trigo", "centeno", "cebada", "avena",
+    // Falsk-negativ-gennemgang (16. okt. 2026): hvedearter og -produkter, øl (bygmalt) og italienske/spanske ord
+    "triticale", "graham", "sigtemel", "øl", "hvidtøl", "maltøl", "frumento", "grano tenero", "grano duro", "semola di grano", "orzo", "segale",
   ],
   // Hvede = specifikt hvedeprotein (separat fra cøliaki/gluten)
   hvede: [
@@ -71,6 +73,10 @@ export const ALLERGEN_KEYWORDS = {
     "tarwe", "tarwebloem", "tarwemeel", "tarwezetmeel", "tarwegluten",
     "vete", "vetemjöl", "vetestärkelse", "vetegluten", "vetekli", "hvete", "hvetemel",
     "vehnä", "vehnäjauho", "vehnätärkkelys", "blé", "froment", "épeautre",
+    // Falsk-negativ-gennemgang (16. okt. 2026): hvedearter og hvedeprodukter stod kun under gluten, så en ren hvedeallergiker fik
+    // grønt for bulgur, couscous, semulje og kamut. Ris-/majssemulje fjernes i normalizeIngredientText. Spansk/italiensk hvede.
+    "kamut", "khorasan", "semulje", "semolina", "couscous", "bulgur", "freekeh", "farro", "einkorn", "emmer", "dinkel", "triticale",
+    "graham", "sigtemel", "trigo", "frumento", "grano tenero", "grano duro", "semola di grano",
   ],
   // Mælkeallergi = mælkePROTEIN (kasein, valle) — separat fra laktose
   maelkeallergi: [
@@ -110,6 +116,16 @@ export const ALLERGEN_KEYWORDS = {
     "lait", "lactosérum", "beurre", "yaourt", "caséine", "petit-lait", "crème fraîche",
     // Norsk (6. okt. 2026, G1)
     "kumelk", "kumelkprotein", "kumjölk",
+    // Falsk-negativ-gennemgang (16. okt. 2026): laktose er et mælkeprodukt (EU 1169/2011 bilag II: "mælk og produkter heraf, herunder
+    // laktose"), og "laktose" alene som ingrediens gav mælk = nej. "laktosefri"/"laktose under 0,01 %" negeres som før. Spansk/italiensk mælk.
+    "laktose", "lactose", "laktos", "mælkesukker", "milk sugar", "milchzucker", "laktoosi",
+    "leche", "latte", "lattosio", "lactosa", "queso", "formaggio", "mantequilla",
+    // Runde 2 (16. okt. 2026): ostetyper og smørblandinger med "ost"/"smør" som sidste led (korte ord matcher kun hele ord), ASCII-mælk.
+    // Nøddesmør (jordnøddesmør, mandelsmør), kakaosmør og sheasmør står bevidst ikke her.
+    "skimmelost", "skiveost", "skiveoste", "grillost", "salatost", "smelteost", "smelteoste", "hårdost", "hvidost", "skæreost", "cremeost", "kremost",
+    "mælksost", "vesterhavsost", "mozarella", "ostesauce", "ostesovs", "ostefyld", "ostekiks", "ostekrydderi", "ostepops", "ostenachos",
+    "hvidløgssmør", "kryddersmør", "trøffelsmør", "kaperssmør", "saltsmør", "smørblanding", "smørblandinger", "smørsauce", "smørsovs", "smørstegt",
+    "maelk", "maelkeprotein", "floede",
   ],
   // Laktose = mælkeSUKKER. Backend behandler laktose bredt (enhver mælke-
   // ingrediens kan indebære laktose) med en global "laktosefri"-override
@@ -134,6 +150,9 @@ export const ALLERGEN_KEYWORDS = {
     "maito", "maido", "maitojauhe", "heraproteiini", "herajauhe", "kerma", "juusto", "jogurtti", "rahka", "laktoosi",
     "lait", "lactosérum", "beurre", "yaourt", "petit-lait", "crème fraîche",
     "kumelk", "kumjölk",
+    // Falsk-negativ-gennemgang (16. okt. 2026)
+    "laktos", "leche", "latte", "lattosio", "lactosa", "queso", "formaggio",
+    "skimmelost", "skiveost", "grillost", "salatost", "smelteost", "hårdost", "hvidost", "skæreost", "cremeost", "mælksost", "vesterhavsost", "mozarella", "ostesauce", "ostesovs", "ostefyld", "maelk", "floede",
   ],
   aeg: [
     "æg", "egg", "eggs", "ovum", "hønseæg", "æggehvide", "egg white",
@@ -154,6 +173,11 @@ export const ALLERGEN_KEYWORDS = {
     "œuf", "œufs", "oeuf", "oeufs",
     // Fund fra gennemgang af nedgange (6. okt. 2026, G1): ægpulver, norsk og svensk
     "ægpulver", "ægghvide", "eggehvite", "eggepulver", "eggeplomme", "eggeblomme", "äggulor", "äggvitor",
+    // Falsk-negativ-gennemgang (16. okt. 2026): spansk/italiensk æg og æggebaserede saucer
+    // (Bearnaise/hollandaise er bevidst udeladt: essenser og saucepulver uden æg bærer samme navn og gav falske fund.)
+    "huevo", "huevos", "uovo", "uova", "aioli", "mayo",
+    // Runde 2: ASCII-æg ("spor af aeg"), tysk flertal i dativ ("mit Eiern"), hollandsk ("ei" findes allerede)
+    "aeg", "eiern",
   ],
   noedder: [
     "nødder", "mandel", "mandler", "almond", "hasselnød", "hasselnødder",
@@ -178,6 +202,10 @@ export const ALLERGEN_KEYWORDS = {
     "noisette", "noisettes", "amande", "amandes", "noix", "cajou", "pistache", "pistaches",
     // Engelsk og norsk "nuts" (6. okt. 2026, G1): "may contain traces of nuts" blev overset. Jordnødder rammes ikke ("peanuts" er et andet ord).
     "nuts", "tree nuts", "nut mix", "nøtter", "hasselnøtt", "hasselnøtter", "valnøtt", "valnøtter", "cashewnøtter",
+    // Falsk-negativ-gennemgang (16. okt. 2026): "pekan" alene, praliné/pralin, italiensk/spansk
+    "pekan", "pralin", "nocciol", "mandorl", "pistacchi", "anacardi", "anacardo", "almendra", "avellana", "nueces",
+    // Runde 2 (16. okt. 2026): svensk "mandlar" (56 produkter), ASCII-nødder, stavefejl set i butiksdata
+    "mandlar", "noedder", "noeddemel", "nøddder",
   ],
   jordnoedder: [
     "jordnød", "jordnødder", "peanut", "peanuts", "groundnut",
@@ -188,6 +216,11 @@ export const ALLERGEN_KEYWORDS = {
     "erdnuss", "erdnüsse", "erdnussöl", "erdnussbutter", "erdnussmus",
     // Hollandsk, svensk, finsk, fransk (6. okt. 2026, G1)
     "pinda", "pindas", "pindakaas", "pindapasta", "jordnöt", "jordnötter", "maapähkinä", "maapähkinää", "arachide", "arachides", "cacahuète", "cacahuètes",
+    // Falsk-negativ-gennemgang (16. okt. 2026): norsk "jordnøtter"/"peanøtter" (fx "Coop Chocolate Peanuts: peanøtter 24 %" stod med
+    // jordnødder = nej), spansk og italiensk
+    "jordnøtt", "jordnøtter", "peanøtt", "peanøtter", "cacahuet", "arachidi",
+    // Runde 2: ASCII-skrivemåde
+    "jordnoedder", "jordnoed",
   ],
   soja: [
     "soja", "soy", "soya", "glycine max", "sojabønne", "sojabønner",
@@ -203,6 +236,8 @@ export const ALLERGEN_KEYWORDS = {
     "sojabohnen", "sojalecithine", "sojaeiweiß",
     // Hollandsk, svensk, finsk, fransk (6. okt. 2026, G1)
     "sojabonen", "sojabloem", "sojaproteïne", "soija", "soijalesitiini", "soijaproteiini", "lesitiini", "lécithine", "lécithines",
+    // Falsk-negativ-gennemgang (16. okt. 2026): italiensk
+    "soia",
   ],
   fisk: [
     "fisk", "fish", "ansjos", "ansjoser", "anchovy", "anchovies", "anchois",
@@ -233,6 +268,12 @@ export const ALLERGEN_KEYWORDS = {
     "poisson", "saumon", "thon", "hareng", "morue", "huile de poisson",
     // Fund fra gennemgang af nedgange (6. okt. 2026, G1): stavefejl og sammensætninger i butiksdata
     "stenbidderrogn", "fiskepulver", "fiskegelantine", "fiskekstrakt", "bonito", "vildlaks", "rødlaks", "alaskasej",
+    // Falsk-negativ-gennemgang (16. okt. 2026): worcestersauce (ansjoser) i alle stavemåder, sardeller, kulmule m.fl., spansk/italiensk.
+    // "…fisk" som sidste led (rødfisk, hvidfisk) klares af SHORT_PATTERNS i motoren.
+    "worcester", "sardel", "kulmule", "pighvar", "havkat", "pesce", "pescado", "acciug", "anchoa", "merluzzo", "merluza", "bacalao", "tonno",
+    // Runde 2 (16. okt. 2026): "ørred" står i NO_SUBSTRING, så sammensætningerne skal stå her; hoki (i fiskepinde/rogn); dansk "anchovis";
+    // svensk/norsk fiskeord. "fiske…" som første led (FISKEROGN) klares af SHORT_PATTERNS.
+    "ørredfilet", "ørredfileter", "ørredrogn", "ørrederogn", "ørredsalat", "hoki", "anchovis", "fiskfilet", "fisksås", "fisksauce", "fiskesaus", "fisksaus", "fiskrom", "fiskerogn", "størrogn",
   ],
   skaldyr: [
     "skaldyr", "crustacean", "rejer", "reje", "tigerrejer", "shrimp", "prawn",
@@ -250,6 +291,8 @@ export const ALLERGEN_KEYWORDS = {
     "räkor", "räka", "skaldjur", "krabba", "kräftor", "kräfta", "musslor", "bläckfisk",
     "katkarapu", "katkaravut", "äyriäiset", "rapu", "simpukka", "simpukat", "osterit", "mustekala",
     "crevette", "crevettes", "crabe", "homard", "crustacés", "moules", "huître", "huîtres", "calmar", "poulpe",
+    // Falsk-negativ-gennemgang (16. okt. 2026)
+    "scampi", "langustin", "kaisergranat", "gamba", "gamber", "camaron", "camarón", "crostace", "crustáce", "calamar",
   ],
   selleri: [
     "selleri", "celery", "apium", "knoldselleri", "celeriac",
@@ -259,6 +302,7 @@ export const ALLERGEN_KEYWORDS = {
     "sellerie", "knollensellerie",
     // Hollandsk, fransk (6. okt. 2026, G1)
     "selderij", "selderie", "céleri",
+    "sedano", "apio",
   ],
   sennep: [
     "sennep", "mustard", "sinapis", "sennepsfrø", "mustard seed",
@@ -269,6 +313,7 @@ export const ALLERGEN_KEYWORDS = {
     "senf", "senfsaat", "senfmehl", "senfkörner",
     // Hollandsk, svensk, finsk, fransk (6. okt. 2026, G1)
     "mosterd", "mosterdzaad", "senap", "senapsfrö", "sinappi", "moutarde",
+    "senape", "mostaza",
   ],
   sesam: [
     "sesam", "sesame", "sesamum", "tahini", "tahin",
@@ -276,6 +321,8 @@ export const ALLERGEN_KEYWORDS = {
     "sesampasta", "sesammel", "halva", "halvah", "gomashio", "gingelly",
     // Fransk, finsk (6. okt. 2026, G1)
     "sésame", "seesami",
+    // Falsk-negativ-gennemgang (16. okt. 2026). ("hummus" bevidst udeladt: ordet står mest i brugsforslag og i dellister med egne ingredienser.)
+    "sésamo", "gomasio",
   ],
   svovl: [
     "svovldioxid", "svovl", "sulphur dioxide", "sulfur dioxide",
@@ -286,6 +333,9 @@ export const ALLERGEN_KEYWORDS = {
     "schwefeldioxid",
     // Hollandsk, svensk, finsk, fransk (6. okt. 2026, G1)
     "zwaveldioxide", "svaveldioxid", "rikkidioksidi", "dioxyde de soufre", "anhydride sulfureux",
+    "solfit", "solforos", "sulfuros",
+    // Runde 2 (16. okt. 2026): hollandsk "Bevat sulfieten" (11 vine med svovl = nej), spansk/portugisisk
+    "sulfiet", "sulfitos", "sulfitten",
   ],
   lupin: [
     "lupin", "lupine", "lupinus", "lupinfrø", "lupinmel",
@@ -301,5 +351,7 @@ export const ALLERGEN_KEYWORDS = {
     "weichtiere", "muscheln", "miesmuscheln", "tintenfisch",
     // Hollandsk, svensk, finsk, fransk (6. okt. 2026, G1)
     "weekdieren", "mosselen", "oesters", "inktvis", "musslor", "blötdjur", "bläckfisk", "nilviäiset", "simpukka", "simpukat", "osterit", "mustekala", "mollusques", "moules", "huître", "huîtres", "calmar", "poulpe",
+    // Falsk-negativ-gennemgang (16. okt. 2026): calamari/calamares, vinbjergsnegle, spansk/italiensk
+    "calamar", "sepia", "vinbjergsnegl", "cozze", "mejillon", "almeja", "pulpo", "polpo",
   ],
 };

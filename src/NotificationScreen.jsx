@@ -4,6 +4,7 @@
 // (slettet, udløbet, anden konto) ser den samme neutrale besked, så indholdet
 // aldrig afsløres. Læst-status sættes først, når beskeden er vist.
 import React, { useEffect, useState, useCallback } from "react";
+import { BackButton } from "./IconButton.jsx";
 import { Icon, ConfirmDialog, showToast } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { timeAgo } from "./helpers.js";
@@ -59,9 +60,7 @@ export default function NotificationScreen({ notificationId, markRead, onDelete,
     <div className="screen fade-in">
       <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 14px" }}>
         {/* Tilbagepil (som på øvrige undersider); kryds bruges kun i modaler. */}
-        <button onClick={onBack} aria-label="Tilbage" className="legal-topbar-back" style={{ position:"static" }}>
-          <span className="legal-topbar-back-circle"><Icon name="chevronLeft" size={17} color="var(--ink)" /></span>
-        </button>
+        <BackButton onClick={onBack} />
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Besked</div>
       </div>
 

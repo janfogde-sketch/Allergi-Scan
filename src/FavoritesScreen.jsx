@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { setProductReturn } from "./searchReturn.js";
 import { SCREENS } from "./constants.jsx";
 import { createPortal } from "react-dom";
-import { buildActiveProfileList, evaluateProductForProfiles } from "./helpers.js";
-import { Icon, ProductImage, LoadErrorBox, CloseButton } from "./SharedComponents.jsx";
+import { buildActiveProfileList, evaluateProductForProfiles, profilesReady } from "./helpers.js";
+import { Icon, ProductImage, LoadErrorBox, CloseButton, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
 import { useHistoryContext } from "./HistoryContext.jsx";
@@ -109,7 +109,7 @@ function FavoriteCategorySheet({ favorite, existingCategories, onSetCategory, on
 export default function FavoritesScreen({ household, lookupProduct }) {
   const { user } = useAuthContext();
   // Scan-profiler = egne profiler + husstandens skrivebeskyttede konti (App.jsx, 1. okt. 2026).
-  const { allergens, customAllerg, scanFamily: family, activeProfiles } = useProfileContext();
+  const { allergens, customAllerg, scanFamily: family, activeProfiles, profileLoadStatus, retryProfileLoad } = useProfileContext();
   const { favorites, favoritesScope, favoritesError, loadFavorites, toggleFavorite, setFavoriteCategory } = useHistoryContext();
   const { selectedENumbers } = useAllergenPrefsContext();
 
@@ -137,7 +137,7 @@ export default function FavoritesScreen({ household, lookupProduct }) {
   const favoriteStatus = (f) => {
     if (activeProfileList.length === 0 || !f.allergen_flags) return null;
     // Fælles statussystem (helpers.js): grøn kun med tilstrækkelige data.
-    const ev = evaluateProductForProfiles(activeProfileList, f);
+    const ev = evaluateProductForProfiles(activeProfileList, f, { profilesReady: profilesReady(profileLoadStatus) });
     const detail = ev.level === "danger" || ev.level === "warn" ? ev.reasons[0] : ev.level === "unknown" ? ev.missing[0] : null;
     // Uden friske produktdata (produktet findes ikke længere) vises et "ingen match" aldrig som grønt (G8, som Historik).
     if (ev.level === "safe" && f.freshData === false) return { status: "historical", text: "Historisk vurdering · ikke verificeret" };
@@ -184,6 +184,8 @@ export default function FavoritesScreen({ household, lookupProduct }) {
           Favoritter viser nu udelukkende gemte favoritter. */}
 
       {favoritesError && <LoadErrorBox what="Favoritterne" onRetry={() => loadFavorites(favoritesScope)} />}
+      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
 
       {!favoritesError && favorites.length === 0 && (
         <div className="empty-state">

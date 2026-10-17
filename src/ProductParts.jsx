@@ -159,7 +159,7 @@ export function ProductImage({ product, size = 64, height = size }) {
 // ── Fælles søgeresultat-kort ────────────────────────────────────────────────
 // Bruges både på forsidens Søg-skærm og i "Tilføj vare" i indkøbslisten, så
 // et søgeresultat ser ens ud uanset hvor man søger fra.
-export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, onOpen, onAddToList, onList }) {
+export const SearchResultRow = React.memo(function SearchResultRow({ product: p, effectiveIds, effectiveLevels, profiles, profilesReady = true, onOpen, onAddToList, onList }) {
   // To udregningsveje (25. sept. 2026, brugerfeedback: "hvilken profil
   // konflikten gælder" + "skriv årsagen eksplicit"):
   // - `profiles` (fra ListScreen.jsx, med den fulde aktive profil-liste) →
@@ -180,7 +180,7 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   let status, statusLabel, reasonChips, missingText = null;
   if (profiles && profiles.length > 0) {
     // Fælles statussystem (helpers.js evaluateProductForProfiles): grøn kun med tilstrækkelige data, konkrete årsager på rød/orange.
-    const ev = evaluateProductForProfiles(profiles, p);
+    const ev = evaluateProductForProfiles(profiles, p, { profilesReady });
     status = ev.level;
     statusLabel = ev.label;
     reasonChips = ev.reasons;
@@ -188,7 +188,9 @@ export const SearchResultRow = React.memo(function SearchResultRow({ product: p,
   } else {
     const cmp = compareAllergens(p.allergen_flags||{}, effectiveIds, effectiveLevels);
     const hasData = !!p.allergen_flags && Object.keys(p.allergen_flags).length > 0;
-    status = cmp.status === "danger" ? "danger" : cmp.matchedWarning.length ? "warn" : (cmp.hasUnknown || !hasData) ? "unknown" : "safe";
+    // Uden en hentet profil eller uden nogen valgte allergener er intet tjekket: aldrig grøn (16. okt. 2026).
+    const nothingChecked = !profilesReady || !(effectiveIds && effectiveIds.length);
+    status = cmp.status === "danger" ? "danger" : cmp.matchedWarning.length ? "warn" : (nothingChecked || cmp.hasUnknown || !hasData) ? "unknown" : "safe";
     statusLabel = STATUS_TEXT[status];
     reasonChips = [
       ...cmp.matchedDanger.map(id => `Indeholder ${(ALLERGENS.find(a=>a.id===id)?.label || id).toLowerCase()}`),

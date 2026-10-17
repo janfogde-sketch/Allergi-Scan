@@ -8,6 +8,7 @@ import { Icon, showToast } from "../../SharedComponents.jsx";
 import { fmtAuditDateTime } from "../auditLogic.js";
 import Disclosure from "../Disclosure.jsx";
 import { memberLabel, memberCount } from "../familyLogic.js";
+import CloseX from "../CloseX.jsx";
 
 // Samme betegnelser og farver overalt: grøn = accepteret, afdæmpet orange = afventer, grå = udløbet, afdæmpet rød = tilbagekaldt
 export const INVITE_STATUS = { pending: ["Afventer", "admin-pill-amber"], accepted: ["Accepteret", "admin-pill-green"], expired: ["Udløbet", "admin-pill-neutral"], revoked: ["Tilbagekaldt", "admin-pill-red"] };
@@ -68,7 +69,7 @@ function Panel({ title, sub, onClose, busy, children }) {
             <div id="fam-title" className="audit-sheet-title">{title}</div>
             {sub && <div className="audit-sheet-time">{sub}</div>}
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} disabled={busy} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} disabled={busy} />
         </div>
         <div className="todo-panel-body">{children}</div>
       </div>

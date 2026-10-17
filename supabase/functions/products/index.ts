@@ -16,6 +16,8 @@ function mapAllergenTags(allergenTags: string[], tracesTags: string[]) {
     "en:fish": "fisk", "en:crustaceans": "skaldyr", "en:celery": "selleri",
     "en:mustard": "sennep", "en:sesame-seeds": "sesam",
     "en:sulphur-dioxide": "svovl", "en:lupin": "lupin", "en:molluscs": "bloeddyr",
+    // OFF's taksonomi hedder "en:sulphur-dioxide-and-sulphites" (verificeret mod OFF's API 16. okt. 2026); det gamle navn beholdes for en sikkerheds skyld.
+    "en:sulphur-dioxide-and-sulphites": "svovl",
   };
   const flags: Record<string, string> = {
     gluten:"unknown", hvede:"unknown", maelkeallergi:"unknown", laktose:"unknown", aeg:"unknown", noedder:"unknown",
@@ -107,7 +109,9 @@ async function fetchFromOFF(ean: string) {
       `?fields=product_name,brands,categories,image_url,ingredients_text,nutriments,allergens_tags,traces_tags`,
       { headers: { "User-Agent": "EatSafe/1.0 (kontakt@eatsafe.dk)" } }
     );
-    if (!res.ok) return null;
+    // 404 og status 0 = produktet findes ikke hos OFF. Alt andet (netværk, 429, 5xx, ugyldigt svar) er en teknisk fejl og må ikke tælles som "manglende produkt".
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`off_${res.status}`);
     const data = await res.json();
     if (data.status === 0) return null;
     const p = data.product;
@@ -136,7 +140,7 @@ async function fetchFromOFF(ean: string) {
       allergens_tags: p.allergens_tags || [],
       traces_tags: p.traces_tags || [],
     };
-  } catch { return null; }
+  } catch (e) { throw e; }
 }
 
 // ── Gem OFF-produkt permanent i databasen ─────────────────────────────────────
@@ -274,7 +278,9 @@ Deno.serve(async (req) => {
         if (!(await withinUserLimit(supabase, lookupUser.id, "off_lookup"))) return new Response(
           JSON.stringify({ error: "Du har brugt dagens grænse for opslag af nye produkter. Prøv igen i morgen.", code: "daily_limit" }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        const offProduct = await fetchFromOFF(identifier);
+        let offProduct: Awaited<ReturnType<typeof fetchFromOFF>> = null;
+        let offFailed = false;
+        try { offProduct = await fetchFromOFF(identifier); } catch (e) { offFailed = true; console.error("OFF-opslag fejlede:", e); }
         if (offProduct) {
           let allergenFlags = mapAllergenTags(offProduct.allergens_tags, offProduct.traces_tags);
           let usedKeywordEngine = false;
@@ -307,6 +313,10 @@ Deno.serve(async (req) => {
             nutrition: offProduct.nutrition || null,
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
+
+        // Teknisk fejl hos OFF: intet registreres som manglende, og svaret markeres, så appen ikke fejlagtigt siger, at produktet ikke findes
+        if (offFailed) return new Response(JSON.stringify({ found: false, product: null, lookup_failed: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
         // Produkt ikke fundet nogen steder — log manglende EAN
         const logPromise = logMissingEan(supabase, identifier);

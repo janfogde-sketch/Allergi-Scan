@@ -1,16 +1,18 @@
 // @ts-nocheck
 import { useShowSpinner } from "../RefreshContext.js";
 import { useIsMobile } from "../useIsMobile.js";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { PRODUCT_ALLERGENS, SUPABASE_URL } from "../../constants.jsx";
 import { apiCall, makeHeaders, extractENumbers, normalizeENumber, addENumberToText } from "../../helpers.js";
 import { showToast } from "../../SharedComponents.jsx";
 import { statusPill } from "../statusTone.js";
 import {
   submissionAllergenFlags, allergenSummary, allergenLine, nameAllergenMismatch,
-  SUBMISSION_STATUS_LABELS, SUBMISSION_ACTION_LABELS, submissionTypeLabel,
+  SUBMISSION_STATUS_LABELS, SUBMISSION_ACTION_LABELS, submissionTypeLabel, splitEnergy, joinEnergy, allergenGroups,
 } from "../submissionLogic.js";
 import { privateImagePath, SUBMISSION_IMAGES_BUCKET } from "../../../supabase/functions/_shared/productImages.js";
+import CloseX from "../CloseX.jsx";
+import ImageViewer from "../ImageViewer.jsx";
 
 const fmtDate = (d) => new Intl.DateTimeFormat("da-DK", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", year: "numeric" }).format(new Date(d));
 const productName = (s) => s.ai_parsed_data?.name || s.product_name || "Ukendt produkt";
@@ -43,6 +45,7 @@ function SubmissionImage({ label, url, accessToken }) {
   const path = privateImagePath(url);
   const [src, setSrc] = useState(path ? null : url);
   const [failed, setFailed] = useState(false);
+  const [big, setBig] = useState(false);
   useEffect(() => {
     if (!path) return undefined;
     let alive = true;
@@ -60,9 +63,14 @@ function SubmissionImage({ label, url, accessToken }) {
       <label className="admin-label">{label}</label>
       {failed ? <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Billedet kunne ikke hentes.</div>
         : src ? (
-          <a href={src} target="_blank" rel="noreferrer">
-            <img src={src} alt={label} style={{ width: "100%", maxHeight: 280, objectFit: "contain", borderRadius: 8, background: "var(--surface2)" }} />
-          </a>
+          <>
+            <button type="button" onClick={() => setBig(true)} aria-label={`Forstør: ${label}`}
+              style={{ display: "block", width: "100%", padding: 0, border: "none", background: "none", cursor: "zoom-in" }}>
+              <img src={src} alt={label} style={{ width: "100%", maxHeight: 150, objectFit: "contain", borderRadius: 8, background: "var(--surface2)", display: "block" }} />
+            </button>
+            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>Tryk for at forstørre</div>
+            {big && <ImageViewer src={src} title={label} onClose={() => setBig(false)} />}
+          </>
         ) : <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Henter billede…</div>}
     </div>
   );
@@ -117,7 +125,7 @@ const FILTERS = [
 
 // Felterne brugeren udfylder i indsendelsen (trin 3); serveren omsætter dem til resultatsidens format ved godkendelse.
 const NUTRITION_FIELDS = [
-  ["energy", "Energi (kJ/kcal)"], ["fat", "Fedt (g)"], ["saturated", "- heraf mættet (g)"], ["carbs", "Kulhydrat (g)"],
+  ["fat", "Fedt (g)"], ["saturated", "- heraf mættet (g)"], ["carbs", "Kulhydrat (g)"],
   ["sugars", "- heraf sukker (g)"], ["protein", "Protein (g)"], ["salt", "Salt (g)"],
 ];
 
@@ -195,6 +203,13 @@ export default function SubmissionsSection({
   };
 
   const close = () => { setOpenSubmission(null); setEditingSubmission(null); setSubmitterInfo(null); };
+  // Ikke-gemte ændringer: sammenlignes med indholdet, da vinduet blev åbnet; kassering kræver bekræftelse
+  const [discardAsk, setDiscardAsk] = useState(false);
+  const snapRef = useRef({ id: null, json: "" });
+  if (openSubmission && editingSubmission && snapRef.current.id !== openSubmission.id) snapRef.current = { id: openSubmission.id, json: JSON.stringify(editingSubmission) };
+  if (!openSubmission && snapRef.current.id) snapRef.current = { id: null, json: "" };
+  const dirtySubmission = !!(openSubmission && editingSubmission && snapRef.current.id === openSubmission.id && snapRef.current.json !== JSON.stringify(editingSubmission));
+  const requestClose = () => { if (dirtySubmission) setDiscardAsk(true); else close(); };
 
   const isMobile = useIsMobile();
   const readOnly = !!openSubmission && openSubmission.status !== "pending"; // godkendte og afviste indsendelser kan kun ses, aldrig behandles igen herfra
@@ -272,8 +287,17 @@ export default function SubmissionsSection({
       )}
 
       {openSubmission && editingSubmission && (
-        <div className="admin-modal-overlay" onClick={close}>
+        <div className="admin-modal-overlay" onClick={requestClose}>
           <div className="admin-modal" onClick={e => e.stopPropagation()}>
+            {discardAsk && (
+              <div className="todo-confirm" role="alertdialog" aria-label="Ikke-gemte ændringer" style={{ marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Du har ændringer, der ikke er gemt.</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => setDiscardAsk(false)}>Bliv og ret</button>
+                  <button type="button" className="admin-btn admin-btn-danger admin-btn-sm admin-touch" onClick={() => { setDiscardAsk(false); close(); }}>Kassér ændringer</button>
+                </div>
+              </div>
+            )}
             <div className="admin-modal-header">
               <div>
                 <div style={{ fontSize: 16, fontWeight: 800 }}>{readOnly ? "Detaljer" : openSubmission.type === "edit" ? "Gennemse rettelsesforslag" : "Gennemse indsendelse"}</div>
@@ -291,7 +315,7 @@ export default function SubmissionsSection({
                   )}
                 </div>
               </div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
+              <CloseX onClick={requestClose} />
             </div>
 
             <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
@@ -322,6 +346,16 @@ export default function SubmissionsSection({
               <div className="admin-field">
                 <label className="admin-label">Næringsindhold pr. 100 g/ml (sammenlign med fotoet af næringstabellen; redigérbart)</label>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px 12px" }}>
+                  {["kj", "kcal"].map((part) => {
+                    const e = splitEnergy(editingSubmission.nutrition.energy);
+                    return (
+                      <div key={part}>
+                        <label htmlFor={`sub-energy-${part}`} style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>{part === "kj" ? "Energi (kJ)" : "Energi (kcal)"}</label>
+                        <input id={`sub-energy-${part}`} inputMode="decimal" value={e[part]}
+                          onChange={ev => setEditingSubmission(s => { const cur = splitEnergy(s.nutrition.energy); return { ...s, nutrition: { ...s.nutrition, energy: joinEnergy(part === "kj" ? ev.target.value : cur.kj, part === "kcal" ? ev.target.value : cur.kcal) } }; })} />
+                      </div>
+                    );
+                  })}
                   {NUTRITION_FIELDS.map(([key, label]) => (
                     <div key={key}>
                       <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 3 }}>{label}</div>
@@ -336,7 +370,7 @@ export default function SubmissionsSection({
             {openSubmission.ocr_raw_text && (
               <div className="admin-field">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <label className="admin-label" style={{ marginBottom: 0 }}>Ingredienser fra OCR</label>
+                  <label className="admin-label" style={{ marginBottom: 0 }}>Aflæst fra billedet (OCR, ikke kontrolleret)</label>
                   <button className="admin-btn admin-btn-ghost admin-btn-sm" disabled={cleaningOcr} onClick={() => cleanOcrWithAI(openSubmission.ocr_raw_text)}>
                     {cleaningOcr ? "Renskriver…" : "Renskriv med AI"}
                   </button>
@@ -355,8 +389,8 @@ export default function SubmissionsSection({
 
             {editingSubmission.ingredients_text !== undefined && (
               <div className="admin-field">
-                <label className="admin-label">Ingredienstekst der bliver godkendt (redigérbar)</label>
-                <textarea className="admin-textarea" rows={3} value={editingSubmission.ingredients_text || ""}
+                <label className="admin-label" htmlFor="sub-approved-text">Godkendt ingredienstekst (det, der gemmes på produktet)</label>
+                <textarea id="sub-approved-text" className="admin-textarea" rows={3} value={editingSubmission.ingredients_text || ""}
                   onChange={e => setEditingSubmission(s => ({ ...s, ingredients_text: e.target.value }))}
                   placeholder="Ingrediensliste…" />
                 {(() => {
@@ -419,6 +453,20 @@ export default function SubmissionsSection({
                       </div>
                     )}
                   </>
+                );
+              })()}
+              {(() => {
+                const g = allergenGroups(editingSubmission.allergen_flags, PRODUCT_ALLERGENS);
+                const row = (label, items, color) => items.length > 0 && (
+                  <div style={{ fontSize: 12.5, lineHeight: 1.5 }}><b style={{ color }}>{label}:</b> {items.join(", ")}</div>
+                );
+                return (
+                  <div className="admin-info-note" role="status" aria-label="Overblik over allergener" style={{ marginBottom: 8 }}>
+                    {row("Ja", g.yes, "var(--red)")}
+                    {row("Spor", g.traces, "var(--amber)")}
+                    {g.yes.length + g.traces.length === 0 && <div style={{ fontSize: 12.5 }}>Ingen allergener angivet som ja eller spor.</div>}
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Ikke angivet: {g.unset.length} · Nej: {g.no.length}</div>
+                  </div>
                 );
               })()}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6 }}>

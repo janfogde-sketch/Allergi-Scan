@@ -3,6 +3,7 @@
 // Fødevarestyrelsen, også dem uden stregkode. Åbnes fra Indstillinger. Kun tekst fra Fødevarestyrelsen
 // (recalls-tabellen); linket vises kun til deres eget domæne. Ingen matching på navn.
 import React, { useState } from "react";
+import { BackButton } from "./IconButton.jsx";
 import { Icon, LoadErrorBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useRecentRecalls } from "./useRecentRecalls.js";
@@ -17,13 +18,11 @@ export default function RecallsListScreen({ onBack }) {
   return (
     <div className="screen fade-in">
       <div style={{ display:"flex", alignItems:"center", gap:8, margin:"4px 0 6px" }}>
-        <button type="button" onClick={onBack} aria-label="Tilbage" className="legal-topbar-back">
-          <span className="legal-topbar-back-circle"><Icon name="chevronLeft" size={17} color="var(--ink)" /></span>
-        </button>
+        <BackButton onClick={onBack} />
         <div style={{ fontSize:17, fontWeight:800, color:"var(--ink)" }}>Aktuelle tilbagekaldelser</div>
       </div>
       <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.5, marginBottom:14 }}>
-        Listen kommer fra Fødevarestyrelsen. Tjek altid emballagens parti og dato.
+        Her finder du de seneste registrerede tilbagekaldelser fra Fødevarestyrelsen. Kontrollér altid produktets parti- og datooplysninger på emballagen.
       </div>
 
       {error && <LoadErrorBox what="Tilbagekaldelserne" onRetry={reload} />}
@@ -31,7 +30,7 @@ export default function RecallsListScreen({ onBack }) {
       {!error && !loading && items.length === 0 && (
         <div className="empty-state">
           <span className="empty-icon" style={{ width:60, height:60 }}><Icon name="warning" size={23} color="var(--muted)" /></span>
-          <div className="empty-txt">Ingen tilbagekaldelser de seneste 60 dage.</div>
+          <div className="empty-txt">Ingen tilbagekaldelser registreret på listen for de seneste 60 dage.</div>
         </div>
       )}
 
@@ -51,7 +50,7 @@ export default function RecallsListScreen({ onBack }) {
             {isOpen && (
               <div>
                 {r.reason && <div style={line}><b>Årsag:</b> {r.reason}</div>}
-                {r.action && <div style={line}><b>Hvad skal du gøre:</b> {r.action}</div>}
+                {r.action && <div style={line}><b>Hvad skal du gøre?</b> {r.action}</div>}
                 {isOfficialRecallUrl(r.source_url) && (
                   <a href={r.source_url} target="_blank" rel="noopener noreferrer"
                     style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, fontSize:13, fontWeight:700, color:"var(--red)" }}>

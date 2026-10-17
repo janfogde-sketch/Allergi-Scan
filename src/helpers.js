@@ -195,8 +195,8 @@ export const STORE_SOURCES = ["katalog"];
 // en importdato er ikke en verificering, så uden dato står der tydeligt, at det ikke er kontrolleret.
 export const ingredientsVerifiedText = (iso) => {
   const d = iso ? new Date(iso) : null;
-  if (!d || Number.isNaN(d.getTime())) return "Ikke kontrolleret mod emballagen endnu";
-  return `Ingredienser kontrolleret ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}`;
+  if (!d || Number.isNaN(d.getTime())) return "Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.";
+  return `Ingrediensoplysninger kontrolleret mod emballagen den ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}.`;
 };
 
 export const verifiedBadge = (verified_status, source) => {
@@ -346,6 +346,8 @@ const normName = (t) => (t || "").toLowerCase().replace(/[^a-zæøåäöü0-9]+/
 function hasRealIngredients(text, productName) {
   const t = (text || "").trim();
   if (t.length === 0 || /^ingen ingrediensliste/i.test(t)) return false;
+  // Pladsholdere ("Ingen", "-", "Se emballage", "Ikke oplyst") er ingen liste (gennemgang 16. okt. 2026, runde 2: to varer med "Ingen" stod grønne)
+  if (/^(?:ingen|nej|n\/a|ukendt|mangler|ikke oplyst|se (?:pakke\w*|emballage\w*|etiket\w*)|[-.?]+)\.?$/i.test(t)) return false;
   return !(productName && normName(t) === normName(productName));
 }
 
@@ -741,7 +743,15 @@ export function profileMatchLabel() {
 // Samlet vurdering af ét produkt mod de valgte profiler: { level: danger|warn|unknown|safe, label, reasons, missing }.
 // Rækkefølge: direkte konflikt vinder visuelt, så spor, så for lidt data; grøn kun uden fund OG med tilstrækkelige data.
 // `reasons` er konkrete og eksplicitte ("Indeholder æg", "Spor af æg", "Indeholder E120"); `missing` nævner, hvad der mangler.
-export function evaluateProductForProfiles(profiles, product) {
+// Er profilerne hentet, så de kan stoles på? (16. okt. 2026) Kun status "ok" fra useLoadUserData. I artifact-preview findes ingen session,
+// og profilerne er mock-data. Mens de ikke er hentet, mangler allergener og/eller familie, og et "ingen konflikt" ville være falsk grønt.
+export function profilesReady(profileLoadStatus) {
+  return profileLoadStatus === "ok" || import.meta.env?.MODE === "artifact-preview";
+}
+
+// opts.profilesReady === false: profilerne er ikke (alle) hentet. Et fund (rød/orange) står stadig, fordi det er den forsigtige side,
+// men "grøn" bliver aldrig vist: den bliver til "Kan ikke vurderes" med forklaringen "Din profil er ikke hentet".
+export function evaluateProductForProfiles(profiles, product, opts = {}) {
   const ingredientsText = product?.ingredients || product?.ingredients_text || "";
   const results = computeProfileResults(profiles || [], {
     allergen_flags: normalizeProductFlagsFor(product || {}), ingredients: ingredientsText, nutrition: product?.nutrition,
@@ -774,7 +784,10 @@ export function evaluateProductForProfiles(profiles, product) {
   const reasons = level === "danger" ? [...dangerReasons, ...traceReasons] : level === "warn" ? traceReasons : [];
   // Ingen profil at vurdere imod er aldrig "sikkert": manglende oplysninger er ikke sikkerhed.
   if (noProfiles && !missing.length) missing.push("Ingen profil valgt");
-  if (nothingToCheck) missing.push("Ingen allergier valgt");
+  if (nothingToCheck) missing.push("Ingen fødevarehensyn valgt");
+  if (opts.profilesReady === false && level === "safe") {
+    return { level: "unknown", label: STATUS_TEXT.unknown, reasons: [], missing: ["Din profil er ikke hentet", ...missing], results };
+  }
   return { level, label, reasons, missing, results };
 }
 
@@ -877,6 +890,10 @@ export function computeTopStatus({ hasSufficientData, allergyMatches, intoleranc
 // (fx en brugerskrevet "Mælk") matches på navnetekst (≥3 tegn, begge veje).
 // Bruges af ResultScreen til at vælge mellem "Tilføj", "Markér som købt" og "Købt",
 // og af addToList til at undgå dubletter.
+// Navn på en almindelig vare (uden produktvalg), sammenlignet uden hensyn til store/små bogstaver og ekstra mellemrum. Bogstaver som æ, ø og å bevares, så forskellige varer ikke slås sammen.
+export const normalizeItemName = (s) => String(s ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase("da");
+export const ITEM_EXISTS_TEXT = "Varen findes allerede på din indkøbsliste.";
+
 export function findProductOnList(listItems, product) {
   const items = listItems || [];
   if (items.length === 0 || !product) return null;

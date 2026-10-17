@@ -9,6 +9,7 @@ import {
   analyzeIngredients,
   looksNonDanish,
   liftGlutenFromWheat,
+  mergeFlagsUpward,
   shouldUseClaudeFallback,
 } from "../_shared/allergenEngine.js";
 
@@ -223,8 +224,11 @@ Deno.serve(async (req) => {
       }
 
       // Adminloggen: før/efter på produktet, når en admin gemmer (interne kald fra natjob o.l. logges ikke)
-      const { data: before } = isInternalCall ? { data: null } :
+      // Den aktuelle værdi hentes altid (ikke kun til adminloggen): save:true må ikke sænke et deklareret eller håndrettet ja/spor,
+      // så den nye beregning flettes opad som i auto-reparse og ved godkendelse (G4; gennemgang 16. okt. 2026, A16).
+      const { data: before } =
         await supabase.from("products").select("name, ean, allergen_flags, allergen_source_method").eq("id", product_id).maybeSingle();
+      allergenFlags = mergeFlagsUpward(before?.allergen_flags ?? {}, allergenFlags) as Record<string, string>;
       const { error } = await supabase
         .from("products")
         .update({

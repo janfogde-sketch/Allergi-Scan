@@ -8,6 +8,8 @@ import { PRODUCT_ALLERGENS } from "../../constants.jsx";
 import { Icon } from "../../SharedComponents.jsx";
 import Disclosure from "../Disclosure.jsx";
 import { fmtAuditDateTime } from "../auditLogic.js";
+import CloseX from "../CloseX.jsx";
+import { allergenGroups } from "../submissionLogic.js";
 import {
   FLAG_STATES, FLAG_META, flagState, canMarkNotDetected, validateProduct, verifyBlockers, eanCheck, productDirty,
   VERIFIED_LABELS, QUALITY_LABELS, SOURCE_LABELS, METHOD_LABELS, labelOr,
@@ -84,7 +86,7 @@ export default function ProductEditor({ product, draft, setDraft, busy, onSave, 
             <div id="pe-title" className="audit-sheet-title">{(ready && draft.name) || product.name || "Produkt uden navn"}</div>
             <div className="audit-sheet-time">EAN {product.ean}{ready && !ean.ok ? " · tjek EAN" : ""}</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={requestClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={requestClose} />
         </div>
 
         <div className="todo-panel-body">
@@ -141,6 +143,17 @@ export default function ProductEditor({ product, draft, setDraft, busy, onSave, 
               </div>
               {v.warnings.map((w) => <Notice key={w} tone="amber">{w}</Notice>)}
 
+              {(() => {
+                const g = allergenGroups(draft.allergen_flags, PRODUCT_ALLERGENS);
+                return (
+                  <div className="admin-info-note" role="status" aria-label="Overblik over allergener" style={{ marginBottom: 8 }}>
+                    {g.yes.length > 0 && <div style={{ fontSize: 12.5, lineHeight: 1.5 }}><b style={{ color: "var(--red)" }}>Indeholder:</b> {g.yes.join(", ")}</div>}
+                    {g.traces.length > 0 && <div style={{ fontSize: 12.5, lineHeight: 1.5 }}><b style={{ color: "var(--amber)" }}>Kan indeholde spor:</b> {g.traces.join(", ")}</div>}
+                    {g.yes.length + g.traces.length === 0 && <div style={{ fontSize: 12.5 }}>Ingen allergener er sat til Indeholder eller Spor.</div>}
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>Ukendt: {g.unset.length} · Ikke påvist: {g.no.length}</div>
+                  </div>
+                );
+              })()}
               <div className="pe-flags" role="group" aria-label="Allergener">
                 {PRODUCT_ALLERGENS.map((a) => {
                   const st = flagState(draft.allergen_flags, a.id);
@@ -176,7 +189,7 @@ export default function ProductEditor({ product, draft, setDraft, busy, onSave, 
               </div>
               <dl className="audit-detail">
                 <div className="audit-detail-row"><dt>Allergendata</dt><dd>{labelOr(QUALITY_LABELS, draft.meta?.allergen_quality)}{draft.meta?.allergen_source_method ? ` · ${labelOr(METHOD_LABELS, draft.meta.allergen_source_method)}` : ""}</dd></div>
-                {draft.meta?.ingredients_verified_at && <div className="audit-detail-row"><dt>Ingredienser kontrolleret</dt><dd>{fmtAuditDateTime(draft.meta.ingredients_verified_at, true)}</dd></div>}
+                {draft.meta?.ingredients_verified_at && <div className="audit-detail-row"><dt>Ingrediensoplysninger kontrolleret</dt><dd>{fmtAuditDateTime(draft.meta.ingredients_verified_at, true)}</dd></div>}
               </dl>
               <Disclosure title="Rettelseshistorik">
                 <History loadHistory={loadHistory} productId={product.id} />

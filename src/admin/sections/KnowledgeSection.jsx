@@ -1,220 +1,183 @@
 // @ts-nocheck
+// Leksikon: kompakte kort (emoji og titel, kategori, resumé, status og dato), kategorivalg med antal, søgning, filtre for manglende oplysninger og redaktionel status,
+// sortering og "Vis flere". Alt kører på serveren (hele tabellen). Oprettelse og redigering sker i KnowledgeEditor.
+import React, { useState, useEffect, useRef } from "react";
 import { useShowSpinner } from "../RefreshContext.js";
-import React from "react";
-import { ALLERGENS } from "../../constants.jsx";
-import { AllergenGlyph } from "../../SharedComponents.jsx";
+import { Icon, showToast } from "../../SharedComponents.jsx";
+import KnowledgeEditor from "./KnowledgeEditor.jsx";
+import { KB_CATEGORIES, KB_CATEGORY_SINGULAR, KB_SORTS, KB_MISSING_FILTERS, EDITORIAL, EDITORIAL_LABEL } from "../knowledgeLogic.js";
 
-const CATEGORIES = ["allergen", "e_number", "ingredient", "dish", "cross_reaction", "faq", "fun_fact"];
-const CATEGORY_LABELS = {
-  allergen: "Allergen", e_number: "E-nummer", ingredient: "Ingrediens", dish: "Ret/produkt", diet: "Kost",
-  cross_reaction: "Krydsreaktion", faq: "FAQ", fun_fact: "Sjov viden",
-};
-// Risikoniveau er fjernet fra leksikonet (30. sept. 2026) — "Høj risiko"/"Moderat"
-// kunne læses som en universel medicinsk vurdering. I stedet: fritekst
-// "faglig status" (fx "Fødevareallergi", "Intolerance – ikke allergi").
+const date = (v) => (v ? new Date(v).toLocaleDateString("da-DK") : "–");
+const EMPTY = { category: "ingredient", title: "", slug: "", emoji: "", summary: "", description: "", health_notes: "", status_label: "", sort_order: 0, found_in: [], alternatives: [], diet_tags: [], allergen_ids: [], aliases: [], tags: [], sources: [], editorial_status: "draft", published: true, slugTouched: false };
+const PILL = { approved: "admin-pill-green", pending_review: "admin-pill-amber", needs_update: "admin-pill-amber", draft: "admin-pill-neutral" };
 
-function slugify(text) {
-  return (text || "")
-    .toLowerCase()
-    .replace(/[æå]/g, "a").replace(/ø/g, "o")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+/** Rækken fra databasen til formularens form (lister er altid lister, tekst aldrig null). */
+export function entryToForm(row) {
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  return {
+    category: row.category, title: row.title || "", slug: row.slug || "", emoji: row.emoji || "", summary: row.summary || "", description: row.description || "",
+    health_notes: row.health_notes || "", status_label: row.status_label || "", sort_order: row.sort_order ?? 0,
+    found_in: arr(row.found_in), alternatives: arr(row.alternatives), diet_tags: arr(row.diet_tags), allergen_ids: arr(row.allergen_ids), aliases: arr(row.aliases), tags: arr(row.tags), sources: arr(row.sources),
+    editorial_status: row.editorial_status || "", published: row.published !== false, slugTouched: true,
+  };
 }
 
-// Array-felter (found_in, alternatives, diet_tags, allergen_ids, aliases, tags,
-// sources) gemmes i formularen som kommasepareret tekst og splittes/joines
-// ved hentning/gemning (se kbArraysToText/kbTextToArrays i useAdmin.js) — et
-// simpelt tekstfelt er den mest robuste UI for 7 forskellige frie lister,
-// fremfor 7 separate chip-widgets.
-function ArrayField({ label, value, onChange, placeholder }) {
-  return (
-    <div className="admin-field">
-      <label className="admin-label">{label} <span style={{ fontWeight: 400, color: "var(--muted)" }}>(kommasepareret)</span></label>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
-    </div>
-  );
-}
+export default function KnowledgeSection({ knowledge: kb }) {
+  const showSpinner = useShowSpinner(kb.loading, kb.entries.length > 0);
+  const [search, setSearch] = useState("");
+  const [f, setF] = useState({ category: "", missing: "", editorial: "", sort: "manual" });
+  const [open, setOpen] = useState(null); // { id, isNew, initial, meta, reviewer } | { id, loading } | { id, failed }
+  const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const first = useRef(true);
+  const filtered = !!(f.category || f.missing || f.editorial);
+  const q = search.trim();
 
-export default function KnowledgeSection({
-  knowledgeEntries, knowledgeLoading, knowledgeSearch, setKnowledgeSearch,
-  knowledgeCategoryFilter, setKnowledgeCategoryFilter, loadKnowledgeEntries,
-  openKnowledgeEntry, setOpenKnowledgeEntry, editingKnowledgeEntry, setEditingKnowledgeEntry,
-  knowledgeActionLoading, openKnowledgeEntryForEdit, openNewKnowledgeEntry,
-  saveKnowledgeEntry, deleteKnowledgeEntry,
-}) {
-  const showSpinner = useShowSpinner(knowledgeLoading, knowledgeEntries.length > 0);
-  const close = () => { setOpenKnowledgeEntry(null); setEditingKnowledgeEntry(null); };
+  useEffect(() => {
+    if (first.current) { first.current = false; return undefined; }
+    const t = setTimeout(() => kb.load({ q: search }), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bevidst: load genskabes hver gang
+  }, [search]);
 
-  const handleDelete = () => {
-    if (!openKnowledgeEntry || openKnowledgeEntry.isNew) return;
-    if (!window.confirm(`Slet "${openKnowledgeEntry.title}" permanent? Dette kan ikke fortrydes.`)) return;
-    deleteKnowledgeEntry(openKnowledgeEntry.id);
+  const setFilter = (patch) => { const n = { ...f, ...patch }; setF(n); kb.load({ q: search, ...n }); };
+  const reset = () => { const n = { category: "", missing: "", editorial: "", sort: f.sort }; setSearch(""); setF(n); kb.load({ q: "", ...n }); };
+
+  const openEntry = async (row) => {
+    setSaveError(null);
+    setOpen({ id: row.id, loading: true });
+    const r = await kb.getEntry(row.id);
+    if (!r.ok) { setOpen({ id: row.id, failed: true, denied: r.denied }); return; }
+    setOpen({ id: row.id, initial: entryToForm(r.entry), meta: { updated_at: r.entry.updated_at, reviewed_at: r.entry.reviewed_at, tipsCount: Array.isArray(r.entry.tips) ? r.entry.tips.length : 0 }, reviewer: r.reviewer });
+  };
+  const openNew = () => { setSaveError(null); setOpen({ id: null, isNew: true, initial: { ...EMPTY, category: f.category || EMPTY.category, editorial_status: kb.hasEditorial ? "draft" : "" }, meta: {} }); };
+  const close = () => { setOpen(null); setSaveError(null); };
+
+  const save = async (form) => {
+    setBusy(true); setSaveError(null);
+    const r = await kb.saveEntry(open.isNew ? null : open.id, form, open.meta?.updated_at || null);
+    setBusy(false);
+    if (r.ok) { showToast(open.isNew ? "Opslaget er oprettet" : "Opslaget er gemt"); close(); kb.load({}); }
+    else setSaveError(r);
+  };
+  const del = async () => {
+    setBusy(true);
+    const r = await kb.deleteEntry(open.id);
+    setBusy(false);
+    if (r.ok) { showToast("Opslaget er slettet"); close(); } else setSaveError(r);
   };
 
-  const selectedAllergenIds = (editingKnowledgeEntry?.allergen_ids || "").split(",").map(s => s.trim()).filter(Boolean);
-  const toggleAllergenId = (id) => {
-    const set = new Set(selectedAllergenIds);
-    if (set.has(id)) set.delete(id); else set.add(id);
-    setEditingKnowledgeEntry(s => ({ ...s, allergen_ids: [...set].join(", ") }));
-  };
+  const total = kb.total;
+  const countText = total === null ? "" : `${total.toLocaleString("da-DK")} opslag`;
+
+  let body;
+  if (kb.error && kb.entries.length === 0) {
+    body = (
+      <div className="admin-table-empty audit-state" role="alert">
+        <div className="audit-state-icon" aria-hidden="true"><Icon name="warning" size={22} color="var(--muted)" /></div>
+        <div className="audit-state-title">{kb.error.denied ? "Ingen adgang til leksikonet" : "Kunne ikke hente opslag"}</div>
+        <div>{kb.error.denied ? "Din konto har ikke administratorrettighed." : "Det betyder ikke, at der ingen opslag er. Tjek forbindelsen, og prøv igen."}</div>
+        {!kb.error.denied && <div style={{ marginTop: 12 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={() => kb.load({})}>Prøv igen</button></div>}
+      </div>
+    );
+  } else if (showSpinner && kb.entries.length === 0) {
+    body = <div className="admin-loading-row"><div className="admin-spinner" /> Henter opslag…</div>;
+  } else if (kb.entries.length === 0) {
+    body = (
+      <div className="admin-table-empty audit-state">
+        <div className="audit-state-icon" aria-hidden="true"><Icon name="search" size={22} color="var(--muted)" /></div>
+        <div className="audit-state-title">{q || filtered ? "Ingen opslag matcher" : "Ingen opslag"}</div>
+        <div>{q || filtered ? "Prøv at ændre søgningen eller filtrene." : "Opret det første opslag."}</div>
+        {(q || filtered) && <div style={{ marginTop: 12 }}><button type="button" className="admin-btn admin-btn-ghost admin-btn-sm admin-touch" onClick={reset}>Nulstil</button></div>}
+      </div>
+    );
+  } else {
+    body = (
+      <div className="admin-card-list">
+        {kb.entries.map((e) => {
+          const miss = [!String(e.summary ?? "").trim() && "resumé", !(e.sources || []).length && "kilde"].filter(Boolean); // listen henter ikke beskrivelsen
+          const es = e.editorial_status || "";
+          return (
+            <button key={e.id} type="button" className="admin-item-card usr-row kb-row" onClick={() => openEntry(e)}>
+              <div className="usr-row-name kb-name">{e.emoji ? `${e.emoji} ` : ""}{e.title}</div>
+              {e.summary ? <div className="usr-row-mail kb-sum">{e.summary}</div> : <div className="usr-row-mail kb-sum kb-none">Intet resumé</div>}
+              <div className="usr-row-meta">
+                <span className="admin-pill admin-pill-neutral">{KB_CATEGORY_SINGULAR[e.category] || e.category}</span>{" "}
+                {kb.hasEditorial && <><span className={`admin-pill ${PILL[es] || "admin-pill-neutral"}`}>{EDITORIAL_LABEL[es] || "Ikke gennemgået"}</span>{" "}</>}
+                {kb.hasEditorial && e.published === false && <><span className="admin-pill admin-pill-amber">Skjult</span>{" "}</>}
+                {miss.length > 0 && <span className="kb-miss">Mangler {miss.join(", ")} · </span>}
+                {date(e.updated_at)}
+              </div>
+              <span className="audit-card-chev" aria-hidden="true"><Icon name="chevronRight" size={16} color="var(--muted2)" /></span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <>
-      <div style={{ display: "flex", gap: 10, marginBottom: 16, alignItems: "center" }}>
-        <form onSubmit={e => { e.preventDefault(); loadKnowledgeEntries(); }} style={{ display: "flex", gap: 8, flex: 1 }}>
-          <input className="admin-search" placeholder="Søg titel, slug eller resumé…"
-            value={knowledgeSearch} onChange={e => setKnowledgeSearch(e.target.value)} style={{ flex: 1 }} />
-          <button type="submit" className="admin-btn admin-btn-ghost admin-btn-sm">Søg</button>
-        </form>
-        <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={openNewKnowledgeEntry}>Ny entry</button>
-      </div>
-
-      <div className="admin-tabs">
-        {["all", ...CATEGORIES].map(c => (
-          <button key={c} className={`admin-tab-btn${knowledgeCategoryFilter === c ? " active" : ""}`}
-            onClick={() => { setKnowledgeCategoryFilter(c); loadKnowledgeEntries(undefined, c); }}>
-            {c === "all" ? "Alle" : CATEGORY_LABELS[c]}
-          </button>
-        ))}
-      </div>
-
-      <div className="admin-table-wrap">
-        {showSpinner ? (
-          <div className="admin-loading-row"><div className="admin-spinner" /> Henter leksikon-entries…</div>
-        ) : knowledgeEntries.length === 0 ? (
-          <div className="admin-table-empty">Ingen entries matcher</div>
-        ) : (
-          <table className="admin-table">
-            <thead><tr><th></th><th>Titel</th><th>Kategori</th><th>Slug</th><th>Faglig status</th><th>Opdateret</th><th></th></tr></thead>
-            <tbody>
-              {knowledgeEntries.map(k => (
-                <tr key={k.id} style={{ cursor: "pointer" }} onClick={() => openKnowledgeEntryForEdit(k)}>
-                  <td style={{ fontSize: 16 }}>{k.emoji || ""}</td>
-                  <td>{k.title}</td>
-                  <td data-label="Kategori"><span className="admin-pill admin-pill-neutral">{CATEGORY_LABELS[k.category] || k.category}</span></td>
-                  <td data-label="Slug" style={{ fontFamily: "var(--mono)", fontSize: 11 }}>{k.slug}</td>
-                  <td data-label="Faglig status">{k.status_label ? <span className="admin-pill admin-pill-neutral">{k.status_label}</span> : <span style={{ color: "var(--muted)" }}>–</span>}</td>
-                  <td data-label="Opdateret">{k.updated_at ? new Date(k.updated_at).toLocaleDateString("da-DK") : "–"}</td>
-                  <td><button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={e => { e.stopPropagation(); openKnowledgeEntryForEdit(k); }}>Redigér</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {openKnowledgeEntry && !editingKnowledgeEntry && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-loading-row"><div className="admin-spinner" /> Henter entry…</div>
+      <div className="kb-top">
+        <div className="prd-search" style={{ flex: 1, marginBottom: 0 }}>
+          <label htmlFor="kb-q" className="np-vars-label">Søg på titel, slug, resumé, alias eller tag</label>
+          <div className="prd-search-row">
+            <input id="kb-q" type="search" enterKeyHint="search" autoComplete="off" className="admin-search" placeholder="Fx mælk eller E322" value={search}
+              onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur(); kb.load({ q: search }); } }} />
+            {search && <button type="button" className="admin-iconbtn" aria-label="Ryd søgning" onClick={() => setSearch("")}><Icon name="x" size={18} color="var(--ink2)" /></button>}
           </div>
+        </div>
+        <button type="button" className="admin-btn admin-btn-primary admin-touch kb-new" onClick={openNew}>Nyt opslag</button>
+      </div>
+
+      <div className="prd-filters" style={{ marginTop: 10 }}>
+        <div className="admin-field"><label htmlFor="kb-cat">Kategori</label>
+          <select id="kb-cat" className="admin-select" value={f.category} onChange={(e) => setFilter({ category: e.target.value })}>
+            <option value="">Alle{kb.counts ? ` (${Object.values(kb.counts).reduce((a, b) => a + b, 0)})` : ""}</option>
+            {KB_CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}{kb.counts ? ` (${kb.counts[v] || 0})` : ""}</option>)}
+          </select></div>
+        <div className="admin-field"><label htmlFor="kb-mis">Mangler</label>
+          <select id="kb-mis" className="admin-select" value={f.missing} onChange={(e) => setFilter({ missing: e.target.value })}>
+            <option value="">Alle</option>{KB_MISSING_FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select></div>
+        {kb.hasEditorial && (
+          <div className="admin-field"><label htmlFor="kb-ed">Redaktionel status</label>
+            <select id="kb-ed" className="admin-select" value={f.editorial} onChange={(e) => setFilter({ editorial: e.target.value })}>
+              <option value="">Alle</option><option value="none">Ikke gennemgået</option>{EDITORIAL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select></div>
+        )}
+        <div className="admin-field"><label htmlFor="kb-sort">Sortér</label>
+          <select id="kb-sort" className="admin-select" value={f.sort} onChange={(e) => setFilter({ sort: e.target.value })}>
+            {KB_SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select></div>
+      </div>
+
+      <div className="audit-results">
+        <span aria-live="polite">{kb.error && kb.entries.length > 0 ? "Kunne ikke opdatere – viser seneste hentede" : countText}</span>
+        <span className="prd-actions">{(q || filtered) && <button type="button" className="todo-link-btn" onClick={reset}>Nulstil</button>}</span>
+      </div>
+
+      {body}
+
+      {kb.hasMore && kb.entries.length > 0 && (
+        <div style={{ textAlign: "center", margin: "14px 0" }}>
+          <button type="button" className="admin-btn admin-btn-ghost admin-touch" disabled={kb.loadingMore} onClick={() => kb.load(null, true)}>
+            {kb.loadingMore ? "Henter…" : `Vis flere${total !== null ? ` (${kb.entries.length} af ${total.toLocaleString("da-DK")})` : ""}`}
+          </button>
         </div>
       )}
 
-      {openKnowledgeEntry && editingKnowledgeEntry && (
-        <div className="admin-modal-overlay" onClick={close}>
-          <div className="admin-modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{openKnowledgeEntry.isNew ? "Ny leksikon-entry" : "Redigér leksikon-entry"}</div>
-              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={close}>Luk</button>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Titel</label>
-                <input value={editingKnowledgeEntry.title}
-                  onChange={e => {
-                    const title = e.target.value;
-                    setEditingKnowledgeEntry(s => ({ ...s, title, slug: s.slug && !openKnowledgeEntry.isNew ? s.slug : slugify(title) }));
-                  }} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Emoji</label>
-                <input value={editingKnowledgeEntry.emoji} onChange={e => setEditingKnowledgeEntry(s => ({ ...s, emoji: e.target.value }))} />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Slug</label>
-                <input value={editingKnowledgeEntry.slug} onChange={e => setEditingKnowledgeEntry(s => ({ ...s, slug: slugify(e.target.value) }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Kategori</label>
-                <select value={editingKnowledgeEntry.category} onChange={e => setEditingKnowledgeEntry(s => ({ ...s, category: e.target.value }))}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border2)", fontFamily: "var(--f)", fontSize: 13 }}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Resumé</label>
-              <input value={editingKnowledgeEntry.summary} onChange={e => setEditingKnowledgeEntry(s => ({ ...s, summary: e.target.value }))} placeholder="Kort én-linje-opsummering…" />
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Beskrivelse</label>
-              <textarea className="admin-textarea" rows={4} value={editingKnowledgeEntry.description}
-                onChange={e => setEditingKnowledgeEntry(s => ({ ...s, description: e.target.value }))} placeholder="Fuld forklaring…" />
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Sundhedsnoter</label>
-              <textarea className="admin-textarea" rows={2} value={editingKnowledgeEntry.health_notes}
-                onChange={e => setEditingKnowledgeEntry(s => ({ ...s, health_notes: e.target.value }))} />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Faglig status (valgfri)</label>
-                <input value={editingKnowledgeEntry.status_label} placeholder="Fx Fødevareallergi"
-                  onChange={e => setEditingKnowledgeEntry(s => ({ ...s, status_label: e.target.value }))} />
-              </div>
-              <div className="admin-field" style={{ marginBottom: 0 }}>
-                <label className="admin-label">Sortering</label>
-                <input type="number" value={editingKnowledgeEntry.sort_order}
-                  onChange={e => setEditingKnowledgeEntry(s => ({ ...s, sort_order: +e.target.value }))} />
-              </div>
-            </div>
-
-            <div className="admin-field">
-              <label className="admin-label">Tilknyttede allergener</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {ALLERGENS.map(a => {
-                  const isOn = selectedAllergenIds.includes(a.id);
-                  return (
-                    <button key={a.id} type="button" onClick={() => toggleAllergenId(a.id)}
-                      style={{
-                        fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontFamily: "var(--f)",
-                        background: isOn ? "var(--red-lt)" : "var(--surface3)",
-                        color: isOn ? "var(--red)" : "var(--muted2)",
-                        border: `1px solid ${isOn ? "var(--red-md)" : "var(--border)"}`,
-                      }}>
-                      <AllergenGlyph a={a} size={11} /> {a.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <ArrayField label="Findes i" value={editingKnowledgeEntry.found_in} onChange={v => setEditingKnowledgeEntry(s => ({ ...s, found_in: v }))} placeholder="Gelatine, Animalsk løbe…" />
-            <ArrayField label="Alternativer" value={editingKnowledgeEntry.alternatives} onChange={v => setEditingKnowledgeEntry(s => ({ ...s, alternatives: v }))} placeholder="Agar-agar, Plantebaseret…" />
-            <ArrayField label="Kost-tags" value={editingKnowledgeEntry.diet_tags} onChange={v => setEditingKnowledgeEntry(s => ({ ...s, diet_tags: v }))} placeholder="vegansk, halal…" />
-            <ArrayField label="Aliaser" value={editingKnowledgeEntry.aliases} onChange={v => setEditingKnowledgeEntry(s => ({ ...s, aliases: v }))} placeholder="Andre navne/stavemåder…" />
-            <ArrayField label="Tags" value={editingKnowledgeEntry.tags} onChange={v => setEditingKnowledgeEntry(s => ({ ...s, tags: v }))} placeholder="søgeord…" />
-            <ArrayField label="Kilder" value={editingKnowledgeEntry.sources} onChange={v => setEditingKnowledgeEntry(s => ({ ...s, sources: v }))} placeholder="https://…" />
-
-            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <button className="admin-btn admin-btn-primary" disabled={knowledgeActionLoading} onClick={saveKnowledgeEntry}>
-                {openKnowledgeEntry.isNew ? "Opret entry" : "Gem ændringer"}
-              </button>
-              {!openKnowledgeEntry.isNew && (
-                <button className="admin-btn admin-btn-danger" disabled={knowledgeActionLoading} onClick={handleDelete} style={{ marginLeft: "auto" }}>Slet entry</button>
-              )}
-            </div>
-          </div>
+      {open?.loading && <div className="kb-loading" role="status"><div className="admin-spinner" /> Åbner opslag…</div>}
+      {open?.failed && (
+        <div className="kb-loading" role="alert">
+          {open.denied ? "Ingen adgang til opslaget." : "Opslaget kunne ikke hentes."}{" "}
+          <button type="button" className="todo-link-btn" onClick={() => openEntry({ id: open.id })}>Prøv igen</button>{" "}
+          <button type="button" className="todo-link-btn" onClick={close}>Luk</button>
         </div>
+      )}
+      {open?.initial && (
+        <KnowledgeEditor key={open.id || "new"} entryId={open.id} isNew={!!open.isNew} initial={open.initial} orig={open.initial} meta={open.meta} reviewer={open.reviewer}
+          hasEditorial={kb.hasEditorial} loadHistory={kb.loadHistory} onSave={save} onDelete={del} onClose={close} busy={busy} saveError={saveError} />
       )}
     </>
   );

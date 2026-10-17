@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, profilesHaveSelections, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
+import { allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, profilesReady, profilesHaveSelections, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -66,7 +66,8 @@ export default function ResultScreen({
   // Hotfix F2-1 (6. okt. 2026): uden hentet profil (allergener og familie) er der intet at
   // vurdere imod, og en tom profil ville give et grønt "Ingen match med dine valg". Vis i
   // stedet, at profilen mangler, og vurdér først, når den er hentet (siden regner selv om).
-  if (profileLoadStatus !== "ok" && !scanResult.isDemo) {
+  // profilesReady (helpers.js, 16. okt. 2026): kun status "ok" (og artifact-preview, som ingen session har). Samme regel som Historik, Favoritter og Indkøbsliste.
+  if (!profilesReady(profileLoadStatus) && !scanResult.isDemo) {
     const failed = profileLoadStatus === "error";
     return (
       <div className="screen fade-in">
@@ -453,11 +454,11 @@ export default function ResultScreen({
 
       {/* Kan ikke vurderes: hjælp med de manglende oplysninger er den vigtigste handling, og indkøbslisten bliver sekundær nederst */}
       {cannotAssess && nothingChosen && (activeProfiles.includes("me")
-        ? <StateBox icon="info" title="Du har ikke valgt nogen allergier"
-            text="Derfor har vi ikke tjekket produktet for noget. Vælg dine allergier, så vurderer vi produktet for dig."
-            actionLabel="Vælg allergier" onAction={() => setScreen(SCREENS.EDITPREFERENCES)} />
-        : <StateBox icon="info" title="Ingen allergier valgt"
-            text="Den valgte person har ingen allergier valgt, så vi har ikke tjekket produktet for noget. Du kan vælge dem under Familie."
+        ? <StateBox icon="info" title="Ingen fødevarehensyn valgt"
+            text="Du har endnu ikke valgt, hvad EatSafe skal kontrollere for. Tilføj dine allergier, intolerancer eller andre fødevarehensyn for at få en personlig vurdering."
+            actionLabel="Vælg fødevarehensyn" onAction={() => setScreen(SCREENS.EDITPREFERENCES)} />
+        : <StateBox icon="info" title="Ingen fødevarehensyn valgt"
+            text="Den valgte person har endnu ikke registreret nogen fødevarehensyn. Du kan tilføje dem under Familie."
             actionLabel="Gå til Familie" onAction={() => setScreen(SCREENS.FAMILY)} />)}
       {cannotAssess && !nothingChosen && renderMissingData()}
       {!cannotAssess && renderAddToList()}

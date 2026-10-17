@@ -20,9 +20,9 @@ describe("RefreshButton", () => {
     expect(screen.getByRole("button", { name: "Opdater siden" }).disabled).toBe(true);
   });
   it("headervarianten har samme udseende som de øvrige headerikoner og roterer under indlæsning", () => {
-    render(<RefreshButton variant="header" onClick={() => {}} loading />);
+    render(<RefreshButton onClick={() => {}} loading />);
     const btn = screen.getByRole("button", { name: "Opdater siden" });
-    expect(btn.className).toContain("admin-iconbtn");
+    expect(btn.className).toContain("ibtn"); // samme runde ikonknap som hamburger og søg
     expect(btn.className).toContain("spinning");
     expect(btn.disabled).toBe(true);
   });

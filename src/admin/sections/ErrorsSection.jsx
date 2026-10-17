@@ -11,6 +11,7 @@ import {
   uaSummary, buildErrorPrompt, componentStackOf, errorsFilterCount, filterOptions, historyEntries, occurrenceRows, buildIdsOf, isBuildId,
 } from "../errorsLogic.js";
 import { formatResolved } from "../../../supabase/functions/_shared/symbolicate.js";
+import CloseX from "../CloseX.jsx";
 
 const EMPTY = { screen: "", severity: "", period: "all", from: "", to: "", version: "", q: "" };
 
@@ -108,7 +109,7 @@ function ResolveDialog({ busy, error, onCancel, onConfirm }) {
             <div id="err-resolve-title" className="audit-sheet-title">Markér fejl som løst?</div>
             <div className="audit-sheet-time">Bekræft, at fejlen er rettet og verificeret.</div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={tryClose} aria-label="Luk dialog"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={tryClose} label="Luk dialog" />
         </div>
         <div className="err-ignore">
           <label htmlFor="err-fix">Beskrivelse af rettelse (påkrævet)</label>
@@ -196,7 +197,7 @@ function Detail({ row, extended, onClose, setStatus, setSeverity, loadHistory, s
             <div id="err-sheet-title" className="audit-sheet-title">{areaLabel(cur)}</div>
             <div className="err-pills"><StatusPill status={cur.status} /><SeverityChip severity={cur.severity} /></div>
           </div>
-          <button type="button" className="admin-iconbtn audit-sheet-close" onClick={onClose} aria-label="Luk"><Icon name="x" size={20} color="var(--ink2)" /></button>
+          <CloseX onClick={onClose} />
         </div>
 
         <p className="err-message">{cur.message}</p>
