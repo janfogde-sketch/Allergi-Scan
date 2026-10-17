@@ -106,13 +106,17 @@ describe("affectedAllergenDecreases (lavere risiko, 16. okt. 2026)", () => {
   it("tager kun modtagerens egne allergener (og gluten/hvede via cøliaki) med", () => {
     const hits = affectedAllergenDecreases(changes, { maelkeallergi: "no", aeg: "no", gluten: "traces" }, ["maelkeallergi", "coeliaki"]);
     expect(hits.map(h => h.key).sort()).toEqual(["gluten", "maelkeallergi"]);
-    expect(summarizeAllergenDecreases(hits.filter(h => h.key === "maelkeallergi"))).toBe("Mælkeprotein er nu registreret som ikke indeholdt");
+    expect(summarizeAllergenDecreases(hits.filter(h => h.key === "maelkeallergi"))).toBe("Status for mælkeprotein er ændret til ‘Ikke påvist’.");
   });
   it("springer over, når risikoen er hævet igen siden", () => {
     expect(affectedAllergenDecreases(changes, { maelkeallergi: "yes" }, ["maelkeallergi"])).toEqual([]);
   });
   it("et manglende flag tæller som uoplyst", () => {
     const hits = affectedAllergenDecreases({ aeg: { old: "yes" } }, {}, ["aeg"]);
-    expect(summarizeAllergenDecreases(hits)).toBe("Æg er nu uoplyst");
+    expect(summarizeAllergenDecreases(hits)).toBe("Æg er nu uoplyst.");
+  });
+  it("‘Ikke påvist’ kræver et udtrykkeligt ‘no’, og sporflag får sin egen sætning", () => {
+    const hits = affectedAllergenDecreases({ aeg: { old: "yes" }, soja: { old: "yes" }, fisk: { old: "yes" } }, { aeg: "traces", soja: "no" }, ["aeg", "soja", "fisk"]);
+    expect(summarizeAllergenDecreases(hits)).toBe("Status for æg er ændret til ‘Kan indeholde spor’. Status for soja er ændret til ‘Ikke påvist’. Fisk er nu uoplyst.");
   });
 });

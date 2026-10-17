@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { ALLERGENS, SCREENS, E_NUMBERS, SUPABASE_URL, SUPABASE_ANON_KEY } from "./constants.jsx";
-import { allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, profilesReady, profilesHaveSelections, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
+import { PREFS_LOAD_FAILED_TITLE, PREFS_LOAD_FAILED_RESULT_TEXT, allergenChoiceLabel, compareENumbers, productDisplayName, buildActiveProfileList, computeProfileResults, profileWarnLabel, categorizeProductFindings, computeTopStatus, ignoresTraces, effectiveAllergenFlag, evaluateProductForProfiles, profilesReady, profilesHaveSelections, ingredientsLookIncomplete, sulfiteAssessment, STATUS_TEXT } from "./helpers.js";
 import { ALLERGEN_KEYWORDS } from "./allergenKeywords.js";
 import { Icon, IngredientsList, ProductImage, ListPickerSheet, ConfirmDialog, showToast, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -79,12 +79,12 @@ export default function ResultScreen({
             <span style={{ flexShrink:0, marginTop:2 }}><Icon name="info" size={18} color="var(--neutral)" /></span>
             <div>
               <div style={{ fontSize:14, fontWeight:700, color:"var(--ink)", marginBottom:4 }}>
-                {failed ? "Din profil kunne ikke hentes" : "Henter din profil …"}
+                {failed ? PREFS_LOAD_FAILED_TITLE : "Henter dine præferencer …"}
               </div>
               <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.5 }}>
                 {failed
-                  ? "Vi kan ikke vurdere produktet, før dine allergier er hentet. Tjek din forbindelse, og prøv igen."
-                  : "Vurderingen vises, så snart dine allergier er hentet."}
+                  ? PREFS_LOAD_FAILED_RESULT_TEXT
+                  : "Vurderingen vises, så snart dine præferencer er hentet."}
               </div>
             </div>
           </div>

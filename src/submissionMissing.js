@@ -11,7 +11,7 @@ export function missingSubmissionItems({ name, hasImage, hasIngredients, ocrUnre
   const items = [];
   if (!String(name || "").trim()) items.push({ key:"name", step:null, text: nameUnread ? "Vi kunne ikke læse produktnavnet. Skriv det i feltet herunder." : "Produktnavn mangler. Skriv det i feltet herunder." });
   if (!hasImage) items.push({ key:"image", step:1, text:"Der er intet billede af forsiden." });
-  if (!hasIngredients) items.push({ key:"ingredients", step:2, text: ocrUnreadable ? "Vi kunne ikke læse ingredienslisten." : "Der er ingen ingrediensliste." });
+  if (!hasIngredients) items.push({ key:"ingredients", step:2, text: ocrUnreadable ? "Vi kunne ikke læse ingredienslisten." : "Der mangler et billede af ingredienslisten." });
   if (hasIngredients && unchecked) items.push({ key:"allergens", step:null, text:"Allergenerne er ikke tjekket automatisk. Vælg dem selv herunder." });
   if (!nutritionCount) items.push({ key:"nutrition", step:3, text:"Der er intet næringsindhold (valgfrit)." });
   return items;

@@ -526,7 +526,9 @@ export function useProduct({ accessToken, userId, activeProfiles,
         setNotFoundStep(3); // → Næringsindhold
       } else {
         traceLog(tid, "ocr:empty", { error: "OCR returnerede tom tekst eller fejl", raw: JSON.stringify(ocrData).substring(0, 200) });
-        setOcrUnreadable(true);
+        // Kun et læst-men-tomt svar er en ulæselig ingrediensliste; en fejl fra tjenesten er noget andet og giver en almindelig fejlbesked.
+        if (ocrData.success) setOcrUnreadable(true);
+        else setScanError_("Billedet kunne ikke analyseres. Prøv igen.");
       }
     } catch (e) {
       traceLog(tid, "ocr:error", { error: e?.message || String(e) });

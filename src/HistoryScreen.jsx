@@ -3,7 +3,7 @@ import { scrollBehavior } from "./motion.js";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SCREENS } from "./constants.jsx";
 import { setProductReturn } from "./searchReturn.js";
-import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, profilesReady } from "./helpers.js";
+import { timeAgo, groupHistoryDuplicates, historyActivityText, historyVia, profilesReady, PREFS_LOAD_FAILED_TITLE, PREFS_LOAD_FAILED_TEXT } from "./helpers.js";
 import { evaluateHistoryEntry } from "./historyEval.js";
 import { Icon, ProductImage, ConfirmDialog, showToast, LoadErrorBox, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
@@ -198,8 +198,8 @@ export default function HistoryScreen({ household, lookupProduct, onScanNow }) {
       )}
 
       {!historyLoading && historyError && <LoadErrorBox what="Historikken" onRetry={() => loadHistory(historyScope)} />}
-      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
-      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
+      {/* Præferencerne (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title={PREFS_LOAD_FAILED_TITLE} text={PREFS_LOAD_FAILED_TEXT} onAction={retryProfileLoad} />}
 
       {!historyLoading && !historyError && history.length===0 && (
         <div className="empty-state">

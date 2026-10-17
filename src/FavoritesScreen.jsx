@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { setProductReturn } from "./searchReturn.js";
 import { SCREENS } from "./constants.jsx";
 import { createPortal } from "react-dom";
-import { buildActiveProfileList, evaluateProductForProfiles, profilesReady } from "./helpers.js";
+import { buildActiveProfileList, evaluateProductForProfiles, profilesReady, PREFS_LOAD_FAILED_TITLE, PREFS_LOAD_FAILED_TEXT } from "./helpers.js";
 import { Icon, ProductImage, LoadErrorBox, CloseButton, StateBox } from "./SharedComponents.jsx";
 import { useAuthContext } from "./AuthContext.jsx";
 import { useProfileContext } from "./ProfileContext.jsx";
@@ -184,8 +184,8 @@ export default function FavoritesScreen({ household, lookupProduct }) {
           Favoritter viser nu udelukkende gemte favoritter. */}
 
       {favoritesError && <LoadErrorBox what="Favoritterne" onRetry={() => loadFavorites(favoritesScope)} />}
-      {/* Profilen (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
-      {profileLoadStatus === "error" && <StateBox tone="error" title="Din profil kunne ikke hentes." text="Produkterne kan ikke vurderes, før dine allergier er hentet. Tjek din forbindelse, og prøv igen." onAction={retryProfileLoad} />}
+      {/* Præferencerne (allergier, familie, husstand) kunne ikke hentes: varerne står som "Kan ikke vurderes", indtil den er hentet (16. okt. 2026). */}
+      {profileLoadStatus === "error" && <StateBox tone="error" title={PREFS_LOAD_FAILED_TITLE} text={PREFS_LOAD_FAILED_TEXT} onAction={retryProfileLoad} />}
 
       {!favoritesError && favorites.length === 0 && (
         <div className="empty-state">

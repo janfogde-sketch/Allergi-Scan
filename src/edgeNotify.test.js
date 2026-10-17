@@ -148,7 +148,7 @@ describe("edge: notify", () => {
     expect(recipients).toEqual(["user-a", "user-b"]);
   });
 
-  it("lavere allergenrisiko: kun besked i appen til dem med allergenet, aldrig push eller mail (Jan 16. okt. 2026)", async () => {
+  it("rettede allergenoplysninger: kun besked i appen til dem med allergenet, aldrig push eller mail (Jan 16. okt. 2026)", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: "m1" }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     const ev = event({ kind: "product_allergen_lowered", payload: { product_id: "p1", changes: { maelkeallergi: { old: "yes", new: "no" } } } });
@@ -172,7 +172,7 @@ describe("edge: notify", () => {
     expect(eventUpdates(h).at(-1)).toMatchObject({ status: "done" });
     expect(notes.map((n) => n.user_id)).toEqual(["user-a"]);
     expect(notes[0]).toMatchObject({ type: "P1", variant: "lowered", category: "product_changes" });
-    expect(JSON.stringify(notes[0].content_blocks)).toContain("Mælkeprotein er nu registreret som ikke indeholdt");
+    expect(JSON.stringify(notes[0].content_blocks)).toContain("Status for mælkeprotein er ændret til ‘Ikke påvist’.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

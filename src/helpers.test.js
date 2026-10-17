@@ -733,12 +733,18 @@ describe("historik: scanninger og søgninger holdes adskilt", () => {
 describe("ingredientsVerifiedText", () => {
   it("viser dato, når produktet er kontrolleret", async () => {
     const { ingredientsVerifiedText } = await import("./helpers.js");
-    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z")).toBe("Ingrediensoplysninger kontrolleret mod emballagen den 12. oktober 2026.");
+    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z")).toBe("Ingredienslisten er kontrolleret mod emballagen den 12. oktober 2026.");
   });
   it("siger tydeligt, at det ikke er kontrolleret, uden dato", async () => {
     const { ingredientsVerifiedText } = await import("./helpers.js");
-    expect(ingredientsVerifiedText(null)).toBe("Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.");
-    expect(ingredientsVerifiedText("ugyldig")).toBe("Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.");
+    expect(ingredientsVerifiedText(null)).toBe("Ingredienslisten er endnu ikke kontrolleret mod emballagen.");
+    expect(ingredientsVerifiedText("ugyldig")).toBe("Ingredienslisten er endnu ikke kontrolleret mod emballagen.");
+  });
+  it("en manglende ingrediensliste er noget andet end en ikke kontrolleret liste, og en dato gør den ikke til en kontrol", async () => {
+    const { ingredientsVerifiedText, PACKAGING_REMINDER_TEXT } = await import("./helpers.js");
+    expect(ingredientsVerifiedText(null, false)).toBe("Vi har endnu ikke en ingrediensliste for dette produkt.");
+    expect(ingredientsVerifiedText("2026-10-12T10:00:00Z", false)).toBe("Vi har endnu ikke en ingrediensliste for dette produkt.");
+    expect(PACKAGING_REMINDER_TEXT).toBe("Tjek altid emballagen – oplysninger kan ændre sig.");
   });
 });
 

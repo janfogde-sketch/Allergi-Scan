@@ -33,28 +33,29 @@ describe("ResultScreen uden hentet profil", () => {
   it("viser ingen vurdering og tilbyder 'Prøv igen', når hentningen fejlede", () => {
     const retry = vi.fn();
     renderWith("error", retry);
-    expect(screen.getByText("Din profil kunne ikke hentes")).toBeTruthy();
+    expect(screen.getByText("Vi kunne ikke hente dine præferencer")).toBeTruthy();
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
+    expect(screen.getByText("Vi kan ikke vurdere produktet, fordi dine præferencer ikke kunne hentes. Prøv igen.")).toBeTruthy();
     fireEvent.click(screen.getByText("Prøv igen"));
     expect(retry).toHaveBeenCalled();
   });
 
   it("viser ingen vurdering, mens profilen hentes", () => {
     renderWith("loading");
-    expect(screen.getByText("Henter din profil …")).toBeTruthy();
+    expect(screen.getByText("Henter dine præferencer …")).toBeTruthy();
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
   });
 
   it("viser ingen vurdering, når hentningen endnu ikke er startet (idle)", () => {
     renderWith("idle");
     expect(screen.queryByText(/Ingen registrerede konflikter/)).toBeNull();
-    expect(screen.getByText("Henter din profil …")).toBeTruthy();
+    expect(screen.getByText("Henter dine præferencer …")).toBeTruthy();
   });
 
   it("vurderer som før, når profilen er hentet", () => {
     renderWith("ok");
-    expect(screen.queryByText("Din profil kunne ikke hentes")).toBeNull();
-    expect(screen.queryByText("Henter din profil …")).toBeNull();
+    expect(screen.queryByText("Vi kunne ikke hente dine præferencer")).toBeNull();
+    expect(screen.queryByText("Henter dine præferencer …")).toBeNull();
     expect(screen.getAllByText(/Ingen registrerede konflikter/).length).toBeGreaterThan(0);
   });
 });

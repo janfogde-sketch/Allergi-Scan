@@ -193,11 +193,21 @@ export const STORE_SOURCES = ["katalog"];
 
 // Linjen om seneste kontrol af ingredienser/allergener mod emballagen. Kun en rigtig verificeringsdato vises;
 // en importdato er ikke en verificering, så uden dato står der tydeligt, at det ikke er kontrolleret.
-export const ingredientsVerifiedText = (iso) => {
+// hasIngredients === false: ingredienslisten mangler helt, hvilket er noget andet end en liste, der blot ikke er kontrolleret.
+export const ingredientsVerifiedText = (iso, hasIngredients = true) => {
+  if (hasIngredients === false) return "Vi har endnu ikke en ingrediensliste for dette produkt.";
   const d = iso ? new Date(iso) : null;
-  if (!d || Number.isNaN(d.getTime())) return "Ingrediensoplysningerne er endnu ikke kontrolleret mod emballagen.";
-  return `Ingrediensoplysninger kontrolleret mod emballagen den ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}.`;
+  if (!d || Number.isNaN(d.getTime())) return "Ingredienslisten er endnu ikke kontrolleret mod emballagen.";
+  return `Ingredienslisten er kontrolleret mod emballagen den ${d.toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" })}.`;
 };
+// Samme påmindelse under kontrollinjen, uanset om listen er kontrolleret: en kontrol er ingen garanti for, at produktet er sikkert for brugeren.
+export const PACKAGING_REMINDER_TEXT = "Tjek altid emballagen – oplysninger kan ændre sig.";
+
+// Præferencerne (allergier, intolerancer, E-numre, familie) kunne ikke hentes: samme tekster i Historik, Favoritter, Indkøbsliste og på resultatsiden.
+export const PREFS_LOAD_FAILED_TITLE = "Vi kunne ikke hente dine præferencer";
+export const PREFS_LOAD_FAILED_TEXT = "Vi kan ikke vurdere produkterne ud fra dine præferencer lige nu. Tjek din internetforbindelse, og prøv igen.";
+export const PREFS_LOAD_FAILED_REASON = "Dine præferencer kunne ikke hentes.";
+export const PREFS_LOAD_FAILED_RESULT_TEXT = "Vi kan ikke vurdere produktet, fordi dine præferencer ikke kunne hentes. Prøv igen.";
 
 export const verifiedBadge = (verified_status, source) => {
   // Producent-data — højeste troværdighed
@@ -753,7 +763,7 @@ export function profilesReady(profileLoadStatus) {
 }
 
 // opts.profilesReady === false: profilerne er ikke (alle) hentet. Et fund (rød/orange) står stadig, fordi det er den forsigtige side,
-// men "grøn" bliver aldrig vist: den bliver til "Kan ikke vurderes" med forklaringen "Din profil er ikke hentet".
+// men "grøn" bliver aldrig vist: den bliver til "Kan ikke vurderes" med forklaringen "Dine præferencer kunne ikke hentes.".
 export function evaluateProductForProfiles(profiles, product, opts = {}) {
   const ingredientsText = product?.ingredients || product?.ingredients_text || "";
   const results = computeProfileResults(profiles || [], {
@@ -789,7 +799,7 @@ export function evaluateProductForProfiles(profiles, product, opts = {}) {
   if (noProfiles && !missing.length) missing.push("Ingen profil valgt");
   if (nothingToCheck) missing.push("Ingen fødevarehensyn valgt");
   if (opts.profilesReady === false && level === "safe") {
-    return { level: "unknown", label: STATUS_TEXT.unknown, reasons: [], missing: ["Din profil er ikke hentet", ...missing], results };
+    return { level: "unknown", label: STATUS_TEXT.unknown, reasons: [], missing: [PREFS_LOAD_FAILED_REASON, ...missing], results };
   }
   return { level, label, reasons, missing, results };
 }
