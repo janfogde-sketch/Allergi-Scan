@@ -47,6 +47,9 @@ function StatCard({ icon, iconColor, value, label, big }) {
   );
 }
 
+// Søgninger er ikke scanninger: de nævnes som det, de er, og tælles ikke med i tallene ovenfor.
+const searchNote = (n) => `Dertil ${n === 1 ? "kommer 1 produktsøgning, som" : `kommer ${n} produktsøgninger, som`} ikke tælles som scanninger.`;
+
 // phase: "loading" | "error" | "empty" | "ok". Et tal vises kun, når historikken faktisk er hentet; aldrig 0 som erstatning for en fejl eller en hentning, der ikke er færdig.
 function ActivityCard({ phase, stats, onRetry, setScreen, SCREENS }) {
   const more = stats.truncated ? "+" : "";
@@ -68,7 +71,7 @@ function ActivityCard({ phase, stats, onRetry, setScreen, SCREENS }) {
         <Icon name="scanframe" size={20} color="var(--muted)" />
         <div style={{ minWidth:0 }}>
           <div style={{ fontSize:13, color:"var(--ink2)", lineHeight:1.45 }}>Du har endnu ikke scannet nogen produkter.</div>
-          {stats.searches > 0 && <div style={{ ...note, marginTop:2 }}>{stats.searches} opslag via søgning er ikke talt med.</div>}
+          {stats.searches > 0 && <div style={{ ...note, marginTop:2 }}>{searchNote(stats.searches)}</div>}
         </div>
       </div>
     );
@@ -83,7 +86,7 @@ function ActivityCard({ phase, stats, onRetry, setScreen, SCREENS }) {
         {(stats.truncated || stats.searches > 0) && (
           <div style={note}>
             {stats.truncated ? "Opgjort for dine seneste 50 scanninger og opslag. " : ""}
-            {stats.searches > 0 ? `${stats.searches} opslag via søgning er ikke talt med.` : ""}
+            {stats.searches > 0 ? searchNote(stats.searches) : ""}
           </div>
         )}
       </>
@@ -112,7 +115,7 @@ const CHIP_TONES = {
 function PrefGroup({ label, children }) {
   return (
     <div style={{ marginTop:12 }}>
-      <div style={{ ...UI.sectionLbl4Ink, marginBottom:4 }}>{label}</div>
+      <div style={{ ...UI.sectionLbl4Ink, marginBottom:8 }}>{label}</div>
       <div className="tags">{children}</div>
     </div>
   );
@@ -192,7 +195,7 @@ export default function ProfileScreen({
         <div style={{ ...CARD, boxShadow:"var(--sh2)" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
             <div style={UI.boldInk13}>Mine præferencer</div>
-            <button type="button" className="profile-edit-btn" onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Rediger</button>
+            <button type="button" className="profile-edit-btn" style={{ margin:"-6px 0" }} onClick={() => setScreen(SCREENS.EDITPREFERENCES)}>Rediger</button>
           </div>
           {allergenIds.length + customAllerg.length + (selectedENumbers?.length || 0) === 0
             ? (
@@ -230,7 +233,7 @@ export default function ProfileScreen({
 
         {/* Familie: kun en genvej til den eksisterende Familie-side, ingen duplikeret administration. Tæller både administrerede profiler og husstandskonti. */}
         <button type="button" className="row-btn" onClick={() => setScreen(SCREENS.FAMILY)}
-          style={{ ...CARD, width:"100%", minHeight:56, padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)" }}>
+          style={{ ...CARD, width:"100%", minHeight:44, padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, cursor:"pointer", textAlign:"left", fontFamily:"var(--f)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
             <Icon name="family" size={16} color="var(--ink)" />
             <div style={{ minWidth:0 }}>
@@ -254,8 +257,8 @@ export default function ProfileScreen({
             feedback: "Indstillinger mangler i menuen") — nås nu via
             ProfileMenu.jsx's "Indstillinger", ikke længere herfra. */}
 
-        {/* Footer: diskret. Bunden friholdes for den faste bundnavigation (ca. 77 px + safe area) af .screen og denne bund-padding. */}
-        <div style={{ marginTop:8, paddingBottom:"calc(64px + env(safe-area-inset-bottom))", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
+        {/* Footer: følger indholdet. Pladsen under den (bundnavigation + safe area) kommer fra .screen, ikke fra ekstra padding her. */}
+        <div style={{ marginTop:8, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
           <a href="mailto:hej@eatsafe.dk"
             style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", gap:6, minHeight:44, padding:"0 12px", fontSize:12, fontWeight:600, color:"var(--muted)", textDecoration:"none" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
