@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from "react";
+import ReactDOM from "react-dom";
 import { submitFeedback } from "../submitFeedback.js";
 import { compressImageToBase64 } from "../helpers.js";
 import { showToast, Icon } from "../SharedComponents.jsx";
@@ -21,8 +22,12 @@ const TYPES = [
   { id: "suggestion", label: "Forslag" },
 ];
 
-export default function FeedbackButton({ accessToken, userId, userEmail, section }) {
-  const [open, setOpen] = useState(false);
+// open/onOpenChange: styres udefra (fx fra kontomenuen), og så vises ingen egen knap. Uden dem ligger knappen her som før.
+export default function FeedbackButton({ accessToken, userId, userEmail, section, open: openProp, onOpenChange }) {
+  const controlled = typeof openProp === "boolean";
+  const [openLocal, setOpenLocal] = useState(false);
+  const open = controlled ? openProp : openLocal;
+  const setOpen = (v) => { if (controlled) onOpenChange?.(v); else setOpenLocal(v); };
   const [type, setType] = useState("bug");
   const [text, setText] = useState("");
   const [image, setImage] = useState(null);
@@ -68,10 +73,12 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
 
   return (
     <>
-      <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)}>
-        <Icon name="message" size={14} color="var(--ink2)" />Send feedback
-      </button>
-      {open && (
+      {!controlled && (
+        <button className="admin-btn admin-btn-ghost admin-btn-full admin-btn-sm" onClick={() => setOpen(true)}>
+          <Icon name="message" size={14} color="var(--ink2)" />Send feedback
+        </button>
+      )}
+      {open && ReactDOM.createPortal(
         <div className="admin-modal-overlay" onClick={requestClose}>
           <div className="admin-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
             {ask && (
@@ -144,7 +151,8 @@ export default function FeedbackButton({ accessToken, userId, userEmail, section
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

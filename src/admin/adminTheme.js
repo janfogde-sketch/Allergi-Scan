@@ -82,9 +82,21 @@ body{
 .admin-nav-item .badge,.admin-nav-group-head .badge{margin-left:auto;flex:none;box-sizing:border-box;min-width:20px;height:20px;padding:0 6px;border-radius:10px;font-size:11px;font-weight:800;line-height:20px;text-align:center;letter-spacing:0;text-transform:none;background:var(--surface2);color:var(--ink2);}
 .admin-nav-item .badge.warn,.admin-nav-group-head .badge.warn{background:var(--amber-lt);color:var(--amber);}
 .admin-nav-item .badge.crit,.admin-nav-group-head .badge.crit{background:var(--red);color:#fff;}
-.admin-sidebar-footer{flex:0 0 auto;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--border);padding:8px 12px calc(8px + env(safe-area-inset-bottom));}
-.admin-sidebar-user{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);padding:0 10px;min-width:0;}.admin-sidebar-user span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}.admin-sidebar-footer .admin-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;}.admin-btn-quiet{color:var(--muted);}
-@media (max-height:480px){.admin-sidebar-footer{flex-direction:row;flex-wrap:wrap;}.admin-sidebar-user{flex:1 1 100%;}.admin-sidebar-footer>*:not(.admin-sidebar-user){flex:1 1 0;min-width:0;}}
+.admin-sidebar-back{flex:0 0 auto;padding:0 12px 8px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.admin-sidebar-footer{flex:0 0 auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--border);padding:8px 12px calc(8px + env(safe-area-inset-bottom));}
+.admin-account-row{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:6px 10px;border:none;background:none;border-radius:10px;cursor:pointer;font-family:var(--f);text-align:left;color:var(--ink);}
+@media (hover:hover){.admin-account-row:hover,.admin-account-item:hover{background:var(--surface2);}}
+.admin-account-row:active,.admin-account-item:active{background:var(--surface2);}
+.admin-account-row:focus-visible,.admin-account-item:focus-visible{outline:2px solid var(--green);outline-offset:-2px;}
+.admin-account-avatar{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);}
+.admin-account-text{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.admin-account-title{font-size:13px;font-weight:600;color:var(--ink);line-height:1.25;}
+.admin-account-mail{font-size:11.5px;color:var(--muted);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.admin-account-chev{flex:0 0 auto;display:inline-flex;transition:transform .15s;}
+.admin-account-chev.open{transform:rotate(180deg);}
+.admin-account-menu{display:flex;flex-direction:column;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px;}
+.admin-account-item{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:4px 10px;border:none;background:none;border-radius:8px;cursor:pointer;font-family:var(--f);font-size:13px;font-weight:500;color:var(--ink);text-align:left;}
+@media (prefers-reduced-motion:reduce){.admin-account-chev{transition:none;}}
 .admin-main{flex:1;min-width:0;display:flex;flex-direction:column;}
 .admin-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface);}
 .admin-topbar h1{font-size:18px;font-weight:900;margin:0;}
@@ -660,7 +672,6 @@ button.beta-cell{cursor:pointer;} button.beta-cell:focus-visible{outline:2px sol
   .admin-nav-close{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-6px 0;border:none;background:none;border-radius:8px;cursor:pointer;flex-shrink:0;}
   .admin-nav-close:active{background:var(--surface2);}
   .admin-nav-group-head{min-height:40px;}
-  .admin-sidebar-footer .admin-btn{min-height:40px;}
   .admin-nav-backdrop{display:block;position:fixed;inset:0;background:rgba(21,32,26,.45);z-index:110;}
   .admin-menu-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0;border:none;background:none;border-radius:8px;cursor:pointer;flex-shrink:0;}
   .admin-menu-btn:active{background:var(--surface2);}
